@@ -35,11 +35,45 @@ export default function HomeScreen() {
         return `${mName} ${selectedMonthDate.year}`;
     })();
 
+    const markedDates = monthSessions?.reduce((acc: any, session: any) => {
+        const color = session.color || (isDark ? '#60A5FA' : '#3B82F6');
+        acc[session.date] = {
+            customStyles: {
+                container: {
+                    backgroundColor: color + '26', // Mismo noto de transparencia
+                    borderRadius: 10, // Cuadrado redondeado
+                    width: 36, // Tamaño fijo para no estirarse
+                    height: 36,
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                },
+                text: {
+                    color: color,
+                    fontWeight: 'bold',
+                }
+            }
+        };
+        return acc;
+    }, {}) || {};
+
     const handleDayPress = (day: DateData) => {
         router.push({
             pathname: '/add-session',
             params: { date: day.dateString }
         });
+    };
+
+    const calculateSessionEarnings = (session: any) => {
+        if (session.earning_type === 'fixed') return session.earning_amount || 0;
+        if (session.earning_type === 'hourly') {
+            const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
+            const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
+            let startMins = startH * 60 + startM;
+            let endMins = endH * 60 + endM;
+            if (endMins <= startMins) endMins += 24 * 60;
+            return (session.earning_amount || 0) * ((endMins - startMins) / 60);
+        }
+        return 0;
     };
 
     return (
@@ -74,6 +108,7 @@ export default function HomeScreen() {
                     </View>
 
                     <Calendar
+                        markingType={'custom'}
                         theme={{
                             backgroundColor: 'transparent',
                             calendarBackground: 'transparent',
@@ -81,7 +116,7 @@ export default function HomeScreen() {
                             selectedDayBackgroundColor: '#3B82F6',
                             selectedDayTextColor: '#ffffff',
                             todayTextColor: '#ffffff',
-                            todayBackgroundColor: '#3B82F6',
+                            todayBackgroundColor: '#22C55E', // Lo hago verde para diferenciarlo
                             dayTextColor: isDark ? '#D1D5DB' : '#111827',
                             textDisabledColor: isDark ? '#4B5563' : '#D1D5DB',
                             dotColor: '#3B82F6',
@@ -100,6 +135,7 @@ export default function HomeScreen() {
                         }}
                         hideExtraDays={true}
                         key={currentLanguage} // force re-render when language changes
+                        markedDates={markedDates}
                     />
                 </View>
 
@@ -129,10 +165,18 @@ export default function HomeScreen() {
                                             <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden" style={{ color: session.color || '#3B82F6', backgroundColor: (session.color || '#3B82F6') + '1A' }}>{session.start_time} - {session.end_time}</Text>
 
                                             {session.is_collective && session.djs && session.djs.length > 0 && (
-                                                <View className="flex-row items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md max-w-[60%]">
+                                                <View className="flex-row items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md max-w-[50%]">
                                                     <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
                                                     <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
                                                         {session.djs.join(', ')}
+                                                    </Text>
+                                                </View>
+                                            )}
+
+                                            {session.earning_type && session.earning_type !== 'free' && (
+                                                <View className="flex-row items-center px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800/30">
+                                                    <Text className="text-xs font-bold text-green-700 dark:text-green-400">
+                                                        {calculateSessionEarnings(session)} €
                                                     </Text>
                                                 </View>
                                             )}

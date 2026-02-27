@@ -12,7 +12,7 @@ export default function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-session" options={{ presentation: 'modal', headerShown: true }} />
+                <Stack.Screen name="add-session" options={{ presentation: 'modal', headerShown: false }} />
             </Stack>
             <StatusBar style="auto" />
         </AppProviders>

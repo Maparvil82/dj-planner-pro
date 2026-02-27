@@ -41,5 +41,11 @@
     "sync_calendars_empty_state": "Sincroniza con tus calendarios externos para ver tus próximos sets.",
     "collective_session": "Sesión Colectiva",
     "add_djs": "Añadir DJs",
-    "add_djs_placeholder": "Ej: DJ Nano"
+    "add_djs_placeholder": "Ej: DJ Nano",
+    "earning_type": "Tipo de cobro",
+    "earning_free": "Gratis",
+    "earning_hourly": "Por hora",
+    "earning_fixed": "Cerrado",
+    "earning_amount": "Importe (€)",
+    "total_earnings": "Total estimado:"
 }

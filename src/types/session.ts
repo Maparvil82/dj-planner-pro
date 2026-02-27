@@ -9,6 +9,8 @@ export interface Session {
     color: string;
     is_collective: boolean;
     djs: string[];
+    earning_type: 'free' | 'hourly' | 'fixed';
+    earning_amount: number;
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
 }
@@ -22,4 +24,6 @@ export interface CreateSessionInput {
     color?: string;
     is_collective?: boolean;
     djs?: string[];
+    earning_type?: 'free' | 'hourly' | 'fixed';
+    earning_amount?: number;
 }

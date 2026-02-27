@@ -11,3 +11,7 @@ ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS djs text[] DEFAULT '{}';
 */
 ALTER TABLE public.user_tags DROP CONSTRAINT IF EXISTS user_tags_type_check;
 ALTER TABLE public.user_tags ADD CONSTRAINT user_tags_type_check CHECK (type IN ('title', 'venue', 'dj'));
+
+/* --- NEW MIGRATIONS FOR SESSION EARNINGS --- */
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS earning_type text DEFAULT 'free' CHECK (earning_type IN ('free', 'hourly', 'fixed'));
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS earning_amount numeric DEFAULT 0;

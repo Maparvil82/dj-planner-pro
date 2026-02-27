@@ -1,19 +1,50 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState, useRef, useContext } from 'react';
+import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as CalendarIcon, MapPin, Clock, Users, X } from 'lucide-react-native';
+import { Calendar as CalendarIcon, MapPin, Clock, Users, X, DollarSign } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
-import { useContext } from 'react';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: 'red' }}>
+                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>REAL CRASH:</Text>
+                    <Text style={{ color: 'white', marginTop: 10 }}>{this.state.error?.message}</Text>
+                    <Text style={{ color: 'white', marginTop: 10, fontSize: 10 }}>{this.state.error?.stack}</Text>
+                </View>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 export default function AddSessionModal() {
-    const { date } = useLocalSearchParams<{ date: string }>();
-    const { t, currentLanguage } = useTranslation();
+    const { date } = useGlobalSearchParams<{ date: string }>();
     const router = useRouter();
+    return (
+        <ErrorBoundary>
+            <AddSessionModalContent date={date} onBack={() => router.back()} />
+        </ErrorBoundary>
+    );
+}
+
+function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => void }) {
+    const { t, currentLanguage } = useTranslation();
     const { session } = useAuthStore();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
@@ -24,6 +55,10 @@ export default function AddSessionModal() {
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
+
+    // Earnings State
+    const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
+    const [earningAmount, setEarningAmount] = useState('');
 
     // Collective Session State
     const [isCollective, setIsCollective] = useState(false);
@@ -78,6 +113,31 @@ export default function AddSessionModal() {
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
     const dayAndMonth = dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
 
+    // Calculate total hours
+    const calculateTotalHours = () => {
+        if (!startTime || !endTime) return 0;
+        const [startH, startM] = startTime.split(':').map(Number);
+        const [endH, endM] = endTime.split(':').map(Number);
+
+        if (isNaN(startH) || isNaN(startM) || isNaN(endH) || isNaN(endM)) return 0;
+
+        let startMinutes = startH * 60 + startM;
+        let endMinutes = endH * 60 + endM;
+
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60; // Next day
+        }
+
+        return (endMinutes - startMinutes) / 60;
+    };
+
+    const getEstimatedTotal = () => {
+        const amount = parseFloat(earningAmount) || 0;
+        if (earningType === 'fixed') return amount;
+        if (earningType === 'hourly') return amount * calculateTotalHours();
+        return 0;
+    };
+
     const handleSave = async () => {
         if (!title.trim() || !venue.trim()) {
             Alert.alert(t('error'), t('missing_fields'));
@@ -100,11 +160,13 @@ export default function AddSessionModal() {
                 start_time: startTime.trim(),
                 end_time: endTime.trim(),
                 is_collective: isCollective,
-                djs: finalDjs
+                djs: finalDjs,
+                earning_type: earningType,
+                earning_amount: parseFloat(earningAmount) || 0
             });
 
             Alert.alert(t('success'), t('session_added_success'), [
-                { text: 'OK', onPress: () => router.back() }
+                { text: 'OK', onPress: onBack }
             ]);
         } catch (error) {
             Alert.alert(t('error'), t('error_saving_session'));
@@ -114,22 +176,13 @@ export default function AddSessionModal() {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
-            <Stack.Screen options={{
-                headerShown: true,
-                title: t('add_session'),
-                headerLeft: () => (
-                    <TouchableOpacity onPress={() => router.back()} className="mr-2">
-                        <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>
-                    </TouchableOpacity>
-                ),
-                headerTitleStyle: {
-                    fontWeight: '700',
-                    color: isDark ? '#F9FAFB' : '#111827'
-                },
-                headerStyle: { backgroundColor: isDark ? '#030712' : '#F9FAFB' },
-                headerShadowVisible: false,
-                presentation: 'modal',
-            }} />
+            <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+                <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
+                    <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>
+                </TouchableOpacity>
+                <Text className="text-lg font-bold text-gray-900 dark:text-white">{t('add_session')}</Text>
+                <View className="w-16" />
+            </View>
 
             <ScrollView
                 className="flex-1 px-5 pt-4 pb-12"
@@ -185,7 +238,7 @@ export default function AddSessionModal() {
                             </ScrollView>
                         )}
 
-                        <View className={`rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'title' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                        <View className={`rounded-2xl border-2 overflow-hidden ${focusedInput === 'title' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                             <TextInput
                                 className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
                                 placeholder={t('session_title_placeholder')}
@@ -232,7 +285,7 @@ export default function AddSessionModal() {
                             </ScrollView>
                         )}
 
-                        <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'venue' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                        <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'venue' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                             <View className="absolute left-5 z-10 w-6 items-center">
                                 <MapPin size={22} color={focusedInput === 'venue' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
                             </View>
@@ -267,83 +320,81 @@ export default function AddSessionModal() {
                     </View>
 
                     {/* DJs Input */}
-                    {isCollective && (
-                        <View className="z-30 mb-4">
-                            <View className="flex-row justify-between items-end mb-2">
-                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
-                                    {t('add_djs')}
-                                </Text>
-                            </View>
-
-                            {/* Autocomplete Tags */}
-                            {focusedInput === 'dj' && filteredDjTags.length > 0 && (
-                                <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    keyboardShouldPersistTaps="handled"
-                                    className="mb-3"
-                                >
-                                    {filteredDjTags.map((tag) => (
-                                        <TouchableOpacity
-                                            key={tag.name}
-                                            activeOpacity={0.7}
-                                            className="px-4 py-2 rounded-full mr-2 border flex-row items-center"
-                                            style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
-                                            onPress={() => {
-                                                if (!selectedDjs.includes(tag.name)) {
-                                                    setSelectedDjs([...selectedDjs, tag.name]);
-                                                    setDjInput(''); // Clear input after selection
-                                                }
-                                            }}
-                                            onPressOut={() => setFocusedInput(null)}
-                                        >
-                                            <Users size={14} color={tag.color} className="mr-1.5" />
-                                            <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            )}
-
-                            <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'dj' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
-                                <View className="absolute left-5 z-10 w-6 items-center">
-                                    <Users size={22} color={focusedInput === 'dj' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
-                                </View>
-                                <TextInput
-                                    className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
-                                    placeholder={t('add_djs_placeholder')}
-                                    placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                                    value={djInput}
-                                    onChangeText={setDjInput}
-                                    onFocus={() => handleFocus('dj')}
-                                    onBlur={handleBlur}
-                                    onSubmitEditing={() => {
-                                        if (djInput.trim() && !selectedDjs.includes(djInput.trim())) {
-                                            setSelectedDjs([...selectedDjs, djInput.trim()]);
-                                            setDjInput('');
-                                        }
-                                    }}
-                                    returnKeyType="done"
-                                />
-                            </View>
-
-                            {/* Selected DJs Pills */}
-                            {selectedDjs.length > 0 && (
-                                <View className="flex-row flex-wrap mt-3 gap-2">
-                                    {selectedDjs.map((dj, index) => {
-                                        const hashTagColor = djTags.find(t => t.name === dj)?.color || '#3B82F6';
-                                        return (
-                                            <View key={index} className="flex-row items-center px-3 py-2 rounded-xl border bg-white dark:bg-gray-800" style={{ borderColor: hashTagColor + '4D' }}>
-                                                <Text className="font-semibold mr-2" style={{ color: hashTagColor }}>{dj}</Text>
-                                                <TouchableOpacity onPress={() => setSelectedDjs(selectedDjs.filter(d => d !== dj))} className="bg-gray-100 dark:bg-gray-700 rounded-full p-1">
-                                                    <X size={12} color={isDark ? '#D1D5DB' : '#6B7280'} />
-                                                </TouchableOpacity>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            )}
+                    <View className={isCollective ? 'z-30 mb-4' : 'hidden'}>
+                        <View className="flex-row justify-between items-end mb-2">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                                {t('add_djs')}
+                            </Text>
                         </View>
-                    )}
+
+                        {/* Autocomplete Tags */}
+                        {focusedInput === 'dj' && filteredDjTags.length > 0 && (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                keyboardShouldPersistTaps="handled"
+                                className="mb-3"
+                            >
+                                {filteredDjTags.map((tag) => (
+                                    <TouchableOpacity
+                                        key={tag.name}
+                                        activeOpacity={0.7}
+                                        className="px-4 py-2 rounded-full mr-2 border flex-row items-center"
+                                        style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                        onPress={() => {
+                                            if (!selectedDjs.includes(tag.name)) {
+                                                setSelectedDjs([...selectedDjs, tag.name]);
+                                                setDjInput(''); // Clear input after selection
+                                            }
+                                        }}
+                                        onPressOut={() => setFocusedInput(null)}
+                                    >
+                                        <Users size={14} color={tag.color} className="mr-1.5" />
+                                        <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
+
+                        <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'dj' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                            <View className="absolute left-5 z-10 w-6 items-center">
+                                <Users size={22} color={focusedInput === 'dj' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                            </View>
+                            <TextInput
+                                className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                placeholder={t('add_djs_placeholder')}
+                                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                                value={djInput}
+                                onChangeText={setDjInput}
+                                onFocus={() => handleFocus('dj')}
+                                onBlur={handleBlur}
+                                onSubmitEditing={() => {
+                                    if (djInput.trim() && !selectedDjs.includes(djInput.trim())) {
+                                        setSelectedDjs([...selectedDjs, djInput.trim()]);
+                                        setDjInput('');
+                                    }
+                                }}
+                                returnKeyType="done"
+                            />
+                        </View>
+
+                        {/* Selected DJs Pills */}
+                        {selectedDjs.length > 0 && (
+                            <View className="flex-row flex-wrap mt-3 gap-2">
+                                {selectedDjs.map((dj, index) => {
+                                    const hashTagColor = djTags.find(t => t.name === dj)?.color || '#3B82F6';
+                                    return (
+                                        <View key={index} className="flex-row items-center px-3 py-2 rounded-xl border bg-white dark:bg-gray-800" style={{ borderColor: hashTagColor + '4D' }}>
+                                            <Text className="font-semibold mr-2" style={{ color: hashTagColor }}>{dj}</Text>
+                                            <TouchableOpacity onPress={() => setSelectedDjs(selectedDjs.filter(d => d !== dj))} className="bg-gray-100 dark:bg-gray-700 rounded-full p-1">
+                                                <X size={12} color={isDark ? '#D1D5DB' : '#6B7280'} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        )}
+                    </View>
 
                     {/* Time Inputs Row */}
                     <View className="flex-row space-x-4">
@@ -351,7 +402,7 @@ export default function AddSessionModal() {
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('start_time')}
                             </Text>
-                            <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'start' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                            <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'start' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                                 <View className="absolute left-4 z-10 w-5 items-center">
                                     <Clock size={20} color={focusedInput === 'start' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
                                 </View>
@@ -371,7 +422,7 @@ export default function AddSessionModal() {
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('end_time')}
                             </Text>
-                            <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'end' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                            <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'end' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                                 <View className="absolute left-4 z-10 w-5 items-center">
                                     <Clock size={20} color={focusedInput === 'end' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
                                 </View>
@@ -385,6 +436,52 @@ export default function AddSessionModal() {
                                     onBlur={() => setFocusedInput(null)}
                                 />
                             </View>
+                        </View>
+                    </View>
+
+                    {/* Earnings Section */}
+                    <View className="z-10 mt-2">
+                        <View className="flex-row justify-between items-end mb-2">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                                {t('earning_type') || 'Cobro'}
+                            </Text>
+                        </View>
+
+                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
+                            {['free', 'hourly', 'fixed'].map((type) => (
+                                <TouchableOpacity
+                                    key={type}
+                                    onPress={() => setEarningType(type as any)}
+                                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === type ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                >
+                                    <Text style={{ fontSize: 14, fontWeight: '600', color: earningType === type ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                        {t(`earning_${type}`) || type}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <View className={earningType === 'free' ? 'hidden' : 'flex'}>
+                            <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'earning' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                                <View className="absolute left-5 z-10 w-6 items-center">
+                                    <DollarSign size={20} color={focusedInput === 'earning' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                                </View>
+                                <TextInput
+                                    className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                    placeholder={t('earning_amount') || 'Importe'}
+                                    placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                                    keyboardType="numeric"
+                                    value={earningAmount}
+                                    onChangeText={setEarningAmount}
+                                    onFocus={() => handleFocus('earning')}
+                                    onBlur={handleBlur}
+                                />
+                            </View>
+                            {/*<View className={earningType === 'hourly' && earningAmount.length > 0 ? 'flex' : 'hidden'}>
+                                <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 ml-2">
+                                    {t('total_earnings') || 'Total:'} <Text className="text-green-600 dark:text-green-500 font-bold">{getEstimatedTotal() || 0} €</Text> ({calculateTotalHours()}h)
+                                </Text>
+                            </View>*/}
                         </View>
                     </View>
 
