@@ -36,5 +36,7 @@
     "missing_fields": "Please fill in the required fields.",
     "error_saving_session": "There was an error saving the session.",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "upcoming_sessions": "Upcoming Sessions",
+    "sync_calendars_empty_state": "Sync with your external calendars to view upcoming sets."
 }

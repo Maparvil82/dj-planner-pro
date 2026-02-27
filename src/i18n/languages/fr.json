@@ -20,5 +20,7 @@
     "settings_title": "Paramètres",
     "change_avatar": "Changer d'Avatar",
     "avatar_upload_success": "Avatar mis à jour avec succès !",
-    "permissions_required": "Les autorisations de la caméra sont requises pour continuer"
+    "permissions_required": "Les autorisations de la caméra sont requises pour continuer",
+    "upcoming_sessions": "Prochaines Sessions",
+    "sync_calendars_empty_state": "Synchronisez avec vos calendriers externes pour voir les prochains sets."
 }

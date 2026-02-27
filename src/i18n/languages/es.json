@@ -36,5 +36,7 @@
     "missing_fields": "Por favor, completa los campos obligatorios.",
     "error_saving_session": "Hubo un error al guardar la sesión.",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "upcoming_sessions": "Próximas Sesiones",
+    "sync_calendars_empty_state": "Sincroniza con tus calendarios externos para ver tus próximos sets."
 }

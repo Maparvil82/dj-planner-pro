@@ -10,7 +10,7 @@ import { useContext } from 'react';
 
 export default function AddSessionModal() {
     const { date } = useLocalSearchParams<{ date: string }>();
-    const { t } = useTranslation();
+    const { t, currentLanguage } = useTranslation();
     const router = useRouter();
     const { session } = useAuthStore();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
@@ -23,7 +23,7 @@ export default function AddSessionModal() {
     const [endTime, setEndTime] = useState('04:00');
 
     // Format the incoming date string (e.g. "2026-10-15")
-    const formattedDate = date ? new Date(date).toLocaleDateString(undefined, {
+    const formattedDate = date ? new Date(date).toLocaleDateString(currentLanguage, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',

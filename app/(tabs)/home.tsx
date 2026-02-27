@@ -9,19 +9,12 @@ import { Calendar as CalendarIcon, Inbox } from 'lucide-react-native';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
+import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 
-const esConfig: any = {
-    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-    monthNamesShort: ['Ene.', 'Feb.', 'Mar', 'Abr', 'May', 'Jun', 'Jul.', 'Ago', 'Sept.', 'Oct.', 'Nov.', 'Dic.'],
-    dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-    dayNamesShort: ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'],
-    today: 'Hoy'
-};
-LocaleConfig.locales['es'] = esConfig;
-LocaleConfig.defaultLocale = 'es';
+setupCalendarLocales();
 
 export default function HomeScreen() {
-    const { t } = useTranslation();
+    const { t, currentLanguage } = useTranslation();
     const { session, profile } = useAuthStore();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
@@ -29,12 +22,18 @@ export default function HomeScreen() {
 
     const isDark = themeCtx?.activeTheme === 'dark';
 
-    const [currentMonth, setCurrentMonth] = useState(() => {
-        const d = new Date();
-        const monthNames = LocaleConfig.locales['es']?.monthNames;
-        const month = monthNames ? monthNames[d.getMonth()] : '';
-        return `${month} ${d.getFullYear()}`;
+    LocaleConfig.defaultLocale = currentLanguage;
+
+    const [selectedMonthDate, setSelectedMonthDate] = useState({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
     });
+
+    const currentMonthLabel = (() => {
+        const config = LocaleConfig.locales[currentLanguage] || LocaleConfig.locales['en'];
+        const mName = config?.monthNames ? config.monthNames[selectedMonthDate.month - 1] : '';
+        return `${mName} ${selectedMonthDate.year}`;
+    })();
 
     const handleDayPress = (day: DateData) => {
         router.push({
@@ -70,7 +69,7 @@ export default function HomeScreen() {
                             <CalendarIcon size={20} color={isDark ? '#60A5FA' : '#2563EB'} />
                         </View>
                         <Text className="text-lg font-bold text-gray-900 dark:text-white capitalize">
-                            {currentMonth}
+                            {currentMonthLabel}
                         </Text>
                     </View>
 
@@ -81,7 +80,8 @@ export default function HomeScreen() {
                             textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
                             selectedDayBackgroundColor: '#3B82F6',
                             selectedDayTextColor: '#ffffff',
-                            todayTextColor: '#3B82F6',
+                            todayTextColor: '#ffffff',
+                            todayBackgroundColor: '#3B82F6',
                             dayTextColor: isDark ? '#D1D5DB' : '#111827',
                             textDisabledColor: isDark ? '#4B5563' : '#D1D5DB',
                             dotColor: '#3B82F6',
@@ -96,18 +96,17 @@ export default function HomeScreen() {
                         }}
                         onDayPress={handleDayPress}
                         onMonthChange={(month: DateData) => {
-                            const monthNames = LocaleConfig.locales['es']?.monthNames;
-                            const mName = monthNames ? monthNames[month.month - 1] : '';
-                            setCurrentMonth(`${mName} ${month.year}`);
+                            setSelectedMonthDate({ month: month.month, year: month.year });
                         }}
                         hideExtraDays={true}
+                        key={currentLanguage} // force re-render when language changes
                     />
                 </View>
 
                 {/* UPCOMING SESSIONS */}
                 <View>
                     <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 px-2 tracking-tight">
-                        Upcoming Sessions
+                        {t('upcoming_sessions')}
                     </Text>
 
                     {isLoading ? (
@@ -126,7 +125,7 @@ export default function HomeScreen() {
                                 {t('no_sessions_yet')}
                             </Text>
                             <Text className="text-gray-500 dark:text-gray-400 text-center">
-                                Sync with your external calendars to view upcoming sets.
+                                {t('sync_calendars_empty_state')}
                             </Text>
                         </View>
                     )}

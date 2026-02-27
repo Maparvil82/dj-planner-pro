@@ -20,5 +20,7 @@
     "settings_title": "設定",
     "change_avatar": "アバターを変更",
     "avatar_upload_success": "アバターが正常に更新されました！",
-    "permissions_required": "続行するにはカメラの権限が必要です"
+    "permissions_required": "続行するにはカメラの権限が必要です",
+    "upcoming_sessions": "今後のセッション",
+    "sync_calendars_empty_state": "外部カレンダーと同期して、今後のセットを表示します。"
 }

@@ -20,5 +20,7 @@
     "settings_title": "Einstellungen",
     "change_avatar": "Avatar ändern",
     "avatar_upload_success": "Avatar erfolgreich aktualisiert!",
-    "permissions_required": "Kameraberechtigungen sind erforderlich, um fortzufahren"
+    "permissions_required": "Kameraberechtigungen sind erforderlich, um fortzufahren",
+    "upcoming_sessions": "Kommende Sitzungen",
+    "sync_calendars_empty_state": "Synchronisieren Sie mit Ihren externen Kalendern, um anstehende Sets anzuzeigen."
 }
