@@ -51,5 +51,7 @@
     "date": "Fecha",
     "current_month_earnings": "Ganancias del mes actual",
     "earned_so_far": "Llevas ganado",
-    "projected_total": "Prevees ganar"
+    "projected_total": "Prevees ganar",
+    "filter_all": "Todas",
+    "filter_this_month": "Este Mes"
 }

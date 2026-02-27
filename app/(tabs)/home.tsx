@@ -17,6 +17,7 @@ export default function HomeScreen() {
     const themeCtx = useContext(ThemeContext);
 
     const isDark = themeCtx?.activeTheme === 'dark';
+    const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('all');
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
@@ -58,8 +59,18 @@ export default function HomeScreen() {
         return { earnedSoFar: earned, projectedTotal: projected };
     }, [monthSessions]);
 
+    const filteredUpcomingSessions = useMemo(() => {
+        if (!upcomingSessions) return [];
+        if (sessionFilter === 'all') return upcomingSessions;
+
+        return upcomingSessions.filter((session: any) => {
+            const [y, m] = session.date.split('-');
+            return Number(y) === currentYear && Number(m) === currentMonth;
+        });
+    }, [upcomingSessions, sessionFilter, currentYear, currentMonth]);
+
     return (
-        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
             <View className="flex-row items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
                 <View>
@@ -75,7 +86,7 @@ export default function HomeScreen() {
                 />
             </View>
 
-            <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
                 {/* MONTHLY EARNINGS CARD */}
                 <View className="mb-8">
@@ -119,17 +130,38 @@ export default function HomeScreen() {
 
                 {/* UPCOMING SESSIONS */}
                 <View>
-                    <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 px-2 tracking-tight">
-                        {t('upcoming_sessions')}
-                    </Text>
+                    <View className="flex-row items-center justify-between mb-4 px-2">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                            {t('upcoming_sessions')}
+                        </Text>
+
+                        <View className="flex-row bg-gray-200 dark:bg-gray-800 rounded-full p-1 border border-gray-300/50 dark:border-gray-700/50">
+                            <TouchableOpacity
+                                onPress={() => setSessionFilter('all')}
+                                className={`px-3 py-1.5 rounded-full ${sessionFilter === 'all' ? 'bg-white dark:bg-gray-600 shadow-sm shadow-black/10' : ''}`}
+                            >
+                                <Text className={`text-xs font-bold ${sessionFilter === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    {t('filter_all') || 'Todas'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setSessionFilter('month')}
+                                className={`px-3 py-1.5 rounded-full ${sessionFilter === 'month' ? 'bg-white dark:bg-gray-600 shadow-sm shadow-black/10' : ''}`}
+                            >
+                                <Text className={`text-xs font-bold ${sessionFilter === 'month' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    {t('filter_this_month') || 'Este Mes'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     {isLoadingUpcoming ? (
                         <View className="flex-1 items-center justify-center p-8">
                             <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#3B82F6'} />
                         </View>
-                    ) : upcomingSessions && upcomingSessions.length > 0 ? (
+                    ) : filteredUpcomingSessions && filteredUpcomingSessions.length > 0 ? (
                         <View className="flex-col gap-0">
-                            {upcomingSessions.map((session: any) => {
+                            {filteredUpcomingSessions.map((session: any) => {
                                 const [y, m, d] = session.date.split('-');
                                 const sessionDateObj = new Date(Number(y), Number(m) - 1, Number(d));
                                 const monthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'short' });

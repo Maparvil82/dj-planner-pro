@@ -51,5 +51,7 @@
     "date": "Date",
     "current_month_earnings": "Monthly Earnings",
     "earned_so_far": "Earned so far",
-    "projected_total": "Projected total"
+    "projected_total": "Projected total",
+    "filter_all": "All",
+    "filter_this_month": "This Month"
 }
