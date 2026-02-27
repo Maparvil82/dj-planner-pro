@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { Calendar as CalendarIcon, Inbox, Users } from 'lucide-react-native';
+import { CalendarPlus, Inbox, Users } from 'lucide-react-native';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -52,16 +52,6 @@ export default function HomeScreen() {
             </View>
 
             <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
-
-                {/* ADD SESSION BUTTON */}
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    className="bg-blue-600 dark:bg-blue-500 rounded-2xl p-4 flex-row items-center justify-center mb-8 shadow-sm shadow-blue-500/20"
-                    onPress={() => router.push('/add-session')}
-                >
-                    <CalendarIcon size={24} color="#FFFFFF" className="mr-2" />
-                    <Text className="text-white font-bold text-lg">{t('add_session') || 'Añadir Sesión'}</Text>
-                </TouchableOpacity>
 
                 {/* UPCOMING SESSIONS */}
                 <View>
@@ -122,6 +112,16 @@ export default function HomeScreen() {
                 </View>
 
             </ScrollView>
+
+            {/* FLOATING ACTION BUTTON (Add Session) */}
+            <TouchableOpacity
+                activeOpacity={0.8}
+                className="absolute bottom-6 right-6 w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full items-center justify-center shadow-lg shadow-blue-500/40"
+                style={{ elevation: 8 }}
+                onPress={() => router.push('/add-session')}
+            >
+                <CalendarPlus size={28} color="#FFFFFF" />
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }

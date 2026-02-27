@@ -136,6 +136,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
     const dateIsoStr = sessionDate; // Format as YYYY-MM-DD for supabase
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
+    LocaleConfig.defaultLocale = currentLanguage;
 
     // Calculate total hours
     const calculateTotalHours = () => {
