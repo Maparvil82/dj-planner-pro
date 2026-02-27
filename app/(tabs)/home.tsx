@@ -138,17 +138,29 @@ export default function HomeScreen() {
                         <View className="flex-row bg-gray-200 dark:bg-gray-800 rounded-full p-1 border border-gray-300/50 dark:border-gray-700/50">
                             <TouchableOpacity
                                 onPress={() => setSessionFilter('all')}
-                                className={`px-3 py-1.5 rounded-full ${sessionFilter === 'all' ? 'bg-white dark:bg-gray-600 shadow-sm shadow-black/10' : ''}`}
+                                className="px-3 py-1.5 rounded-full"
+                                style={{
+                                    backgroundColor: sessionFilter === 'all' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                }}
                             >
-                                <Text className={`text-xs font-bold ${sessionFilter === 'all' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <Text className="text-xs font-bold"
+                                    style={{
+                                        color: sessionFilter === 'all' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                    }}>
                                     {t('filter_all') || 'Todas'}
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => setSessionFilter('month')}
-                                className={`px-3 py-1.5 rounded-full ${sessionFilter === 'month' ? 'bg-white dark:bg-gray-600 shadow-sm shadow-black/10' : ''}`}
+                                className="px-3 py-1.5 rounded-full"
+                                style={{
+                                    backgroundColor: sessionFilter === 'month' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                }}
                             >
-                                <Text className={`text-xs font-bold ${sessionFilter === 'month' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <Text className="text-xs font-bold"
+                                    style={{
+                                        color: sessionFilter === 'month' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                    }}>
                                     {t('filter_this_month') || 'Este Mes'}
                                 </Text>
                             </TouchableOpacity>
