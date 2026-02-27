@@ -4,10 +4,14 @@ import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as CalendarIcon, MapPin, Clock, Users, X, DollarSign } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { setupCalendarLocales } from '../src/i18n/calendarLocales';
+
+setupCalendarLocales();
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
     constructor(props: { children: React.ReactNode }) {
@@ -60,6 +64,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
     const [earningAmount, setEarningAmount] = useState('');
 
+    // Session Date State
+    const [sessionDate, setSessionDate] = useState(() => {
+        const d = date ? new Date(date) : new Date();
+        return d.toISOString().split('T')[0];
+    });
+    const [showCalendar, setShowCalendar] = useState(false);
+
     // Collective Session State
     const [isCollective, setIsCollective] = useState(false);
     const [djInput, setDjInput] = useState('');
@@ -107,11 +118,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
         : [];
 
 
-    // Format the incoming date string (e.g. "2026-10-15")
-    const dateObj = date ? new Date(date) : new Date();
-    const dateIsoStr = dateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD for supabase
+    // Parse the date purely locally to avoid timezone shifts
+    const [y, m, d] = sessionDate.split('-');
+    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const dateIsoStr = sessionDate; // Format as YYYY-MM-DD for supabase
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
     const dayAndMonth = dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
+    LocaleConfig.defaultLocale = currentLanguage;
 
     // Calculate total hours
     const calculateTotalHours = () => {
@@ -191,15 +204,59 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 keyboardDismissMode="on-drag"
             >
 
-                {/* Hero Header */}
-                <View className="items-center mb-8">
+                {/* Hero Header / Date Selector */}
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setShowCalendar(!showCalendar)}
+                    className="items-center mb-6 bg-white dark:bg-gray-900 py-3 px-6 rounded-3xl mx-auto shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800 flex-row"
+                >
+                    <View className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl items-center justify-center mr-4">
+                        <LucideCalendar size={24} color={isDark ? '#60A5FA' : '#3B82F6'} />
+                    </View>
+                    <View>
+                        <Text className="text-xl font-extrabold text-gray-900 dark:text-white capitalize">
+                            {weekday}
+                        </Text>
+                        <Text className="text-sm text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mt-0.5">
+                            {dayAndMonth}
+                        </Text>
+                    </View>
+                </TouchableOpacity>
 
-                    <Text className="text-3xl font-extrabold text-gray-900 dark:text-white capitalize text-center">
-                        {weekday}
-                    </Text>
-                    <Text className="text-lg text-blue-600 dark:text-blue-400 font-medium mt-1 uppercase tracking-wider">
-                        {dayAndMonth}
-                    </Text>
+                {/* Calendar Picker (hidden by default) */}
+                <View className={showCalendar ? 'mb-8 bg-white dark:bg-gray-900 rounded-3xl p-3 shadow-md shadow-black/5 border border-gray-100 dark:border-gray-800 overflow-hidden' : 'hidden'}>
+                    <Calendar
+                        markingType={'custom'}
+                        theme={{
+                            backgroundColor: 'transparent',
+                            calendarBackground: 'transparent',
+                            textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+                            selectedDayBackgroundColor: '#3B82F6',
+                            selectedDayTextColor: '#ffffff',
+                            todayTextColor: '#3B82F6',
+                            dayTextColor: isDark ? '#D1D5DB' : '#111827',
+                            textDisabledColor: isDark ? '#4B5563' : '#374151',
+                            arrowColor: isDark ? '#60A5FA' : '#3B82F6',
+                            monthTextColor: isDark ? '#F9FAFB' : '#111827',
+                            textDayFontWeight: '500',
+                            textMonthFontWeight: 'bold',
+                            textDayHeaderFontWeight: '600',
+                        }}
+                        onDayPress={(day: any) => {
+                            setSessionDate(day.dateString);
+                            setShowCalendar(false);
+                        }}
+                        markedDates={{
+                            [sessionDate]: {
+                                selected: true,
+                                disableTouchEvent: true,
+                                customStyles: {
+                                    container: { backgroundColor: '#3B82F6', borderRadius: 10 },
+                                    text: { color: 'white', fontWeight: 'bold' }
+                                }
+                            }
+                        }}
+                    />
                 </View>
 
                 {/* Form Elements */}

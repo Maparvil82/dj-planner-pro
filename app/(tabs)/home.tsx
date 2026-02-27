@@ -8,60 +8,18 @@ import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useS
 import { Calendar as CalendarIcon, Inbox, Users } from 'lucide-react-native';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
-
-setupCalendarLocales();
 
 export default function HomeScreen() {
     const { t, currentLanguage } = useTranslation();
     const { session, profile } = useAuthStore();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
-    const [selectedMonthDate, setSelectedMonthDate] = useState({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
-    });
 
     const isDark = themeCtx?.activeTheme === 'dark';
-    LocaleConfig.defaultLocale = currentLanguage;
+    // Calendar localization is now handled where the calendar is used
 
-    const { data: monthSessions } = useSessionsQuery(selectedMonthDate.year, selectedMonthDate.month);
     const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
-
-    const currentMonthLabel = (() => {
-        const config = LocaleConfig.locales[currentLanguage] || LocaleConfig.locales['en'];
-        const mName = config?.monthNames ? config.monthNames[selectedMonthDate.month - 1] : '';
-        return `${mName} ${selectedMonthDate.year}`;
-    })();
-
-    const markedDates = monthSessions?.reduce((acc: any, session: any) => {
-        const color = session.color || (isDark ? '#60A5FA' : '#3B82F6');
-        acc[session.date] = {
-            customStyles: {
-                container: {
-                    backgroundColor: color + '26', // Mismo noto de transparencia
-                    borderRadius: 10, // Cuadrado redondeado
-                    width: 36, // Tamaño fijo para no estirarse
-                    height: 36,
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                },
-                text: {
-                    color: color,
-                    fontWeight: 'bold',
-                }
-            }
-        };
-        return acc;
-    }, {}) || {};
-
-    const handleDayPress = (day: DateData) => {
-        router.push({
-            pathname: '/add-session',
-            params: { date: day.dateString }
-        });
-    };
 
     const calculateSessionEarnings = (session: any) => {
         if (session.earning_type === 'fixed') return session.earning_amount || 0;
@@ -95,49 +53,15 @@ export default function HomeScreen() {
 
             <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
 
-                {/* MONTH CALENDAR */}
-                <View className="bg-white dark:bg-gray-900 p-6 mb-6 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800">
-                    <View className="flex-row items-center mb-4">
-                        <View className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-full items-center justify-center mr-3">
-                            {/* @ts-ignore */}
-                            <CalendarIcon size={20} color={isDark ? '#60A5FA' : '#2563EB'} />
-                        </View>
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white capitalize">
-                            {currentMonthLabel}
-                        </Text>
-                    </View>
-
-                    <Calendar
-                        markingType={'custom'}
-                        theme={{
-                            backgroundColor: 'transparent',
-                            calendarBackground: 'transparent',
-                            textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
-                            selectedDayBackgroundColor: '#3B82F6',
-                            selectedDayTextColor: '#ffffff',
-                            todayTextColor: '#ffffff',
-                            todayBackgroundColor: '#22C55E', // Lo hago verde para diferenciarlo
-                            dayTextColor: isDark ? '#D1D5DB' : '#111827',
-                            textDisabledColor: isDark ? '#4B5563' : '#D1D5DB',
-                            dotColor: '#3B82F6',
-                            selectedDotColor: '#ffffff',
-                            arrowColor: isDark ? '#60A5FA' : '#3B82F6',
-                            monthTextColor: 'transparent', // We hide the default title to use our custom one
-                            indicatorColor: '#3B82F6',
-                            textDayFontWeight: '500',
-                            textMonthFontWeight: 'bold',
-                            textDayHeaderFontWeight: '600',
-                            textDayFontSize: 16,
-                        }}
-                        onDayPress={handleDayPress}
-                        onMonthChange={(month: DateData) => {
-                            setSelectedMonthDate({ month: month.month, year: month.year });
-                        }}
-                        hideExtraDays={true}
-                        key={currentLanguage} // force re-render when language changes
-                        markedDates={markedDates}
-                    />
-                </View>
+                {/* ADD SESSION BUTTON */}
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    className="bg-blue-600 dark:bg-blue-500 rounded-2xl p-4 flex-row items-center justify-center mb-8 shadow-sm shadow-blue-500/20"
+                    onPress={() => router.push('/add-session')}
+                >
+                    <CalendarIcon size={24} color="#FFFFFF" className="mr-2" />
+                    <Text className="text-white font-bold text-lg">{t('add_session') || 'Añadir Sesión'}</Text>
+                </TouchableOpacity>
 
                 {/* UPCOMING SESSIONS */}
                 <View>
