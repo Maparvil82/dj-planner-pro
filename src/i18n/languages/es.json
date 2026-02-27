@@ -20,5 +20,7 @@
     "settings_title": "Configuración",
     "change_avatar": "Cambiar Avatar",
     "avatar_upload_success": "¡Avatar actualizado!",
-    "permissions_required": "Se requieren permisos de cámara para continuar"
+    "permissions_required": "Se requieren permisos de cámara para continuar",
+    "cancel": "Cancelar",
+    "open_settings": "Abrir Configuración"
 }

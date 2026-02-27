@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.djplannerpro.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,6 +23,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "package": "com.djplannerpro.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {

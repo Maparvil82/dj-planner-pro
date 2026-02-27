@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { Avatar } from '../src/components/ui/Avatar';
 import { useAuthStore } from '../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
+import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { profileService } from '../src/services/profile';
 import { LogOut } from 'lucide-react-native';
@@ -20,7 +21,14 @@ export default function SettingsScreen() {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
         if (permissionResult.granted === false) {
-            Alert.alert(t('settings_title'), t('permissions_required'));
+            Alert.alert(
+                t('settings_title'),
+                t('permissions_required'),
+                [
+                    { text: t('cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
+                    { text: t('open_settings', { defaultValue: 'Abrir Configuración' }), onPress: () => Linking.openSettings() }
+                ]
+            );
             return;
         }
 
@@ -52,8 +60,9 @@ export default function SettingsScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
             <Stack.Screen options={{
+                headerShown: true,
                 title: t('settings_title'),
                 headerBackTitle: t('home'),
                 headerStyle: { backgroundColor: 'transparent' },

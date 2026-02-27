@@ -20,5 +20,7 @@
     "settings_title": "Settings",
     "change_avatar": "Change Avatar",
     "avatar_upload_success": "Avatar updated successfully!",
-    "permissions_required": "Camera roll permissions are required to continue"
+    "permissions_required": "Camera roll permissions are required to continue",
+    "cancel": "Cancel",
+    "open_settings": "Open Settings"
 }
