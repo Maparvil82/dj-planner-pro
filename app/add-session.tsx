@@ -22,13 +22,13 @@ export default function AddSessionModal() {
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
 
+    // UI Focus States
+    const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
     // Format the incoming date string (e.g. "2026-10-15")
-    const formattedDate = date ? new Date(date).toLocaleDateString(currentLanguage, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    }) : '';
+    const dateObj = date ? new Date(date) : new Date();
+    const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
+    const dayAndMonth = dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
 
     const handleSave = async () => {
         if (!title.trim() || !venue.trim()) {
@@ -54,104 +54,119 @@ export default function AddSessionModal() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
             <Stack.Screen options={{
                 headerShown: true,
                 title: t('add_session'),
                 headerLeft: () => (
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text className="text-blue-500 font-medium text-lg mr-4">{t('cancel')}</Text>
+                    <TouchableOpacity onPress={() => router.back()} className="mr-2">
+                        <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>
                     </TouchableOpacity>
                 ),
-                headerStyle: { backgroundColor: 'transparent' },
+                headerTitleStyle: {
+                    fontWeight: '700',
+                    color: isDark ? '#F9FAFB' : '#111827'
+                },
+                headerStyle: { backgroundColor: isDark ? '#030712' : '#F9FAFB' },
                 headerShadowVisible: false,
-                headerTintColor: '#3b82f6', // blue-500
                 presentation: 'modal',
             }} />
 
-            <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
-                {/* Header info */}
-                <View className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-2xl mb-6 flex-row items-center border border-blue-100 dark:border-blue-900/50">
-                    <View className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full items-center justify-center mr-3">
-                        <CalendarIcon size={20} color={isDark ? '#60A5FA' : '#2563EB'} />
+            <ScrollView className="flex-1 px-5 pt-4 pb-12" showsVerticalScrollIndicator={false}>
+
+                {/* Hero Header */}
+                <View className="items-center mb-8">
+                    <View className="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mb-4 shadow-sm shadow-blue-500/20">
+                        <CalendarIcon size={32} color={isDark ? '#60A5FA' : '#2563EB'} />
                     </View>
-                    <View className="flex-1">
-                        <Text className="text-blue-900 dark:text-blue-100 font-bold">
-                            {t('selected_date')}
-                        </Text>
-                        <Text className="text-blue-700 dark:text-blue-300 capitalize mt-1">
-                            {formattedDate}
-                        </Text>
-                    </View>
+                    <Text className="text-3xl font-extrabold text-gray-900 dark:text-white capitalize text-center">
+                        {weekday}
+                    </Text>
+                    <Text className="text-lg text-blue-600 dark:text-blue-400 font-medium mt-1 uppercase tracking-wider">
+                        {dayAndMonth}
+                    </Text>
                 </View>
 
-                {/* Form fields */}
-                <View className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800 space-y-4">
+                {/* Form Elements */}
+                <View className="flex-col gap-6">
 
+                    {/* Title Input */}
                     <View>
-                        <Text className="text-gray-700 dark:text-gray-300 font-bold mb-2 ml-1">
+                        <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                             {t('session_title')} *
                         </Text>
-                        <TextInput
-                            className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 text-gray-900 dark:text-white"
-                            placeholder={t('session_title_placeholder')}
-                            placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                            value={title}
-                            onChangeText={setTitle}
-                        />
-                    </View>
-
-                    <View>
-                        <Text className="text-gray-700 dark:text-gray-300 font-bold mb-2 ml-1">
-                            {t('venue')} *
-                        </Text>
-                        <View className="relative justify-center">
-                            <View className="absolute left-4 z-10 w-5 items-center">
-                                <MapPin size={18} color={isDark ? '#6B7280' : '#9CA3AF'} />
-                            </View>
+                        <View className={`rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'title' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                             <TextInput
-                                className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl pl-11 pr-4 py-3 text-gray-900 dark:text-white"
-                                placeholder={t('venue_placeholder')}
+                                className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                placeholder={t('session_title_placeholder')}
                                 placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                                value={venue}
-                                onChangeText={setVenue}
+                                value={title}
+                                onChangeText={setTitle}
+                                onFocus={() => setFocusedInput('title')}
+                                onBlur={() => setFocusedInput(null)}
                             />
                         </View>
                     </View>
 
+                    {/* Venue Input */}
+                    <View>
+                        <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
+                            {t('venue')} *
+                        </Text>
+                        <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'venue' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                            <View className="absolute left-5 z-10 w-6 items-center">
+                                <MapPin size={22} color={focusedInput === 'venue' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                            </View>
+                            <TextInput
+                                className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                placeholder={t('venue_placeholder')}
+                                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                                value={venue}
+                                onChangeText={setVenue}
+                                onFocus={() => setFocusedInput('venue')}
+                                onBlur={() => setFocusedInput(null)}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Time Inputs Row */}
                     <View className="flex-row space-x-4">
                         <View className="flex-1 mr-2">
-                            <Text className="text-gray-700 dark:text-gray-300 font-bold mb-2 ml-1">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('start_time')}
                             </Text>
-                            <View className="relative justify-center">
+                            <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'start' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                                 <View className="absolute left-4 z-10 w-5 items-center">
-                                    <Clock size={18} color={isDark ? '#6B7280' : '#9CA3AF'} />
+                                    <Clock size={20} color={focusedInput === 'start' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
                                 </View>
                                 <TextInput
-                                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl pl-11 pr-4 py-3 text-gray-900 dark:text-white"
+                                    className="pl-11 pr-4 py-4 text-gray-900 dark:text-white text-base font-medium"
                                     placeholder="22:00"
                                     placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                     value={startTime}
                                     onChangeText={setStartTime}
+                                    onFocus={() => setFocusedInput('start')}
+                                    onBlur={() => setFocusedInput(null)}
                                 />
                             </View>
                         </View>
 
                         <View className="flex-1 ml-2">
-                            <Text className="text-gray-700 dark:text-gray-300 font-bold mb-2 ml-1">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('end_time')}
                             </Text>
-                            <View className="relative justify-center">
+                            <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'end' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                                 <View className="absolute left-4 z-10 w-5 items-center">
-                                    <Clock size={18} color={isDark ? '#6B7280' : '#9CA3AF'} />
+                                    <Clock size={20} color={focusedInput === 'end' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
                                 </View>
                                 <TextInput
-                                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl pl-11 pr-4 py-3 text-gray-900 dark:text-white"
+                                    className="pl-11 pr-4 py-4 text-gray-900 dark:text-white text-base font-medium"
                                     placeholder="04:00"
                                     placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                     value={endTime}
                                     onChangeText={setEndTime}
+                                    onFocus={() => setFocusedInput('end')}
+                                    onBlur={() => setFocusedInput(null)}
                                 />
                             </View>
                         </View>
@@ -161,9 +176,10 @@ export default function AddSessionModal() {
 
                 {/* Save Button */}
                 <TouchableOpacity
-                    className={`mt-8 mb-12 flex-row justify-center py-4 rounded-full ${loading || !title.trim() || !venue.trim()
-                        ? 'bg-blue-300 dark:bg-blue-900/50'
-                        : 'bg-blue-600 dark:bg-blue-500'
+                    activeOpacity={0.8}
+                    className={`mt-10 mb-12 flex-row justify-center items-center py-4 rounded-2xl shadow-lg ${loading || !title.trim() || !venue.trim()
+                        ? 'bg-blue-300 dark:bg-blue-900/50 shadow-none'
+                        : 'bg-blue-600 dark:bg-blue-500 shadow-blue-500/40'
                         }`}
                     onPress={handleSave}
                     disabled={loading || !title.trim() || !venue.trim()}
@@ -171,11 +187,14 @@ export default function AddSessionModal() {
                     {loading ? (
                         <ActivityIndicator color="white" />
                     ) : (
-                        <Text className="text-white font-bold text-lg">
+                        <Text className="text-white font-bold text-[17px] tracking-wide">
                             {t('save_session')}
                         </Text>
                     )}
                 </TouchableOpacity>
+
+                {/* Bottom Spacer to ensure scrollability over safe area */}
+                <View className="h-10" />
 
             </ScrollView>
         </SafeAreaView>
