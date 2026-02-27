@@ -7,6 +7,7 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useContext } from 'react';
+import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 
 export default function AddSessionModal() {
     const { date } = useLocalSearchParams<{ date: string }>();
@@ -16,7 +17,8 @@ export default function AddSessionModal() {
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
 
-    const [loading, setLoading] = useState(false);
+    const createSessionMutation = useCreateSessionMutation();
+
     const [title, setTitle] = useState('');
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
@@ -27,6 +29,7 @@ export default function AddSessionModal() {
 
     // Format the incoming date string (e.g. "2026-10-15")
     const dateObj = date ? new Date(date) : new Date();
+    const dateIsoStr = dateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD for supabase
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
     const dayAndMonth = dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -36,22 +39,23 @@ export default function AddSessionModal() {
             return;
         }
 
-        setLoading(true);
-
         try {
-            // TODO: Actually save this to supabase
-            // Mock waiting time
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await createSessionMutation.mutateAsync({
+                date: dateIsoStr,
+                title: title.trim(),
+                venue: venue.trim(),
+                start_time: startTime.trim(),
+                end_time: endTime.trim()
+            });
 
             Alert.alert(t('success'), t('session_added_success'), [
                 { text: 'OK', onPress: () => router.back() }
             ]);
         } catch (error) {
             Alert.alert(t('error'), t('error_saving_session'));
-        } finally {
-            setLoading(false);
         }
     };
+
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
@@ -177,14 +181,14 @@ export default function AddSessionModal() {
                 {/* Save Button */}
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    className={`mt-10 mb-12 flex-row justify-center items-center py-4 rounded-2xl shadow-lg ${loading || !title.trim() || !venue.trim()
+                    className={`mt-10 mb-12 flex-row justify-center items-center py-4 rounded-2xl shadow-lg ${createSessionMutation.isPending || !title.trim() || !venue.trim()
                         ? 'bg-blue-300 dark:bg-blue-900/50 shadow-none'
                         : 'bg-blue-600 dark:bg-blue-500 shadow-blue-500/40'
                         }`}
                     onPress={handleSave}
-                    disabled={loading || !title.trim() || !venue.trim()}
+                    disabled={createSessionMutation.isPending || !title.trim() || !venue.trim()}
                 >
-                    {loading ? (
+                    {createSessionMutation.isPending ? (
                         <ActivityIndicator color="white" />
                     ) : (
                         <Text className="text-white font-bold text-[17px] tracking-wide">

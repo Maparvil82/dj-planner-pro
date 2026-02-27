@@ -18,16 +18,15 @@ export default function HomeScreen() {
     const { session, profile } = useAuthStore();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
-    const { data: sessions, isLoading } = useSessionsQuery();
-
-    const isDark = themeCtx?.activeTheme === 'dark';
-
-    LocaleConfig.defaultLocale = currentLanguage;
-
     const [selectedMonthDate, setSelectedMonthDate] = useState({
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear()
     });
+
+    const isDark = themeCtx?.activeTheme === 'dark';
+    LocaleConfig.defaultLocale = currentLanguage;
+
+    const { data: sessions, isLoading } = useSessionsQuery(selectedMonthDate.year, selectedMonthDate.month);
 
     const currentMonthLabel = (() => {
         const config = LocaleConfig.locales[currentLanguage] || LocaleConfig.locales['en'];
@@ -110,10 +109,27 @@ export default function HomeScreen() {
                     </Text>
 
                     {isLoading ? (
-                        <ActivityIndicator className="mt-8" />
+                        <View className="flex-1 items-center justify-center p-8">
+                            <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#3B82F6'} />
+                        </View>
                     ) : sessions && sessions.length > 0 ? (
-                        <View>
-                            {/* Iteration placeholder */}
+                        <View className="flex-col gap-4">
+                            {sessions.map((session: any) => (
+                                <View key={session.id} className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 flex-row items-center m-1">
+                                    <View className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl items-center justify-center mr-4">
+                                        <Text className="text-blue-600 dark:text-blue-400 font-bold text-lg">
+                                            {session.date.split('-')[2]}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
+                                        <Text className="text-gray-500 dark:text-gray-400 text-sm mb-2" numberOfLines={1}>{session.venue}</Text>
+                                        <View className="flex-row items-center">
+                                            <Text className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-2 py-1 rounded-md overflow-hidden">{session.start_time} - {session.end_time}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            ))}
                         </View>
                     ) : (
                         <View className="bg-white dark:bg-gray-900 items-center justify-center rounded-3xl p-10 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5">
