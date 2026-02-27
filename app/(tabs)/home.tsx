@@ -38,7 +38,7 @@ export default function HomeScreen() {
 
     const handleDayPress = (day: DateData) => {
         router.push({
-            pathname: '/(modals)/add-session',
+            pathname: '/add-session',
             params: { date: day.dateString }
         });
     };

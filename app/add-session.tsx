@@ -1,11 +1,11 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useTranslation } from '../../src/i18n/useTranslation';
+import { useTranslation } from '../src/i18n/useTranslation';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { useAuthStore } from '../src/store/useAuthStore';
 import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
-import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useContext } from 'react';
 
 export default function AddSessionModal() {
@@ -13,7 +13,7 @@ export default function AddSessionModal() {
     const { t } = useTranslation();
     const router = useRouter();
     const { session } = useAuthStore();
-    const themeCtx = useContext(ThemeContext);
+    const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
 
     const [loading, setLoading] = useState(false);
@@ -58,7 +58,11 @@ export default function AddSessionModal() {
             <Stack.Screen options={{
                 headerShown: true,
                 title: t('add_session'),
-                headerBackTitle: t('cancel'),
+                headerLeft: () => (
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text className="text-blue-500 font-medium text-lg mr-4">{t('cancel')}</Text>
+                    </TouchableOpacity>
+                ),
                 headerStyle: { backgroundColor: 'transparent' },
                 headerShadowVisible: false,
                 headerTintColor: '#3b82f6', // blue-500
