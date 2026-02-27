@@ -48,5 +48,8 @@
     "earning_fixed": "Fixed",
     "earning_amount": "Amount (€)",
     "total_earnings": "Est. Total:",
-    "date": "Date"
+    "date": "Date",
+    "current_month_earnings": "Monthly Earnings",
+    "earned_so_far": "Earned so far",
+    "projected_total": "Projected total"
 }

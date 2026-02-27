@@ -48,5 +48,8 @@
     "earning_fixed": "Cerrado",
     "earning_amount": "Importe (€)",
     "total_earnings": "Total estimado:",
-    "date": "Fecha"
+    "date": "Fecha",
+    "current_month_earnings": "Ganancias del mes actual",
+    "earned_so_far": "Llevas ganado",
+    "projected_total": "Prevees ganar"
 }
