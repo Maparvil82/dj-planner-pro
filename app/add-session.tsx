@@ -218,8 +218,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 {/* Date Input Toggle */}
                 <View className="mb-6 z-40">
                     <View className="flex-row justify-between items-end mb-2">
-                        <Text className="text-gray-900 dark:text-white font-bold text-base">
-                            {t('date') || 'Date'} <Text className="text-red-500">*</Text>
+                        <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                            {t('date') || 'Date'} *
                         </Text>
                     </View>
                     <TouchableOpacity
