@@ -69,6 +69,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
         const d = date ? new Date(date) : new Date();
         return d.toISOString().split('T')[0];
     });
+    const [showCalendar, setShowCalendar] = useState(false);
 
     // Collective Session State
     const [isCollective, setIsCollective] = useState(false);
@@ -214,32 +215,65 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 keyboardDismissMode="on-drag"
             >
 
-                {/* Date Input */}
+                {/* Date Input Toggle */}
                 <View className="mb-6 z-40">
                     <View className="flex-row justify-between items-end mb-2">
                         <Text className="text-gray-900 dark:text-white font-bold text-base">
                             {t('date') || 'Date'} <Text className="text-red-500">*</Text>
                         </Text>
                     </View>
-                    <View className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 shadow-sm shadow-black/5">
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            setShowCalendar(!showCalendar);
+                        }}
+                        className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5"
+                    >
                         <LucideCalendar size={20} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
-                        <TextInput
-                            className="flex-1 text-base text-gray-900 dark:text-white"
-                            placeholder="YYYY-MM-DD"
-                            placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
-                            value={sessionDate}
-                            onChangeText={setSessionDate}
-                            onFocus={() => setFocusedInput('sessionDate')}
-                            onBlur={handleBlur}
-                            keyboardType="numeric"
-                            maxLength={10}
+                        <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
+                            {`${weekday}, ${dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Expandable Calendar Picker */}
+                    <View
+                        className="mt-4 bg-white dark:bg-gray-900 rounded-3xl p-3 shadow-md shadow-black/5 border border-gray-100 dark:border-gray-800 overflow-hidden"
+                        style={{ display: showCalendar ? 'flex' : 'none' }}
+                    >
+                        <Calendar
+                            markingType={'custom'}
+                            theme={{
+                                backgroundColor: 'transparent',
+                                calendarBackground: 'transparent',
+                                textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+                                selectedDayBackgroundColor: '#3B82F6',
+                                selectedDayTextColor: '#ffffff',
+                                todayTextColor: '#3B82F6',
+                                dayTextColor: isDark ? '#D1D5DB' : '#111827',
+                                textDisabledColor: isDark ? '#4B5563' : '#374151',
+                                arrowColor: isDark ? '#60A5FA' : '#3B82F6',
+                                monthTextColor: isDark ? '#F9FAFB' : '#111827',
+                                textDayFontWeight: '500',
+                                textMonthFontWeight: 'bold',
+                                textDayHeaderFontWeight: '600',
+                            }}
+                            onDayPress={(day: any) => {
+                                setSessionDate(day.dateString);
+                                setShowCalendar(false);
+                            }}
+                            markedDates={{
+                                [sessionDate]: {
+                                    selected: true,
+                                    disableTouchEvent: true,
+                                    customStyles: {
+                                        container: { backgroundColor: '#3B82F6', borderRadius: 10 },
+                                        text: { color: 'white', fontWeight: 'bold' }
+                                    }
+                                }
+                            }}
                         />
                     </View>
-                    {focusedInput === 'sessionDate' && (
-                        <View className="mt-1">
-                            <Text className="text-xs text-blue-500 font-medium ml-1">Example: 2026-03-15</Text>
-                        </View>
-                    )}
                 </View>
 
                 {/* Form Elements */}
