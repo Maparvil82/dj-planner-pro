@@ -105,6 +105,24 @@ export const sessionService = {
         return data || [];
     },
 
+    async getUpcomingSessions(userId: string): Promise<Session[]> {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('date', today)
+            .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching upcoming sessions:', error);
+            throw new Error(error.message);
+        }
+
+        return data || [];
+    },
+
     async getUserTags(userId: string, type: 'title' | 'venue' | 'dj'): Promise<TagOption[]> {
         const { data, error } = await supabase
             .from('user_tags')

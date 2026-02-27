@@ -4,7 +4,7 @@ import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { Calendar as CalendarIcon, Inbox, Users } from 'lucide-react-native';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -26,7 +26,8 @@ export default function HomeScreen() {
     const isDark = themeCtx?.activeTheme === 'dark';
     LocaleConfig.defaultLocale = currentLanguage;
 
-    const { data: sessions, isLoading } = useSessionsQuery(selectedMonthDate.year, selectedMonthDate.month);
+    const { data: monthSessions } = useSessionsQuery(selectedMonthDate.year, selectedMonthDate.month);
+    const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
 
     const currentMonthLabel = (() => {
         const config = LocaleConfig.locales[currentLanguage] || LocaleConfig.locales['en'];
@@ -108,13 +109,13 @@ export default function HomeScreen() {
                         {t('upcoming_sessions')}
                     </Text>
 
-                    {isLoading ? (
+                    {isLoadingUpcoming ? (
                         <View className="flex-1 items-center justify-center p-8">
                             <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#3B82F6'} />
                         </View>
-                    ) : sessions && sessions.length > 0 ? (
+                    ) : upcomingSessions && upcomingSessions.length > 0 ? (
                         <View className="flex-col gap-0">
-                            {sessions.map((session: any) => (
+                            {upcomingSessions.map((session: any) => (
                                 <View key={session.id} className="bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 flex-row items-center">
                                     <View className="w-12 h-12 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
                                         <Text className="font-bold text-lg" style={{ color: session.color || '#3B82F6' }}>

@@ -17,6 +17,20 @@ export const useSessionsQuery = (year: number, month: number) => {
     });
 };
 
+export const useUpcomingSessionsQuery = () => {
+    const { session } = useAuthStore();
+    const userId = session?.user?.id;
+
+    return useQuery({
+        queryKey: ['sessions', 'upcoming', userId],
+        queryFn: () => {
+            if (!userId) return [];
+            return sessionService.getUpcomingSessions(userId);
+        },
+        enabled: !!userId,
+    });
+};
+
 export const useCreateSessionMutation = () => {
     const queryClient = useQueryClient();
     const { session } = useAuthStore();
