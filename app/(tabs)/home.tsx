@@ -11,7 +11,7 @@ import { ThemeContext } from '../../src/contexts/ThemeContext';
 
 export default function HomeScreen() {
     const { t } = useTranslation();
-    const session = useAuthStore((state) => state.session);
+    const { session, profile } = useAuthStore();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
     const { data: sessions, isLoading } = useSessionsQuery();
@@ -28,6 +28,7 @@ export default function HomeScreen() {
                     </Text>
                 </View>
                 <Avatar
+                    url={profile?.avatar_url}
                     name={session?.user?.email || '?'}
                     size="sm"
                     onPress={() => router.push('/settings')}
