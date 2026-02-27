@@ -30,6 +30,8 @@ export const useCreateSessionMutation = () => {
         onSuccess: () => {
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            // Invalidate the tags to reflect newly saved venues/titles in the autocomplete
+            queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });
 };

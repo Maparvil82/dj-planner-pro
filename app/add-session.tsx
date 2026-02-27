@@ -33,11 +33,11 @@ export default function AddSessionModal() {
     const { data: venueTags = [] } = useTagsQuery('venue');
 
     const filteredTitleTags = titleTags
-        .filter(t => t.toLowerCase().includes(title.toLowerCase()) && t.toLowerCase() !== title.toLowerCase())
+        .filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase())
         .slice(0, 3);
 
     const filteredVenueTags = venueTags
-        .filter(v => v.toLowerCase().includes(venue.toLowerCase()) && v.toLowerCase() !== venue.toLowerCase())
+        .filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase())
         .slice(0, 3);
 
     // Format the incoming date string (e.g. "2026-10-15")
@@ -89,7 +89,12 @@ export default function AddSessionModal() {
                 presentation: 'modal',
             }} />
 
-            <ScrollView className="flex-1 px-5 pt-4 pb-12" showsVerticalScrollIndicator={false}>
+            <ScrollView
+                className="flex-1 px-5 pt-4 pb-12"
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+            >
 
                 {/* Hero Header */}
                 <View className="items-center mb-8">
@@ -109,9 +114,37 @@ export default function AddSessionModal() {
 
                     {/* Title Input */}
                     <View className="z-50">
-                        <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
-                            {t('session_title')} *
-                        </Text>
+                        <View className="flex-row justify-between items-end mb-2">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                                {t('session_title')} *
+                            </Text>
+                        </View>
+
+                        {/* Autocomplete Tags */}
+                        {focusedInput === 'title' && filteredTitleTags.length > 0 && (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                keyboardShouldPersistTaps="handled"
+                                className="mb-3"
+                            >
+                                {filteredTitleTags.map((tag) => (
+                                    <TouchableOpacity
+                                        key={tag.name}
+                                        activeOpacity={0.7}
+                                        className="px-4 py-2 rounded-full mr-2 border"
+                                        style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                        onPress={() => {
+                                            setTitle(tag.name);
+                                        }}
+                                        onPressOut={() => setFocusedInput(null)}
+                                    >
+                                        <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
+
                         <View className={`rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'title' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                             <TextInput
                                 className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
@@ -123,32 +156,42 @@ export default function AddSessionModal() {
                                 onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
                             />
                         </View>
-
-                        {/* Autocomplete Dropdown */}
-                        {focusedInput === 'title' && filteredTitleTags.length > 0 && (
-                            <View className="absolute top-[88px] left-0 right-0 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-black/10 border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                                {filteredTitleTags.map((tag, index) => (
-                                    <TouchableOpacity
-                                        key={tag}
-                                        activeOpacity={0.7}
-                                        className={`px-5 py-4 ${index !== filteredTitleTags.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}
-                                        onPress={() => {
-                                            setTitle(tag);
-                                            setFocusedInput(null);
-                                        }}
-                                    >
-                                        <Text className="text-gray-800 dark:text-gray-200 font-medium text-base">{tag}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
                     </View>
 
                     {/* Venue Input */}
                     <View className="z-40">
-                        <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
-                            {t('venue')} *
-                        </Text>
+                        <View className="flex-row justify-between items-end mb-2">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                                {t('venue')} *
+                            </Text>
+                        </View>
+
+                        {/* Autocomplete Tags */}
+                        {focusedInput === 'venue' && filteredVenueTags.length > 0 && (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                keyboardShouldPersistTaps="handled"
+                                className="mb-3"
+                            >
+                                {filteredVenueTags.map((tag) => (
+                                    <TouchableOpacity
+                                        key={tag.name}
+                                        activeOpacity={0.7}
+                                        className="px-4 py-2 rounded-full mr-2 border flex-row items-center"
+                                        style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                        onPress={() => {
+                                            setVenue(tag.name);
+                                        }}
+                                        onPressOut={() => setFocusedInput(null)}
+                                    >
+                                        <MapPin size={14} color={tag.color} className="mr-1.5" />
+                                        <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
+
                         <View className={`relative justify-center rounded-2xl border-2 transition-colors duration-200 overflow-hidden ${focusedInput === 'venue' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
                             <View className="absolute left-5 z-10 w-6 items-center">
                                 <MapPin size={22} color={focusedInput === 'venue' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
@@ -163,26 +206,6 @@ export default function AddSessionModal() {
                                 onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
                             />
                         </View>
-
-                        {/* Autocomplete Dropdown */}
-                        {focusedInput === 'venue' && filteredVenueTags.length > 0 && (
-                            <View className="absolute top-[88px] left-0 right-0 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-black/10 border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                                {filteredVenueTags.map((tag, index) => (
-                                    <TouchableOpacity
-                                        key={tag}
-                                        activeOpacity={0.7}
-                                        className={`px-5 py-4 flex-row items-center ${index !== filteredVenueTags.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}
-                                        onPress={() => {
-                                            setVenue(tag);
-                                            setFocusedInput(null);
-                                        }}
-                                    >
-                                        <MapPin size={18} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
-                                        <Text className="text-gray-800 dark:text-gray-200 font-medium text-base ml-3">{tag}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
                     </View>
 
                     {/* Time Inputs Row */}

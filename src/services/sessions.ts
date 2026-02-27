@@ -1,13 +1,39 @@
 import { supabase } from '../lib/supabase';
 import { CreateSessionInput, Session } from '../types/session';
+import { TagOption } from '../types/tag';
+
+const TAG_COLORS = [
+    '#EF4444', // red-500
+    '#F97316', // orange-500
+    '#F59E0B', // amber-500
+    '#10B981', // emerald-500
+    '#0EA5E9', // sky-500
+    '#3B82F6', // blue-500
+    '#6366F1', // indigo-500
+    '#8B5CF6', // violet-500
+    '#D946EF', // fuchsia-500
+    '#F43F5E', // rose-500
+];
+
+export const getColorForString = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % TAG_COLORS.length;
+    return TAG_COLORS[index];
+};
 
 export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
+        const sessionColor = input.color || getColorForString(input.title);
+
         // 1. Insert the session
         const { data: sessionData, error: sessionError } = await supabase
             .from('sessions')
             .insert({
                 ...input,
+                color: sessionColor,
                 user_id: userId
             })
             .select()
@@ -24,13 +50,13 @@ export const sessionService = {
             try {
                 if (input.title) {
                     const { error: tErr } = await supabase.from('user_tags').insert(
-                        { user_id: userId, type: 'title', name: input.title.trim() }
+                        { user_id: userId, type: 'title', name: input.title.trim(), color: sessionColor }
                     );
                     if (tErr && tErr.code !== '23505') console.warn('Supabase title tag error:', tErr);
                 }
                 if (input.venue) {
                     const { error: vErr } = await supabase.from('user_tags').insert(
-                        { user_id: userId, type: 'venue', name: input.venue.trim() }
+                        { user_id: userId, type: 'venue', name: input.venue.trim(), color: getColorForString(input.venue.trim()) }
                     );
                     if (vErr && vErr.code !== '23505') console.warn('Supabase venue tag error:', vErr);
                 }
@@ -70,10 +96,10 @@ export const sessionService = {
         return data || [];
     },
 
-    async getUserTags(userId: string, type: 'title' | 'venue'): Promise<string[]> {
+    async getUserTags(userId: string, type: 'title' | 'venue'): Promise<TagOption[]> {
         const { data, error } = await supabase
             .from('user_tags')
-            .select('name')
+            .select('name, color')
             .eq('user_id', userId)
             .eq('type', type)
             .order('name', { ascending: true });
@@ -83,6 +109,6 @@ export const sessionService = {
             return [];
         }
 
-        return (data || []).map(row => row.name);
+        return (data || []).map(row => ({ name: row.name, color: row.color || '#3B82F6' }));
     }
 };

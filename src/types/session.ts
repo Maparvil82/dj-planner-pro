@@ -6,6 +6,7 @@ export interface Session {
     venue: string;
     start_time: string; // e.g., '22:00'
     end_time: string; // e.g., '04:00'
+    color: string;
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
 }
@@ -16,4 +17,5 @@ export interface CreateSessionInput {
     venue: string;
     start_time: string;
     end_time: string;
+    color?: string;
 }
