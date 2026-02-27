@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { Calendar as CalendarIcon, Inbox } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Inbox, Users } from 'lucide-react-native';
 import { useContext, useState } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
@@ -61,7 +61,7 @@ export default function HomeScreen() {
             <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
 
                 {/* MONTH CALENDAR */}
-                <View className="bg-white dark:bg-gray-900 rounded-3xl p-6 mb-6 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800">
+                <View className="bg-white dark:bg-gray-900 p-6 mb-6 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800">
                     <View className="flex-row items-center mb-4">
                         <View className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-full items-center justify-center mr-3">
                             {/* @ts-ignore */}
@@ -113,9 +113,9 @@ export default function HomeScreen() {
                             <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#3B82F6'} />
                         </View>
                     ) : sessions && sessions.length > 0 ? (
-                        <View className="flex-col gap-4">
+                        <View className="flex-col gap-0">
                             {sessions.map((session: any) => (
-                                <View key={session.id} className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 flex-row items-center m-1">
+                                <View key={session.id} className="bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 flex-row items-center">
                                     <View className="w-12 h-12 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
                                         <Text className="font-bold text-lg" style={{ color: session.color || '#3B82F6' }}>
                                             {session.date.split('-')[2]}
@@ -124,8 +124,17 @@ export default function HomeScreen() {
                                     <View className="flex-1">
                                         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
                                         <Text className="text-gray-500 dark:text-gray-400 text-sm mb-2" numberOfLines={1}>{session.venue}</Text>
-                                        <View className="flex-row items-center">
+                                        <View className="flex-row items-center flex-wrap gap-2">
                                             <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden" style={{ color: session.color || '#3B82F6', backgroundColor: (session.color || '#3B82F6') + '1A' }}>{session.start_time} - {session.end_time}</Text>
+
+                                            {session.is_collective && session.djs && session.djs.length > 0 && (
+                                                <View className="flex-row items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md max-w-[60%]">
+                                                    <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
+                                                    <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
+                                                        {session.djs.join(', ')}
+                                                    </Text>
+                                                </View>
+                                            )}
                                         </View>
                                     </View>
                                 </View>

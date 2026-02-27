@@ -3,7 +3,7 @@ import { sessionService } from '../services/sessions';
 import { useAuthStore } from '../store/useAuthStore';
 import { TagOption } from '../types/tag';
 
-export const useTagsQuery = (type: 'title' | 'venue') => {
+export const useTagsQuery = (type: 'title' | 'venue' | 'dj') => {
     const { session } = useAuthStore();
     const userId = session?.user?.id;
 

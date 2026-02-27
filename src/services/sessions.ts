@@ -60,6 +60,15 @@ export const sessionService = {
                     );
                     if (vErr && vErr.code !== '23505') console.warn('Supabase venue tag error:', vErr);
                 }
+
+                if (input.is_collective && input.djs && input.djs.length > 0) {
+                    for (const dj of input.djs) {
+                        const { error: dErr } = await supabase.from('user_tags').insert(
+                            { user_id: userId, type: 'dj', name: dj.trim(), color: getColorForString(dj.trim()) }
+                        );
+                        if (dErr && dErr.code !== '23505') console.warn('Supabase dj tag error:', dErr);
+                    }
+                }
             } catch (err) {
                 console.warn('Silent tag insertion failed', err);
             }
@@ -96,7 +105,7 @@ export const sessionService = {
         return data || [];
     },
 
-    async getUserTags(userId: string, type: 'title' | 'venue'): Promise<TagOption[]> {
+    async getUserTags(userId: string, type: 'title' | 'venue' | 'dj'): Promise<TagOption[]> {
         const { data, error } = await supabase
             .from('user_tags')
             .select('name, color')

@@ -38,5 +38,8 @@
     "error": "Error",
     "success": "Success",
     "upcoming_sessions": "Upcoming Sessions",
-    "sync_calendars_empty_state": "Sync with your external calendars to view upcoming sets."
+    "sync_calendars_empty_state": "Sync with your external calendars to view upcoming sets.",
+    "collective_session": "Collective Session",
+    "add_djs": "Add DJs",
+    "add_djs_placeholder": "e.g. DJ Tiesto"
 }
