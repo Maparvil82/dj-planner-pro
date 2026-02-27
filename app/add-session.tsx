@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
@@ -27,18 +27,37 @@ export default function AddSessionModal() {
 
     // UI Focus States
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleFocus = (field: string) => {
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+            blurTimeoutRef.current = null;
+        }
+        setFocusedInput(field);
+    };
+
+    const handleBlur = () => {
+        blurTimeoutRef.current = setTimeout(() => {
+            setFocusedInput(null);
+        }, 150);
+    };
 
     // Tags and Autocomplete
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venueTags = [] } = useTagsQuery('venue');
 
-    const filteredTitleTags = titleTags
-        .filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase())
-        .slice(0, 3);
+    const filteredTitleTags = title.trim().length > 0
+        ? titleTags
+            .filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase())
+            .slice(0, 10)
+        : [];
 
-    const filteredVenueTags = venueTags
-        .filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase())
-        .slice(0, 3);
+    const filteredVenueTags = venue.trim().length > 0
+        ? venueTags
+            .filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase())
+            .slice(0, 10)
+        : [];
 
     // Format the incoming date string (e.g. "2026-10-15")
     const dateObj = date ? new Date(date) : new Date();
@@ -98,9 +117,7 @@ export default function AddSessionModal() {
 
                 {/* Hero Header */}
                 <View className="items-center mb-8">
-                    <View className="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mb-4 shadow-sm shadow-blue-500/20">
-                        <CalendarIcon size={32} color={isDark ? '#60A5FA' : '#2563EB'} />
-                    </View>
+
                     <Text className="text-3xl font-extrabold text-gray-900 dark:text-white capitalize text-center">
                         {weekday}
                     </Text>
@@ -152,8 +169,8 @@ export default function AddSessionModal() {
                                 placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                 value={title}
                                 onChangeText={setTitle}
-                                onFocus={() => setFocusedInput('title')}
-                                onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
+                                onFocus={() => handleFocus('title')}
+                                onBlur={handleBlur}
                             />
                         </View>
                     </View>
@@ -202,8 +219,8 @@ export default function AddSessionModal() {
                                 placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                 value={venue}
                                 onChangeText={setVenue}
-                                onFocus={() => setFocusedInput('venue')}
-                                onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
+                                onFocus={() => handleFocus('venue')}
+                                onBlur={handleBlur}
                             />
                         </View>
                     </View>

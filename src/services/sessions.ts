@@ -65,7 +65,7 @@ export const sessionService = {
             }
         };
 
-        insertTags();
+        await insertTags();
 
         return sessionData;
     },
