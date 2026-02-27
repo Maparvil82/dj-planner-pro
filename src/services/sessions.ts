@@ -3,7 +3,8 @@ import { CreateSessionInput, Session } from '../types/session';
 
 export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
-        const { data, error } = await supabase
+        // 1. Insert the session
+        const { data: sessionData, error: sessionError } = await supabase
             .from('sessions')
             .insert({
                 ...input,
@@ -12,12 +13,35 @@ export const sessionService = {
             .select()
             .single();
 
-        if (error) {
-            console.error('Error creating session:', error);
-            throw new Error(error.message);
+        if (sessionError) {
+            console.error('Error creating session:', sessionError);
+            throw new Error(sessionError.message);
         }
 
-        return data;
+        // 2. Silently insert tags in the background (ignore errors and duplicates)
+        // By not awaiting this, we guarantee the UI never hangs for the user.
+        const insertTags = async () => {
+            try {
+                if (input.title) {
+                    const { error: tErr } = await supabase.from('user_tags').insert(
+                        { user_id: userId, type: 'title', name: input.title.trim() }
+                    );
+                    if (tErr && tErr.code !== '23505') console.warn('Supabase title tag error:', tErr);
+                }
+                if (input.venue) {
+                    const { error: vErr } = await supabase.from('user_tags').insert(
+                        { user_id: userId, type: 'venue', name: input.venue.trim() }
+                    );
+                    if (vErr && vErr.code !== '23505') console.warn('Supabase venue tag error:', vErr);
+                }
+            } catch (err) {
+                console.warn('Silent tag insertion failed', err);
+            }
+        };
+
+        insertTags();
+
+        return sessionData;
     },
 
     async getSessionsByMonth(year: number, month: number, userId: string): Promise<Session[]> {
@@ -44,5 +68,21 @@ export const sessionService = {
         }
 
         return data || [];
+    },
+
+    async getUserTags(userId: string, type: 'title' | 'venue'): Promise<string[]> {
+        const { data, error } = await supabase
+            .from('user_tags')
+            .select('name')
+            .eq('user_id', userId)
+            .eq('type', type)
+            .order('name', { ascending: true });
+
+        if (error) {
+            console.error(`Error fetching ${type} tags:`, error);
+            return [];
+        }
+
+        return (data || []).map(row => row.name);
     }
 };

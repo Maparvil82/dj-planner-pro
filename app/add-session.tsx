@@ -8,6 +8,7 @@ import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useContext } from 'react';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
+import { useTagsQuery } from '../src/hooks/useTagsQuery';
 
 export default function AddSessionModal() {
     const { date } = useLocalSearchParams<{ date: string }>();
@@ -26,6 +27,18 @@ export default function AddSessionModal() {
 
     // UI Focus States
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+    // Tags and Autocomplete
+    const { data: titleTags = [] } = useTagsQuery('title');
+    const { data: venueTags = [] } = useTagsQuery('venue');
+
+    const filteredTitleTags = titleTags
+        .filter(t => t.toLowerCase().includes(title.toLowerCase()) && t.toLowerCase() !== title.toLowerCase())
+        .slice(0, 3);
+
+    const filteredVenueTags = venueTags
+        .filter(v => v.toLowerCase().includes(venue.toLowerCase()) && v.toLowerCase() !== venue.toLowerCase())
+        .slice(0, 3);
 
     // Format the incoming date string (e.g. "2026-10-15")
     const dateObj = date ? new Date(date) : new Date();
@@ -95,7 +108,7 @@ export default function AddSessionModal() {
                 <View className="flex-col gap-6">
 
                     {/* Title Input */}
-                    <View>
+                    <View className="z-50">
                         <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                             {t('session_title')} *
                         </Text>
@@ -107,13 +120,32 @@ export default function AddSessionModal() {
                                 value={title}
                                 onChangeText={setTitle}
                                 onFocus={() => setFocusedInput('title')}
-                                onBlur={() => setFocusedInput(null)}
+                                onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
                             />
                         </View>
+
+                        {/* Autocomplete Dropdown */}
+                        {focusedInput === 'title' && filteredTitleTags.length > 0 && (
+                            <View className="absolute top-[88px] left-0 right-0 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-black/10 border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+                                {filteredTitleTags.map((tag, index) => (
+                                    <TouchableOpacity
+                                        key={tag}
+                                        activeOpacity={0.7}
+                                        className={`px-5 py-4 ${index !== filteredTitleTags.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}
+                                        onPress={() => {
+                                            setTitle(tag);
+                                            setFocusedInput(null);
+                                        }}
+                                    >
+                                        <Text className="text-gray-800 dark:text-gray-200 font-medium text-base">{tag}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
                     </View>
 
                     {/* Venue Input */}
-                    <View>
+                    <View className="z-40">
                         <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                             {t('venue')} *
                         </Text>
@@ -128,9 +160,29 @@ export default function AddSessionModal() {
                                 value={venue}
                                 onChangeText={setVenue}
                                 onFocus={() => setFocusedInput('venue')}
-                                onBlur={() => setFocusedInput(null)}
+                                onBlur={() => setTimeout(() => setFocusedInput(null), 150)}
                             />
                         </View>
+
+                        {/* Autocomplete Dropdown */}
+                        {focusedInput === 'venue' && filteredVenueTags.length > 0 && (
+                            <View className="absolute top-[88px] left-0 right-0 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-black/10 border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+                                {filteredVenueTags.map((tag, index) => (
+                                    <TouchableOpacity
+                                        key={tag}
+                                        activeOpacity={0.7}
+                                        className={`px-5 py-4 flex-row items-center ${index !== filteredVenueTags.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}
+                                        onPress={() => {
+                                            setVenue(tag);
+                                            setFocusedInput(null);
+                                        }}
+                                    >
+                                        <MapPin size={18} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
+                                        <Text className="text-gray-800 dark:text-gray-200 font-medium text-base ml-3">{tag}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
                     </View>
 
                     {/* Time Inputs Row */}

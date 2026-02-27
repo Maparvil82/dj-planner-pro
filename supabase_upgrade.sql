@@ -1,17 +1,34 @@
--- UPGRADE SESSIONS TABLE
+-- NEW TABLE FOR AUTO-SUGGEST TAGS
 
--- 1. Add new columns
-ALTER TABLE public.sessions 
-ADD COLUMN IF NOT EXISTS title text,
-ADD COLUMN IF NOT EXISTS venue text,
-ADD COLUMN IF NOT EXISTS start_time text,
-ADD COLUMN IF NOT EXISTS end_time text;
+CREATE TABLE IF NOT EXISTS public.user_tags (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id uuid REFERENCES auth.users NOT NULL,
+    type text NOT NULL CHECK (type IN ('title', 'venue')),
+    name text NOT NULL,
+    created_at timestamptz DEFAULT now(),
+    -- Ensure we don't save duplicate tags for the same user and type
+    UNIQUE (user_id, type, name)
+);
 
--- 2. Update existing rows with default values so we can enforce NOT NULL safely, if desired
-UPDATE public.sessions SET title = 'Untitled Session' WHERE title IS NULL;
-UPDATE public.sessions SET venue = 'Unknown Venue' WHERE venue IS NULL;
+-- Note: Ensure Row Level Security (RLS) is configured for this table in your Supabase Dashboard
+-- so that users can only select and insert their own tags.
 
--- 3. Make title and venue required (optional, but good practice)
-ALTER TABLE public.sessions 
-ALTER COLUMN title SET NOT NULL,
-ALTER COLUMN venue SET NOT NULL;
+-- OPTION: Add RLS Policies so the tags can be inserted from the app:
+
+ALTER TABLE public.user_tags ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert their own tags." 
+ON public.user_tags FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own tags." 
+ON public.user_tags FOR SELECT 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own tags." 
+ON public.user_tags FOR UPDATE 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own tags." 
+ON public.user_tags FOR DELETE 
+USING (auth.uid() = user_id);
