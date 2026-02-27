@@ -214,7 +214,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView
-                    className="flex-1 px-5 pt-4 pb-12"
+                    className="flex-1 px-5 pt-4"
+                    contentContainerStyle={{ paddingBottom: 100 }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
@@ -565,11 +566,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                         </View>
 
                     </View>
+                </ScrollView>
 
-                    {/* Save Button */}
+                {/* Fixed Save Button */}
+                <View className="absolute bottom-0 left-0 right-0 bg-gray-50/95 dark:bg-gray-950/95 border-t border-gray-200/50 dark:border-gray-800/50 px-5 py-4 pb-8" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 10 }}>
                     <TouchableOpacity
                         activeOpacity={0.8}
-                        className={`mt-10 mb-12 flex-row justify-center items-center py-4 rounded-2xl shadow-lg ${createSessionMutation.isPending || !title.trim() || !venue.trim()
+                        className={`flex-row justify-center items-center py-4 rounded-2xl shadow-lg ${createSessionMutation.isPending || !title.trim() || !venue.trim()
                             ? 'bg-blue-300 dark:bg-blue-900/50 shadow-none'
                             : 'bg-blue-600 dark:bg-blue-500 shadow-blue-500/40'
                             }`}
@@ -584,11 +587,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                             </Text>
                         )}
                     </TouchableOpacity>
-
-                    {/* Bottom Spacer to ensure scrollability over safe area */}
-                    <View className="h-10" />
-
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

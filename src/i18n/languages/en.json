@@ -47,5 +47,6 @@
     "earning_hourly": "Hourly",
     "earning_fixed": "Fixed",
     "earning_amount": "Amount (€)",
-    "total_earnings": "Est. Total:"
+    "total_earnings": "Est. Total:",
+    "date": "Date"
 }

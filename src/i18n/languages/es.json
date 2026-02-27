@@ -47,5 +47,6 @@
     "earning_hourly": "Por hora",
     "earning_fixed": "Cerrado",
     "earning_amount": "Importe (€)",
-    "total_earnings": "Total estimado:"
+    "total_earnings": "Total estimado:",
+    "date": "Fecha"
 }
