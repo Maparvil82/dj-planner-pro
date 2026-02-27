@@ -22,5 +22,19 @@
     "avatar_upload_success": "¡Avatar actualizado!",
     "permissions_required": "Se requieren permisos de cámara para continuar",
     "cancel": "Cancelar",
-    "open_settings": "Abrir Configuración"
+    "open_settings": "Abrir Configuración",
+    "add_session": "Añadir Sesión",
+    "selected_date": "Fecha seleccionada",
+    "session_title": "Título de la sesión",
+    "session_title_placeholder": "Ej: DJ Set de Verano",
+    "venue": "Lugar / Discoteca",
+    "venue_placeholder": "Ej: Club Amnesia",
+    "start_time": "Hora inicio",
+    "end_time": "Hora fin",
+    "save_session": "Guardar sesión",
+    "session_added_success": "¡La sesión ha sido registrada con éxito!",
+    "missing_fields": "Por favor, completa los campos obligatorios.",
+    "error_saving_session": "Hubo un error al guardar la sesión.",
+    "error": "Error",
+    "success": "Éxito"
 }

@@ -22,5 +22,19 @@
     "avatar_upload_success": "Avatar updated successfully!",
     "permissions_required": "Camera roll permissions are required to continue",
     "cancel": "Cancel",
-    "open_settings": "Open Settings"
+    "open_settings": "Open Settings",
+    "add_session": "Add Session",
+    "selected_date": "Selected Date",
+    "session_title": "Session Title",
+    "session_title_placeholder": "e.g. Summer DJ Set",
+    "venue": "Venue / Club",
+    "venue_placeholder": "e.g. Club Amnesia",
+    "start_time": "Start Time",
+    "end_time": "End Time",
+    "save_session": "Save Session",
+    "session_added_success": "Session registered successfully!",
+    "missing_fields": "Please fill in the required fields.",
+    "error_saving_session": "There was an error saving the session.",
+    "error": "Error",
+    "success": "Success"
 }
