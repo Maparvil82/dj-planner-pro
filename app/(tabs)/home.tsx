@@ -98,12 +98,12 @@ export default function HomeScreen() {
                         <View className="flex-row items-end justify-between">
                             <View className="flex-col">
                                 <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-                                    {t('projected_total') || 'Prevees ganar'}
+                                    {t('earned_so_far') || 'Llevas ganado'}
                                 </Text>
                                 <View className="flex-row items-center">
-                                    <TrendingUp size={20} color={isDark ? '#34D399' : '#10B981'} className="mr-2" />
-                                    <Text className="text-3xl font-extrabold text-gray-900 dark:text-white leading-8">
-                                        {projectedTotal.toFixed(2)}
+
+                                    <Text className="text-5xl text-gray-800 dark:text-white leading-8">
+                                        {earnedSoFar.toFixed(2)}
                                     </Text>
                                     <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
                                 </View>
@@ -111,12 +111,12 @@ export default function HomeScreen() {
 
                             <View className="flex-col items-end">
                                 <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-                                    {t('earned_so_far') || 'Llevas ganado'}
+                                    {t('projected_total') || 'Prevees ganar'}
                                 </Text>
                                 <View className="flex-row items-center">
-                                    <Wallet size={16} color={isDark ? '#818CF8' : '#4F46E5'} className="mr-2" />
+                                    <TrendingUp size={16} color={isDark ? '#34D399' : '#10B981'} className="mr-2" />
                                     <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                        {earnedSoFar.toFixed(2)}
+                                        {projectedTotal.toFixed(2)}
                                     </Text>
                                     <Text className="text-base font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
                                 </View>
