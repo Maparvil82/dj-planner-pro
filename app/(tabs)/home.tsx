@@ -43,23 +43,27 @@ export default function HomeScreen() {
         return 0;
     };
 
-    const { earnedSoFar, projectedTotal } = useMemo(() => {
-        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0 };
+    const { earnedSoFar, projectedTotal, earnedCount, projectedCount } = useMemo(() => {
+        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0 };
 
         let earned = 0;
         let projected = 0;
+        let eCount = 0;
+        let pCount = 0;
         const todayStr = new Date().toISOString().split('T')[0];
 
         monthSessions.forEach((session: any) => {
             const amount = calculateSessionEarnings(session);
             projected += amount;
+            pCount++;
 
             if (session.date <= todayStr) {
                 earned += amount;
+                eCount++;
             }
         });
 
-        return { earnedSoFar: earned, projectedTotal: projected };
+        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount };
     }, [monthSessions]);
 
     const filteredUpcomingSessions = useMemo(() => {
@@ -108,8 +112,8 @@ export default function HomeScreen() {
                                 </Text>
                                 <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-1">€</Text>
                             </View>
-                            <Text className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">
-                                {capitalizedMonthName}
+                            <Text className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2 flex-wrap">
+                                {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                             </Text>
                         </View>
 
@@ -127,8 +131,8 @@ export default function HomeScreen() {
                                 </Text>
                                 <Text className="text-lg font-bold text-green-700 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
                             </View>
-                            <Text className="text-sm font-medium text-green-900 dark:text-emerald-500/60 mt-2">
-                                {capitalizedMonthName}
+                            <Text className="text-sm font-medium text-green-900 dark:text-emerald-500/60 mt-2 flex-wrap">
+                                {capitalizedMonthName} • {projectedCount} {projectedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                             </Text>
                         </View>
                     </View>
@@ -179,52 +183,73 @@ export default function HomeScreen() {
                         </View>
                     ) : filteredUpcomingSessions && filteredUpcomingSessions.length > 0 ? (
                         <View className="flex-col gap-0">
-                            {filteredUpcomingSessions.map((session: any) => {
+                            {filteredUpcomingSessions.map((session: any, index: number, array: any[]) => {
                                 const [y, m, d] = session.date.split('-');
                                 const sessionDateObj = new Date(Number(y), Number(m) - 1, Number(d));
                                 const monthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'short' });
                                 const weekdayName = sessionDateObj.toLocaleDateString(currentLanguage, { weekday: 'short' });
 
+                                const fullMonthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'long', year: 'numeric' });
+                                const capitalizedFullMonth = fullMonthName.charAt(0).toUpperCase() + fullMonthName.slice(1);
+
+                                let showMonthHeader = false;
+                                if (index === 0) {
+                                    showMonthHeader = true;
+                                } else {
+                                    const prevSession = array[index - 1];
+                                    const [prevY, prevM] = prevSession.date.split('-');
+                                    if (prevY !== y || prevM !== m) {
+                                        showMonthHeader = true;
+                                    }
+                                }
+
                                 return (
-                                    <View key={session.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3">
-                                        <View className="w-32 items-center justify-center" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
-                                            <Text className="text-xs font-bold uppercase mb-2" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
-                                                {weekdayName}
+                                    <View key={session.id}>
+                                        {showMonthHeader && (
+                                            <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-4 mb-4 uppercase tracking-wider ml-1">
+                                                {capitalizedFullMonth}
                                             </Text>
-                                            <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color || '#3B82F6' }}>
-                                                {d}
-                                            </Text>
-                                            <Text className="text-xs font-bold uppercase" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
-                                                {monthName}
-                                            </Text>
-                                        </View>
-                                        <View className="flex-1 flex-row items-center p-4">
-                                            <View className="flex-1 mr-3">
-                                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
-                                                <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
-                                                <View className="flex-row items-center flex-wrap gap-2">
-                                                    <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
-
-                                                    {session.is_collective && session.djs && session.djs.length > 0 && (
-                                                        <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
-                                                            <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
-                                                            <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
-                                                                {session.djs.join(', ')}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
+                                        )}
+                                        <View className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3">
+                                            <View className="w-32 items-center justify-center" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
+                                                <Text className="text-xs font-bold uppercase mb-2" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
+                                                    {weekdayName}
+                                                </Text>
+                                                <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color || '#3B82F6' }}>
+                                                    {d}
+                                                </Text>
+                                                <Text className="text-xs font-bold uppercase" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
+                                                    {monthName}
+                                                </Text>
                                             </View>
+                                            <View className="flex-1 flex-row items-center p-4">
+                                                <View className="flex-1 mr-3">
+                                                    <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
+                                                    <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
+                                                    <View className="flex-row items-center flex-wrap gap-2">
+                                                        <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
 
-                                            {session.earning_type && session.earning_type !== 'free' && (
-                                                <View className="items-end justify-center">
-                                                    <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
-                                                        <Text className="text-xs font-bold text-green-700 dark:text-green-400">
-                                                            {calculateSessionEarnings(session)} €
-                                                        </Text>
+                                                        {session.is_collective && session.djs && session.djs.length > 0 && (
+                                                            <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
+                                                                <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
+                                                                <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
+                                                                    {session.djs.join(', ')}
+                                                                </Text>
+                                                            </View>
+                                                        )}
                                                     </View>
                                                 </View>
-                                            )}
+
+                                                {session.earning_type && session.earning_type !== 'free' && (
+                                                    <View className="items-end justify-center">
+                                                        <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                                                            <Text className="text-xs font-bold text-green-700 dark:text-green-400">
+                                                                {calculateSessionEarnings(session)} €
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                )}
+                                            </View>
                                         </View>
                                     </View>
                                 );
