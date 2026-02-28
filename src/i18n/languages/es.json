@@ -54,5 +54,13 @@
     "projected_total": "Prevees ganar",
     "earned_history": "Historial de ingresos",
     "filter_all": "Todas",
-    "filter_this_month": "Este Mes"
+    "filter_this_month": "Este Mes",
+    "does_not_repeat": "No se repite",
+    "daily": "Todos los días",
+    "weekly": "Todas las semanas",
+    "monthly": "Todos los meses",
+    "quarterly": "Trimestral",
+    "biannually": "Semestral",
+    "yearly": "Todos los años",
+    "repeat_until": "Repetir hasta:"
 }

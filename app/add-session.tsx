@@ -72,15 +72,24 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const [showCalendar, setShowCalendar] = useState(false);
 
     // Recurrence State
-    const [recurrenceType, setRecurrenceType] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'>('none');
+    const [recurrenceType, setRecurrenceType] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly'>('none');
     const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>(() => {
-        // Default end date to 1 month from now if they open it
-        const d = new Date();
+        const d = date ? new Date(date + 'T12:00:00Z') : new Date();
         d.setUTCMonth(d.getUTCMonth() + 1);
         return d.toISOString().split('T')[0];
     });
     const [showEndCalendar, setShowEndCalendar] = useState(false);
     const [isRepeatModalVisible, setIsRepeatModalVisible] = useState(false);
+
+    // Auto-adjust end date if session date goes past it
+    React.useEffect(() => {
+        const sd = new Date(sessionDate + 'T12:00:00Z');
+        const ed = new Date(recurrenceEndDate + 'T12:00:00Z');
+        if (sd > ed) {
+            sd.setUTCMonth(sd.getUTCMonth() + 1);
+            setRecurrenceEndDate(sd.toISOString().split('T')[0]);
+        }
+    }, [sessionDate]);
 
     // Collective Session State
     const [isCollective, setIsCollective] = useState(false);
@@ -307,11 +316,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                         >
                             <Repeat size={20} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
                             <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
-                                {recurrenceType === 'none' && (t('does_not_repeat') || 'No se repite')}
-                                {recurrenceType === 'daily' && (t('daily') || 'Todos los días')}
-                                {recurrenceType === 'weekly' && (t('weekly') || 'Todas las semanas')}
-                                {recurrenceType === 'monthly' && (t('monthly') || 'Todos los meses')}
-                                {recurrenceType === 'yearly' && (t('yearly') || 'Todos los años')}
+                                {recurrenceType === 'none' && t('does_not_repeat')}
+                                {recurrenceType === 'daily' && t('daily')}
+                                {recurrenceType === 'weekly' && t('weekly')}
+                                {recurrenceType === 'monthly' && t('monthly')}
+                                {recurrenceType === 'quarterly' && t('quarterly')}
+                                {recurrenceType === 'biannually' && t('biannually')}
+                                {recurrenceType === 'yearly' && t('yearly')}
                             </Text>
                         </TouchableOpacity>
 
@@ -327,7 +338,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                     className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-3 ml-8"
                                 >
                                     <Text className="text-sm text-gray-500 dark:text-gray-400 mr-2">
-                                        {t('repeat_until') || 'Repetir hasta:'}
+                                        {t('repeat_until')}
                                     </Text>
                                     <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
                                         {(() => {
@@ -754,11 +765,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 >
                     <View className="bg-white dark:bg-gray-900 w-4/5 rounded-3xl p-2 shadow-xl shadow-black">
                         {[
-                            { value: 'none', label: t('does_not_repeat') || 'No se repite' },
-                            { value: 'daily', label: t('daily') || 'Todos los días' },
-                            { value: 'weekly', label: t('weekly') || 'Todas las semanas' },
-                            { value: 'monthly', label: t('monthly') || 'Todos los meses' },
-                            { value: 'yearly', label: t('yearly') || 'Todos los años' }
+                            { value: 'none', label: t('does_not_repeat') },
+                            { value: 'daily', label: t('daily') },
+                            { value: 'weekly', label: t('weekly') },
+                            { value: 'monthly', label: t('monthly') },
+                            { value: 'quarterly', label: t('quarterly') },
+                            { value: 'biannually', label: t('biannually') },
+                            { value: 'yearly', label: t('yearly') }
                         ].map((item, index, array) => (
                             <TouchableOpacity
                                 key={item.value}

@@ -54,5 +54,13 @@
     "projected_total": "Projected total",
     "earned_history": "Earnings History",
     "filter_all": "All",
-    "filter_this_month": "This Month"
+    "filter_this_month": "This Month",
+    "does_not_repeat": "Does not repeat",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "biannually": "Biannually",
+    "yearly": "Yearly",
+    "repeat_until": "Repeat until:"
 }

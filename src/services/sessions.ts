@@ -36,7 +36,10 @@ export const sessionService = {
             if (type === 'daily') d.setUTCDate(d.getUTCDate() + 1);
             else if (type === 'weekly') d.setUTCDate(d.getUTCDate() + 7);
             else if (type === 'monthly') d.setUTCMonth(d.getUTCMonth() + 1);
+            else if (type === 'quarterly') d.setUTCMonth(d.getUTCMonth() + 3);
+            else if (type === 'biannually') d.setUTCMonth(d.getUTCMonth() + 6);
             else if (type === 'yearly') d.setUTCFullYear(d.getUTCFullYear() + 1);
+            else throw new Error(`Unsupported recurrence type: ${type}`);
             return d.toISOString().split('T')[0];
         };
 
@@ -69,13 +72,24 @@ export const sessionService = {
             const parentId = firstSession.id;
             currDate = calculateNextDate(currDate, input.recurrence_type);
 
+            let iterations = 0;
+            const MAX_ITERATIONS = 500; // Safeguard against infinite loops 
+
             while (currDate <= endDate) {
+                if (iterations > MAX_ITERATIONS) {
+                    console.error('Safeguard reached: too many recurring sessions generated.');
+                    break;
+                }
                 sessionsToInsert.push({
                     ...baseSession,
                     date: currDate,
                     parent_session_id: parentId
                 });
-                currDate = calculateNextDate(currDate, input.recurrence_type);
+
+                const nextDate = calculateNextDate(currDate, input.recurrence_type);
+                if (nextDate === currDate) throw new Error('Infinite loop detected in date calculation.');
+                currDate = nextDate;
+                iterations++;
             }
 
             if (sessionsToInsert.length > 0) {

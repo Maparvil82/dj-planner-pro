@@ -21,6 +21,6 @@ ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS currency text DEFAULT '€'
 UPDATE public.user_tags SET color = '#262626';
 
 /* --- RECURRING SESSIONS --- */
-ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS recurrence_type text DEFAULT 'none' CHECK (recurrence_type IN ('none', 'daily', 'weekly', 'monthly', 'yearly'));
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS recurrence_type text DEFAULT 'none' CHECK (recurrence_type IN ('none', 'daily', 'weekly', 'monthly', 'quarterly', 'biannually', 'yearly'));
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS recurrence_end_date date;
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS parent_session_id uuid REFERENCES public.sessions(id) ON DELETE CASCADE;

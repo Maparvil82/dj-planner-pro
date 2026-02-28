@@ -25,5 +25,13 @@
     "avatar_upload_success": "Avatar mis à jour avec succès !",
     "permissions_required": "Les autorisations de la caméra sont requises pour continuer",
     "upcoming_sessions": "Prochaines Sessions",
-    "sync_calendars_empty_state": "Synchronisez avec vos calendriers externes pour voir les prochains sets."
+    "sync_calendars_empty_state": "Synchronisez avec vos calendriers externes pour voir les prochains sets.",
+    "does_not_repeat": "Ne se répète pas",
+    "daily": "Tous les jours",
+    "weekly": "Toutes les semaines",
+    "monthly": "Tous les mois",
+    "quarterly": "Trimestriel",
+    "biannually": "Semestriel",
+    "yearly": "Tous les ans",
+    "repeat_until": "Répéter jusqu'au :"
 }
