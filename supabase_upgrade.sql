@@ -16,3 +16,6 @@ ALTER TABLE public.user_tags ADD CONSTRAINT user_tags_type_check CHECK (type IN 
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS earning_type text DEFAULT 'free' CHECK (earning_type IN ('free', 'hourly', 'fixed'));
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS earning_amount numeric DEFAULT 0;
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS currency text DEFAULT '€';
+
+/* --- UPDATE EXISTING TAGS TO NEUTRAL COLOR --- */
+UPDATE public.user_tags SET color = '#262626';

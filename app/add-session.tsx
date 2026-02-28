@@ -308,14 +308,14 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         <TouchableOpacity
                                             key={tag.name}
                                             activeOpacity={0.7}
-                                            className="px-4 py-2 rounded-full mr-2 border"
-                                            style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                            className="mr-2 mb-2 px-3 py-1.5 rounded-full border flex-row items-center"
+                                            style={{ backgroundColor: '#262626', borderColor: '#404040' }}
                                             onPress={() => {
                                                 setTitle(tag.name);
                                             }}
                                             onPressOut={() => setFocusedInput(null)}
                                         >
-                                            <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                            <Text className="font-medium" style={{ color: '#A3A3A3' }}>{tag.name}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </ScrollView>
@@ -354,15 +354,16 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         <TouchableOpacity
                                             key={tag.name}
                                             activeOpacity={0.7}
-                                            className="px-4 py-2 rounded-full mr-2 border flex-row items-center"
-                                            style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                            className="mr-2 mb-2 px-3 py-1.5 rounded-full border flex-row items-center"
+                                            style={{ backgroundColor: '#262626', borderColor: '#404040' }}
                                             onPress={() => {
                                                 setVenue(tag.name);
+                                                Keyboard.dismiss();
+                                                setFocusedInput(null);
                                             }}
-                                            onPressOut={() => setFocusedInput(null)}
                                         >
-                                            <MapPin size={14} color={tag.color} className="mr-1.5" />
-                                            <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                            <MapPin size={14} color="#A3A3A3" className="mr-1.5" />
+                                            <Text className="font-medium" style={{ color: '#A3A3A3' }}>{tag.name}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </ScrollView>
@@ -422,8 +423,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         <TouchableOpacity
                                             key={tag.name}
                                             activeOpacity={0.7}
-                                            className="px-4 py-2 rounded-full mr-2 border flex-row items-center"
-                                            style={{ backgroundColor: tag.color + '26', borderColor: tag.color + '4D' }}
+                                            className="mr-2 mb-2 px-3 py-1.5 rounded-full border flex-row items-center"
+                                            style={{ backgroundColor: '#262626', borderColor: '#404040' }}
                                             onPress={() => {
                                                 if (!selectedDjs.includes(tag.name)) {
                                                     setSelectedDjs([...selectedDjs, tag.name]);
@@ -432,8 +433,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                             }}
                                             onPressOut={() => setFocusedInput(null)}
                                         >
-                                            <Users size={14} color={tag.color} className="mr-1.5" />
-                                            <Text className="font-medium" style={{ color: tag.color }}>{tag.name}</Text>
+                                            <Users size={14} color="#A3A3A3" className="mr-1.5" />
+                                            <Text className="font-medium" style={{ color: '#A3A3A3' }}>{tag.name}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </ScrollView>
@@ -465,12 +466,12 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                             {selectedDjs.length > 0 && (
                                 <View className="flex-row flex-wrap mt-3 gap-2">
                                     {selectedDjs.map((dj, index) => {
-                                        const hashTagColor = djTags.find(t => t.name === dj)?.color || '#3B82F6';
+                                        const hashTagColor = '#A3A3A3';
                                         return (
-                                            <View key={index} className="flex-row items-center px-3 py-2 rounded-xl border bg-white dark:bg-gray-800" style={{ borderColor: hashTagColor + '4D' }}>
+                                            <View key={index} className="flex-row items-center bg-gray-800 rounded-full px-3 py-1.5 mr-2 mb-2 border border-gray-700">
                                                 <Text className="font-semibold mr-2" style={{ color: hashTagColor }}>{dj}</Text>
-                                                <TouchableOpacity onPress={() => setSelectedDjs(selectedDjs.filter(d => d !== dj))} className="bg-gray-100 dark:bg-gray-700 rounded-full p-1">
-                                                    <X size={12} color={isDark ? '#D1D5DB' : '#6B7280'} />
+                                                <TouchableOpacity onPress={() => setSelectedDjs(selectedDjs.filter(d => d !== dj))} className="bg-gray-700/50 rounded-full p-1">
+                                                    <X size={12} color="#D1D5DB" />
                                                 </TouchableOpacity>
                                             </View>
                                         );
