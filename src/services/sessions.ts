@@ -28,20 +28,84 @@ export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
         const sessionColor = input.color || getColorForString(input.title);
 
-        // 1. Insert the session
-        const { data: sessionData, error: sessionError } = await supabase
-            .from('sessions')
-            .insert({
-                ...input,
-                color: sessionColor,
-                user_id: userId
-            })
-            .select()
-            .single();
+        let sessionsToInsert: any[] = [];
 
-        if (sessionError) {
-            console.error('Error creating session:', sessionError);
-            throw new Error(sessionError.message);
+        // Helper to add days/months/years robustly
+        const calculateNextDate = (currentDate: string, type: string) => {
+            const d = new Date(currentDate + 'T12:00:00Z');
+            if (type === 'daily') d.setUTCDate(d.getUTCDate() + 1);
+            else if (type === 'weekly') d.setUTCDate(d.getUTCDate() + 7);
+            else if (type === 'monthly') d.setUTCMonth(d.getUTCMonth() + 1);
+            else if (type === 'yearly') d.setUTCFullYear(d.getUTCFullYear() + 1);
+            return d.toISOString().split('T')[0];
+        };
+
+        const baseSession = {
+            ...input,
+            color: sessionColor,
+            user_id: userId
+        };
+
+        if (input.recurrence_type && input.recurrence_type !== 'none' && input.recurrence_end_date) {
+            // Generate all dates
+            let currDate = input.date;
+            const endDate = input.recurrence_end_date;
+
+            // We use 'parent_session_id' dynamically, but for Supabase we can generate a random UUID 
+            // string if needed, or simply let the first session be the parent of the others.
+            // For simplicity, we'll insert the first one to get its ID, then insert the rest.
+
+            const { data: firstSession, error: firstError } = await supabase
+                .from('sessions')
+                .insert(baseSession)
+                .select()
+                .single();
+
+            if (firstError) {
+                console.error('Error creating first recurring session:', firstError);
+                throw new Error(firstError.message);
+            }
+
+            const parentId = firstSession.id;
+            currDate = calculateNextDate(currDate, input.recurrence_type);
+
+            while (currDate <= endDate) {
+                sessionsToInsert.push({
+                    ...baseSession,
+                    date: currDate,
+                    parent_session_id: parentId
+                });
+                currDate = calculateNextDate(currDate, input.recurrence_type);
+            }
+
+            if (sessionsToInsert.length > 0) {
+                const { error: bulkError } = await supabase
+                    .from('sessions')
+                    .insert(sessionsToInsert);
+
+                if (bulkError) {
+                    console.error('Error creating recurring sessions instances:', bulkError);
+                    // Decide if you want to throw or continue. We'll throw to alert the user.
+                    throw new Error(bulkError.message);
+                }
+            }
+
+            // Re-assign sessionData to the first created session so it can return successfully
+            var sessionData = firstSession; // using var because block scoping with the single insert above
+            var sessionError = null;
+        } else {
+            // Standard single insert
+            var { data: singleSession, error: singleError } = await supabase
+                .from('sessions')
+                .insert(baseSession)
+                .select()
+                .single();
+
+            if (singleError) {
+                console.error('Error creating session:', singleError);
+                throw new Error(singleError.message);
+            }
+            var sessionData = singleSession;
         }
 
         // 2. Silently insert tags in the background (ignore errors and duplicates)

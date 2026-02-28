@@ -4,7 +4,7 @@ import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
@@ -65,12 +65,22 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const [earningAmount, setEarningAmount] = useState('');
     const [currency, setCurrency] = useState('€');
 
-    // Session Date State
     const [sessionDate, setSessionDate] = useState(() => {
         const d = date ? new Date(date) : new Date();
         return d.toISOString().split('T')[0];
     });
     const [showCalendar, setShowCalendar] = useState(false);
+
+    // Recurrence State
+    const [recurrenceType, setRecurrenceType] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'>('none');
+    const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>(() => {
+        // Default end date to 1 month from now if they open it
+        const d = new Date();
+        d.setUTCMonth(d.getUTCMonth() + 1);
+        return d.toISOString().split('T')[0];
+    });
+    const [showEndCalendar, setShowEndCalendar] = useState(false);
+    const [isRepeatModalVisible, setIsRepeatModalVisible] = useState(false);
 
     // Collective Session State
     const [isCollective, setIsCollective] = useState(false);
@@ -189,7 +199,9 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 djs: finalDjs,
                 earning_type: earningType,
                 earning_amount: parseFloat(earningAmount) || 0,
-                currency: currency
+                currency: currency,
+                recurrence_type: recurrenceType,
+                recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined
             });
 
             Alert.alert(t('success'), t('session_added_success'), [
@@ -283,6 +295,90 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 }}
                             />
                         </View>
+
+                        {/* Recurrence Input Toggle */}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setIsRepeatModalVisible(true);
+                            }}
+                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-4"
+                        >
+                            <Repeat size={20} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
+                            <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
+                                {recurrenceType === 'none' && (t('does_not_repeat') || 'No se repite')}
+                                {recurrenceType === 'daily' && (t('daily') || 'Todos los días')}
+                                {recurrenceType === 'weekly' && (t('weekly') || 'Todas las semanas')}
+                                {recurrenceType === 'monthly' && (t('monthly') || 'Todos los meses')}
+                                {recurrenceType === 'yearly' && (t('yearly') || 'Todos los años')}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* Recurrence End Date Toggle (Only if repeating) */}
+                        {recurrenceType !== 'none' && (
+                            <>
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Keyboard.dismiss();
+                                        setShowEndCalendar(!showEndCalendar);
+                                    }}
+                                    className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-3 ml-8"
+                                >
+                                    <Text className="text-sm text-gray-500 dark:text-gray-400 mr-2">
+                                        {t('repeat_until') || 'Repetir hasta:'}
+                                    </Text>
+                                    <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
+                                        {(() => {
+                                            const [ey, em, ed] = recurrenceEndDate.split('-');
+                                            const edateObj = new Date(Number(ey), Number(em) - 1, Number(ed));
+                                            return edateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
+                                        })()}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* Expandable End Calendar Picker */}
+                                <View
+                                    className="mt-3 ml-8 bg-white dark:bg-gray-900 rounded-3xl p-3 shadow-md shadow-black/5 border border-gray-100 dark:border-gray-800 overflow-hidden"
+                                    style={{ display: showEndCalendar ? 'flex' : 'none' }}
+                                >
+                                    <Calendar
+                                        markingType={'custom'}
+                                        theme={{
+                                            backgroundColor: 'transparent',
+                                            calendarBackground: 'transparent',
+                                            textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+                                            selectedDayBackgroundColor: '#3B82F6',
+                                            selectedDayTextColor: '#ffffff',
+                                            todayTextColor: '#3B82F6',
+                                            dayTextColor: isDark ? '#D1D5DB' : '#111827',
+                                            textDisabledColor: isDark ? '#4B5563' : '#374151',
+                                            arrowColor: isDark ? '#60A5FA' : '#3B82F6',
+                                            monthTextColor: isDark ? '#F9FAFB' : '#111827',
+                                            textDayFontWeight: '500',
+                                            textMonthFontWeight: 'bold',
+                                            textDayHeaderFontWeight: '600',
+                                        }}
+                                        onDayPress={(day: any) => {
+                                            setRecurrenceEndDate(day.dateString);
+                                            setShowEndCalendar(false);
+                                        }}
+                                        minDate={sessionDate}
+                                        markedDates={{
+                                            [recurrenceEndDate]: {
+                                                selected: true,
+                                                disableTouchEvent: true,
+                                                customStyles: {
+                                                    container: { backgroundColor: '#3B82F6', borderRadius: 10 },
+                                                    text: { color: 'white', fontWeight: 'bold' }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </View>
+                            </>
+                        )}
                     </View>
 
                     {/* Form Elements */}
@@ -643,6 +739,49 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+            {/* Repeat Type Modal */}
+            <Modal
+                visible={isRepeatModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setIsRepeatModalVisible(false)}
+            >
+                <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+                    activeOpacity={1}
+                    onPress={() => setIsRepeatModalVisible(false)}
+                >
+                    <View className="bg-white dark:bg-gray-900 w-4/5 rounded-3xl p-2 shadow-xl shadow-black">
+                        {[
+                            { value: 'none', label: t('does_not_repeat') || 'No se repite' },
+                            { value: 'daily', label: t('daily') || 'Todos los días' },
+                            { value: 'weekly', label: t('weekly') || 'Todas las semanas' },
+                            { value: 'monthly', label: t('monthly') || 'Todos los meses' },
+                            { value: 'yearly', label: t('yearly') || 'Todos los años' }
+                        ].map((item, index, array) => (
+                            <TouchableOpacity
+                                key={item.value}
+                                className={`flex-row items-center py-4 px-5 ${index !== array.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''}`}
+                                onPress={() => {
+                                    setRecurrenceType(item.value as any);
+                                    setIsRepeatModalVisible(false);
+                                }}
+                            >
+                                <View className="w-8 items-center justify-center">
+                                    {recurrenceType === item.value && (
+                                        <Text className="text-blue-500 font-bold text-lg">✓</Text>
+                                    )}
+                                </View>
+                                <Text className={`flex-1 text-base ${recurrenceType === item.value ? 'font-bold text-blue-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    {item.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
         </SafeAreaView >
     );
 }
