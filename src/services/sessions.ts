@@ -138,5 +138,20 @@ export const sessionService = {
         }
 
         return (data || []).map(row => ({ name: row.name, color: row.color || '#3B82F6' }));
+    },
+
+    async getSessionById(sessionId: string): Promise<Session | null> {
+        const { data, error } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching session by id:', error);
+            throw new Error(error.message);
+        }
+
+        return data || null;
     }
 };

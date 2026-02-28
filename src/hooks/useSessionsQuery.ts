@@ -52,3 +52,16 @@ export const useCreateSessionMutation = () => {
     });
 };
 
+export const useSessionByIdQuery = (sessionId: string | undefined | string[]) => {
+    const id = Array.isArray(sessionId) ? sessionId[0] : sessionId;
+
+    return useQuery({
+        queryKey: ['session', id],
+        queryFn: () => {
+            if (!id) return null;
+            return sessionService.getSessionById(id);
+        },
+        enabled: !!id,
+    });
+};
+

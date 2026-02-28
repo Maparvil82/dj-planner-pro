@@ -280,7 +280,11 @@ export default function HomeScreen() {
                                                 {capitalizedFullMonth}
                                             </Text>
                                         )}
-                                        <View className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch">
+                                        <TouchableOpacity
+                                            activeOpacity={0.7}
+                                            onPress={() => router.push(`/session/${session.id}` as any)}
+                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3"
+                                        >
                                             <View className="w-24 h-24 items-center justify-center m-3 rounded-xl" style={{ backgroundColor: '#262626' }}>
                                                 <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: '#A3A3A3', opacity: 0.8 }}>
                                                     {weekdayName}
@@ -311,16 +315,19 @@ export default function HomeScreen() {
                                                 </View>
 
                                                 {session.earning_type && session.earning_type !== 'free' && (
-                                                    <View className="items-end justify-center">
+                                                    <View className="items-end justify-center mr-2">
                                                         <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
                                                             <Text className="text-xs font-bold text-green-700 dark:text-green-400">
-                                                                {calculateSessionEarnings(session)} €
+                                                                {calculateSessionEarnings(session)} {session.currency || '€'}
                                                             </Text>
                                                         </View>
                                                     </View>
                                                 )}
+                                                <View className="justify-center items-center ml-1">
+                                                    <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                </View>
                                             </View>
-                                        </View>
+                                        </TouchableOpacity>
                                     </View>
                                 );
                             })}
@@ -375,7 +382,15 @@ export default function HomeScreen() {
                                 earnedSessionsList.map((session, index) => {
                                     const [y, m, d] = session.date.split('-');
                                     return (
-                                        <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                        <TouchableOpacity
+                                            key={session.id || index}
+                                            activeOpacity={0.7}
+                                            onPress={() => {
+                                                setIsEarningsModalVisible(false);
+                                                router.push(`/session/${session.id}` as any);
+                                            }}
+                                            className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                        >
                                             <View className="flex-1 pr-4">
                                                 <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
                                                     {session.title}
@@ -384,10 +399,13 @@ export default function HomeScreen() {
                                                     {d}/{m}/{y} • {session.venue}
                                                 </Text>
                                             </View>
-                                            <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
-                                                +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
-                                            </Text>
-                                        </View>
+                                            <View className="flex-row items-center">
+                                                <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
+                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                </Text>
+                                                <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                            </View>
+                                        </TouchableOpacity>
                                     );
                                 })
                             ) : (
@@ -431,7 +449,15 @@ export default function HomeScreen() {
                                     pendingSessionsList.map((session, index) => {
                                         const [y, m, d] = session.date.split('-');
                                         return (
-                                            <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                            <TouchableOpacity
+                                                key={session.id || index}
+                                                activeOpacity={0.7}
+                                                onPress={() => {
+                                                    setIsProjectedModalVisible(false);
+                                                    router.push(`/session/${session.id}` as any);
+                                                }}
+                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                            >
                                                 <View className="flex-1 pr-4">
                                                     <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
                                                         {session.title}
@@ -440,10 +466,13 @@ export default function HomeScreen() {
                                                         {d}/{m}/{y} • {session.venue}
                                                     </Text>
                                                 </View>
-                                                <Text className="text-lg font-bold text-gray-400 dark:text-gray-500">
-                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
-                                                </Text>
-                                            </View>
+                                                <View className="flex-row items-center">
+                                                    <Text className="text-lg font-bold text-gray-400 dark:text-gray-500 mr-2">
+                                                        +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                    </Text>
+                                                    <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                </View>
+                                            </TouchableOpacity>
                                         );
                                     })
                                 ) : (
@@ -462,19 +491,30 @@ export default function HomeScreen() {
                                     earnedSessionsList.map((session, index) => {
                                         const [y, m, d] = session.date.split('-');
                                         return (
-                                            <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                            <TouchableOpacity
+                                                key={session.id || index}
+                                                activeOpacity={0.7}
+                                                onPress={() => {
+                                                    setIsProjectedModalVisible(false);
+                                                    router.push(`/session/${session.id}` as any);
+                                                }}
+                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                            >
                                                 <View className="flex-1 pr-4">
-                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1 opacity-70">
+                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
                                                         {session.title}
                                                     </Text>
-                                                    <Text className="text-sm text-gray-500 dark:text-gray-400 opacity-70">
+                                                    <Text className="text-sm text-gray-500 dark:text-gray-400">
                                                         {d}/{m}/{y} • {session.venue}
                                                     </Text>
                                                 </View>
-                                                <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
-                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
-                                                </Text>
-                                            </View>
+                                                <View className="flex-row items-center">
+                                                    <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
+                                                        +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                    </Text>
+                                                    <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                </View>
+                                            </TouchableOpacity>
                                         );
                                     })
                                 ) : (
