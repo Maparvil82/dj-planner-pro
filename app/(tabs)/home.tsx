@@ -385,7 +385,7 @@ export default function HomeScreen() {
                                                 </Text>
                                             </View>
                                             <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
-                                                +{session.calculatedEarned.toFixed(0)} €
+                                                +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
                                             </Text>
                                         </View>
                                     );
@@ -441,7 +441,7 @@ export default function HomeScreen() {
                                                     </Text>
                                                 </View>
                                                 <Text className="text-lg font-bold text-gray-400 dark:text-gray-500">
-                                                    +{session.calculatedEarned.toFixed(0)} €
+                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
                                                 </Text>
                                             </View>
                                         );
@@ -472,7 +472,7 @@ export default function HomeScreen() {
                                                     </Text>
                                                 </View>
                                                 <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
-                                                    +{session.calculatedEarned.toFixed(0)} €
+                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
                                                 </Text>
                                             </View>
                                         );

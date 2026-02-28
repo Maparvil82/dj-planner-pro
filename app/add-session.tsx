@@ -63,6 +63,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     // Earnings State
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
     const [earningAmount, setEarningAmount] = useState('');
+    const [currency, setCurrency] = useState('€');
 
     // Session Date State
     const [sessionDate, setSessionDate] = useState(() => {
@@ -187,7 +188,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 is_collective: isCollective,
                 djs: finalDjs,
                 earning_type: earningType,
-                earning_amount: parseFloat(earningAmount) || 0
+                earning_amount: parseFloat(earningAmount) || 0,
+                currency: currency
             });
 
             Alert.alert(t('success'), t('session_added_success'), [
@@ -542,13 +544,13 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 ))}
                             </View>
 
-                            <View className={earningType === 'free' ? 'hidden' : 'flex'}>
-                                <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'earning' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
-                                    <View className="absolute left-5 z-10 w-6 items-center">
-                                        <DollarSign size={20} color={focusedInput === 'earning' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                            <View className={`${earningType === 'free' ? 'hidden' : 'flex-row items-center gap-2'} mt-1`}>
+                                <View className={`flex-1 relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'earning' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                                    <View className="absolute left-4 z-10 w-6 items-center">
+                                        <Text className="text-xl font-medium text-gray-400 dark:text-gray-500">{currency}</Text>
                                     </View>
                                     <TextInput
-                                        className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                        className="pl-12 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
                                         placeholder={t('earning_amount') || 'Importe'}
                                         placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
                                         keyboardType="numeric"
@@ -558,15 +560,56 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         onBlur={handleBlur}
                                     />
                                 </View>
-                                {/*<View className={earningType === 'hourly' && earningAmount.length > 0 ? 'flex' : 'hidden'}>
+
+                                {/* Currency Dropdown Selector */}
+                                <View className="relative h-14 w-20 z-50">
+                                    <TouchableOpacity
+                                        activeOpacity={0.7}
+                                        onPress={() => {
+                                            // We can use the focusedInput state as a generic toggle for custom dropdowns
+                                            if (focusedInput === 'currencyMenu') {
+                                                setFocusedInput(null);
+                                            } else {
+                                                handleFocus('currencyMenu');
+                                                Keyboard.dismiss();
+                                            }
+                                        }}
+                                        className="h-full bg-white dark:bg-gray-900 border-2 border-transparent shadow-sm shadow-black/5 rounded-2xl flex-row items-center justify-center"
+                                        style={focusedInput === 'currencyMenu' ? { borderColor: isDark ? '#60A5FA' : '#3B82F6' } : {}}
+                                    >
+                                        <Text className="text-xl font-bold text-gray-900 dark:text-white mr-1">{currency}</Text>
+                                        <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ transform: [{ rotate: focusedInput === 'currencyMenu' ? '-90deg' : '90deg' }] }} />
+                                    </TouchableOpacity>
+
+                                    {/* Dropdown Menu Overlay */}
+                                    {focusedInput === 'currencyMenu' && (
+                                        <View className="absolute top-[110%] w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1" style={{ zIndex: 100, elevation: 10 }}>
+                                            {['€', '$', '£', '¥'].map((curr) => (
+                                                <TouchableOpacity
+                                                    key={curr}
+                                                    onPress={() => {
+                                                        setCurrency(curr);
+                                                        setFocusedInput(null);
+                                                    }}
+                                                    className="px-4 py-3 items-center border-b border-gray-50 dark:border-gray-700/50 last:border-0"
+                                                >
+                                                    <Text className={`text-lg font-bold ${currency === curr ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                        {curr}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                            {/*<View className={earningType === 'hourly' && earningAmount.length > 0 ? 'flex' : 'hidden'}>
                                 <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 ml-2">
                                     {t('total_earnings') || 'Total:'} <Text className="text-green-600 dark:text-green-500 font-bold">{getEstimatedTotal() || 0} €</Text> ({calculateTotalHours()}h)
                                 </Text>
                             </View>*/}
-                            </View>
                         </View>
-
                     </View>
+
                 </ScrollView>
 
                 {/* Fixed Save Button */}
@@ -590,6 +633,6 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
