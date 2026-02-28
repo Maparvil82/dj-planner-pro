@@ -1,10 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import React, { useState, useRef, useContext } from 'react';
 import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
@@ -562,17 +562,12 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 </View>
 
                                 {/* Currency Dropdown Selector */}
-                                <View className="relative h-14 w-20 z-50">
+                                <View className="h-14 w-20">
                                     <TouchableOpacity
                                         activeOpacity={0.7}
                                         onPress={() => {
-                                            // We can use the focusedInput state as a generic toggle for custom dropdowns
-                                            if (focusedInput === 'currencyMenu') {
-                                                setFocusedInput(null);
-                                            } else {
-                                                handleFocus('currencyMenu');
-                                                Keyboard.dismiss();
-                                            }
+                                            Keyboard.dismiss();
+                                            setFocusedInput('currencyMenu');
                                         }}
                                         className="h-full bg-white dark:bg-gray-900 border-2 border-transparent shadow-sm shadow-black/5 rounded-2xl flex-row items-center justify-center"
                                         style={focusedInput === 'currencyMenu' ? { borderColor: isDark ? '#60A5FA' : '#3B82F6' } : {}}
@@ -581,25 +576,39 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ transform: [{ rotate: focusedInput === 'currencyMenu' ? '-90deg' : '90deg' }] }} />
                                     </TouchableOpacity>
 
-                                    {/* Dropdown Menu Overlay */}
-                                    {focusedInput === 'currencyMenu' && (
-                                        <View className="absolute top-[110%] w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1" style={{ zIndex: 100, elevation: 10 }}>
-                                            {['€', '$', '£', '¥'].map((curr) => (
-                                                <TouchableOpacity
-                                                    key={curr}
-                                                    onPress={() => {
-                                                        setCurrency(curr);
-                                                        setFocusedInput(null);
-                                                    }}
-                                                    className="px-4 py-3 items-center border-b border-gray-50 dark:border-gray-700/50 last:border-0"
-                                                >
-                                                    <Text className={`text-lg font-bold ${currency === curr ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                        {curr}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    )}
+                                    {/* Modal Dropdown Menu */}
+                                    <Modal
+                                        visible={focusedInput === 'currencyMenu'}
+                                        transparent={true}
+                                        animationType="fade"
+                                        onRequestClose={() => setFocusedInput(null)}
+                                    >
+                                        <TouchableOpacity
+                                            activeOpacity={1}
+                                            onPress={() => setFocusedInput(null)}
+                                            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+                                        >
+                                            <View className="w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden py-2" style={{ elevation: 10 }}>
+                                                {['€', '$', '£', '¥'].map((curr) => (
+                                                    <TouchableOpacity
+                                                        key={curr}
+                                                        onPress={() => {
+                                                            setCurrency(curr);
+                                                            setFocusedInput(null);
+                                                        }}
+                                                        className="px-6 py-4 items-center flex-row justify-between border-b border-gray-100 dark:border-gray-700/50 last:border-0"
+                                                    >
+                                                        <Text className={`text-xl font-bold ${currency === curr ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                            {curr === '€' ? 'Euro' : curr === '$' ? 'Dólar' : curr === '£' ? 'Libra' : 'Yen'}
+                                                        </Text>
+                                                        <Text className={`text-xl font-bold ${currency === curr ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                            {curr}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        </TouchableOpacity>
+                                    </Modal>
                                 </View>
                             </View>
                             {/*<View className={earningType === 'hourly' && earningAmount.length > 0 ? 'flex' : 'hidden'}>
