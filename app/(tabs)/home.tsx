@@ -19,6 +19,7 @@ export default function HomeScreen() {
     const isDark = themeCtx?.activeTheme === 'dark';
     const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('all');
     const [isEarningsModalVisible, setIsEarningsModalVisible] = useState(false);
+    const [isProjectedModalVisible, setIsProjectedModalVisible] = useState(false);
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
@@ -44,8 +45,8 @@ export default function HomeScreen() {
         return 0;
     };
 
-    const { earnedSoFar, projectedTotal, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList } = useMemo(() => {
-        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [] };
+    const { earnedSoFar, projectedTotal, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList } = useMemo(() => {
+        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [], pendingSessionsList: [] };
 
         let earned = 0;
         let projected = 0;
@@ -55,6 +56,7 @@ export default function HomeScreen() {
         const earnedMap: Record<string, number> = {};
         const projectedMap: Record<string, number> = {};
         const earnedSessionsList: any[] = [];
+        const pendingSessionsList: any[] = [];
 
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
@@ -106,6 +108,10 @@ export default function HomeScreen() {
                 if (amount > 0) {
                     earnedSessionsList.push({ ...session, calculatedEarned: amount });
                 }
+            } else {
+                if (amount > 0) {
+                    pendingSessionsList.push({ ...session, calculatedEarned: amount });
+                }
             }
         });
 
@@ -113,8 +119,9 @@ export default function HomeScreen() {
         const projectedData = Object.keys(projectedMap).map(color => ({ color, value: projectedMap[color] }));
 
         earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        pendingSessionsList.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList };
+        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
     }, [monthSessions]);
 
     const filteredUpcomingSessions = useMemo(() => {
@@ -175,23 +182,29 @@ export default function HomeScreen() {
                         </TouchableOpacity>
 
                         {/* Projected Total Card */}
-                        <View className="flex-1 bg-teal-400 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-green-200 dark:border-emerald-800/40">
+                        <TouchableOpacity
+                            className="flex-1 bg-neutral-800 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-neutral-200 dark:border-emerald-800/40"
+                            activeOpacity={0.7}
+                            onPress={() => setIsProjectedModalVisible(true)}
+                        >
 
-
-                            <Text className="text-xs font-semibold text-green-900 dark:text-green-400 uppercase tracking-wider mb-1">
-                                {t('projected_total') || 'Prevees ganar'}
-                            </Text>
+                            <View className="flex-row items-center justify-between mb-1">
+                                <Text className="text-xs font-semibold text-neutral-400 dark:text-green-400 uppercase tracking-wider">
+                                    {t('projected_total') || 'Prevees ganar'}
+                                </Text>
+                                <ChevronRight size={16} color={isDark ? '#oklch(70.8% 0 0) / 50' : '#6B7280'} />
+                            </View>
 
                             <View className="flex-row items-baseline mt-5">
-                                <Text className="text-5xl text-green-900 dark:text-emerald-400">
+                                <Text className="text-5xl text-neutral-400 dark:text-emerald-400">
                                     {projectedTotal.toFixed(0)}
                                 </Text>
-                                <Text className="text-lg font-bold text-green-700 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
+                                <Text className="text-lg font-bold text-neutral-400 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
                             </View>
-                            <Text className="text-sm font-medium text-green-900 dark:text-emerald-500/60 mt-2 flex-wrap">
+                            <Text className="text-sm font-medium text-neutral-400 dark:text-emerald-500/60 mt-2 flex-wrap">
                                 {capitalizedMonthName} • {projectedCount} {projectedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -371,7 +384,7 @@ export default function HomeScreen() {
                                                     {d}/{m}/{y} • {session.venue}
                                                 </Text>
                                             </View>
-                                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                            <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
                                                 +{session.calculatedEarned.toFixed(0)} €
                                             </Text>
                                         </View>
@@ -382,6 +395,95 @@ export default function HomeScreen() {
                                     No hay ingresos registrados este mes todavía.
                                 </Text>
                             )}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+            {/* PROJECTED EARNINGS MODAL */}
+            <Modal
+                visible={isProjectedModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setIsProjectedModalVisible(false)}
+            >
+                <View className="flex-1 justify-end bg-black/50">
+                    <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
+                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                                {t('projected_total') || 'Previsión de ingresos'} - {capitalizedMonthName}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setIsProjectedModalVisible(false)}
+                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full"
+                            >
+                                <X size={20} color={isDark ? '#D1D5DB' : '#4B5563'} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }}>
+
+                            {/* PENDING SESSIONS */}
+                            <View className="mb-6">
+                                <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+                                    Pendientes ({pendingSessionsList.length})
+                                </Text>
+                                {pendingSessionsList.length > 0 ? (
+                                    pendingSessionsList.map((session, index) => {
+                                        const [y, m, d] = session.date.split('-');
+                                        return (
+                                            <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                                <View className="flex-1 pr-4">
+                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                                        {session.title}
+                                                    </Text>
+                                                    <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {d}/{m}/{y} • {session.venue}
+                                                    </Text>
+                                                </View>
+                                                <Text className="text-lg font-bold text-gray-400 dark:text-gray-500">
+                                                    +{session.calculatedEarned.toFixed(0)} €
+                                                </Text>
+                                            </View>
+                                        );
+                                    })
+                                ) : (
+                                    <Text className="text-sm text-gray-500 dark:text-gray-400 italic mb-4">
+                                        No hay sesiones pendientes.
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* EARNED SESSIONS */}
+                            <View>
+                                <Text className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-4">
+                                    Ya completadas ({earnedSessionsList.length})
+                                </Text>
+                                {earnedSessionsList.length > 0 ? (
+                                    earnedSessionsList.map((session, index) => {
+                                        const [y, m, d] = session.date.split('-');
+                                        return (
+                                            <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                                <View className="flex-1 pr-4">
+                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1 opacity-70">
+                                                        {session.title}
+                                                    </Text>
+                                                    <Text className="text-sm text-gray-500 dark:text-gray-400 opacity-70">
+                                                        {d}/{m}/{y} • {session.venue}
+                                                    </Text>
+                                                </View>
+                                                <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90">
+                                                    +{session.calculatedEarned.toFixed(0)} €
+                                                </Text>
+                                            </View>
+                                        );
+                                    })
+                                ) : (
+                                    <Text className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                        No hay sesiones completadas aún.
+                                    </Text>
+                                )}
+                            </View>
+
                         </ScrollView>
                     </View>
                 </View>
