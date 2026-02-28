@@ -1,6 +1,9 @@
 {
     "welcome": "Bienvenue sur DJ Planner PRO",
     "login": "Connexion",
+    "earned_so_far": "Gagné jusqu'à présent",
+    "projected_total": "Total prévu",
+    "earned_history": "Historique des gains",
     "register": "S'inscrire",
     "home": "Accueil",
     "login_subtitle": "Veuillez vous connecter pour continuer",

@@ -1,11 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet } from 'lucide-react-native';
+import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X } from 'lucide-react-native';
 import { useContext, useState, useMemo } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -18,6 +18,7 @@ export default function HomeScreen() {
 
     const isDark = themeCtx?.activeTheme === 'dark';
     const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('all');
+    const [isEarningsModalVisible, setIsEarningsModalVisible] = useState(false);
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
@@ -43,27 +44,77 @@ export default function HomeScreen() {
         return 0;
     };
 
-    const { earnedSoFar, projectedTotal, earnedCount, projectedCount } = useMemo(() => {
-        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0 };
+    const { earnedSoFar, projectedTotal, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList } = useMemo(() => {
+        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [] };
 
         let earned = 0;
         let projected = 0;
         let eCount = 0;
         let pCount = 0;
-        const todayStr = new Date().toISOString().split('T')[0];
+
+        const earnedMap: Record<string, number> = {};
+        const projectedMap: Record<string, number> = {};
+        const earnedSessionsList: any[] = [];
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTotalMinutes = currentHour * 60 + currentMinute;
 
         monthSessions.forEach((session: any) => {
             const amount = calculateSessionEarnings(session);
+            const color = session.color || '#3B82F6';
+
             projected += amount;
+            projectedMap[color] = (projectedMap[color] || 0) + amount;
             pCount++;
 
-            if (session.date <= todayStr) {
+            let isEarned = false;
+            if (session.date < todayStr) {
+                isEarned = true;
+            } else if (session.date === todayStr) {
+                const [endH, endM] = (session.end_time || '23:59').split(':').map(Number);
+                let endTotalMinutes = endH * 60 + endM;
+
+                // Si la sesión termina al día siguiente (ej. 03:00 am pero empieza el 'mismo' día)
+                // consideramos la lógica real del DJ: si la hora de fin es muy temprana (ej. 00-06h), 
+                // realmente pertenece a la madrugada siguiente.
+                // Como es una aproximación simple, si los minutos de fin son menores o iguales a la hora actual, ha terminado.
+                // Para ser estrictos: si la sesión pasa de las 12 (endT < startT), entonces hoy no ha terminado a no ser que estemos en esa madrugada.
+                // Simplificando usando la hora calculada:
+                const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
+                const startTotalMinutes = startH * 60 + startM;
+
+                if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60; // cruza la medianoche
+
+                // También ajustamos la hora actual si "sigue" a la sesión en la madrugada
+                let adjustedCurrentMinutes = currentTotalMinutes;
+                if (currentTotalMinutes < 12 * 60 && startTotalMinutes > 12 * 60) {
+                    adjustedCurrentMinutes += 24 * 60;
+                }
+
+                if (adjustedCurrentMinutes >= endTotalMinutes) {
+                    isEarned = true;
+                }
+            }
+
+            if (isEarned) {
                 earned += amount;
+                earnedMap[color] = (earnedMap[color] || 0) + amount;
                 eCount++;
+                if (amount > 0) {
+                    earnedSessionsList.push({ ...session, calculatedEarned: amount });
+                }
             }
         });
 
-        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount };
+        const earnedData = Object.keys(earnedMap).map(color => ({ color, value: earnedMap[color] }));
+        const projectedData = Object.keys(projectedMap).map(color => ({ color, value: projectedMap[color] }));
+
+        earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList };
     }, [monthSessions]);
 
     const filteredUpcomingSessions = useMemo(() => {
@@ -99,12 +150,18 @@ export default function HomeScreen() {
                 <View className="mb-8">
                     <View className="flex-row gap-4 px-2">
                         {/* Earned So Far Card */}
-                        <View className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
+                        <TouchableOpacity
+                            className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40"
+                            activeOpacity={0.7}
+                            onPress={() => setIsEarningsModalVisible(true)}
+                        >
 
-
-                            <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-                                {t('earned_so_far') || 'Llevas ganado'}
-                            </Text>
+                            <View className="flex-row items-center justify-between mb-1">
+                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    {t('earned_so_far') || 'Llevas ganado'}
+                                </Text>
+                                <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                            </View>
 
                             <View className="flex-row items-baseline mt-5">
                                 <Text className="text-5xl text-gray-900 dark:text-white">
@@ -115,7 +172,7 @@ export default function HomeScreen() {
                             <Text className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2 flex-wrap">
                                 {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
 
                         {/* Projected Total Card */}
                         <View className="flex-1 bg-teal-400 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-green-200 dark:border-emerald-800/40">
@@ -278,6 +335,57 @@ export default function HomeScreen() {
             >
                 <CalendarPlus size={28} color="#FFFFFF" />
             </TouchableOpacity>
-        </SafeAreaView>
+
+            {/* EARNINGS HISTORY MODAL */}
+            <Modal
+                visible={isEarningsModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setIsEarningsModalVisible(false)}
+            >
+                <View className="flex-1 justify-end bg-black/50">
+                    <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
+                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                                {t('earned_history') || 'Historial de ingresos'} - {capitalizedMonthName}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setIsEarningsModalVisible(false)}
+                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full"
+                            >
+                                <X size={20} color={isDark ? '#D1D5DB' : '#4B5563'} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }}>
+                            {earnedSessionsList.length > 0 ? (
+                                earnedSessionsList.map((session, index) => {
+                                    const [y, m, d] = session.date.split('-');
+                                    return (
+                                        <View key={session.id || index} className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4">
+                                            <View className="flex-1 pr-4">
+                                                <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                                    {session.title}
+                                                </Text>
+                                                <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {d}/{m}/{y} • {session.venue}
+                                                </Text>
+                                            </View>
+                                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                                +{session.calculatedEarned.toFixed(0)} €
+                                            </Text>
+                                        </View>
+                                    );
+                                })
+                            ) : (
+                                <Text className="text-center text-gray-500 dark:text-gray-400 mt-10">
+                                    No hay ingresos registrados este mes todavía.
+                                </Text>
+                            )}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+        </SafeAreaView >
     );
 }

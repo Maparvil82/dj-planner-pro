@@ -1,6 +1,9 @@
 {
     "welcome": "DJ Planner PROへようこそ",
     "login": "ログイン",
+    "earned_so_far": "これまでに稼いだ額",
+    "projected_total": "予測合計",
+    "earned_history": "収益履歴",
     "register": "登録",
     "home": "ホーム",
     "login_subtitle": "続行するにはログインしてください",
