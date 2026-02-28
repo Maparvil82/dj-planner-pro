@@ -95,34 +95,31 @@ export default function HomeScreen() {
                     </Text>
 
                     <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
-                        <View className="flex-row items-center mb-4">
-                            <View className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 items-center justify-center mr-3">
-                                <Wallet size={20} color={isDark ? '#818CF8' : '#4F46E5'} />
-                            </View>
-                            <View>
-                                <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {t('earned_so_far') || 'Llevas ganado'}
+                        <View className="flex-row items-end justify-between">
+                            <View className="flex-col">
+                                <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                                    {t('projected_total') || 'Prevees ganar'}
                                 </Text>
-                                <View className="flex-row items-end flex-wrap h-8">
+                                <View className="flex-row items-center">
+                                    <TrendingUp size={20} color={isDark ? '#34D399' : '#10B981'} className="mr-2" />
                                     <Text className="text-3xl font-extrabold text-gray-900 dark:text-white leading-8">
-                                        {earnedSoFar.toFixed(2)}
+                                        {projectedTotal.toFixed(2)}
                                     </Text>
                                     <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
                                 </View>
                             </View>
-                        </View>
 
-                        <View className="h-px bg-gray-100 dark:bg-gray-800 mb-4" />
-
-                        <View className="flex-row items-center justify-between">
-                            <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                {t('projected_total') || 'Prevees ganar'}
-                            </Text>
-                            <View className="flex-row items-center">
-                                <TrendingUp size={16} color={isDark ? '#34D399' : '#10B981'} className="mr-1" />
-                                <Text className="text-base font-bold text-gray-900 dark:text-white">
-                                    {projectedTotal.toFixed(2)} €
+                            <View className="flex-col items-end">
+                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                                    {t('earned_so_far') || 'Llevas ganado'}
                                 </Text>
+                                <View className="flex-row items-center">
+                                    <Wallet size={16} color={isDark ? '#818CF8' : '#4F46E5'} className="mr-2" />
+                                    <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                                        {earnedSoFar.toFixed(2)}
+                                    </Text>
+                                    <Text className="text-base font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
+                                </View>
                             </View>
                         </View>
                     </View>
