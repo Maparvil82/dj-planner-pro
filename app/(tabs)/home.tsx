@@ -183,40 +183,48 @@ export default function HomeScreen() {
                                 const [y, m, d] = session.date.split('-');
                                 const sessionDateObj = new Date(Number(y), Number(m) - 1, Number(d));
                                 const monthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'short' });
+                                const weekdayName = sessionDateObj.toLocaleDateString(currentLanguage, { weekday: 'short' });
 
                                 return (
-                                    <View key={session.id} className="bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 flex-row items-center">
-                                        <View className="w-14 h-14 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
-                                            <Text className="font-extrabold text-xl leading-tight" style={{ color: session.color || '#3B82F6' }}>
+                                    <View key={session.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3">
+                                        <View className="w-32 items-center justify-center" style={{ backgroundColor: (session.color || '#3B82F6') + '26' }}>
+                                            <Text className="text-xs font-bold uppercase mb-2" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
+                                                {weekdayName}
+                                            </Text>
+                                            <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color || '#3B82F6' }}>
                                                 {d}
                                             </Text>
                                             <Text className="text-xs font-bold uppercase" style={{ color: session.color || '#3B82F6', opacity: 0.8 }}>
                                                 {monthName}
                                             </Text>
                                         </View>
-                                        <View className="flex-1">
-                                            <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
-                                            <Text className="text-gray-500 dark:text-gray-400 text-sm mb-2" numberOfLines={1}>{session.venue}</Text>
-                                            <View className="flex-row items-center flex-wrap gap-2">
-                                                <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden" style={{ color: session.color || '#3B82F6', backgroundColor: (session.color || '#3B82F6') + '1A' }}>{session.start_time} - {session.end_time}</Text>
+                                        <View className="flex-1 flex-row items-center p-4">
+                                            <View className="flex-1 mr-3">
+                                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
+                                                <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
+                                                <View className="flex-row items-center flex-wrap gap-2">
+                                                    <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
 
-                                                {session.is_collective && session.djs && session.djs.length > 0 && (
-                                                    <View className="flex-row items-center px-1.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md max-w-[50%]">
-                                                        <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
-                                                        <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
-                                                            {session.djs.join(', ')}
-                                                        </Text>
-                                                    </View>
-                                                )}
+                                                    {session.is_collective && session.djs && session.djs.length > 0 && (
+                                                        <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
+                                                            <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
+                                                            <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
+                                                                {session.djs.join(', ')}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                            </View>
 
-                                                {session.earning_type && session.earning_type !== 'free' && (
-                                                    <View className="flex-row items-center px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800/30">
+                                            {session.earning_type && session.earning_type !== 'free' && (
+                                                <View className="items-end justify-center">
+                                                    <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
                                                         <Text className="text-xs font-bold text-green-700 dark:text-green-400">
                                                             {calculateSessionEarnings(session)} €
                                                         </Text>
                                                     </View>
-                                                )}
-                                            </View>
+                                                </View>
+                                            )}
                                         </View>
                                     </View>
                                 );
