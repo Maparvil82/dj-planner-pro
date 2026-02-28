@@ -285,14 +285,14 @@ export default function HomeScreen() {
                                             onPress={() => router.push(`/session/${session.id}` as any)}
                                             className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3"
                                         >
-                                            <View className="w-24 h-24 items-center justify-center m-3 rounded-xl" style={{ backgroundColor: '#262626' }}>
-                                                <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: '#A3A3A3', opacity: 0.8 }}>
+                                            <View className="w-24 h-24 items-center justify-center m-3 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
+                                                <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color ? '#E5E5E5' : '#A3A3A3', opacity: session.color ? 0.9 : 0.8 }}>
                                                     {weekdayName}
                                                 </Text>
-                                                <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: '#A3A3A3' }}>
+                                                <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color ? '#FFFFFF' : '#A3A3A3' }}>
                                                     {d}
                                                 </Text>
-                                                <Text className="text-[10px] font-bold uppercase" style={{ color: '#A3A3A3', opacity: 0.8 }}>
+                                                <Text className="text-[10px] font-bold uppercase" style={{ color: session.color ? '#E5E5E5' : '#A3A3A3', opacity: session.color ? 0.9 : 0.8 }}>
                                                     {monthName}
                                                 </Text>
                                             </View>

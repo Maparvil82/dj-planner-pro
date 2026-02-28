@@ -33,5 +33,17 @@
     "quarterly": "四半期ごと",
     "biannually": "半年ごと",
     "yearly": "毎年",
-    "repeat_until": "終了日:"
+    "repeat_until": "終了日:",
+    "color_default": "デフォルトカラー",
+    "color_tomato": "トマト",
+    "color_tangerine": "タンジェリン",
+    "color_banana": "バナナ",
+    "color_basil": "バジル",
+    "color_sage": "セージ",
+    "color_peacock": "ピーコック",
+    "color_blueberry": "ブルーベリー",
+    "color_lavender": "ラベンダー",
+    "color_grape": "グレープ",
+    "color_flamingo": "フラミンゴ",
+    "color_graphite": "グラファイト"
 }

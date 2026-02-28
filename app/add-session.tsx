@@ -4,7 +4,7 @@ import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
@@ -80,6 +80,10 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     });
     const [showEndCalendar, setShowEndCalendar] = useState(false);
     const [isRepeatModalVisible, setIsRepeatModalVisible] = useState(false);
+
+    // Color State
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [isColorModalVisible, setIsColorModalVisible] = useState(false);
 
     // Auto-adjust end date if session date goes past it
     React.useEffect(() => {
@@ -210,7 +214,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                 earning_amount: parseFloat(earningAmount) || 0,
                 currency: currency,
                 recurrence_type: recurrenceType,
-                recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined
+                recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
+                color: selectedColor || undefined
             });
 
             Alert.alert(t('success'), t('session_added_success'), [
@@ -390,6 +395,37 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 </View>
                             </>
                         )}
+
+                        {/* Custom Color Toggle */}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setIsColorModalVisible(true);
+                            }}
+                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-4"
+                        >
+                            {!selectedColor ? (
+                                <View className="w-5 h-5 rounded-full bg-blue-500 mr-3" />
+                            ) : (
+                                <View className="w-5 h-5 rounded-full mr-3" style={{ backgroundColor: selectedColor }} />
+                            )}
+                            <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
+                                {!selectedColor && (t('color_default') || 'Color predeterminado')}
+                                {selectedColor === '#EF4444' && t('color_tomato')}
+                                {selectedColor === '#F97316' && t('color_tangerine')}
+                                {selectedColor === '#FBBF24' && t('color_banana')}
+                                {selectedColor === '#10B981' && t('color_basil')}
+                                {selectedColor === '#34D399' && t('color_sage')}
+                                {selectedColor === '#0EA5E9' && t('color_peacock')}
+                                {selectedColor === '#3B82F6' && t('color_blueberry')}
+                                {selectedColor === '#8B5CF6' && t('color_lavender')}
+                                {selectedColor === '#9333EA' && t('color_grape')}
+                                {selectedColor === '#F43F5E' && t('color_flamingo')}
+                                {selectedColor === '#6B7280' && t('color_graphite')}
+                            </Text>
+                            <ChevronRight size={20} color={isDark ? '#4B5563' : '#D1D5DB'} />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Form Elements */}
@@ -791,6 +827,63 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 </Text>
                             </TouchableOpacity>
                         ))}
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
+            {/* Color Picker Modal */}
+            <Modal
+                visible={isColorModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsColorModalVisible(false)}
+            >
+                <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+                    activeOpacity={1}
+                    onPress={() => setIsColorModalVisible(false)}
+                >
+                    <View className="bg-white dark:bg-gray-900 rounded-t-3xl pt-2 pb-8 shadow-xl">
+                        <View className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto my-3" />
+                        <ScrollView className="max-h-96" showsVerticalScrollIndicator={false}>
+                            {[
+                                { value: '#EF4444', label: t('color_tomato') || 'Tomate' },
+                                { value: '#F97316', label: t('color_tangerine') || 'Mandarina' },
+                                { value: '#FBBF24', label: t('color_banana') || 'Plátano' },
+                                { value: '#10B981', label: t('color_basil') || 'Albahaca' },
+                                { value: '#34D399', label: t('color_sage') || 'Salvia' },
+                                { value: '#0EA5E9', label: t('color_peacock') || 'Pavo real' },
+                                { value: '#3B82F6', label: t('color_blueberry') || 'Arándano' },
+                                { value: '#8B5CF6', label: t('color_lavender') || 'Lavanda' },
+                                { value: '#9333EA', label: t('color_grape') || 'Uva morada' },
+                                { value: '#F43F5E', label: t('color_flamingo') || 'Flamenco' },
+                                { value: '#6B7280', label: t('color_graphite') || 'Grafito' },
+                                { value: null, label: t('color_default') || 'Color predeterminado', isDefault: true }
+                            ].map((item, index) => (
+                                <TouchableOpacity
+                                    key={item.label}
+                                    className="flex-row items-center py-4 px-6 border-b border-gray-50 dark:border-gray-800/50"
+                                    onPress={() => {
+                                        setSelectedColor(item.value);
+                                        setIsColorModalVisible(false);
+                                    }}
+                                >
+                                    <View className="w-8 items-center justify-center">
+                                        {selectedColor === item.value && (
+                                            <Text className="text-gray-900 dark:text-white font-bold text-lg">✓</Text>
+                                        )}
+                                    </View>
+                                    <Text className={`flex-1 text-base ml-2 ${selectedColor === item.value ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                        {item.label}
+                                    </Text>
+                                    {item.isDefault ? (
+                                        <View className="w-5 h-5 rounded-full bg-blue-500" />
+                                    ) : (
+                                        <View className="w-5 h-5 rounded-full" style={{ backgroundColor: item.value as string }} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
                     </View>
                 </TouchableOpacity>
             </Modal>

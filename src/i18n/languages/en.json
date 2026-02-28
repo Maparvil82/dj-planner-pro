@@ -62,5 +62,17 @@
     "quarterly": "Quarterly",
     "biannually": "Biannually",
     "yearly": "Yearly",
-    "repeat_until": "Repeat until:"
+    "repeat_until": "Repeat until:",
+    "color_default": "Default color",
+    "color_tomato": "Tomato",
+    "color_tangerine": "Tangerine",
+    "color_banana": "Banana",
+    "color_basil": "Basil",
+    "color_sage": "Sage",
+    "color_peacock": "Peacock",
+    "color_blueberry": "Blueberry",
+    "color_lavender": "Lavender",
+    "color_grape": "Grape",
+    "color_flamingo": "Flamingo",
+    "color_graphite": "Graphite"
 }

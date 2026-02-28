@@ -33,5 +33,17 @@
     "avatar_upload_success": "Avatar aggiornato con successo!",
     "permissions_required": "Sono necessari i permessi della fotocamera per continuare",
     "upcoming_sessions": "Prossime Sessioni",
-    "sync_calendars_empty_state": "Sincronizza con i tuoi calendari esterni per vedere i prossimi set."
+    "sync_calendars_empty_state": "Sincronizza con i tuoi calendari esterni per vedere i prossimi set.",
+    "color_default": "Colore predefinito",
+    "color_tomato": "Pomodoro",
+    "color_tangerine": "Mandarino",
+    "color_banana": "Banana",
+    "color_basil": "Basilico",
+    "color_sage": "Salvia",
+    "color_peacock": "Pavone",
+    "color_blueberry": "Mirtillo",
+    "color_lavender": "Lavanda",
+    "color_grape": "Uva",
+    "color_flamingo": "Fenicottero",
+    "color_graphite": "Grafite"
 }

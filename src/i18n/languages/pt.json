@@ -33,5 +33,17 @@
     "quarterly": "Trimestral",
     "biannually": "Semestral",
     "yearly": "Todos os anos",
-    "repeat_until": "Repetir até:"
+    "repeat_until": "Repetir até:",
+    "color_default": "Cor padrão",
+    "color_tomato": "Tomate",
+    "color_tangerine": "Tangerina",
+    "color_banana": "Banana",
+    "color_basil": "Manjericão",
+    "color_sage": "Sálvia",
+    "color_peacock": "Pavão",
+    "color_blueberry": "Mirtilo",
+    "color_lavender": "Lavanda",
+    "color_grape": "Uva",
+    "color_flamingo": "Flamingo",
+    "color_graphite": "Grafite"
 }

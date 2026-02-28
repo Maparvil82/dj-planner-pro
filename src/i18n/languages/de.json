@@ -31,5 +31,17 @@
     "quarterly": "Vierteljährlich",
     "biannually": "Halbjährlich",
     "yearly": "Jährlich",
-    "repeat_until": "Wiederholen bis:"
+    "repeat_until": "Wiederholen bis:",
+    "color_default": "Standardfarbe",
+    "color_tomato": "Tomate",
+    "color_tangerine": "Mandarine",
+    "color_banana": "Banane",
+    "color_basil": "Basilikum",
+    "color_sage": "Salbei",
+    "color_peacock": "Pfau",
+    "color_blueberry": "Blaubeere",
+    "color_lavender": "Lavendel",
+    "color_grape": "Traube",
+    "color_flamingo": "Flamingo",
+    "color_graphite": "Grafit"
 }
