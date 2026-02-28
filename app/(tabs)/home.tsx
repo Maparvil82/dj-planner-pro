@@ -90,36 +90,36 @@ export default function HomeScreen() {
 
                 {/* MONTHLY EARNINGS CARD */}
                 <View className="mb-8">
-                    <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4 px-2 tracking-tight">
-                        {t('current_month_earnings') || 'Ganancias del mes actual'}
-                    </Text>
+                    <View className="flex-row gap-4 px-2">
+                        {/* Earned So Far Card */}
+                        <View className="flex-1 bg-white dark:bg-gray-900 p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
 
-                    <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
-                        <View className="flex-row items-end justify-between">
-                            <View className="flex-col">
-                                <Text className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-                                    {t('earned_so_far') || 'Llevas ganado'}
+
+                            <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                                {t('earned_so_far') || 'Llevas ganado'}
+                            </Text>
+
+                            <View className="flex-row items-baseline mt-5">
+                                <Text className="text-5xl text-gray-900 dark:text-white">
+                                    {earnedSoFar.toFixed(0)}
                                 </Text>
-                                <View className="flex-row items-center">
-
-                                    <Text className="text-5xl text-gray-800 dark:text-white leading-8">
-                                        {earnedSoFar.toFixed(2)}
-                                    </Text>
-                                    <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
-                                </View>
+                                <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-1">€</Text>
                             </View>
+                        </View>
 
-                            <View className="flex-col items-end">
-                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-                                    {t('projected_total') || 'Prevees ganar'}
+                        {/* Projected Total Card */}
+                        <View className="flex-1 bg-green-300 dark:bg-emerald-900/20  p-5 shadow-sm shadow-black/5 border border-green-200 dark:border-emerald-800/40">
+
+
+                            <Text className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider mb-1">
+                                {t('projected_total') || 'Prevees ganar'}
+                            </Text>
+
+                            <View className="flex-row items-baseline mt-5">
+                                <Text className="text-5xl text-green-800 dark:text-emerald-400">
+                                    {projectedTotal.toFixed(0)}
                                 </Text>
-                                <View className="flex-row items-center">
-                                    <TrendingUp size={16} color={isDark ? '#34D399' : '#10B981'} className="mr-2" />
-                                    <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                        {projectedTotal.toFixed(2)}
-                                    </Text>
-                                    <Text className="text-base font-bold text-gray-500 dark:text-gray-400 ml-1 mb-0.5">€</Text>
-                                </View>
+                                <Text className="text-lg font-bold text-green-700 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
                             </View>
                         </View>
                     </View>
