@@ -25,6 +25,9 @@ export default function HomeScreen() {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
+    const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
+    const capitalizedMonthName = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
+
     const { data: monthSessions, isLoading: isLoadingMonth } = useSessionsQuery(currentYear, currentMonth);
 
     const calculateSessionEarnings = (session: any) => {
@@ -92,7 +95,7 @@ export default function HomeScreen() {
                 <View className="mb-8">
                     <View className="flex-row gap-4 px-2">
                         {/* Earned So Far Card */}
-                        <View className="flex-1 bg-white dark:bg-gray-900 p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
+                        <View className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40">
 
 
                             <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
@@ -105,22 +108,28 @@ export default function HomeScreen() {
                                 </Text>
                                 <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-1">€</Text>
                             </View>
+                            <Text className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2">
+                                {capitalizedMonthName}
+                            </Text>
                         </View>
 
                         {/* Projected Total Card */}
-                        <View className="flex-1 bg-green-300 dark:bg-emerald-900/20  p-5 shadow-sm shadow-black/5 border border-green-200 dark:border-emerald-800/40">
+                        <View className="flex-1 bg-teal-400 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-green-200 dark:border-emerald-800/40">
 
 
-                            <Text className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider mb-1">
+                            <Text className="text-xs font-semibold text-green-900 dark:text-green-400 uppercase tracking-wider mb-1">
                                 {t('projected_total') || 'Prevees ganar'}
                             </Text>
 
                             <View className="flex-row items-baseline mt-5">
-                                <Text className="text-5xl text-green-800 dark:text-emerald-400">
+                                <Text className="text-5xl text-green-900 dark:text-emerald-400">
                                     {projectedTotal.toFixed(0)}
                                 </Text>
                                 <Text className="text-lg font-bold text-green-700 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
                             </View>
+                            <Text className="text-sm font-medium text-green-900 dark:text-emerald-500/60 mt-2">
+                                {capitalizedMonthName}
+                            </Text>
                         </View>
                     </View>
                 </View>
