@@ -113,7 +113,8 @@ export const sessionService = {
             .select('*')
             .eq('user_id', userId)
             .gte('date', today)
-            .order('date', { ascending: true });
+            .order('date', { ascending: true })
+            .limit(30);
 
         if (error) {
             console.error('Error fetching upcoming sessions:', error);

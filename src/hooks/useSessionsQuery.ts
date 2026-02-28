@@ -14,6 +14,7 @@ export const useSessionsQuery = (year: number, month: number) => {
             return sessionService.getSessionsByMonth(year, month, userId);
         },
         enabled: !!userId,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache to prevent constant loading spinners
     });
 };
 
@@ -28,6 +29,7 @@ export const useUpcomingSessionsQuery = () => {
             return sessionService.getUpcomingSessions(userId);
         },
         enabled: !!userId,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 };
 
