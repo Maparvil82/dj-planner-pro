@@ -283,7 +283,7 @@ export default function HomeScreen() {
                                         <TouchableOpacity
                                             activeOpacity={0.7}
                                             onPress={() => router.push(`/session/${session.id}` as any)}
-                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3"
+                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch"
                                         >
                                             <View className="w-24 h-24 items-center justify-center m-3 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
                                                 <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
