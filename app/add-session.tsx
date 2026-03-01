@@ -406,7 +406,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                             className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-4"
                         >
                             {!selectedColor ? (
-                                <View className="w-5 h-5 rounded-full bg-blue-500 mr-3" />
+                                <View className="w-5 h-5 rounded-full mr-3" style={{ backgroundColor: '#262626' }} />
                             ) : (
                                 <View className="w-5 h-5 rounded-full mr-3" style={{ backgroundColor: selectedColor }} />
                             )}
@@ -877,7 +877,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         {item.label}
                                     </Text>
                                     {item.isDefault ? (
-                                        <View className="w-5 h-5 rounded-full bg-blue-500" />
+                                        <View className="w-5 h-5 rounded-full" style={{ backgroundColor: '#262626' }} />
                                     ) : (
                                         <View className="w-5 h-5 rounded-full" style={{ backgroundColor: item.value as string }} />
                                     )}

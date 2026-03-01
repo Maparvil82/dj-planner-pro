@@ -2,26 +2,11 @@ import { supabase } from '../lib/supabase';
 import { CreateSessionInput, Session } from '../types/session';
 import { TagOption } from '../types/tag';
 
-const TAG_COLORS = [
-    '#EF4444', // red-500
-    '#F97316', // orange-500
-    '#F59E0B', // amber-500
-    '#10B981', // emerald-500
-    '#0EA5E9', // sky-500
-    '#3B82F6', // blue-500
-    '#6366F1', // indigo-500
-    '#8B5CF6', // violet-500
-    '#D946EF', // fuchsia-500
-    '#F43F5E', // rose-500
-];
+const TAG_COLORS: string[] = [];
 
 export const getColorForString = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % TAG_COLORS.length;
-    return TAG_COLORS[index];
+    // The user requested to default to the Neutral 800 black color used in the "Prevees_ganar" tracking card.
+    return '#262626';
 };
 
 export const sessionService = {
