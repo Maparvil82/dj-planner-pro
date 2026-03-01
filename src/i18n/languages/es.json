@@ -77,5 +77,10 @@
     "color_graphite": "Grafito",
     "delete_session_title": "Eliminar Sesión",
     "delete_session_message": "¿Estás seguro de que quieres eliminar esta sesión de forma permanente?",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "duplicate_session_title": "Sesión existente",
+    "duplicate_session_message": "Ya tienes una o más sesiones registradas en este día. ¿Estás seguro de que quieres añadir otra más?",
+    "past_date_warning_title": "Fecha pasada",
+    "past_date_warning_message": "Estás a punto de registrar una sesión en una fecha que ya ha pasado. ¿Deseas continuar?",
+    "continue": "Continuar"
 }

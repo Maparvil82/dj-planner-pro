@@ -48,5 +48,10 @@
     "color_graphite": "グラファイト",
     "delete_session_title": "セッションを削除",
     "delete_session_message": "このセッションを完全に削除してもよろしいですか？",
-    "delete": "削除"
+    "delete": "削除",
+    "duplicate_session_title": "既存のセッション",
+    "duplicate_session_message": "この日には既に1つ以上のセッションが登録されています。本当に別のセッションを追加しますか？",
+    "past_date_warning_title": "過去の日付",
+    "past_date_warning_message": "すでに過ぎた日付にセッションを登録しようとしています。続行しますか？",
+    "continue": "続行"
 }

@@ -10,6 +10,7 @@ import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../src/i18n/calendarLocales';
+import { supabase } from '../src/lib/supabase';
 
 setupCalendarLocales();
 
@@ -201,28 +202,83 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
             setDjInput('');
         }
 
-        try {
-            await createSessionMutation.mutateAsync({
-                date: dateIsoStr,
-                title: title.trim(),
-                venue: venue.trim(),
-                start_time: startTime.trim(),
-                end_time: endTime.trim(),
-                is_collective: isCollective,
-                djs: finalDjs,
-                earning_type: earningType,
-                earning_amount: parseFloat(earningAmount) || 0,
-                currency: currency,
-                recurrence_type: recurrenceType,
-                recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
-                color: selectedColor || undefined
-            });
+        const executeSave = async () => {
+            try {
+                await createSessionMutation.mutateAsync({
+                    date: dateIsoStr,
+                    title: title.trim(),
+                    venue: venue.trim(),
+                    start_time: startTime.trim(),
+                    end_time: endTime.trim(),
+                    is_collective: isCollective,
+                    djs: finalDjs,
+                    earning_type: earningType,
+                    earning_amount: parseFloat(earningAmount) || 0,
+                    currency: currency,
+                    recurrence_type: recurrenceType,
+                    recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
+                    color: selectedColor || undefined
+                });
 
-            Alert.alert(t('success'), t('session_added_success'), [
-                { text: 'OK', onPress: onBack }
-            ]);
+                Alert.alert(t('success'), t('session_added_success'), [
+                    { text: 'OK', onPress: onBack }
+                ]);
+            } catch (error) {
+                Alert.alert(t('error'), t('error_saving_session'));
+            }
+        };
+
+        try {
+            // 1. Check duplicate session
+            const { data: duplicateData } = await supabase
+                .from('sessions')
+                .select('id')
+                .eq('user_id', session?.user?.id)
+                .eq('date', dateIsoStr)
+                .limit(1);
+
+            const hasDuplicate = !!(duplicateData && duplicateData.length > 0);
+
+            // 2. Check past date (simple string comparison works for YYYY-MM-DD vs today)
+            const todayStr = new Date().toISOString().split('T')[0];
+            const isPastDate = dateIsoStr < todayStr;
+
+            const promptChecks = (checkDuplicate: boolean, checkPast: boolean) => {
+                if (checkDuplicate) {
+                    Alert.alert(
+                        t('duplicate_session_title') || 'Sesión existente',
+                        t('duplicate_session_message') || 'Ya tienes una o más sesiones registradas en este día. ¿Estás seguro de que quieres añadir otra más?',
+                        [
+                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                            {
+                                text: t('continue') || 'Continuar',
+                                onPress: () => promptChecks(false, checkPast)
+                            }
+                        ]
+                    );
+                    return;
+                }
+
+                if (checkPast) {
+                    Alert.alert(
+                        t('past_date_warning_title') || 'Fecha pasada',
+                        t('past_date_warning_message') || 'Estás a punto de registrar una sesión en una fecha que ya ha pasado. ¿Deseas continuar?',
+                        [
+                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                            { text: t('continue') || 'Continuar', onPress: executeSave }
+                        ]
+                    );
+                    return;
+                }
+
+                executeSave();
+            };
+
+            promptChecks(hasDuplicate, isPastDate);
         } catch (error) {
-            Alert.alert(t('error'), t('error_saving_session'));
+            console.error('Error during validation checks:', error);
+            // Fallback to save if validation query fails
+            executeSave();
         }
     };
 

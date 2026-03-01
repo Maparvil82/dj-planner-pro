@@ -46,5 +46,10 @@
     "color_graphite": "Grafit",
     "delete_session_title": "Sitzung löschen",
     "delete_session_message": "Bist du sicher, dass du diese Sitzung dauerhaft löschen möchtest?",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "duplicate_session_title": "Vorhandene Sitzung",
+    "duplicate_session_message": "Du hast bereits eine oder mehrere Sitzungen an diesem Tag registriert. Bist du sicher, dass du eine weitere hinzufügen möchtest?",
+    "past_date_warning_title": "Vergangenes Datum",
+    "past_date_warning_message": "Du bist dabei, eine Sitzung an einem bereits vergangenen Datum zu registrieren. Möchtest du fortfahren?",
+    "continue": "Weiter"
 }
