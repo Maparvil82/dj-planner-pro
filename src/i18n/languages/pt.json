@@ -45,5 +45,8 @@
     "color_lavender": "Lavanda",
     "color_grape": "Uva",
     "color_flamingo": "Flamingo",
-    "color_graphite": "Grafite"
+    "color_graphite": "Grafite",
+    "delete_session_title": "Excluir sessão",
+    "delete_session_message": "Tem certeza de que deseja excluir permanentemente esta sessão?",
+    "delete": "Excluir"
 }

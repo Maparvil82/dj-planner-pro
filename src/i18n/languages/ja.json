@@ -45,5 +45,8 @@
     "color_lavender": "ラベンダー",
     "color_grape": "グレープ",
     "color_flamingo": "フラミンゴ",
-    "color_graphite": "グラファイト"
+    "color_graphite": "グラファイト",
+    "delete_session_title": "セッションを削除",
+    "delete_session_message": "このセッションを完全に削除してもよろしいですか？",
+    "delete": "削除"
 }

@@ -52,6 +52,20 @@ export const useCreateSessionMutation = () => {
     });
 };
 
+export const useDeleteSessionMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (sessionId: string) => {
+            return sessionService.deleteSession(sessionId);
+        },
+        onSuccess: () => {
+            // Refetch calendar and upcoming sessions
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+        },
+    });
+};
+
 export const useSessionByIdQuery = (sessionId: string | undefined | string[]) => {
     const id = Array.isArray(sessionId) ? sessionId[0] : sessionId;
 

@@ -1,10 +1,10 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X } from 'lucide-react-native';
 import { useContext, useState, useMemo } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
+    const deleteSessionMutation = useDeleteSessionMutation();
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -139,8 +140,8 @@ export default function HomeScreen() {
             {/* HEADER */}
             <View className="flex-row items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
                 <View>
-                    <Text className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                        DJ Planner PRO
+                    <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                        DJ Planner
                     </Text>
                 </View>
                 <Avatar
@@ -283,7 +284,23 @@ export default function HomeScreen() {
                                         <TouchableOpacity
                                             activeOpacity={0.7}
                                             onPress={() => router.push(`/session/${session.id}` as any)}
-                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch"
+                                            onLongPress={() => {
+                                                Alert.alert(
+                                                    t('delete_session_title') || 'Eliminar Sesión',
+                                                    t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
+                                                    [
+                                                        { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                                                        {
+                                                            text: t('delete') || 'Eliminar',
+                                                            style: 'destructive',
+                                                            onPress: () => {
+                                                                deleteSessionMutation.mutate(session.id);
+                                                            }
+                                                        }
+                                                    ]
+                                                );
+                                            }}
+                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch mb-3"
                                         >
                                             <View className="w-24 h-24 items-center justify-center m-3 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
                                                 <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
@@ -389,6 +406,23 @@ export default function HomeScreen() {
                                                 setIsEarningsModalVisible(false);
                                                 router.push(`/session/${session.id}` as any);
                                             }}
+                                            onLongPress={() => {
+                                                Alert.alert(
+                                                    t('delete_session_title') || 'Eliminar Sesión',
+                                                    t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
+                                                    [
+                                                        { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                                                        {
+                                                            text: t('delete') || 'Eliminar',
+                                                            style: 'destructive',
+                                                            onPress: () => {
+                                                                setIsEarningsModalVisible(false);
+                                                                deleteSessionMutation.mutate(session.id);
+                                                            }
+                                                        }
+                                                    ]
+                                                );
+                                            }}
                                             className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                         >
                                             <View className="flex-1 pr-4">
@@ -456,6 +490,23 @@ export default function HomeScreen() {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
+                                                onLongPress={() => {
+                                                    Alert.alert(
+                                                        t('delete_session_title') || 'Eliminar Sesión',
+                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
+                                                        [
+                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                                                            {
+                                                                text: t('delete') || 'Eliminar',
+                                                                style: 'destructive',
+                                                                onPress: () => {
+                                                                    setIsProjectedModalVisible(false);
+                                                                    deleteSessionMutation.mutate(session.id);
+                                                                }
+                                                            }
+                                                        ]
+                                                    );
+                                                }}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
@@ -497,6 +548,23 @@ export default function HomeScreen() {
                                                 onPress={() => {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
+                                                }}
+                                                onLongPress={() => {
+                                                    Alert.alert(
+                                                        t('delete_session_title') || 'Eliminar Sesión',
+                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
+                                                        [
+                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
+                                                            {
+                                                                text: t('delete') || 'Eliminar',
+                                                                style: 'destructive',
+                                                                onPress: () => {
+                                                                    setIsProjectedModalVisible(false);
+                                                                    deleteSessionMutation.mutate(session.id);
+                                                                }
+                                                            }
+                                                        ]
+                                                    );
                                                 }}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >

@@ -216,5 +216,17 @@ export const sessionService = {
         }
 
         return data || null;
+    },
+
+    async deleteSession(sessionId: string): Promise<void> {
+        const { error } = await supabase
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId);
+
+        if (error) {
+            console.error('Error deleting session:', error);
+            throw new Error(error.message);
+        }
     }
 };
