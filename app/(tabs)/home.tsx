@@ -155,7 +155,7 @@ export default function HomeScreen() {
             <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
                 {/* MONTHLY EARNINGS CARD */}
-                <View className="mb-8">
+                <View className="mb-16">
                     <View className="flex-row gap-4 px-2">
                         {/* Earned So Far Card */}
                         <TouchableOpacity
@@ -366,11 +366,11 @@ export default function HomeScreen() {
             {/* FLOATING ACTION BUTTON (Add Session) */}
             <TouchableOpacity
                 activeOpacity={0.8}
-                className="absolute bottom-6 right-6 w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full items-center justify-center shadow-lg shadow-blue-500/40"
+                className="absolute bottom-6 right-6 w-16 h-16 bg-neutral-800 dark:bg-blue-500 rounded-full items-center justify-center shadow-lg shadow-blue-500/40"
                 style={{ elevation: 8 }}
                 onPress={() => router.push('/add-session')}
             >
-                <CalendarPlus size={28} color="#FFFFFF" />
+                <CalendarPlus size={28} color="#919191ff" />
             </TouchableOpacity>
 
             {/* EARNINGS HISTORY MODAL */}
