@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { CreateSessionInput } from '../types/session';
 
 export const useSessionsQuery = (year: number, month: number) => {
-    const { session } = useAuthStore();
+    const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
     return useQuery({
@@ -13,13 +13,13 @@ export const useSessionsQuery = (year: number, month: number) => {
             if (!userId) return [];
             return sessionService.getSessionsByMonth(year, month, userId);
         },
-        enabled: !!userId,
+        enabled: !!userId && initialized,
         staleTime: 1000 * 60 * 5, // 5 minutes cache to prevent constant loading spinners
     });
 };
 
 export const useUpcomingSessionsQuery = () => {
-    const { session } = useAuthStore();
+    const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
     return useQuery({
@@ -28,7 +28,7 @@ export const useUpcomingSessionsQuery = () => {
             if (!userId) return [];
             return sessionService.getUpcomingSessions(userId);
         },
-        enabled: !!userId,
+        enabled: !!userId && initialized,
         staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 };

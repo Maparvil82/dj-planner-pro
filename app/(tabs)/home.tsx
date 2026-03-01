@@ -22,7 +22,7 @@ export default function HomeScreen() {
     const [isProjectedModalVisible, setIsProjectedModalVisible] = useState(false);
     // Calendar localization is now handled where the calendar is used
 
-    const { data: upcomingSessions, isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
+    const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
     const deleteSessionMutation = useDeleteSessionMutation();
 
     const now = new Date();
@@ -31,7 +31,11 @@ export default function HomeScreen() {
     const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
     const capitalizedMonthName = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
 
-    const { data: monthSessions, isLoading: isLoadingMonth } = useSessionsQuery(currentYear, currentMonth);
+    const { data: monthSessions, isLoading: isMonthLoading } = useSessionsQuery(currentYear, currentMonth);
+
+    const { initialized } = useAuthStore();
+    const isLoadingUpcoming = isUpcomingLoading || !initialized;
+    const isLoadingMonth = isMonthLoading || !initialized;
 
     const calculateSessionEarnings = (session: any) => {
         if (session.earning_type === 'fixed') return session.earning_amount || 0;
