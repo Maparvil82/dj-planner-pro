@@ -99,3 +99,18 @@ export const useUpdateSessionColorMutation = () => {
         },
     });
 };
+
+export const useUpdateSessionMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ sessionId, input }: { sessionId: string; input: Partial<CreateSessionInput> }) => {
+            return sessionService.updateSession(sessionId, input);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['session', variables.sessionId] });
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['tags'] });
+        },
+    });
+};

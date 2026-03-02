@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSessionByIdQuery, useDeleteSessionMutation, useUpdateSessionColorMutation } from '../../src/hooks/useSessionsQuery';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X, Pencil } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -116,18 +116,28 @@ export default function SessionDetailScreen() {
                 >
                     <ChevronLeft size={24} color={isDark ? '#FFFFFF' : '#111827'} />
                 </TouchableOpacity>
-                <View className="flex-row gap-2">
+                <View className="flex-row items-center space-x-3">
+                    <TouchableOpacity
+                        onPress={() => router.push(`/edit-session/${id}`)}
+                        className="p-2"
+                        activeOpacity={0.7}
+                    >
+                        <Pencil size={22} color={isDark ? '#D1D5DB' : '#4B5563'} strokeWidth={1.5} />
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         onPress={() => setIsColorModalVisible(true)}
-                        className="w-10 h-10 items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-full"
+                        className="p-2"
+                        activeOpacity={0.7}
                     >
-                        <Palette size={20} color={session.color || (isDark ? '#9CA3AF' : '#6B7280')} />
+                        <Palette size={22} color={session.color || (isDark ? '#D1D5DB' : '#4B5563')} strokeWidth={1.5} />
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={handleShare}
-                        className="w-10 h-10 items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-full"
+                        className="p-2"
+                        activeOpacity={0.7}
                     >
-                        <Share2 size={20} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                        <Share2 size={20} color={isDark ? '#D1D5DB' : '#4B5563'} strokeWidth={1.5} />
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={handleDelete}
@@ -322,6 +332,6 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }

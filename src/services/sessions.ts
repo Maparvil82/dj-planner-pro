@@ -276,5 +276,19 @@ export const sessionService = {
             console.error('Error updating multiple session colors:', error);
             throw new Error(error.message);
         }
+    },
+    async updateSession(sessionId: string, input: Partial<CreateSessionInput>): Promise<void> {
+        const { error } = await supabase
+            .from('sessions')
+            .update({
+                ...input,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', sessionId);
+
+        if (error) {
+            console.error('Error updating session:', error);
+            throw new Error(error.message);
+        }
     }
 };
