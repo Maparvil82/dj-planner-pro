@@ -143,24 +143,42 @@ export default function SessionDetailScreen() {
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Title and Earnings Section */}
-                <View className="mb-8">
+                {/* Title Section */}
+                <View className="mb-6">
                     <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
                         {t('session_summary_label') || 'Resumen de la sesión'}
                     </Text>
-                    <Text className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-3">
+                    <Text className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         {session.title}
                     </Text>
+                </View>
 
-                    {/* Estimated Earnings prominently below title */}
-                    <View className="flex-row items-center bg-emerald-50 dark:bg-emerald-900/20 self-start px-4 py-2 rounded-2xl border border-emerald-100 dark:border-emerald-800/40">
-                        <Banknote size={16} color={isDark ? '#34D399' : '#059669'} className="mr-2" />
-                        <Text className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mr-2">
-                            {t('total_earnings') || 'Total Ganado'}:
-                        </Text>
-                        <Text className="text-xl font-black text-emerald-700 dark:text-emerald-400">
-                            {earnings.toFixed(2)} {session.currency || '€'}
-                        </Text>
+                {/* Earnings Section (Matching Venue Style) */}
+                <View className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl p-6 flex-row items-center mb-6 border border-emerald-100/50 dark:border-emerald-800/20">
+                    <View className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-full items-center justify-center mr-4 shadow-sm border border-emerald-200 dark:border-emerald-800/30">
+                        <Banknote size={22} color={isDark ? '#34D399' : '#059669'} />
+                    </View>
+                    <View className="flex-1">
+                        <View className="flex-row justify-between items-start">
+                            <View>
+                                <Text className="text-xs font-bold text-emerald-600 dark:text-emerald-400/70 uppercase tracking-widest mb-1">
+                                    {t('estimated_total_label') || 'Total estimado'}
+                                </Text>
+                                <Text className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                                    {earnings.toFixed(2)} {session.currency || '€'}
+                                </Text>
+                            </View>
+                            <View className="items-end">
+                                <Text className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500/60 uppercase tracking-widest mb-1">
+                                    {t('payment_method') || 'Cálculo'}
+                                </Text>
+                                <Text className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                    {session.earning_type === 'hourly' && t('calc_hourly', { amount: session.earning_amount, currency: session.currency, hours: duration.toFixed(1) })}
+                                    {session.earning_type === 'fixed' && t('calc_fixed')}
+                                    {session.earning_type === 'free' && t('calc_free')}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 
@@ -283,8 +301,8 @@ export default function SessionDetailScreen() {
                                                 );
                                             }}
                                             className={`w-[48%] flex-row items-center p-3 rounded-2xl border ${isSelected
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
+                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                                                 }`}
                                         >
                                             <View className="w-5 h-5 rounded-full mr-3 border border-black/5" style={{ backgroundColor: item.color }} />

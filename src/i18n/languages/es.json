@@ -97,5 +97,10 @@
     "apply_color_to_all_title": "¿Actualizar sesiones relacionadas?",
     "apply_color_to_all_message": "¿Quieres cambiar el color solo a esta sesión o a todas las de \"{{title}}\"?",
     "apply_only_this": "Solo esta sesión",
-    "apply_all_related": "Todas las de {{title}}"
+    "apply_all_related": "Todas las de {{title}}",
+    "payment_method": "Método de pago",
+    "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
+    "calc_fixed": "Precio cerrado",
+    "calc_free": "Sin remuneración",
+    "estimated_total_label": "Total estimado"
 }
