@@ -208,12 +208,12 @@ export default function SessionDetailScreen() {
                 </View>
 
                 {/* Summary Section (Mockup Inspiration) */}
-                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8 space-y-6">
-                    <Text className="text-xl font-black text-gray-900 dark:text-white mb-6">
+                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8">
+                    <Text className="text-xl font-black text-gray-900 dark:text-white mb-10">
                         {t('session_detail_header') || 'Detalle de la sesión'}
                     </Text>
 
-                    <View className="space-y-6">
+                    <View className="space-y-12">
                         {/* Date Row */}
                         <View className="flex-row justify-between items-center">
                             <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">{t('date') || 'Fecha'}</Text>

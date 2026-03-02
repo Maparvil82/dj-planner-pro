@@ -167,7 +167,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
-            <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+            <View className="flex-row items-center justify-between px-5 pt-4 pb-6">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
                     <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>
                 </TouchableOpacity>
@@ -246,7 +246,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                     </View>
 
                     {/* Title & Venue */}
-                    <View className="flex-col gap-6">
+                    <View className="flex-col gap-8">
                         <View className="z-50">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('session_title')} *
