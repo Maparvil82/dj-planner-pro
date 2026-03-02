@@ -52,6 +52,14 @@
     "duplicate_session_title": "Session existante",
     "duplicate_session_message": "Vous avez déjà une ou plusieurs sessions enregistrées ce jour-là. Êtes-vous sûr de vouloir en ajouter une autre ?",
     "past_date_warning_title": "Date passée",
-    "past_date_warning_message": "Vous êtes sur le point denregistrer une session à une date déjà passée. Voulez-vous continuer ?",
-    "continue": "Continuer"
+    "past_date_warning_message": "Vous êtes sur le point d'enregistrer une séance à una date déjà passée. Voulez-vous continuer ?",
+    "continue": "Continuer",
+    "error_loading_session": "Nous n'avons pas pu charger les informations de cette séance.",
+    "go_back": "Retourner",
+    "session_summary_label": "Résumé de la séance",
+    "session_detail_header": "Détails de la séance",
+    "duration": "Durée",
+    "shared_with": "Partagé avec",
+    "share_session_btn": "Partager la séance",
+    "time_label": "Heure"
 }

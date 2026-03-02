@@ -50,6 +50,14 @@
     "duplicate_session_title": "Vorhandene Sitzung",
     "duplicate_session_message": "Du hast bereits eine oder mehrere Sitzungen an diesem Tag registriert. Bist du sicher, dass du eine weitere hinzufügen möchtest?",
     "past_date_warning_title": "Vergangenes Datum",
-    "past_date_warning_message": "Du bist dabei, eine Sitzung an einem bereits vergangenen Datum zu registrieren. Möchtest du fortfahren?",
-    "continue": "Weiter"
+    "past_date_warning_message": "Sie sind dabei, eine Sitzung für ein Datum zu registrieren, das bereits vergangen ist. Möchten Sie fortfahren?",
+    "continue": "Fortsetzen",
+    "error_loading_session": "Wir konnten die Informationen für diese Sitzung nicht laden.",
+    "go_back": "Zurückgehen",
+    "session_summary_label": "Sitzungszusammenfassung",
+    "session_detail_header": "Sitzungsdetails",
+    "duration": "Dauer",
+    "shared_with": "Geteilt mit",
+    "share_session_btn": "Sitzung teilen",
+    "time_label": "Zeit"
 }

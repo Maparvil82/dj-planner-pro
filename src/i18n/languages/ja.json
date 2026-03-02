@@ -53,5 +53,13 @@
     "duplicate_session_message": "この日には既に1つ以上のセッションが登録されています。本当に別のセッションを追加しますか？",
     "past_date_warning_title": "過去の日付",
     "past_date_warning_message": "すでに過ぎた日付にセッションを登録しようとしています。続行しますか？",
-    "continue": "続行"
+    "continue": "続行",
+    "error_loading_session": "このセッションの情報を読み込めませんでした。",
+    "go_back": "戻る",
+    "session_summary_label": "セッションの概要",
+    "session_detail_header": "セッションの詳細",
+    "duration": "時間",
+    "shared_with": "共同出演",
+    "share_session_btn": "セッションを共有",
+    "time_label": "時間"
 }

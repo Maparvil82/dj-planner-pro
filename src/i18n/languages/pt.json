@@ -53,5 +53,13 @@
     "duplicate_session_message": "Você já tem uma ou mais sessões registradas neste dia. Tem certeza de que deseja adicionar outra?",
     "past_date_warning_title": "Data Passada",
     "past_date_warning_message": "Você está prestes a registrar uma sessão em uma data que já passou. Deseja continuar?",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "error_loading_session": "Não foi possível carregar as informações desta sessão.",
+    "go_back": "Voltar",
+    "session_summary_label": "Resumo da sessão",
+    "session_detail_header": "Detalhes da sessão",
+    "duration": "Duração",
+    "shared_with": "Compartilhado com",
+    "share_session_btn": "Compartilhar sessão",
+    "time_label": "Horário"
 }
