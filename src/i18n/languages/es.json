@@ -96,6 +96,7 @@
     "choose_color": "Elige un color",
     "apply_color_to_all_title": "¿Actualizar sesiones relacionadas?",
     "apply_color_to_all_message": "¿Quieres cambiar el color solo a esta sesión o a todas las de \"{{title}}\"?",
+    "apply_changes_to_all_message": "¿Quieres aplicar estos cambios solo a esta sesión o a todas las de \"{{title}}\"?",
     "apply_only_this": "Solo esta sesión",
     "apply_all_related": "Todas las de {{title}}",
     "payment_method": "Método de pago",

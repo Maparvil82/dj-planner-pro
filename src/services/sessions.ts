@@ -277,17 +277,60 @@ export const sessionService = {
             throw new Error(error.message);
         }
     },
-    async updateSession(sessionId: string, input: Partial<CreateSessionInput>): Promise<void> {
-        const { error } = await supabase
-            .from('sessions')
-            .update({
-                ...input,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', sessionId);
+    async updateSession(sessionId: string, input: Partial<CreateSessionInput>, updateAll: boolean = false): Promise<void> {
+        if (!updateAll) {
+            const { error } = await supabase
+                .from('sessions')
+                .update({
+                    ...input,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', sessionId);
 
+            if (error) {
+                console.error('Error updating session:', error);
+                throw new Error(error.message);
+            }
+            return;
+        }
+
+        // Broad update logic
+        const { data: session } = await supabase
+            .from('sessions')
+            .select('title, parent_session_id, user_id')
+            .eq('id', sessionId)
+            .single();
+
+        if (!session) throw new Error('Session not found');
+
+        let query = supabase.from('sessions').update({
+            ...input,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', session.user_id);
+
+        if (session.parent_session_id) {
+            // It's a child in a series
+            query = query.or(`id.eq.${session.parent_session_id},parent_session_id.eq.${session.parent_session_id}`);
+        } else {
+            // Check if it's a parent
+            const { data: children } = await supabase
+                .from('sessions')
+                .select('id')
+                .eq('parent_session_id', sessionId)
+                .limit(1);
+
+            if (children && children.length > 0) {
+                // It's a parent
+                query = query.or(`id.eq.${sessionId},parent_session_id.eq.${sessionId}`);
+            } else {
+                // Not a series, update by title as requested ("todas las de [Nombre]")
+                query = query.eq('title', session.title);
+            }
+        }
+
+        const { error } = await query;
         if (error) {
-            console.error('Error updating session:', error);
+            console.error('Error updating multiple sessions:', error);
             throw new Error(error.message);
         }
     }

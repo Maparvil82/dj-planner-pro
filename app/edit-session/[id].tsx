@@ -118,34 +118,55 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
             finalDjs.push(djInput.trim());
         }
 
-        try {
-            await updateSessionMutation.mutateAsync({
-                sessionId: initialSession.id,
-                input: {
-                    date: sessionDate,
-                    title: title.trim(),
-                    venue: venue.trim(),
-                    start_time: startTime.trim(),
-                    end_time: endTime.trim(),
-                    is_collective: isCollective,
-                    djs: finalDjs,
-                    earning_type: earningType,
-                    earning_amount: parseFloat(earningAmount) || 0,
-                    currency: currency,
-                    color: selectedColor || undefined
-                }
-            });
+        const input = {
+            date: sessionDate,
+            title: title.trim(),
+            venue: venue.trim(),
+            start_time: startTime.trim(),
+            end_time: endTime.trim(),
+            is_collective: isCollective,
+            djs: finalDjs,
+            earning_type: earningType,
+            earning_amount: parseFloat(earningAmount) || 0,
+            currency: currency,
+            color: selectedColor || undefined
+        };
 
-            Alert.alert(t('success'), t('session_added_success'), [
-                { text: 'OK', onPress: onBack }
-            ]);
-        } catch (error) {
-            Alert.alert(t('error'), t('error_saving_session'));
-        }
+        const performUpdate = async (updateAll: boolean) => {
+            try {
+                await updateSessionMutation.mutateAsync({
+                    sessionId: initialSession.id,
+                    input,
+                    updateAll
+                });
+
+                Alert.alert(t('success'), t('session_added_success'), [
+                    { text: 'OK', onPress: onBack }
+                ]);
+            } catch (error) {
+                Alert.alert(t('error'), t('error_saving_session'));
+            }
+        };
+
+        Alert.alert(
+            t('apply_color_to_all_title') || '¿Actualizar sesiones?',
+            t('apply_changes_to_all_message', { title: initialSession.title }),
+            [
+                { text: t('cancel'), style: 'cancel' },
+                {
+                    text: t('apply_only_this'),
+                    onPress: () => performUpdate(false)
+                },
+                {
+                    text: t('apply_all_related', { title: initialSession.title }),
+                    onPress: () => performUpdate(true)
+                }
+            ]
+        );
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
             <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
                     <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>

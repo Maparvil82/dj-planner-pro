@@ -284,7 +284,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
 
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
             <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
                     <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>

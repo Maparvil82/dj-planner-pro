@@ -67,6 +67,7 @@
     "choose_color": "Escolha uma cor",
     "apply_color_to_all_title": "Atualizar sessões relacionadas?",
     "apply_color_to_all_message": "Deseja alterar a cor apenas para esta sessão ou para todas as de \"{{title}}\"?",
+    "apply_changes_to_all_message": "Deseja aplicar estas alterações apenas a esta sessão ou a todas as sessões de \"{{title}}\"?",
     "apply_only_this": "Apenas esta sessão",
     "apply_all_related": "Todas as de {{title}}",
     "payment_method": "Método de pagamento",
