@@ -1,11 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useContext, useEffect } from 'react';
 import {
     View,
     Text,
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    RefreshControl
+    RefreshControl,
+    TextInput,
+    Modal,
+    Pressable,
+    Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -13,23 +17,57 @@ import {
     ChevronRight,
     MapPin,
     Clock,
-    Users
+    Users,
+    Search,
+    Filter,
+    X,
+    Check
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { useContext } from 'react';
 import { useRouter } from 'expo-router';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameMonth, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+
+import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
+
+setupCalendarLocales();
+
+const { width } = Dimensions.get('window');
+
 export default function HistoryScreen() {
-    const { t, i18n } = useTranslation();
+    const { t, i18n, currentLanguage } = useTranslation();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
 
     const { data: sessions, isLoading, refetch, isRefetching } = useAllSessionsQuery();
+
+    // Filter States
+    const [searchQuery, setSearchQuery] = useState('');
+    const [quickFilter, setQuickFilter] = useState<'all' | 'collective' | 'this_month' | 'last_month'>('all');
+    const [isAdvancedModalVisible, setIsAdvancedModalVisible] = useState(false);
+
+    // Advanced Filter States
+    const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
+    const [selectedTitles, setSelectedTitles] = useState<string[]>([]);
+    const [selectedEarningTypes, setSelectedEarningTypes] = useState<string[]>([]);
+    const [startDate, setStartDate] = useState<string | null>(null);
+    const [endDate, setEndDate] = useState<string | null>(null);
+
+    // Mini Modals for Calendar pickers
+    const [showStartDateCalendar, setShowStartDateCalendar] = useState(false);
+    const [showEndDateCalendar, setShowEndDateCalendar] = useState(false);
+
+    // FIX: Move locale setup to useEffect to avoid infinite render loop
+    useEffect(() => {
+        if (currentLanguage) {
+            LocaleConfig.defaultLocale = currentLanguage;
+        }
+    }, [currentLanguage]);
 
     const locale = useMemo(() => {
         switch (i18n.language) {
@@ -43,13 +81,70 @@ export default function HistoryScreen() {
         }
     }, [i18n.language]);
 
-    // Group sessions by month/year
-    const groupedSessions = useMemo(() => {
+    // Unique Venues for filter
+    const uniqueVenues = useMemo(() => {
+        if (!sessions) return [];
+        const venues = Array.from(new Set(sessions.map(s => s.venue).filter(Boolean)));
+        return venues.sort();
+    }, [sessions]);
+
+    // Unique Titles for filter
+    const uniqueTitles = useMemo(() => {
+        if (!sessions) return [];
+        const titles = Array.from(new Set(sessions.map(s => s.title).filter(Boolean)));
+        return titles.sort();
+    }, [sessions]);
+
+    // Filtering Logic
+    const filteredSessions = useMemo(() => {
         if (!sessions) return [];
 
+        return sessions.filter(session => {
+            // Search Query
+            if (searchQuery) {
+                const searchLower = searchQuery.toLowerCase();
+                const matchesTitle = session.title?.toLowerCase().includes(searchLower);
+                const matchesVenue = session.venue?.toLowerCase().includes(searchLower);
+                if (!matchesTitle && !matchesVenue) return false;
+            }
+
+            // Quick Filters
+            const sessionDateStr = session.date;
+            const sessionDate = parseISO(sessionDateStr);
+            const now = new Date();
+            if (quickFilter === 'collective' && !session.is_collective) return false;
+            if (quickFilter === 'this_month' && !isSameMonth(sessionDate, now)) return false;
+            if (quickFilter === 'last_month') {
+                const lastMonth = subMonths(now, 1);
+                if (!isSameMonth(sessionDate, lastMonth)) return false;
+            }
+
+            // Advanced Filters
+            if (selectedVenues.length > 0 && !selectedVenues.includes(session.venue)) return false;
+            if (selectedTitles.length > 0 && !selectedTitles.includes(session.title)) return false;
+            if (selectedEarningTypes.length > 0 && !selectedEarningTypes.includes(session.earning_type)) return false;
+
+            // Fixed Date Range logic (inclusive) using date-fns for robustness
+            const normalizedSessionDate = sessionDateStr.substring(0, 10);
+            const sDate = parseISO(normalizedSessionDate);
+
+            if (startDate || endDate) {
+                const intervalStart = startDate ? parseISO(startDate) : new Date(0); // Beginning of time
+                const intervalEnd = endDate ? parseISO(endDate) : new Date(8640000000000000); // Far future
+
+                // Interval check (inclusive)
+                if (sDate < intervalStart || sDate > intervalEnd) return false;
+            }
+
+            return true;
+        });
+    }, [sessions, searchQuery, quickFilter, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+
+    // Group filtered sessions by month/year
+    const groupedSessions = useMemo(() => {
         const groups: { title: string; data: any[] }[] = [];
 
-        sessions.forEach(session => {
+        filteredSessions.forEach(session => {
             const date = parseISO(session.date);
             const monthYear = format(date, 'MMMM yyyy', { locale });
             const capitalizedMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
@@ -63,7 +158,7 @@ export default function HistoryScreen() {
         });
 
         return groups;
-    }, [sessions, locale]);
+    }, [filteredSessions, locale]);
 
     const calculateSessionEarnings = (session: any) => {
         if (session.earning_type === 'fixed') return session.earning_amount || 0;
@@ -78,6 +173,25 @@ export default function HistoryScreen() {
         return 0;
     };
 
+    const resetFilters = () => {
+        setSearchQuery('');
+        setQuickFilter('all');
+        setSelectedVenues([]);
+        setSelectedTitles([]);
+        setSelectedEarningTypes([]);
+        setStartDate(null);
+        setEndDate(null);
+    };
+
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (selectedVenues.length > 0) count++;
+        if (selectedTitles.length > 0) count++;
+        if (selectedEarningTypes.length > 0) count++;
+        if (startDate || endDate) count++;
+        return count;
+    }, [selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+
     if (isLoading && !isRefetching) {
         return (
             <SafeAreaView className="flex-1 bg-white dark:bg-gray-950 items-center justify-center">
@@ -88,14 +202,76 @@ export default function HistoryScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
-            <View className="px-6 pt-4 pb-2">
+            {/* Header */}
+            <View className="px-6 pt-4 pb-2 flex-row items-center justify-between">
                 <Text className="text-3xl font-black text-gray-900 dark:text-white">
                     {t('history')}
                 </Text>
+                {/* Advanced Filter Trigger */}
+                <TouchableOpacity
+                    onPress={() => setIsAdvancedModalVisible(true)}
+                    className={`w-10 h-10 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
+                >
+                    <Filter size={20} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
+                    {activeFiltersCount > 0 && (
+                        <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950 items-center justify-center">
+                            <Text className="text-[10px] font-bold text-white">{activeFiltersCount}</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </View>
+
+            {/* Search Bar */}
+            <View className="px-6 mt-4">
+                <View className="flex-row items-center bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800">
+                    <Search size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                    <TextInput
+                        className="flex-1 ml-3 text-gray-900 dark:text-white font-medium"
+                        placeholder={t('search_placeholder')}
+                        placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {searchQuery !== '' && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+
+            {/* Quick Filters */}
+            <View className="mt-4">
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}
+                >
+                    {[
+                        { id: 'all', label: t('filter_all') },
+                        { id: 'this_month', label: t('filter_this_month') },
+                        { id: 'last_month', label: t('filter_last_month') },
+                        { id: 'collective', label: t('filter_collective') }
+                    ].map(filter => (
+                        <TouchableOpacity
+                            key={filter.id}
+                            onPress={() => setQuickFilter(filter.id as any)}
+                            className={`px-5 py-2.5 rounded-full border ${quickFilter === filter.id
+                                ? 'bg-blue-600 border-blue-600'
+                                : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                }`}
+                        >
+                            <Text className={`text-sm font-bold ${quickFilter === filter.id ? 'text-white' : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                {filter.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             <ScrollView
-                className="flex-1 px-6"
+                className="flex-1 px-6 mt-2"
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
@@ -107,12 +283,20 @@ export default function HistoryScreen() {
             >
                 {groupedSessions.length === 0 ? (
                     <View className="py-20 items-center justify-center">
-                        <View className="w-20 h-20 bg-gray-100 dark:bg-gray-900 rounded-full items-center justify-center mb-4">
+                        <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
                             <CalendarIcon size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
                         </View>
-                        <Text className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                            {t('no_sessions_yet')}
+                        <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
+                            {searchQuery || activeFiltersCount > 0 ? t('no_results_filtered') : t('no_sessions_yet')}
                         </Text>
+                        {(searchQuery !== '' || activeFiltersCount > 0 || quickFilter !== 'all') && (
+                            <TouchableOpacity
+                                onPress={resetFilters}
+                                className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-900 rounded-full"
+                            >
+                                <Text className="text-blue-600 dark:text-blue-400 font-bold">{t('filter_reset')}</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : (
                     groupedSessions.map((group, groupIdx) => (
@@ -125,8 +309,8 @@ export default function HistoryScreen() {
                                 {group.data.map((session) => {
                                     const dateObj = parseISO(session.date);
                                     const d = format(dateObj, 'd');
-                                    const monthName = format(dateObj, 'MMM', { locale });
-                                    const weekdayName = format(dateObj, 'EEE', { locale });
+                                    const mName = format(dateObj, 'MMM', { locale });
+                                    const wName = format(dateObj, 'EEE', { locale });
                                     const earnings = calculateSessionEarnings(session);
 
                                     return (
@@ -138,13 +322,13 @@ export default function HistoryScreen() {
                                         >
                                             <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
                                                 <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                    {weekdayName}
+                                                    {wName}
                                                 </Text>
                                                 <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
                                                     {d}
                                                 </Text>
                                                 <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                    {monthName}
+                                                    {mName}
                                                 </Text>
                                             </View>
 
@@ -159,6 +343,11 @@ export default function HistoryScreen() {
                                                     <View className="flex-row items-center flex-wrap gap-2">
                                                         <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>
                                                             {session.start_time} - {session.end_time}
+                                                        </Text>
+
+                                                        {/* Debug Date Label to help user verify filter */}
+                                                        <Text className="text-[10px] text-gray-400 dark:text-gray-600 font-mono">
+                                                            {session.date}
                                                         </Text>
 
                                                         {session.is_collective && session.djs && session.djs.length > 0 && (
@@ -193,8 +382,274 @@ export default function HistoryScreen() {
                         </View>
                     ))
                 )}
-                <View className="h-10" />
+                <View className="h-20" />
             </ScrollView>
+
+            {/* Advanced Filter Modal */}
+            <Modal
+                visible={isAdvancedModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setIsAdvancedModalVisible(false)}
+            >
+                <View className="flex-1 justify-end bg-black/50">
+                    <Pressable className="flex-1" onPress={() => setIsAdvancedModalVisible(false)} />
+                    <View className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 max-h-[90%]">
+                        <View className="flex-row items-center justify-between mb-8">
+                            <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                                {t('filters_title')}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setIsAdvancedModalVisible(false)}
+                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center"
+                            >
+                                <X size={24} color={isDark ? '#FFFFFF' : '#000000'} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            {/* Date Range Section */}
+                            <View className="mb-8">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                    {t('filter_date_range')}
+                                </Text>
+                                <View className="flex-row gap-4">
+                                    <TouchableOpacity
+                                        onPress={() => setShowStartDateCalendar(true)}
+                                        className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
+                                    >
+                                        <View>
+                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_start_date')}</Text>
+                                            <Text className={`font-bold ${startDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                {startDate ? format(parseISO(startDate), 'dd/MM/yyyy') : '--/--/----'}
+                                            </Text>
+                                        </View>
+                                        <CalendarIcon size={16} color={startDate ? '#2563EB' : '#9CA3AF'} />
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        onPress={() => setShowEndDateCalendar(true)}
+                                        className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
+                                    >
+                                        <View>
+                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_end_date')}</Text>
+                                            <Text className={`font-bold ${endDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                {endDate ? format(parseISO(endDate), 'dd/MM/yyyy') : '--/--/----'}
+                                            </Text>
+                                        </View>
+                                        <CalendarIcon size={16} color={endDate ? '#2563EB' : '#9CA3AF'} />
+                                    </TouchableOpacity>
+                                </View>
+                                {(startDate || endDate) && (
+                                    <TouchableOpacity
+                                        onPress={() => { setStartDate(null); setEndDate(null); }}
+                                        className="mt-2"
+                                    >
+                                        <Text className="text-xs font-bold text-red-500 ml-1">{t('filter_reset')}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
+                            {/* Venues Section */}
+                            <View className="mb-8">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                    {t('filter_venues_title')}
+                                </Text>
+                                <View className="flex-row flex-wrap gap-2">
+                                    {uniqueVenues.map(venue => {
+                                        const isSelected = selectedVenues.includes(venue);
+                                        return (
+                                            <TouchableOpacity
+                                                key={venue}
+                                                onPress={() => {
+                                                    if (isSelected) {
+                                                        setSelectedVenues(selectedVenues.filter(v => v !== venue));
+                                                    } else {
+                                                        setSelectedVenues([...selectedVenues, venue]);
+                                                    }
+                                                }}
+                                                className={`px-4 py-2 rounded-xl border ${isSelected
+                                                    ? 'bg-blue-600 border-blue-600'
+                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                    }`}
+                                            >
+                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                    }`}>
+                                                    {venue}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+
+                            {/* Titles (Fiestas) Section */}
+                            <View className="mb-8">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                    {t('filter_titles_title')}
+                                </Text>
+                                <View className="flex-row flex-wrap gap-2">
+                                    {uniqueTitles.map(title => {
+                                        const isSelected = selectedTitles.includes(title);
+                                        return (
+                                            <TouchableOpacity
+                                                key={title}
+                                                onPress={() => {
+                                                    if (isSelected) {
+                                                        setSelectedTitles(selectedTitles.filter(t => t !== title));
+                                                    } else {
+                                                        setSelectedTitles([...selectedTitles, title]);
+                                                    }
+                                                }}
+                                                className={`px-4 py-2 rounded-xl border ${isSelected
+                                                    ? 'bg-blue-600 border-blue-600'
+                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                    }`}
+                                            >
+                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                    }`}>
+                                                    {title}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+
+                            {/* Earning Types Section */}
+                            <View className="mb-8">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                    {t('filter_earning_types_title')}
+                                </Text>
+                                <View className="flex-row gap-2">
+                                    {[
+                                        { id: 'fixed', label: t('earning_fixed') },
+                                        { id: 'hourly', label: t('earning_hourly') },
+                                        { id: 'free', label: t('earning_free') }
+                                    ].map(type => {
+                                        const isSelected = selectedEarningTypes.includes(type.id);
+                                        return (
+                                            <TouchableOpacity
+                                                key={type.id}
+                                                onPress={() => {
+                                                    if (isSelected) {
+                                                        setSelectedEarningTypes(selectedEarningTypes.filter(t => t !== type.id));
+                                                    } else {
+                                                        setSelectedEarningTypes([...selectedEarningTypes, type.id]);
+                                                    }
+                                                }}
+                                                className={`flex-1 px-4 py-3 rounded-xl border items-center ${isSelected
+                                                    ? 'bg-blue-600 border-blue-600'
+                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                    }`}
+                                            >
+                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                    }`}>
+                                                    {type.label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+
+                            {/* More filters can be added here like Date Range Picker */}
+
+                        </ScrollView>
+
+                        {/* Footer Buttons */}
+                        <View className="flex-row gap-4 mt-8">
+                            <TouchableOpacity
+                                onPress={resetFilters}
+                                className="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-gray-900 items-center"
+                            >
+                                <Text className="text-gray-900 dark:text-white font-bold">{t('filter_reset')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setIsAdvancedModalVisible(false)}
+                                className="flex-[2] py-4 rounded-2xl bg-blue-600 items-center"
+                            >
+                                <Text className="text-white font-black">{t('filter_apply')}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+            {/* Start Date Picker Modal */}
+            <Modal visible={showStartDateCalendar} transparent animationType="fade">
+                <View className="flex-1 justify-center items-center bg-black/60 px-6">
+                    <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden w-full max-w-sm">
+                        <Calendar
+                            current={startDate || undefined}
+                            markedDates={startDate ? {
+                                [startDate]: { selected: true, selectedColor: '#2563EB' }
+                            } : {}}
+                            onDayPress={(day: any) => {
+                                setStartDate(day.dateString);
+                                setShowStartDateCalendar(false);
+                            }}
+                            theme={{
+                                calendarBackground: isDark ? '#111827' : '#ffffff',
+                                textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
+                                selectedDayBackgroundColor: '#2563EB',
+                                selectedDayTextColor: '#ffffff',
+                                todayTextColor: '#2563EB',
+                                dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                textDisabledColor: isDark ? '#374151' : '#d9e1e8',
+                                dotColor: '#2563EB',
+                                selectedDotColor: '#ffffff',
+                                arrowColor: '#2563EB',
+                                monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                indicatorColor: '#2563EB',
+                            }}
+                        />
+                        <TouchableOpacity
+                            onPress={() => setShowStartDateCalendar(false)}
+                            className="p-4 items-center border-t border-gray-100 dark:border-gray-800"
+                        >
+                            <Text className="text-gray-500 font-bold">{t('cancel')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* End Date Picker Modal */}
+            <Modal visible={showEndDateCalendar} transparent animationType="fade">
+                <View className="flex-1 justify-center items-center bg-black/60 px-6">
+                    <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden w-full max-w-sm">
+                        <Calendar
+                            current={endDate || undefined}
+                            markedDates={endDate ? {
+                                [endDate]: { selected: true, selectedColor: '#2563EB' }
+                            } : {}}
+                            onDayPress={(day: any) => {
+                                setEndDate(day.dateString);
+                                setShowEndDateCalendar(false);
+                            }}
+                            theme={{
+                                calendarBackground: isDark ? '#111827' : '#ffffff',
+                                textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
+                                selectedDayBackgroundColor: '#2563EB',
+                                selectedDayTextColor: '#ffffff',
+                                todayTextColor: '#2563EB',
+                                dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                textDisabledColor: isDark ? '#374151' : '#d9e1e8',
+                                dotColor: '#2563EB',
+                                selectedDotColor: '#ffffff',
+                                arrowColor: '#2563EB',
+                                monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                indicatorColor: '#2563EB',
+                            }}
+                        />
+                        <TouchableOpacity
+                            onPress={() => setShowEndDateCalendar(false)}
+                            className="p-4 items-center border-t border-gray-100 dark:border-gray-800"
+                        >
+                            <Text className="text-gray-500 font-bold">{t('cancel')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
