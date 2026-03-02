@@ -106,5 +106,6 @@
     "estimated_total_label": "Total estimado",
     "djs_label": "DJs",
     "solo_me": "Solo yo",
-    "shared_with_prefix": "Junto a "
+    "shared_with_prefix": "Junto a ",
+    "history": "Historial"
 }

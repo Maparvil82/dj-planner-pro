@@ -142,6 +142,20 @@ export const sessionService = {
         return sessionData;
     },
 
+    async getAllSessions(userId: string): Promise<Session[]> {
+        const { data, error } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching all sessions:', error);
+            throw new Error(error.message);
+        }
+
+        return data || [];
+    },
     async getSessionsByMonth(year: number, month: number, userId: string): Promise<Session[]> {
         // Construct YYYY-MM prefix for filtering
         const jsMonth = String(month).padStart(2, '0');

@@ -118,3 +118,17 @@ export const useUpdateSessionMutation = () => {
         },
     });
 };
+
+export const useAllSessionsQuery = () => {
+    const { session, initialized } = useAuthStore();
+    const userId = session?.user?.id;
+
+    return useQuery({
+        queryKey: ['sessions', 'all', userId],
+        queryFn: () => {
+            if (!userId) return [];
+            return sessionService.getAllSessions(userId);
+        },
+        enabled: !!userId && initialized,
+    });
+};

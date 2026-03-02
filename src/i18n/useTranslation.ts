@@ -15,5 +15,5 @@ export function useTranslation() {
         }
     };
 
-    return { t, changeLanguage, currentLanguage: i18n.language };
+    return { t, i18n, changeLanguage, currentLanguage: i18n.language };
 }
