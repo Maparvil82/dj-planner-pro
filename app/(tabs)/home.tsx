@@ -163,13 +163,13 @@ export default function HomeScreen() {
                     <View className="flex-row gap-4 px-2">
                         {/* Earned So Far Card */}
                         <TouchableOpacity
-                            className="flex-1 bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40"
+                            className="flex-1 bg-neutral-200 dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40"
                             activeOpacity={0.7}
                             onPress={() => setIsEarningsModalVisible(true)}
                         >
 
                             <View className="flex-row items-center justify-between mb-1">
-                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <Text className="text-xs font-semibold text-neutral-800 dark:text-gray-400 uppercase tracking-wider">
                                     {t('earned_so_far') || 'Llevas ganado'}
                                 </Text>
                                 <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
@@ -179,9 +179,9 @@ export default function HomeScreen() {
                                 <Text className="text-5xl text-gray-900 dark:text-white">
                                     {earnedSoFar.toFixed(0)}
                                 </Text>
-                                <Text className="text-lg font-bold text-gray-500 dark:text-gray-400 ml-1 mb-1">€</Text>
+                                <Text className="text-lg font-bold neutral-800  dark:text-gray-400 ml-1 mb-1">€</Text>
                             </View>
-                            <Text className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-2 flex-wrap">
+                            <Text className="text-sm font-medium neutral-800  dark:text-gray-500 mt-2 flex-wrap">
                                 {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                             </Text>
                         </TouchableOpacity>
