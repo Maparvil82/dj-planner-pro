@@ -71,5 +71,8 @@
     "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
     "calc_fixed": "Festpreis",
     "calc_free": "Keine Vergütung",
-    "estimated_total_label": "Geschätzte Summe"
+    "estimated_total_label": "Geschätzte Summe",
+    "djs_label": "DJs",
+    "solo_me": "Nur ich",
+    "shared_with_prefix": "Zusammen mit "
 }

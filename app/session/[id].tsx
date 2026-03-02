@@ -198,7 +198,7 @@ export default function SessionDetailScreen() {
                 </View>
 
                 {/* Summary Section (Mockup Inspiration) */}
-                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8">
+                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8 space-y-6">
                     <Text className="text-xl font-black text-gray-900 dark:text-white mb-6">
                         {t('session_detail_header') || 'Detalle de la sesión'}
                     </Text>
@@ -223,14 +223,16 @@ export default function SessionDetailScreen() {
                         </View>
 
                         {/* Crew Row */}
-                        {session.is_collective && session.djs && session.djs.length > 0 && (
-                            <View className="flex-row justify-between items-center">
-                                <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">{t('shared_with') || 'Compartes con'}</Text>
-                                <Text className="text-base text-gray-900 dark:text-white font-bold text-right flex-1 ml-4" numberOfLines={2}>
-                                    {session.djs.join(', ')}
-                                </Text>
-                            </View>
-                        )}
+                        <View className="flex-row justify-between items-center">
+                            <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">
+                                {t('djs_label') || 'DJs'}
+                            </Text>
+                            <Text className="text-base text-gray-900 dark:text-white font-bold text-right flex-1 ml-4" numberOfLines={2}>
+                                {session.is_collective && session.djs && session.djs.length > 0
+                                    ? (t('shared_with_prefix') || 'Junto a ') + session.djs.join(', ')
+                                    : (t('solo_me') || 'Solo yo')}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             </ScrollView>

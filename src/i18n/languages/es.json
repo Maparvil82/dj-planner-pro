@@ -102,5 +102,8 @@
     "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
     "calc_fixed": "Precio cerrado",
     "calc_free": "Sin remuneración",
-    "estimated_total_label": "Total estimado"
+    "estimated_total_label": "Total estimado",
+    "djs_label": "DJs",
+    "solo_me": "Solo yo",
+    "shared_with_prefix": "Junto a "
 }

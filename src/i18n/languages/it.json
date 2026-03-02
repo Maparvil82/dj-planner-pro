@@ -73,5 +73,8 @@
     "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
     "calc_fixed": "Prezzo fisso",
     "calc_free": "Senza compenso",
-    "estimated_total_label": "Totale stimato"
+    "estimated_total_label": "Totale stimato",
+    "djs_label": "DJs",
+    "solo_me": "Solo io",
+    "shared_with_prefix": "Insieme a "
 }
