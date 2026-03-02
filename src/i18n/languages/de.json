@@ -59,5 +59,17 @@
     "duration": "Dauer",
     "shared_with": "Geteilt mit",
     "share_session_btn": "Sitzung teilen",
-    "time_label": "Zeit"
+    "time_label": "Zeit",
+    "accent_color": "Eventfarbe",
+    "change_color": "Farbe ändern",
+    "choose_color": "Farbe wählen",
+    "apply_color_to_all_title": "Zugehörige Sitzungen aktualisieren?",
+    "apply_color_to_all_message": "Möchtest du die Farbe nur für diese Sitzung oder für alle von \"{{title}}\" ändern?",
+    "apply_only_this": "Nur diese Sitzung",
+    "apply_all_related": "Alle von {{title}}",
+    "payment_method": "Zahlungsmethode",
+    "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
+    "calc_fixed": "Festpreis",
+    "calc_free": "Keine Vergütung",
+    "estimated_total_label": "Geschätzte Summe"
 }

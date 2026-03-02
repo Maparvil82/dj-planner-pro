@@ -61,5 +61,17 @@
     "duration": "時間",
     "shared_with": "共同出演",
     "share_session_btn": "セッションを共有",
-    "time_label": "時間"
+    "time_label": "時間",
+    "accent_color": "イベントカラー",
+    "change_color": "色を変更",
+    "choose_color": "色を選択",
+    "apply_color_to_all_title": "関連するセッションを更新しますか？",
+    "apply_color_to_all_message": "このセッションのみの色を変更しますか、それとも \"{{title}}\" のすべてのセッションの色を変更しますか？",
+    "apply_only_this": "このセッションのみ",
+    "apply_all_related": "{{title}} のすべて",
+    "payment_method": "支払い方法",
+    "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
+    "calc_fixed": "固定料金",
+    "calc_free": "報酬なし",
+    "estimated_total_label": "推定合計"
 }

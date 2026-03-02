@@ -61,5 +61,17 @@
     "duration": "Durata",
     "shared_with": "Condiviso con",
     "share_session_btn": "Condividi sessione",
-    "time_label": "Ora"
+    "time_label": "Ora",
+    "accent_color": "Colore dell'evento",
+    "change_color": "Cambia colore",
+    "choose_color": "Scegli un colore",
+    "apply_color_to_all_title": "Aggiornare le sessioni correlate?",
+    "apply_color_to_all_message": "Vuoi cambiare il colore solo per questa sessione o per tutte quelle di \"{{title}}\" ?",
+    "apply_only_this": "Solo questa sessione",
+    "apply_all_related": "Tutte quelle di {{title}}",
+    "payment_method": "Metodo di pagamento",
+    "calc_hourly": "{{amount}}{{currency}} x {{hours}}h",
+    "calc_fixed": "Prezzo fisso",
+    "calc_free": "Senza compenso",
+    "estimated_total_label": "Totale stimato"
 }

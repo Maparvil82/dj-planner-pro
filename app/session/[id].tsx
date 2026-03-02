@@ -154,25 +154,25 @@ export default function SessionDetailScreen() {
                 </View>
 
                 {/* Earnings Section (Matching Venue Style) */}
-                <View className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl p-6 flex-row items-center mb-6 border border-emerald-100/50 dark:border-emerald-800/20">
-                    <View className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-full items-center justify-center mr-4 shadow-sm border border-emerald-200 dark:border-emerald-800/30">
-                        <Banknote size={22} color={isDark ? '#34D399' : '#059669'} />
+                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6">
+                    <View className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full items-center justify-center mr-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <Banknote size={22} color={isDark ? '#FFFFFF' : '#111827'} />
                     </View>
                     <View className="flex-1">
                         <View className="flex-row justify-between items-start">
                             <View>
-                                <Text className="text-xs font-bold text-emerald-600 dark:text-emerald-400/70 uppercase tracking-widest mb-1">
+                                <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">
                                     {t('estimated_total_label') || 'Total estimado'}
                                 </Text>
-                                <Text className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                                <Text className="text-2xl font-black text-gray-900 dark:text-white">
                                     {earnings.toFixed(2)} {session.currency || '€'}
                                 </Text>
                             </View>
                             <View className="items-end">
-                                <Text className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500/60 uppercase tracking-widest mb-1">
+                                <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">
                                     {t('payment_method') || 'Cálculo'}
                                 </Text>
-                                <Text className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                <Text className="text-xs font-bold text-gray-600 dark:text-gray-400">
                                     {session.earning_type === 'hourly' && t('calc_hourly', { amount: session.earning_amount, currency: session.currency, hours: duration.toFixed(1) })}
                                     {session.earning_type === 'fixed' && t('calc_fixed')}
                                     {session.earning_type === 'free' && t('calc_free')}
