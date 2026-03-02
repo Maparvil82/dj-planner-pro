@@ -90,5 +90,12 @@
     "duration": "Duration",
     "shared_with": "Shared with",
     "share_session_btn": "Share Session",
-    "time_label": "Time"
+    "time_label": "Time",
+    "accent_color": "Event color",
+    "change_color": "Change color",
+    "choose_color": "Choose a color",
+    "apply_color_to_all_title": "Update related sessions?",
+    "apply_color_to_all_message": "Do you want to change the color of only this session or all sessions of \"{{title}}\"?",
+    "apply_only_this": "Only this session",
+    "apply_all_related": "All of \"{{title}}\""
 }

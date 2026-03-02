@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useSessionByIdQuery, useDeleteSessionMutation } from '../../src/hooks/useSessionsQuery';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned } from 'lucide-react-native';
+import { useSessionByIdQuery, useDeleteSessionMutation, useUpdateSessionColorMutation } from '../../src/hooks/useSessionsQuery';
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { Modal } from 'react-native';
 
 export default function SessionDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -16,6 +17,9 @@ export default function SessionDetailScreen() {
 
     const { data: session, isLoading, error } = useSessionByIdQuery(id as string);
     const deleteSessionMutation = useDeleteSessionMutation();
+    const updateColorMutation = useUpdateSessionColorMutation();
+
+    const [isColorModalVisible, setIsColorModalVisible] = React.useState(false);
 
     const handleDelete = () => {
         Alert.alert(
@@ -114,6 +118,12 @@ export default function SessionDetailScreen() {
                 </TouchableOpacity>
                 <View className="flex-row gap-2">
                     <TouchableOpacity
+                        onPress={() => setIsColorModalVisible(true)}
+                        className="w-10 h-10 items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-full"
+                    >
+                        <Palette size={20} color={session.color || (isDark ? '#9CA3AF' : '#6B7280')} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
                         onPress={handleShare}
                         className="w-10 h-10 items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-full"
                     >
@@ -206,6 +216,92 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
             </ScrollView>
+
+            {/* Color Selection Modal */}
+            <Modal
+                visible={isColorModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setIsColorModalVisible(false)}
+            >
+                <View className="flex-1 justify-end bg-black/50">
+                    <View className="bg-white dark:bg-gray-900 rounded-t-[40px] px-6 pt-8 pb-12">
+                        <View className="flex-row justify-between items-center mb-6">
+                            <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                                {t('choose_color') || 'Elige un color'}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setIsColorModalVisible(false)}
+                                className="w-10 h-10 items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full"
+                            >
+                                <X size={20} color={isDark ? '#F9FAFB' : '#111827'} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View className="flex-row flex-wrap justify-between gap-y-4">
+                                {[
+                                    { color: '#262626', name: t('color_default') || 'Color predeterminado' },
+                                    { color: '#EF4444', name: t('color_tomato') },
+                                    { color: '#F97316', name: t('color_tangerine') },
+                                    { color: '#FBBF24', name: t('color_banana') },
+                                    { color: '#10B981', name: t('color_basil') },
+                                    { color: '#34D399', name: t('color_sage') },
+                                    { color: '#0EA5E9', name: t('color_peacock') },
+                                    { color: '#3B82F6', name: t('color_blueberry') },
+                                    { color: '#8B5CF6', name: t('color_lavender') },
+                                    { color: '#9333EA', name: t('color_grape') },
+                                    { color: '#F43F5E', name: t('color_flamingo') },
+                                    { color: '#6B7280', name: t('color_graphite') },
+                                ].map((item) => {
+                                    const isSelected = (session.color || '#262626') === item.color;
+                                    return (
+                                        <TouchableOpacity
+                                            key={item.color}
+                                            activeOpacity={0.7}
+                                            onPress={() => {
+                                                Alert.alert(
+                                                    t('apply_color_to_all_title') || '¿Actualizar sesiones?',
+                                                    t('apply_color_to_all_message', { title: session.title }),
+                                                    [
+                                                        { text: t('cancel'), style: 'cancel' },
+                                                        {
+                                                            text: t('apply_only_this'),
+                                                            onPress: () => {
+                                                                updateColorMutation.mutate({ sessionId: id as string, color: item.color, updateAll: false });
+                                                                setIsColorModalVisible(false);
+                                                            }
+                                                        },
+                                                        {
+                                                            text: t('apply_all_related', { title: session.title }),
+                                                            onPress: () => {
+                                                                updateColorMutation.mutate({ sessionId: id as string, color: item.color, updateAll: true });
+                                                                setIsColorModalVisible(false);
+                                                            }
+                                                        }
+                                                    ]
+                                                );
+                                            }}
+                                            className={`w-[48%] flex-row items-center p-3 rounded-2xl border ${isSelected
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
+                                                }`}
+                                        >
+                                            <View className="w-5 h-5 rounded-full mr-3 border border-black/5" style={{ backgroundColor: item.color }} />
+                                            <Text
+                                                className={`text-sm flex-1 ${isSelected ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-900 dark:text-white font-medium'}`}
+                                                numberOfLines={1}
+                                            >
+                                                {item.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }

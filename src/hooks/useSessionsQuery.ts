@@ -79,3 +79,23 @@ export const useSessionByIdQuery = (sessionId: string | undefined | string[]) =>
     });
 };
 
+export const useUpdateSessionColorMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ sessionId, color, updateAll }: { sessionId: string; color: string; updateAll?: boolean }) => {
+            return sessionService.updateSessionColor(sessionId, color, updateAll);
+        },
+        onSuccess: (_, variables) => {
+            if (variables.updateAll) {
+                // Invalidate all session related queries as many records might have changed
+                queryClient.invalidateQueries({ queryKey: ['session'] });
+            } else {
+                // Invalidate the specific session query
+                queryClient.invalidateQueries({ queryKey: ['session', variables.sessionId] });
+            }
+            // Invalidate the sessions array to refetch data on the calendar
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+        },
+    });
+};
