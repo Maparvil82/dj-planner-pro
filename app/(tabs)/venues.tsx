@@ -97,7 +97,7 @@ export default function VenuesScreen() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'left', 'right']}>
             {/* Header */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
                 <View className="flex-row items-center justify-between h-10">

@@ -60,14 +60,23 @@ export default function SettingsScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
+        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'bottom', 'left', 'right']}>
             {/* Header */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-center h-10">
+                <View className="flex-row items-center justify-between h-10">
+                    {/* Left Actions Placeholder */}
+                    <View className="w-8" />
+
+                    {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                             {t('settings_title')}
                         </Text>
+                    </View>
+
+                    {/* Right Actions Placeholder */}
+                    <View className="flex-row items-center gap-3 ml-auto">
+                        <View className="w-8" />
                     </View>
                 </View>
             </View>
