@@ -3,6 +3,7 @@
     "login": "Login",
     "register": "Register",
     "home": "Home",
+    "dashboard": "Dashboard",
     "login_subtitle": "Please log in to continue",
     "email_placeholder": "Email",
     "password_placeholder": "Password",

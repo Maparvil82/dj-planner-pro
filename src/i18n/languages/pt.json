@@ -3,6 +3,7 @@
     "login": "Entrar",
     "register": "Registrar",
     "home": "Início",
+    "dashboard": "Dashboard",
     "login_subtitle": "Por favor, faça login para continuar",
     "email_placeholder": "Endereço de email",
     "password_placeholder": "Senha",

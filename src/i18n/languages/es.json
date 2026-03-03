@@ -3,6 +3,7 @@
     "login": "Iniciar sesión",
     "register": "Registrarse",
     "home": "Inicio",
+    "dashboard": "Dashboard",
     "login_subtitle": "Por favor, inicia sesión para continuar",
     "email_placeholder": "Correo electrónico",
     "password_placeholder": "Contraseña",
