@@ -373,14 +373,6 @@ export default function HistoryScreen() {
                 {/* View Switcher */}
                 <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1">
                     <TouchableOpacity
-                        onPress={() => setViewMode('list')}
-                        className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
-                    >
-                        <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            {t('view_list')}
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
                         onPress={() => setViewMode('calendar')}
                         className={`px-4 py-1.5 rounded-full ${viewMode === 'calendar' ? 'bg-white dark:bg-gray-800' : ''}`}
                     >
@@ -388,6 +380,15 @@ export default function HistoryScreen() {
                             {t('view_calendar')}
                         </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setViewMode('list')}
+                        className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
+                    >
+                        <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            {t('view_list')}
+                        </Text>
+                    </TouchableOpacity>
+
                 </View>
 
                 {/* Advanced Filter Trigger */}
