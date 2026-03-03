@@ -61,6 +61,7 @@
     "no_results_filtered": "Keine Sitzungen entsprechen den Filtern",
     "view_list": "Liste",
     "view_calendar": "Kalender",
+    "no_sessions_this_day": "Für diesen Tag sind keine Sitzungen geplant",
     "share_session_btn": "Sitzung teilen",
     "time_label": "Zeit",
     "accent_color": "Eventfarbe",

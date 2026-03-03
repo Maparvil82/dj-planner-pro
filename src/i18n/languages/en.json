@@ -122,5 +122,6 @@
     "filter_reset": "Clear",
     "no_results_filtered": "No sessions match the selected filters",
     "view_list": "List",
-    "view_calendar": "Calendar"
+    "view_calendar": "Calendar",
+    "no_sessions_this_day": "No sessions scheduled for this day"
 }

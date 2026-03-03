@@ -137,25 +137,45 @@ export default function HistoryScreen() {
         const marked: any = {};
         filteredSessions.forEach(session => {
             const dateStr = session.date.substring(0, 10);
-            if (!marked[dateStr]) {
-                marked[dateStr] = {
-                    marked: true,
-                    dotColor: session.color || (isDark ? '#60A5FA' : '#2563EB')
-                };
-            } else {
-                // If multiple sessions, we can use multi-dot if supported, 
-                // but for now let's just make sure the day is marked
-                marked[dateStr].marked = true;
-            }
+            const baseColor = session.color || (isDark ? '#3B82F6' : '#2563EB');
+
+            marked[dateStr] = {
+                customStyles: {
+                    container: {
+                        backgroundColor: baseColor,
+                        borderRadius: 6,
+                    },
+                    text: {
+                        color: '#FFFFFF',
+                        fontWeight: 'bold'
+                    }
+                }
+            };
         });
 
-        // Add selection styling
+        // Add selection styling - if selected, we make it even more prominent
         if (selectedCalendarDate) {
+            const isToday = selectedCalendarDate === format(new Date(), 'yyyy-MM-dd');
+            const hasSessions = !!marked[selectedCalendarDate];
+
             marked[selectedCalendarDate] = {
                 ...marked[selectedCalendarDate],
-                selected: true,
-                selectedColor: isDark ? '#1D4ED8' : '#2563EB',
-                selectedTextColor: '#FFFFFF'
+                customStyles: {
+                    container: {
+                        backgroundColor: hasSessions
+                            ? (marked[selectedCalendarDate].customStyles.container.backgroundColor) // Keep session color
+                            : (isDark ? '#1F2937' : '#EFF6FF'), // Or subtle bg if no session
+                        borderRadius: 6,
+                        borderWidth: 2,
+                        borderColor: '#2563EB', // Primary blue border for selection
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    },
+                    text: {
+                        color: hasSessions ? '#FFFFFF' : (isDark ? '#F3F4F6' : '#1D4ED8'),
+                        fontWeight: '900'
+                    }
+                }
             };
         }
 
@@ -409,6 +429,7 @@ export default function HistoryScreen() {
                         <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800">
                             <Calendar
                                 key={JSON.stringify(calendarMarkedDates)}
+                                markingType={'custom'}
                                 current={selectedCalendarDate}
                                 markedDates={calendarMarkedDates}
                                 onDayPress={(day: any) => setSelectedCalendarDate(day.dateString)}
