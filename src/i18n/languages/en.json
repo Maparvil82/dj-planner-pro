@@ -137,5 +137,6 @@
     "edit_venue": "Edit Venue",
     "delete_venue": "Delete Venue",
     "venue_deleted_success": "Venue deleted successfully",
-    "venue_added_success": "Venue saved successfully"
+    "venue_added_success": "Venue saved successfully",
+    "add_as_new_venue": "Add \"{{name}}\" as new venue"
 }

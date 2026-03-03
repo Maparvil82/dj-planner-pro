@@ -76,6 +76,7 @@
     "delete_venue": "Ort löschen",
     "venue_deleted_success": "Ort erfolgreich gelöscht",
     "venue_added_success": "Ort erfolgreich gespeichert",
+    "add_as_new_venue": "\"{{name}}\" als neuen Veranstaltungsort hinzufügen",
     "share_session_btn": "Sitzung teilen",
     "time_label": "Zeit",
     "accent_color": "Eventfarbe",

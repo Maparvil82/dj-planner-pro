@@ -4,11 +4,11 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Plus } from 'lucide-react-native';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useSessionByIdQuery, useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../../src/hooks/useTagsQuery';
-import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
+import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 
@@ -42,6 +42,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
     const { t, currentLanguage } = useTranslation();
     const { session: authSession } = useAuthStore();
     const router = useRouter();
+    const createVenueMutation = useCreateVenueMutation();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -322,6 +323,28 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                                                     onChangeText={setVenue}
                                                     onFocus={() => setVenueId(null)}
                                                 />
+                                                {venue.trim().length > 0 && !venues.some(v => v.name.toLowerCase() === venue.toLowerCase()) && (
+                                                    <TouchableOpacity
+                                                        onPress={async () => {
+                                                            try {
+                                                                const newVenue = await createVenueMutation.mutateAsync({ name: venue.trim() });
+                                                                setVenue(newVenue.name);
+                                                                setVenueId(newVenue.id);
+                                                                setIsVenueModalVisible(false);
+                                                            } catch (error) {
+                                                                Alert.alert(t('error'), t('error_saving_session'));
+                                                            }
+                                                        }}
+                                                        className="mt-3 flex-row items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800"
+                                                    >
+                                                        <View className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center mr-3">
+                                                            <Plus size={16} color="#FFF" />
+                                                        </View>
+                                                        <Text className="text-blue-600 dark:text-blue-400 font-bold flex-1">
+                                                            {t('add_as_new_venue', { name: venue.trim() })}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                )}
                                             </View>
 
                                             <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('venues_title')}</Text>

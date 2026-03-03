@@ -44,6 +44,7 @@
     "delete_venue": "Elimina luogo",
     "venue_deleted_success": "Luogo eliminato con successo",
     "venue_added_success": "Luogo salvato con successo",
+    "add_as_new_venue": "Aggiungi \"{{name}}\" come nuovo luogo",
     "no_sessions_yet": "Nessuna sessione ancora",
     "app_title": "DJ Planner PRO",
     "settings_title": "Impostazioni",
