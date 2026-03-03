@@ -123,5 +123,8 @@
     "no_results_filtered": "No sessions match the selected filters",
     "view_list": "List",
     "view_calendar": "Calendar",
-    "no_sessions_this_day": "No sessions scheduled for this day"
+    "no_sessions_this_day": "No sessions scheduled for this day",
+    "filter_earnings_range": "Earnings Range",
+    "filter_min_earnings": "Min",
+    "filter_max_earnings": "Max"
 }

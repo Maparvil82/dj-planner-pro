@@ -123,5 +123,8 @@
     "no_results_filtered": "No hay sesiones que coincidan con los filtros",
     "view_list": "Lista",
     "view_calendar": "Calendario",
-    "no_sessions_this_day": "No hay sesiones programadas para este día"
+    "no_sessions_this_day": "No hay sesiones programadas para este día",
+    "filter_earnings_range": "Rango de ingresos",
+    "filter_min_earnings": "Mínimo",
+    "filter_max_earnings": "Máximo"
 }

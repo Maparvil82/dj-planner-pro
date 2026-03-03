@@ -9,7 +9,9 @@ import {
     TextInput,
     Modal,
     Pressable,
-    Dimensions
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -38,6 +40,19 @@ setupCalendarLocales();
 
 const { width } = Dimensions.get('window');
 
+const calculateSessionEarnings = (session: any) => {
+    if (session.earning_type === 'fixed') return session.earning_amount || 0;
+    if (session.earning_type === 'hourly') {
+        const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
+        const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
+        let startMins = startH * 60 + startM;
+        let endMins = endH * 60 + endM;
+        if (endMins <= startMins) endMins += 24 * 60;
+        return (session.earning_amount || 0) * ((endMins - startMins) / 60);
+    }
+    return 0;
+};
+
 export default function HistoryScreen() {
     const { t, i18n, currentLanguage } = useTranslation();
     const themeCtx = useContext(ThemeContext);
@@ -60,6 +75,8 @@ export default function HistoryScreen() {
     const [selectedEarningTypes, setSelectedEarningTypes] = useState<string[]>([]);
     const [startDate, setStartDate] = useState<string | null>(null);
     const [endDate, setEndDate] = useState<string | null>(null);
+    const [minEarnings, setMinEarnings] = useState<string>('');
+    const [maxEarnings, setMaxEarnings] = useState<string>('');
 
     // Mini Modals for Calendar pickers
     const [showStartDateCalendar, setShowStartDateCalendar] = useState(false);
@@ -128,9 +145,17 @@ export default function HistoryScreen() {
                 if (sDate < intervalStart || sDate > intervalEnd) return false;
             }
 
+            // Earnings Range Filter
+            const earnings = calculateSessionEarnings(session);
+            const min = parseFloat(minEarnings);
+            const max = parseFloat(maxEarnings);
+
+            if (!isNaN(min) && earnings < min) return false;
+            if (!isNaN(max) && earnings > max) return false;
+
             return true;
         });
-    }, [sessions, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+    }, [sessions, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
 
     // Calendar Marked Dates Logic
     const calendarMarkedDates = useMemo(() => {
@@ -207,19 +232,6 @@ export default function HistoryScreen() {
         return groups;
     }, [filteredSessions, locale]);
 
-    const calculateSessionEarnings = (session: any) => {
-        if (session.earning_type === 'fixed') return session.earning_amount || 0;
-        if (session.earning_type === 'hourly') {
-            const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-            const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-            let startMins = startH * 60 + startM;
-            let endMins = endH * 60 + endM;
-            if (endMins <= startMins) endMins += 24 * 60;
-            return (session.earning_amount || 0) * ((endMins - startMins) / 60);
-        }
-        return 0;
-    };
-
     const resetFilters = () => {
         setSearchQuery('');
         setSelectedVenues([]);
@@ -227,6 +239,8 @@ export default function HistoryScreen() {
         setSelectedEarningTypes([]);
         setStartDate(null);
         setEndDate(null);
+        setMinEarnings('');
+        setMaxEarnings('');
     };
 
     const activeFiltersCount = useMemo(() => {
@@ -235,8 +249,9 @@ export default function HistoryScreen() {
         if (selectedTitles.length > 0) count++;
         if (selectedEarningTypes.length > 0) count++;
         if (startDate || endDate) count++;
+        if (minEarnings !== '' || maxEarnings !== '') count++;
         return count;
-    }, [selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+    }, [selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
 
     if (isLoading && !isRefetching) {
         return (
@@ -487,188 +502,226 @@ export default function HistoryScreen() {
                 transparent={true}
                 onRequestClose={() => setIsAdvancedModalVisible(false)}
             >
-                <View className="flex-1 justify-end bg-black/50">
-                    <Pressable className="flex-1" onPress={() => setIsAdvancedModalVisible(false)} />
-                    <View className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 max-h-[90%]">
-                        <View className="flex-row items-center justify-between mb-8">
-                            <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                {t('filters_title')}
-                            </Text>
-                            <TouchableOpacity
-                                onPress={() => setIsAdvancedModalVisible(false)}
-                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center"
-                            >
-                                <X size={24} color={isDark ? '#FFFFFF' : '#000000'} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {/* Date Range Section */}
-                            <View className="mb-8">
-                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                                    {t('filter_date_range')}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    className="flex-1"
+                >
+                    <View className="flex-1 justify-end bg-black/50">
+                        <Pressable className="flex-1" onPress={() => setIsAdvancedModalVisible(false)} />
+                        <View className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 max-h-[90%]">
+                            <View className="flex-row items-center justify-between mb-8">
+                                <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                                    {t('filters_title')}
                                 </Text>
-                                <View className="flex-row gap-4">
-                                    <TouchableOpacity
-                                        onPress={() => setShowStartDateCalendar(true)}
-                                        className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
-                                    >
-                                        <View>
-                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_start_date')}</Text>
-                                            <Text className={`font-bold ${startDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
-                                                {startDate ? format(parseISO(startDate), 'dd/MM/yyyy') : '--/--/----'}
-                                            </Text>
+                                <TouchableOpacity
+                                    onPress={() => setIsAdvancedModalVisible(false)}
+                                    className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center"
+                                >
+                                    <X size={24} color={isDark ? '#FFFFFF' : '#000000'} />
+                                </TouchableOpacity>
+                            </View>
+
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {/* Date Range Section */}
+                                <View className="mb-8">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                        {t('filter_date_range')}
+                                    </Text>
+                                    <View className="flex-row gap-4">
+                                        <TouchableOpacity
+                                            onPress={() => setShowStartDateCalendar(true)}
+                                            className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
+                                        >
+                                            <View>
+                                                <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_start_date')}</Text>
+                                                <Text className={`font-bold ${startDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                    {startDate ? format(parseISO(startDate), 'dd/MM/yyyy') : '--/--/----'}
+                                                </Text>
+                                            </View>
+                                            <CalendarIcon size={16} color={startDate ? '#2563EB' : '#9CA3AF'} />
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            onPress={() => setShowEndDateCalendar(true)}
+                                            className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
+                                        >
+                                            <View>
+                                                <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_end_date')}</Text>
+                                                <Text className={`font-bold ${endDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                    {endDate ? format(parseISO(endDate), 'dd/MM/yyyy') : '--/--/----'}
+                                                </Text>
+                                            </View>
+                                            <CalendarIcon size={16} color={endDate ? '#2563EB' : '#9CA3AF'} />
+                                        </TouchableOpacity>
+                                    </View>
+                                    {(startDate || endDate) && (
+                                        <TouchableOpacity
+                                            onPress={() => { setStartDate(null); setEndDate(null); }}
+                                            className="mt-2"
+                                        >
+                                            <Text className="text-xs font-bold text-red-500 ml-1">{t('filter_reset')}</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+
+                                {/* Venues Section */}
+                                <View className="mb-8">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                        {t('filter_venues_title')}
+                                    </Text>
+                                    <View className="flex-row flex-wrap gap-2">
+                                        {uniqueVenues.map(venue => {
+                                            const isSelected = selectedVenues.includes(venue);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={venue}
+                                                    onPress={() => {
+                                                        if (isSelected) {
+                                                            setSelectedVenues(selectedVenues.filter(v => v !== venue));
+                                                        } else {
+                                                            setSelectedVenues([...selectedVenues, venue]);
+                                                        }
+                                                    }}
+                                                    className={`px-4 py-2 rounded-xl border ${isSelected
+                                                        ? 'bg-blue-600 border-blue-600'
+                                                        : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                        }`}
+                                                >
+                                                    <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                        }`}>
+                                                        {venue}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                </View>
+
+                                {/* Titles (Fiestas) Section */}
+                                <View className="mb-8">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                        {t('filter_titles_title')}
+                                    </Text>
+                                    <View className="flex-row flex-wrap gap-2">
+                                        {uniqueTitles.map(title => {
+                                            const isSelected = selectedTitles.includes(title);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={title}
+                                                    onPress={() => {
+                                                        if (isSelected) {
+                                                            setSelectedTitles(selectedTitles.filter(t => t !== title));
+                                                        } else {
+                                                            setSelectedTitles([...selectedTitles, title]);
+                                                        }
+                                                    }}
+                                                    className={`px-4 py-2 rounded-xl border ${isSelected
+                                                        ? 'bg-blue-600 border-blue-600'
+                                                        : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                        }`}
+                                                >
+                                                    <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                        }`}>
+                                                        {title}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                </View>
+
+                                {/* Earning Types Section */}
+                                <View className="mb-8">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                        {t('filter_earning_types_title')}
+                                    </Text>
+                                    <View className="flex-row gap-2">
+                                        {[
+                                            { id: 'fixed', label: t('earning_fixed') },
+                                            { id: 'hourly', label: t('earning_hourly') },
+                                            { id: 'free', label: t('earning_free') }
+                                        ].map(type => {
+                                            const isSelected = selectedEarningTypes.includes(type.id);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={type.id}
+                                                    onPress={() => {
+                                                        if (isSelected) {
+                                                            setSelectedEarningTypes(selectedEarningTypes.filter(t => t !== type.id));
+                                                        } else {
+                                                            setSelectedEarningTypes([...selectedEarningTypes, type.id]);
+                                                        }
+                                                    }}
+                                                    className={`flex-1 px-4 py-3 rounded-xl border items-center ${isSelected
+                                                        ? 'bg-blue-600 border-blue-600'
+                                                        : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
+                                                        }`}
+                                                >
+                                                    <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                                                        }`}>
+                                                        {type.label}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                </View>
+
+                                {/* Earnings Range Section */}
+                                <View className="mb-8">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                                        {t('filter_earnings_range')}
+                                    </Text>
+                                    <View className="flex-row gap-4">
+                                        <View className="flex-1 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center">
+                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mr-2">{t('filter_min_earnings')}</Text>
+                                            <TextInput
+                                                className="flex-1 font-bold text-gray-900 dark:text-white"
+                                                placeholder="0"
+                                                placeholderTextColor="#9CA3AF"
+                                                keyboardType="numeric"
+                                                value={minEarnings}
+                                                onChangeText={setMinEarnings}
+                                            />
+                                            <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 ml-1">€</Text>
                                         </View>
-                                        <CalendarIcon size={16} color={startDate ? '#2563EB' : '#9CA3AF'} />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        onPress={() => setShowEndDateCalendar(true)}
-                                        className="flex-1 px-4 py-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center justify-between"
-                                    >
-                                        <View>
-                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_end_date')}</Text>
-                                            <Text className={`font-bold ${endDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
-                                                {endDate ? format(parseISO(endDate), 'dd/MM/yyyy') : '--/--/----'}
-                                            </Text>
+                                        <View className="flex-1 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex-row items-center">
+                                            <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mr-2">{t('filter_max_earnings')}</Text>
+                                            <TextInput
+                                                className="flex-1 font-bold text-gray-900 dark:text-white"
+                                                placeholder="9999"
+                                                placeholderTextColor="#9CA3AF"
+                                                keyboardType="numeric"
+                                                value={maxEarnings}
+                                                onChangeText={setMaxEarnings}
+                                            />
+                                            <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 ml-1">€</Text>
                                         </View>
-                                        <CalendarIcon size={16} color={endDate ? '#2563EB' : '#9CA3AF'} />
-                                    </TouchableOpacity>
+                                    </View>
                                 </View>
-                                {(startDate || endDate) && (
-                                    <TouchableOpacity
-                                        onPress={() => { setStartDate(null); setEndDate(null); }}
-                                        className="mt-2"
-                                    >
-                                        <Text className="text-xs font-bold text-red-500 ml-1">{t('filter_reset')}</Text>
-                                    </TouchableOpacity>
-                                )}
+
+                                {/* More filters can be added here like Date Range Picker */}
+
+                            </ScrollView>
+
+                            {/* Footer Buttons */}
+                            <View className="flex-row gap-4 mt-8">
+                                <TouchableOpacity
+                                    onPress={resetFilters}
+                                    className="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-gray-900 items-center"
+                                >
+                                    <Text className="text-gray-900 dark:text-white font-bold">{t('filter_reset')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => setIsAdvancedModalVisible(false)}
+                                    className="flex-[2] py-4 rounded-2xl bg-blue-600 items-center"
+                                >
+                                    <Text className="text-white font-black">{t('filter_apply')}</Text>
+                                </TouchableOpacity>
                             </View>
-
-                            {/* Venues Section */}
-                            <View className="mb-8">
-                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                                    {t('filter_venues_title')}
-                                </Text>
-                                <View className="flex-row flex-wrap gap-2">
-                                    {uniqueVenues.map(venue => {
-                                        const isSelected = selectedVenues.includes(venue);
-                                        return (
-                                            <TouchableOpacity
-                                                key={venue}
-                                                onPress={() => {
-                                                    if (isSelected) {
-                                                        setSelectedVenues(selectedVenues.filter(v => v !== venue));
-                                                    } else {
-                                                        setSelectedVenues([...selectedVenues, venue]);
-                                                    }
-                                                }}
-                                                className={`px-4 py-2 rounded-xl border ${isSelected
-                                                    ? 'bg-blue-600 border-blue-600'
-                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
-                                                    }`}
-                                            >
-                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                                                    }`}>
-                                                    {venue}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-
-                            {/* Titles (Fiestas) Section */}
-                            <View className="mb-8">
-                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                                    {t('filter_titles_title')}
-                                </Text>
-                                <View className="flex-row flex-wrap gap-2">
-                                    {uniqueTitles.map(title => {
-                                        const isSelected = selectedTitles.includes(title);
-                                        return (
-                                            <TouchableOpacity
-                                                key={title}
-                                                onPress={() => {
-                                                    if (isSelected) {
-                                                        setSelectedTitles(selectedTitles.filter(t => t !== title));
-                                                    } else {
-                                                        setSelectedTitles([...selectedTitles, title]);
-                                                    }
-                                                }}
-                                                className={`px-4 py-2 rounded-xl border ${isSelected
-                                                    ? 'bg-blue-600 border-blue-600'
-                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
-                                                    }`}
-                                            >
-                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                                                    }`}>
-                                                    {title}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-
-                            {/* Earning Types Section */}
-                            <View className="mb-8">
-                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                                    {t('filter_earning_types_title')}
-                                </Text>
-                                <View className="flex-row gap-2">
-                                    {[
-                                        { id: 'fixed', label: t('earning_fixed') },
-                                        { id: 'hourly', label: t('earning_hourly') },
-                                        { id: 'free', label: t('earning_free') }
-                                    ].map(type => {
-                                        const isSelected = selectedEarningTypes.includes(type.id);
-                                        return (
-                                            <TouchableOpacity
-                                                key={type.id}
-                                                onPress={() => {
-                                                    if (isSelected) {
-                                                        setSelectedEarningTypes(selectedEarningTypes.filter(t => t !== type.id));
-                                                    } else {
-                                                        setSelectedEarningTypes([...selectedEarningTypes, type.id]);
-                                                    }
-                                                }}
-                                                className={`flex-1 px-4 py-3 rounded-xl border items-center ${isSelected
-                                                    ? 'bg-blue-600 border-blue-600'
-                                                    : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
-                                                    }`}
-                                            >
-                                                <Text className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                                                    }`}>
-                                                    {type.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-
-                            {/* More filters can be added here like Date Range Picker */}
-
-                        </ScrollView>
-
-                        {/* Footer Buttons */}
-                        <View className="flex-row gap-4 mt-8">
-                            <TouchableOpacity
-                                onPress={resetFilters}
-                                className="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-gray-900 items-center"
-                            >
-                                <Text className="text-gray-900 dark:text-white font-bold">{t('filter_reset')}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setIsAdvancedModalVisible(false)}
-                                className="flex-[2] py-4 rounded-2xl bg-blue-600 items-center"
-                            >
-                                <Text className="text-white font-black">{t('filter_apply')}</Text>
-                            </TouchableOpacity>
                         </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
             {/* Start Date Picker Modal */}
             <Modal visible={showStartDateCalendar} transparent animationType="fade">
