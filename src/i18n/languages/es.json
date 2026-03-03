@@ -120,5 +120,7 @@
     "filter_earning_types_title": "Tipo de cobro",
     "filter_apply": "Aplicar Filtros",
     "filter_reset": "Limpiar",
-    "no_results_filtered": "No hay sesiones que coincidan con los filtros"
+    "no_results_filtered": "No hay sesiones que coincidan con los filtros",
+    "view_list": "Lista",
+    "view_calendar": "Calendario"
 }

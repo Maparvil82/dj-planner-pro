@@ -46,9 +46,12 @@ export default function HistoryScreen() {
 
     const { data: sessions, isLoading, refetch, isRefetching } = useAllSessionsQuery();
 
+    // View State
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+    const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+
     // Filter States
     const [searchQuery, setSearchQuery] = useState('');
-    const [quickFilter, setQuickFilter] = useState<'all' | 'collective' | 'this_month' | 'last_month'>('all');
     const [isAdvancedModalVisible, setIsAdvancedModalVisible] = useState(false);
 
     // Advanced Filter States
@@ -108,37 +111,61 @@ export default function HistoryScreen() {
                 if (!matchesTitle && !matchesVenue) return false;
             }
 
-            // Quick Filters
-            const sessionDateStr = session.date;
-            const sessionDate = parseISO(sessionDateStr);
-            const now = new Date();
-            if (quickFilter === 'collective' && !session.is_collective) return false;
-            if (quickFilter === 'this_month' && !isSameMonth(sessionDate, now)) return false;
-            if (quickFilter === 'last_month') {
-                const lastMonth = subMonths(now, 1);
-                if (!isSameMonth(sessionDate, lastMonth)) return false;
-            }
-
             // Advanced Filters
             if (selectedVenues.length > 0 && !selectedVenues.includes(session.venue)) return false;
             if (selectedTitles.length > 0 && !selectedTitles.includes(session.title)) return false;
             if (selectedEarningTypes.length > 0 && !selectedEarningTypes.includes(session.earning_type)) return false;
 
-            // Fixed Date Range logic (inclusive) using date-fns for robustness
+            // Date Range logic (inclusive)
+            const sessionDateStr = session.date;
             const normalizedSessionDate = sessionDateStr.substring(0, 10);
             const sDate = parseISO(normalizedSessionDate);
 
             if (startDate || endDate) {
-                const intervalStart = startDate ? parseISO(startDate) : new Date(0); // Beginning of time
-                const intervalEnd = endDate ? parseISO(endDate) : new Date(8640000000000000); // Far future
+                const intervalStart = startDate ? parseISO(startDate) : new Date(0);
+                const intervalEnd = endDate ? parseISO(endDate) : new Date(8640000000000000);
 
-                // Interval check (inclusive)
                 if (sDate < intervalStart || sDate > intervalEnd) return false;
             }
 
             return true;
         });
-    }, [sessions, searchQuery, quickFilter, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+    }, [sessions, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate]);
+
+    // Calendar Marked Dates Logic
+    const calendarMarkedDates = useMemo(() => {
+        const marked: any = {};
+        filteredSessions.forEach(session => {
+            const dateStr = session.date.substring(0, 10);
+            if (!marked[dateStr]) {
+                marked[dateStr] = {
+                    marked: true,
+                    dotColor: session.color || (isDark ? '#60A5FA' : '#2563EB')
+                };
+            } else {
+                // If multiple sessions, we can use multi-dot if supported, 
+                // but for now let's just make sure the day is marked
+                marked[dateStr].marked = true;
+            }
+        });
+
+        // Add selection styling
+        if (selectedCalendarDate) {
+            marked[selectedCalendarDate] = {
+                ...marked[selectedCalendarDate],
+                selected: true,
+                selectedColor: isDark ? '#1D4ED8' : '#2563EB',
+                selectedTextColor: '#FFFFFF'
+            };
+        }
+
+        return marked;
+    }, [filteredSessions, selectedCalendarDate, isDark]);
+
+    // Sessions for the selected day in calendar view
+    const selectedDaySessions = useMemo(() => {
+        return filteredSessions.filter(s => s.date.substring(0, 10) === selectedCalendarDate);
+    }, [filteredSessions, selectedCalendarDate]);
 
     // Group filtered sessions by month/year
     const groupedSessions = useMemo(() => {
@@ -175,7 +202,6 @@ export default function HistoryScreen() {
 
     const resetFilters = () => {
         setSearchQuery('');
-        setQuickFilter('all');
         setSelectedVenues([]);
         setSelectedTitles([]);
         setSelectedEarningTypes([]);
@@ -200,25 +226,117 @@ export default function HistoryScreen() {
         );
     }
 
+    const renderSessionCard = (session: any) => {
+        const dateObj = parseISO(session.date);
+        const d = format(dateObj, 'd');
+        const mName = format(dateObj, 'MMM', { locale });
+        const wName = format(dateObj, 'EEE', { locale });
+        const earnings = calculateSessionEarnings(session);
+
+        return (
+            <TouchableOpacity
+                key={session.id}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/session/${session.id}`)}
+                className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden flex-row items-stretch mb-4"
+            >
+                <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
+                    <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
+                        {wName}
+                    </Text>
+                    <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
+                        {d}
+                    </Text>
+                    <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
+                        {mName}
+                    </Text>
+                </View>
+
+                <View className="flex-1 flex-row items-center p-4">
+                    <View className="flex-1 mr-3">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
+                            {session.title}
+                        </Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>
+                            {session.venue}
+                        </Text>
+                        <View className="flex-row items-center flex-wrap gap-2">
+                            <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>
+                                {session.start_time} - {session.end_time}
+                            </Text>
+
+                            {session.is_collective && session.djs && session.djs.length > 0 && (
+                                <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
+                                    <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
+                                    <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
+                                        {session.djs.join(', ')}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+
+                    {session.earning_type && session.earning_type !== 'free' && (
+                        <View className="items-end justify-center mr-2">
+                            <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                                <Text className="text-xs font-bold text-green-700 dark:text-green-400">
+                                    {earnings.toFixed(0)} {session.currency || '€'}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    <View className="justify-center items-center ml-1">
+                        <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             {/* Header */}
-            <View className="px-6 pt-4 pb-2 flex-row items-center justify-between">
-                <Text className="text-3xl font-black text-gray-900 dark:text-white">
-                    {t('history')}
-                </Text>
-                {/* Advanced Filter Trigger */}
-                <TouchableOpacity
-                    onPress={() => setIsAdvancedModalVisible(true)}
-                    className={`w-10 h-10 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
-                >
-                    <Filter size={20} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
-                    {activeFiltersCount > 0 && (
-                        <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950 items-center justify-center">
-                            <Text className="text-[10px] font-bold text-white">{activeFiltersCount}</Text>
+            <View className="px-6 pt-4 pb-2">
+                <View className="flex-row items-center justify-between">
+                    <Text className="text-3xl font-black text-gray-900 dark:text-white">
+                        {t('history')}
+                    </Text>
+                    <View className="flex-row items-center gap-2">
+                        {/* View Switcher */}
+                        <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1 mr-1">
+                            <TouchableOpacity
+                                onPress={() => setViewMode('list')}
+                                className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
+                            >
+                                <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
+                                    {t('view_list')}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setViewMode('calendar')}
+                                className={`px-4 py-1.5 rounded-full ${viewMode === 'calendar' ? 'bg-white dark:bg-gray-800' : ''}`}
+                            >
+                                <Text className={`text-xs font-bold ${viewMode === 'calendar' ? 'text-blue-600' : 'text-gray-400'}`}>
+                                    {t('view_calendar')}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
-                    )}
-                </TouchableOpacity>
+
+                        {/* Advanced Filter Trigger */}
+                        <TouchableOpacity
+                            onPress={() => setIsAdvancedModalVisible(true)}
+                            className={`w-10 h-10 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
+                        >
+                            <Filter size={20} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
+                            {activeFiltersCount > 0 && (
+                                <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950 items-center justify-center">
+                                    <Text className="text-[10px] font-bold text-white">{activeFiltersCount}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
 
             {/* Search Bar */}
@@ -240,146 +358,106 @@ export default function HistoryScreen() {
                 </View>
             </View>
 
-            {/* Quick Filters */}
-            <View className="mt-4">
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}
-                >
-                    {[
-                        { id: 'all', label: t('filter_all') },
-                        { id: 'this_month', label: t('filter_this_month') },
-                        { id: 'last_month', label: t('filter_last_month') },
-                        { id: 'collective', label: t('filter_collective') }
-                    ].map(filter => (
-                        <TouchableOpacity
-                            key={filter.id}
-                            onPress={() => setQuickFilter(filter.id as any)}
-                            className={`px-5 py-2.5 rounded-full border ${quickFilter === filter.id
-                                ? 'bg-blue-600 border-blue-600'
-                                : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
-                                }`}
-                        >
-                            <Text className={`text-sm font-bold ${quickFilter === filter.id ? 'text-white' : 'text-gray-500 dark:text-gray-400'
-                                }`}>
-                                {filter.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
 
-            <ScrollView
-                className="flex-1 px-6 mt-2"
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefetching}
-                        onRefresh={refetch}
-                        tintColor={isDark ? '#FFFFFF' : '#000000'}
-                    />
-                }
-            >
-                {groupedSessions.length === 0 ? (
-                    <View className="py-20 items-center justify-center">
-                        <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
-                            <CalendarIcon size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
+            {viewMode === 'list' ? (
+                <ScrollView
+                    className="flex-1 px-6 mt-2"
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={refetch}
+                            tintColor={isDark ? '#FFFFFF' : '#000000'}
+                        />
+                    }
+                >
+                    {groupedSessions.length === 0 ? (
+                        <View className="py-20 items-center justify-center">
+                            <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
+                                <CalendarIcon size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                            </View>
+                            <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
+                                {searchQuery || activeFiltersCount > 0 ? t('no_results_filtered') : t('no_sessions_yet')}
+                            </Text>
+                            {(searchQuery !== '' || activeFiltersCount > 0) && (
+                                <TouchableOpacity
+                                    onPress={resetFilters}
+                                    className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-900 rounded-full"
+                                >
+                                    <Text className="text-blue-600 dark:text-blue-400 font-bold">{t('filter_reset')}</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
-                        <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
-                            {searchQuery || activeFiltersCount > 0 ? t('no_results_filtered') : t('no_sessions_yet')}
-                        </Text>
-                        {(searchQuery !== '' || activeFiltersCount > 0 || quickFilter !== 'all') && (
-                            <TouchableOpacity
-                                onPress={resetFilters}
-                                className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-900 rounded-full"
-                            >
-                                <Text className="text-blue-600 dark:text-blue-400 font-bold">{t('filter_reset')}</Text>
-                            </TouchableOpacity>
+                    ) : (
+                        groupedSessions.map((group, groupIdx) => (
+                            <View key={group.title} className={groupIdx === 0 ? "mt-4" : "mt-8"}>
+                                <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 ml-1">
+                                    {group.title}
+                                </Text>
+
+                                <View className="flex-col">
+                                    {group.data.map(session => renderSessionCard(session))}
+                                </View>
+                            </View>
+                        ))
+                    )}
+                    <View className="h-20" />
+                </ScrollView>
+            ) : (
+                <ScrollView className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
+                    <View className="px-6">
+                        <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                            <Calendar
+                                key={JSON.stringify(calendarMarkedDates)}
+                                current={selectedCalendarDate}
+                                markedDates={calendarMarkedDates}
+                                onDayPress={(day: any) => setSelectedCalendarDate(day.dateString)}
+                                theme={{
+                                    calendarBackground: isDark ? '#111827' : '#ffffff',
+                                    textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
+                                    selectedDayBackgroundColor: '#2563EB',
+                                    selectedDayTextColor: '#ffffff',
+                                    todayTextColor: '#2563EB',
+                                    dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                    textDisabledColor: isDark ? '#374151' : '#d9e1e8',
+                                    dotColor: '#2563EB',
+                                    selectedDotColor: '#ffffff',
+                                    arrowColor: '#2563EB',
+                                    monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
+                                    indicatorColor: '#2563EB',
+                                    textDayFontWeight: '600',
+                                    textMonthFontWeight: 'bold',
+                                    textDayHeaderFontWeight: 'bold',
+                                }}
+                            />
+                        </View>
+                    </View>
+
+                    <View className="px-6 mt-8">
+                        <View className="flex-row items-center justify-between mb-4">
+                            <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                {format(parseISO(selectedCalendarDate), 'd MMMM yyyy', { locale: locale })}
+                            </Text>
+                            <Text className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
+                                {selectedDaySessions.length} {t('sessions')}
+                            </Text>
+                        </View>
+
+                        {selectedDaySessions.length === 0 ? (
+                            <View className="py-12 items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                                <Text className="text-gray-400 dark:text-gray-500 font-medium">
+                                    {t('no_sessions_this_day')}
+                                </Text>
+                            </View>
+                        ) : (
+                            <View className="flex-col">
+                                {selectedDaySessions.map(session => renderSessionCard(session))}
+                            </View>
                         )}
                     </View>
-                ) : (
-                    groupedSessions.map((group, groupIdx) => (
-                        <View key={group.title} className={groupIdx === 0 ? "mt-4" : "mt-8"}>
-                            <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 ml-1">
-                                {group.title}
-                            </Text>
-
-                            <View className="flex-col gap-4">
-                                {group.data.map((session) => {
-                                    const dateObj = parseISO(session.date);
-                                    const d = format(dateObj, 'd');
-                                    const mName = format(dateObj, 'MMM', { locale });
-                                    const wName = format(dateObj, 'EEE', { locale });
-                                    const earnings = calculateSessionEarnings(session);
-
-                                    return (
-                                        <TouchableOpacity
-                                            key={session.id}
-                                            activeOpacity={0.7}
-                                            onPress={() => router.push(`/session/${session.id}`)}
-                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch"
-                                        >
-                                            <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
-                                                <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                    {wName}
-                                                </Text>
-                                                <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
-                                                    {d}
-                                                </Text>
-                                                <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                    {mName}
-                                                </Text>
-                                            </View>
-
-                                            <View className="flex-1 flex-row items-center p-4">
-                                                <View className="flex-1 mr-3">
-                                                    <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
-                                                        {session.title}
-                                                    </Text>
-                                                    <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>
-                                                        {session.venue}
-                                                    </Text>
-                                                    <View className="flex-row items-center flex-wrap gap-2">
-                                                        <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>
-                                                            {session.start_time} - {session.end_time}
-                                                        </Text>
-
-
-                                                        {session.is_collective && session.djs && session.djs.length > 0 && (
-                                                            <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
-                                                                <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
-                                                                <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
-                                                                    {session.djs.join(', ')}
-                                                                </Text>
-                                                            </View>
-                                                        )}
-                                                    </View>
-                                                </View>
-
-                                                {session.earning_type && session.earning_type !== 'free' && (
-                                                    <View className="items-end justify-center mr-2">
-                                                        <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
-                                                            <Text className="text-xs font-bold text-green-700 dark:text-green-400">
-                                                                {earnings.toFixed(0)} {session.currency || '€'}
-                                                            </Text>
-                                                        </View>
-                                                    </View>
-                                                )}
-
-                                                <View className="justify-center items-center ml-1">
-                                                    <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                                </View>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        </View>
-                    ))
-                )}
-                <View className="h-20" />
-            </ScrollView>
+                    <View className="h-24" />
+                </ScrollView>
+            )}
 
             {/* Advanced Filter Modal */}
             <Modal

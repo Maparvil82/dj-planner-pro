@@ -120,5 +120,7 @@
     "filter_earning_types_title": "Payment Type",
     "filter_apply": "Apply Filters",
     "filter_reset": "Clear",
-    "no_results_filtered": "No sessions match the selected filters"
+    "no_results_filtered": "No sessions match the selected filters",
+    "view_list": "List",
+    "view_calendar": "Calendar"
 }
