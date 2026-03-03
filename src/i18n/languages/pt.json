@@ -100,5 +100,7 @@
     "shared_with_prefix": "Junto com ",
     "today": "Hoje",
     "tab_you": "Tu",
-    "save_venue": "Guardar lugar"
+    "save_venue": "Guardar lugar",
+    "duplicate_venue_title": "Lugar Duplicado",
+    "duplicate_venue_message": "Já tens un lugar guardado com este nombre."
 }

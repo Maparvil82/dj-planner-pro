@@ -67,14 +67,21 @@ export default function VenuesScreen() {
     }, [venues, searchQuery]);
 
     const handleCreateVenue = async () => {
-        if (!newName.trim()) {
+        const normalizedName = newName.trim();
+        if (!normalizedName) {
             Alert.alert(t('error'), t('missing_fields'));
+            return;
+        }
+
+        const isDuplicate = venues?.some(v => v.name.toLowerCase() === normalizedName.toLowerCase());
+        if (isDuplicate) {
+            Alert.alert(t('duplicate_venue_title'), t('duplicate_venue_message'));
             return;
         }
 
         try {
             await createVenueMutation.mutateAsync({
-                name: newName.trim(),
+                name: normalizedName,
                 address: newAddress.trim(),
                 contact_info: newContact.trim(),
                 notes: newNotes.trim()

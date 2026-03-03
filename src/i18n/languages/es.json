@@ -142,5 +142,7 @@
     "add_as_new_venue": "Añadir \"{{name}}\" como nuevo lugar",
     "today": "Hoy",
     "tab_you": "Tu",
-    "save_venue": "Guardar lugar"
+    "save_venue": "Guardar lugar",
+    "duplicate_venue_title": "Lugar Duplicado",
+    "duplicate_venue_message": "Ya tienes un lugar guardado con este nombre."
 }

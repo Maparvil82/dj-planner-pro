@@ -99,5 +99,7 @@
     "shared_with_prefix": "Zusammen mit ",
     "today": "Heute",
     "tab_you": "Du",
-    "save_venue": "Ort speichern"
+    "save_venue": "Ort speichern",
+    "duplicate_venue_title": "Doppelter Ort",
+    "duplicate_venue_message": "Sie haben bereits einen Ort mit diesem Namen gespeichert."
 }

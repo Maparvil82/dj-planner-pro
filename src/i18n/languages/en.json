@@ -142,5 +142,7 @@
     "add_as_new_venue": "Add \"{{name}}\" as new venue",
     "today": "Today",
     "tab_you": "You",
-    "save_venue": "Save Venue"
+    "save_venue": "Save Venue",
+    "duplicate_venue_title": "Duplicate Venue",
+    "duplicate_venue_message": "You already have a venue saved with this name."
 }

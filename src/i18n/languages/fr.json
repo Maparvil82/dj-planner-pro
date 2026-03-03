@@ -99,5 +99,7 @@
     "shared_with_prefix": "Avec ",
     "today": "Aujourd'hui",
     "tab_you": "Moi",
-    "save_venue": "Enregistrer le lieu"
+    "save_venue": "Enregistrer le lieu",
+    "duplicate_venue_title": "Lieu déjà existant",
+    "duplicate_venue_message": "Vous avez déjà un lieu enregistré avec ce nom."
 }
