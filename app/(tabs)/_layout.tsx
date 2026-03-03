@@ -1,5 +1,5 @@
-import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, Calendar, MapPin, LayoutDashboard } from 'lucide-react-native';
+import { Tabs as ExpoTabs, useRouter } from 'expo-router';
+import { Home, Calendar, MapPin, LayoutDashboard, PlusCircle } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
@@ -8,6 +8,7 @@ import { useContext } from 'react';
 
 export default function TabLayout() {
     const { t } = useTranslation();
+    const router = useRouter();
     const session = useAuthStore((state) => state.session);
     const themeCtx = useContext(ThemeContext);
 
@@ -45,6 +46,20 @@ export default function TabLayout() {
                     title: t('home'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+                }}
+            />
+            <ExpoTabs.Screen
+                name="add"
+                options={{
+                    title: t('add_session'),
+                    // @ts-ignore
+                    tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size * 1.3} />,
+                }}
+                listeners={{
+                    tabPress: (e) => {
+                        e.preventDefault();
+                        router.push('/add-session');
+                    },
                 }}
             />
             <ExpoTabs.Screen

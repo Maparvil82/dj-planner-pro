@@ -3,11 +3,13 @@ import React, { useContext } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { LayoutDashboard, Wallet, Calendar, ArrowUpRight, TrendingUp } from 'lucide-react-native';
+import { LayoutDashboard, Wallet, Calendar, ArrowUpRight, TrendingUp, Plus } from 'lucide-react-native';
 import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
     const { t } = useTranslation();
+    const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
     const { data: sessions = [], isLoading } = useAllSessionsQuery();
@@ -61,9 +63,26 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                {/* Quick Actions / More Info Sections */}
+                {/* Quick Actions */}
                 <View className="mb-8">
                     <Text className="text-lg font-black text-gray-900 dark:text-white mb-4">{t('welcome')}</Text>
+
+                    <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={() => router.push('/add-session')}
+                        className="bg-blue-600 rounded-[32px] p-6 flex-row items-center justify-between mb-4 shadow-xl shadow-blue-500/30"
+                    >
+                        <View className="flex-row items-center">
+                            <View className="w-12 h-12 rounded-2xl bg-white/20 items-center justify-center mr-4">
+                                <Plus size={24} color="#FFF" />
+                            </View>
+                            <View>
+                                <Text className="text-white text-lg font-black">{t('add_session')}</Text>
+                                <Text className="text-white/80 text-xs font-medium uppercase tracking-wider">{t('register_subtitle') || 'Crea una nueva sesión'}</Text>
+                            </View>
+                        </View>
+                        <ArrowUpRight size={24} color="#FFF" />
+                    </TouchableOpacity>
 
                     <View className="bg-gray-50 dark:bg-gray-900 rounded-[32px] p-6 border border-gray-100 dark:border-gray-800">
                         <View className="flex-row items-center mb-4">

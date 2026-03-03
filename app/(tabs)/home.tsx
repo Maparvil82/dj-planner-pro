@@ -367,15 +367,6 @@ export default function HomeScreen() {
 
             </ScrollView>
 
-            {/* FLOATING ACTION BUTTON (Add Session) */}
-            <TouchableOpacity
-                activeOpacity={0.8}
-                className="absolute bottom-6 right-6 w-16 h-16 bg-neutral-800 dark:bg-blue-500 rounded-full items-center justify-center shadow-lg shadow-blue-500/40"
-                style={{ elevation: 8 }}
-                onPress={() => router.push('/add-session')}
-            >
-                <CalendarPlus size={28} color="#919191ff" />
-            </TouchableOpacity>
 
             {/* EARNINGS HISTORY MODAL */}
             <Modal

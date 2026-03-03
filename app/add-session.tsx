@@ -39,17 +39,17 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
 }
 
-export default function AddSessionModal() {
+export default function AddSessionScreen() {
     const { date } = useGlobalSearchParams<{ date: string }>();
     const router = useRouter();
     return (
         <ErrorBoundary>
-            <AddSessionModalContent date={date} onBack={() => router.back()} />
+            <AddSessionContent date={date} onBack={() => router.back()} />
         </ErrorBoundary>
     );
 }
 
-function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => void }) {
+function AddSessionContent({ date, onBack }: { date: string, onBack: () => void }) {
     const { t, currentLanguage } = useTranslation();
     const { session } = useAuthStore();
     const router = useRouter();
@@ -299,13 +299,15 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
 
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50/50 dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
-            <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+        <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
+            <View className="flex-row items-center justify-between px-5 pt-2 pb-4 border-b border-gray-100 dark:border-gray-900">
                 <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
-                    <Text className="text-blue-600 dark:text-blue-500 font-medium text-lg">{t('cancel')}</Text>
+                    <X size={24} color={isDark ? '#FFF' : '#000'} />
                 </TouchableOpacity>
-                <Text className="text-lg font-bold text-gray-900 dark:text-white">{t('add_session')}</Text>
-                <View className="w-16" />
+                <Text className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                    {t('add_session')}
+                </Text>
+                <View className="w-10" />
             </View>
 
             <KeyboardAvoidingView
