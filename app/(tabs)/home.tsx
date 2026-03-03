@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X } from 'lucide-react-native';
+import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight } from 'lucide-react-native';
 import { useContext, useState, useMemo } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -142,18 +142,31 @@ export default function HomeScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
-            <View className="flex-row items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-                <View>
-                    <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-                        DJ Planner
-                    </Text>
+            <View className="px-6 pt-4 pb-2">
+                <View className="flex-row items-center justify-between">
+                    <View>
+                        <Text className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 capitalize">
+                            {new Intl.DateTimeFormat(currentLanguage, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}
+                        </Text>
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                            {t('hello') || 'Hola'}, {session?.user?.email?.split('@')[0] || 'User'}!
+                        </Text>
+                    </View>
+                    <View className="flex-row items-center gap-3">
+                        <TouchableOpacity
+                            onPress={() => router.push('/add-session')}
+                            className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                        >
+                            <Plus size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <Avatar
+                            url={profile?.avatar_url}
+                            name={session?.user?.email || '?'}
+                            size="md"
+                            onPress={() => router.push('/settings')}
+                        />
+                    </View>
                 </View>
-                <Avatar
-                    url={profile?.avatar_url}
-                    name={session?.user?.email || '?'}
-                    size="sm"
-                    onPress={() => router.push('/settings')}
-                />
             </View>
 
             <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>

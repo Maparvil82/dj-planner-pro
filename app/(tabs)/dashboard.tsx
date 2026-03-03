@@ -6,11 +6,14 @@ import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { LayoutDashboard, Wallet, Calendar, ArrowUpRight, TrendingUp, Plus } from 'lucide-react-native';
 import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '../../src/store/useAuthStore';
+import { Avatar } from '../../src/components/ui/Avatar';
 
 export default function DashboardScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
+    const { session, profile } = useAuthStore();
     const isDark = themeCtx?.activeTheme === 'dark';
     const { data: sessions = [], isLoading } = useAllSessionsQuery();
     const { data: upcomingSessions = [] } = useUpcomingSessionsQuery();
@@ -39,8 +42,19 @@ export default function DashboardScreen() {
                         <Text className="text-3xl font-black text-gray-900 dark:text-white">{t('dashboard')}</Text>
                         <Text className="text-gray-500 dark:text-gray-400 font-medium">{t('app_title')}</Text>
                     </View>
-                    <View className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 items-center justify-center">
-                        <LayoutDashboard size={24} color="#3B82F6" />
+                    <View className="flex-row items-center gap-3">
+                        <TouchableOpacity
+                            onPress={() => router.push('/add-session')}
+                            className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                        >
+                            <Plus size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <Avatar
+                            url={profile?.avatar_url}
+                            name={session?.user?.email || '?'}
+                            size="md"
+                            onPress={() => router.push('/settings')}
+                        />
                     </View>
                 </View>
 
