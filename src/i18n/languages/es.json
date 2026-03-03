@@ -141,5 +141,6 @@
     "venue_added_success": "El lugar ha sido guardado correctamente",
     "add_as_new_venue": "Añadir \"{{name}}\" como nuevo lugar",
     "today": "Hoy",
-    "tab_you": "Tu"
+    "tab_you": "Tu",
+    "save_venue": "Guardar lugar"
 }

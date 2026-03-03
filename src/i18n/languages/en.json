@@ -141,5 +141,6 @@
     "venue_added_success": "Venue saved successfully",
     "add_as_new_venue": "Add \"{{name}}\" as new venue",
     "today": "Today",
-    "tab_you": "You"
+    "tab_you": "You",
+    "save_venue": "Save Venue"
 }

@@ -13,6 +13,8 @@ import {
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
+import { profileService } from '../../src/services/profile';
+import { cn } from '../../src/theme/tw';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     MapPin,
@@ -80,9 +82,6 @@ export default function VenuesScreen() {
 
             setIsAddModalVisible(false);
             setNewName('');
-            setNewAddress('');
-            setNewContact('');
-            setNewNotes('');
         } catch (error) {
             Alert.alert(t('error'), t('error_saving_session'));
         }
@@ -211,7 +210,7 @@ export default function VenuesScreen() {
                     <Pressable className="flex-1" onPress={() => setIsAddModalVisible(false)} />
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10"
+                        className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-16"
                     >
                         <View className="flex-row items-center justify-between mb-8">
                             <Text className="text-2xl font-black text-gray-900 dark:text-white">
@@ -225,85 +224,46 @@ export default function VenuesScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            <View className="space-y-6">
-                                <View>
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_name')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
-                                        placeholder={t('venue_placeholder')}
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newName}
-                                        onChangeText={setNewName}
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_address')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                        placeholder="Calle Ejemplo 123..."
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newAddress}
-                                        onChangeText={setNewAddress}
-                                        multiline
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_contact')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                        placeholder="+34 600..."
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newContact}
-                                        onChangeText={setNewContact}
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_notes')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                        placeholder="..."
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newNotes}
-                                        onChangeText={setNewNotes}
-                                        multiline
-                                        numberOfLines={4}
-                                        textAlignVertical="top"
-                                    />
-                                </View>
+                        <View className="space-y-6">
+                            <View>
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    {t('venue_name')}
+                                </Text>
+                                <TextInput
+                                    className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
+                                    placeholder={t('venue_placeholder')}
+                                    placeholderTextColor="#9CA3AF"
+                                    value={newName}
+                                    onChangeText={setNewName}
+                                    autoFocus
+                                />
                             </View>
-                        </ScrollView>
+                        </View>
 
                         <TouchableOpacity
                             onPress={handleCreateVenue}
-                            disabled={createVenueMutation.isPending}
-                            className="mt-8 bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row"
+                            disabled={!newName.trim() || createVenueMutation.isPending}
+                            className={cn(
+                                "mt-8 mb-4 bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row",
+                                (!newName.trim() || createVenueMutation.isPending) && "opacity-50"
+                            )}
                         >
                             {createVenueMutation.isPending ? (
                                 <ActivityIndicator color="#FFFFFF" />
                             ) : (
                                 <>
-                                    <Text className="text-white font-black text-lg mr-2">
-                                        {t('save_session')}
+                                    <Text className="text-white font-bold text-lg mr-2">
+                                        {t('save_venue')}
                                     </Text>
-                                    <ArrowRight size={20} color="#FFFFFF" />
+                                    {newName.trim().length > 0 && (
+                                        <ArrowRight size={20} color="#FFFFFF" />
+                                    )}
                                 </>
                             )}
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
-                </View>
-            </Modal>
-        </SafeAreaView>
+                </View >
+            </Modal >
+        </SafeAreaView >
     );
 }
