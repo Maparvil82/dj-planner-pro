@@ -95,11 +95,11 @@ export default function VenuesScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             {/* Header */}
-            <View className="px-6 pt-4 pb-2 justify-center">
+            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
                 <View className="flex-row items-center justify-center h-10">
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
                             {t('venues_title')}
                         </Text>
                     </View>

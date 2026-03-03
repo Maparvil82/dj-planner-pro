@@ -35,13 +35,12 @@ export default function DashboardScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
-            <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View className="flex-row items-center justify-center mb-8 h-12">
+            {/* Header */}
+            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
+                <View className="flex-row items-center justify-center h-10">
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-2xl font-black text-gray-900 dark:text-white">{t('dashboard')}</Text>
-                        <Text className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">{t('app_title')}</Text>
+                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">{t('dashboard')}</Text>
                     </View>
 
                     {/* Right Actions */}
@@ -60,6 +59,9 @@ export default function DashboardScreen() {
                         />
                     </View>
                 </View>
+            </View>
+
+            <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
 
                 {/* Primary Stats Grid */}
                 <View className="flex-row gap-4 mb-8">
