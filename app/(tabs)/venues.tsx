@@ -95,17 +95,24 @@ export default function VenuesScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             {/* Header */}
-            <View className="px-6 pt-4 pb-2">
-                <View className="flex-row items-center justify-between">
-                    <Text className="text-3xl font-black text-gray-900 dark:text-white">
-                        {t('venues_title')}
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => setIsAddModalVisible(true)}
-                        className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center"
-                    >
-                        <Plus size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
+            <View className="px-6 pt-4 pb-2 justify-center">
+                <View className="flex-row items-center justify-center h-10">
+                    {/* Centered Title */}
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                            {t('venues_title')}
+                        </Text>
+                    </View>
+
+                    {/* Right Actions */}
+                    <View className="ml-auto">
+                        <TouchableOpacity
+                            onPress={() => setIsAddModalVisible(true)}
+                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                        >
+                            <Plus size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
 

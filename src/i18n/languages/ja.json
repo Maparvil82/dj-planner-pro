@@ -96,5 +96,6 @@
     "estimated_total_label": "推定合計",
     "djs_label": "DJs",
     "solo_me": "私一人",
-    "shared_with_prefix": "共同出演: "
+    "shared_with_prefix": "共同出演: ",
+    "today": "今日"
 }

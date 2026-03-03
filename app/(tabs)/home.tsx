@@ -142,22 +142,22 @@ export default function HomeScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
-            <View className="px-6 pt-4 pb-2">
-                <View className="flex-row items-center justify-between">
-                    <View>
-                        <Text className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 capitalize">
-                            {new Intl.DateTimeFormat(currentLanguage, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}
-                        </Text>
-                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                            {t('hello') || 'Hola'}, {session?.user?.email?.split('@')[0] || 'User'}!
+            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
+                <View className="flex-row items-center justify-center h-10">
+                    {/* Centered Title */}
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                            DJ Planner
                         </Text>
                     </View>
-                    <View className="flex-row items-center gap-3">
+
+                    {/* Right Actions */}
+                    <View className="flex-row items-center gap-3 ml-auto">
                         <TouchableOpacity
                             onPress={() => router.push('/add-session')}
-                            className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
                         >
-                            <Plus size={24} color="#FFFFFF" />
+                            <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
                         <Avatar
                             url={profile?.avatar_url}
@@ -170,6 +170,25 @@ export default function HomeScreen() {
             </View>
 
             <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+
+                {/* WELCOME SECTION */}
+                <View className="mb-6 mt-6 px-2">
+                    <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                        {(() => {
+                            const todayStr = t('today') || 'Hoy';
+                            let dateStr = new Intl.DateTimeFormat(currentLanguage, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+                            // Remove comma after weekday if exists to match "Martes 3"
+                            dateStr = dateStr.replace(',', '');
+                            const fullStr = `${todayStr}, ${dateStr}`;
+                            // Capitalize words except "de" (common in Spanish dates)
+                            return fullStr.split(' ').map(word => {
+                                if (word.toLowerCase() === 'de') return 'de';
+                                return word.charAt(0).toUpperCase() + word.slice(1);
+                            }).join(' ');
+                        })()}
+                    </Text>
+
+                </View>
 
                 {/* MONTHLY EARNINGS CARD */}
                 <View className="mb-16">

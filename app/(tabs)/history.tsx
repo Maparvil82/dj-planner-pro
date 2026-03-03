@@ -332,12 +332,17 @@ export default function HistoryScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             {/* Header */}
-            <View className="px-6 pt-4 pb-2">
-                <View className="flex-row items-center justify-between">
-                    <Text className="text-3xl font-black text-gray-900 dark:text-white">
-                        {t('history')}
-                    </Text>
-                    <View className="flex-row items-center gap-2">
+            <View className="px-6 pt-4 pb-2 justify-center">
+                <View className="flex-row items-center justify-center h-10">
+                    {/* Centered Title */}
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                            {t('history')}
+                        </Text>
+                    </View>
+
+                    {/* Right Actions */}
+                    <View className="flex-row items-center gap-2 ml-auto">
                         {/* View Switcher */}
                         <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1 mr-1">
                             <TouchableOpacity

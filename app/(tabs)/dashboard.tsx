@@ -37,17 +37,20 @@ export default function DashboardScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
                 {/* Header */}
-                <View className="flex-row items-center justify-between mb-8">
-                    <View>
-                        <Text className="text-3xl font-black text-gray-900 dark:text-white">{t('dashboard')}</Text>
-                        <Text className="text-gray-500 dark:text-gray-400 font-medium">{t('app_title')}</Text>
+                <View className="flex-row items-center justify-center mb-8 h-12">
+                    {/* Centered Title */}
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white">{t('dashboard')}</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">{t('app_title')}</Text>
                     </View>
-                    <View className="flex-row items-center gap-3">
+
+                    {/* Right Actions */}
+                    <View className="flex-row items-center gap-3 ml-auto">
                         <TouchableOpacity
                             onPress={() => router.push('/add-session')}
-                            className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
                         >
-                            <Plus size={24} color="#FFFFFF" />
+                            <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
                         <Avatar
                             url={profile?.avatar_url}
@@ -77,42 +80,6 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                {/* Quick Actions */}
-                <View className="mb-8">
-                    <Text className="text-lg font-black text-gray-900 dark:text-white mb-4">{t('welcome')}</Text>
-
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => router.push('/add-session')}
-                        className="bg-blue-600 rounded-[32px] p-6 flex-row items-center justify-between mb-4 shadow-xl shadow-blue-500/30"
-                    >
-                        <View className="flex-row items-center">
-                            <View className="w-12 h-12 rounded-2xl bg-white/20 items-center justify-center mr-4">
-                                <Plus size={24} color="#FFF" />
-                            </View>
-                            <View>
-                                <Text className="text-white text-lg font-black">{t('add_session')}</Text>
-                                <Text className="text-white/80 text-xs font-medium uppercase tracking-wider">{t('register_subtitle') || 'Crea una nueva sesión'}</Text>
-                            </View>
-                        </View>
-                        <ArrowUpRight size={24} color="#FFF" />
-                    </TouchableOpacity>
-
-                    <View className="bg-gray-50 dark:bg-gray-900 rounded-[32px] p-6 border border-gray-100 dark:border-gray-800">
-                        <View className="flex-row items-center mb-4">
-                            <View className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/30 items-center justify-center mr-4">
-                                <Calendar size={20} color="#10B981" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-gray-900 dark:text-white font-bold">{upcomingCount} {t('history')}</Text>
-                                <Text className="text-gray-500 dark:text-gray-400 text-xs">{t('view_calendar')}</Text>
-                            </View>
-                            <ArrowUpRight size={20} color="#9CA3AF" />
-                        </View>
-                    </View>
-                </View>
-
-                <View className="h-10" />
             </ScrollView>
         </SafeAreaView>
     );
