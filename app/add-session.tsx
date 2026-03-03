@@ -143,6 +143,14 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const { data: venues = [] } = useVenuesQuery();
     const { data: djTags = [] } = useTagsQuery('dj');
 
+    const filteredVenues = React.useMemo(() => {
+        if (!venue) return venues;
+        return venues.filter(v =>
+            v.name.toLowerCase().includes(venue.toLowerCase()) ||
+            v.address?.toLowerCase().includes(venue.toLowerCase())
+        );
+    }, [venue, venues]);
+
     const filteredTitleTags = title.trim().length > 0
         ? titleTags
             .filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase())
@@ -580,14 +588,20 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                         <ScrollView showsVerticalScrollIndicator={false}>
                                             {/* Option to just use text if they want */}
                                             <View className="mb-6">
-                                                <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('search_placeholder')}</Text>
-                                                <TextInput
-                                                    className="bg-gray-50 dark:bg-gray-900 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
-                                                    placeholder={t('venue_placeholder')}
-                                                    value={venue}
-                                                    onChangeText={setVenue}
-                                                    onFocus={() => setVenueId(null)}
-                                                />
+                                                <View className="flex-row items-center bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 pr-3">
+                                                    <TextInput
+                                                        className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold"
+                                                        placeholder={t('venue_placeholder')}
+                                                        value={venue}
+                                                        onChangeText={setVenue}
+                                                        onFocus={() => setVenueId(null)}
+                                                    />
+                                                    {venue.length > 0 && (
+                                                        <TouchableOpacity onPress={() => { setVenue(''); setVenueId(null); }}>
+                                                            <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                        </TouchableOpacity>
+                                                    )}
+                                                </View>
                                                 {venue.trim().length > 0 && !venues.some(v => v.name.toLowerCase() === venue.toLowerCase()) && (
                                                     <TouchableOpacity
                                                         onPress={async () => {
@@ -613,7 +627,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                             </View>
 
                                             <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('venues_title')}</Text>
-                                            {venues.length === 0 ? (
+                                            {filteredVenues.length === 0 ? (
                                                 <TouchableOpacity
                                                     onPress={() => {
                                                         setIsVenueModalVisible(false);
@@ -625,7 +639,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                                     <Text className="text-blue-600 font-bold mt-2">{t('add_venue')}</Text>
                                                 </TouchableOpacity>
                                             ) : (
-                                                venues.map((v) => (
+                                                filteredVenues.map((v) => (
                                                     <TouchableOpacity
                                                         key={v.id}
                                                         onPress={() => {
