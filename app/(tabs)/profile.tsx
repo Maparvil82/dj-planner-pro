@@ -1,15 +1,15 @@
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from '../src/i18n/useTranslation';
+import { useTranslation } from '../../src/i18n/useTranslation';
 import { Stack } from 'expo-router';
-import { Avatar } from '../src/components/ui/Avatar';
-import { useAuthStore } from '../src/store/useAuthStore';
+import { Avatar } from '../../src/components/ui/Avatar';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useState } from 'react';
-import { profileService } from '../src/services/profile';
+import { profileService } from '../../src/services/profile';
 import { LogOut } from 'lucide-react-native';
-import { cn } from '../src/theme/tw';
+import { cn } from '../../src/theme/tw';
 
 export default function SettingsScreen() {
     const { t } = useTranslation();
@@ -61,20 +61,21 @@ export default function SettingsScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['bottom', 'left', 'right']}>
-            <Stack.Screen options={{
-                headerShown: true,
-                title: t('settings_title'),
-                headerBackTitle: t('home'),
-                headerStyle: { backgroundColor: 'transparent' },
-                headerShadowVisible: false,
-                headerTintColor: '#3b82f6' // blue-500
-            }} />
+            {/* Header */}
+            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
+                <View className="flex-row items-center justify-center h-10">
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                            {t('settings_title')}
+                        </Text>
+                    </View>
+                </View>
+            </View>
 
-            <View className="flex-1 px-4 py-6">
-
+            <View className="flex-1 px-4 py-8">
                 {/* Profile Card */}
-                <View className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800 items-center mb-8">
-                    <View className="relative mb-4">
+                <View className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800 items-center mb-8">
+                    <View className="relative mb-6">
                         <Avatar
                             url={profile?.avatar_url}
                             name={session?.user?.email}
@@ -87,22 +88,22 @@ export default function SettingsScreen() {
                         )}
                     </View>
 
-                    <Text className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                        {session?.user?.email}
+                    <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {session?.user?.email?.split('@')[0]}
                     </Text>
-                    <Text className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                        {t('session_status', { status: t('logged_in') })}
+                    <Text className="text-base text-gray-500 dark:text-gray-400 mb-8">
+                        {session?.user?.email}
                     </Text>
 
                     <TouchableOpacity
                         className={cn(
-                            "bg-blue-50 dark:bg-blue-900/30 px-6 py-3 rounded-full flex-row items-center",
+                            "bg-blue-600 px-8 py-3.5 rounded-full flex-row items-center",
                             uploading && "opacity-50"
                         )}
                         onPress={handlePickAvatar}
                         disabled={uploading}
                     >
-                        <Text className="text-blue-600 dark:text-blue-400 font-bold">
+                        <Text className="text-white font-bold text-lg">
                             {t('change_avatar')}
                         </Text>
                     </TouchableOpacity>

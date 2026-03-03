@@ -67,7 +67,7 @@ export default function HistoryScreen() {
     const { data: sessions, isLoading, refetch, isRefetching } = useAllSessionsQuery();
 
     // View State
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
     const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
     // Filter States
@@ -351,7 +351,7 @@ export default function HistoryScreen() {
 
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                             {t('history')}
                         </Text>
                     </View>
@@ -364,12 +364,6 @@ export default function HistoryScreen() {
                         >
                             <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
-                        <Avatar
-                            url={profile?.avatar_url}
-                            name={session?.user?.email || '?'}
-                            size="md"
-                            onPress={() => router.push('/settings')}
-                        />
                     </View>
                 </View>
             </View>

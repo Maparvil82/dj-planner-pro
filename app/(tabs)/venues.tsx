@@ -101,19 +101,12 @@ export default function VenuesScreen() {
             {/* Header */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
                 <View className="flex-row items-center justify-between h-10">
-                    {/* Left Actions */}
-                    <View className="flex-row items-center gap-3 w-20">
-                        <TouchableOpacity
-                            onPress={() => router.push('/history')}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
-                        >
-                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
-                        </TouchableOpacity>
-                    </View>
+                    {/* Left Actions - Empty for balance */}
+                    <View className="w-8" />
 
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                             {t('venues_title')}
                         </Text>
                     </View>
@@ -121,17 +114,17 @@ export default function VenuesScreen() {
                     {/* Right Actions */}
                     <View className="flex-row items-center gap-3 ml-auto">
                         <TouchableOpacity
+                            onPress={() => router.push('/history')}
+                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                        >
+                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
                             onPress={() => setIsAddModalVisible(true)}
                             className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
                         >
                             <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
-                        <Avatar
-                            url={profile?.avatar_url}
-                            name={session?.user?.email || '?'}
-                            size="md"
-                            onPress={() => router.push('/settings')}
-                        />
                     </View>
                 </View>
             </View>

@@ -140,5 +140,6 @@
     "venue_deleted_success": "El lugar ha sido eliminado correctamente",
     "venue_added_success": "El lugar ha sido guardado correctamente",
     "add_as_new_venue": "Añadir \"{{name}}\" como nuevo lugar",
-    "today": "Hoy"
+    "today": "Hoy",
+    "tab_you": "Tu"
 }

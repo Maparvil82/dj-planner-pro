@@ -140,5 +140,6 @@
     "venue_deleted_success": "Venue deleted successfully",
     "venue_added_success": "Venue saved successfully",
     "add_as_new_venue": "Add \"{{name}}\" as new venue",
-    "today": "Today"
+    "today": "Today",
+    "tab_you": "You"
 }
