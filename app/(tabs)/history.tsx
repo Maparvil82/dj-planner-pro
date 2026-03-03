@@ -345,10 +345,6 @@ export default function HistoryScreen() {
                                                             {session.start_time} - {session.end_time}
                                                         </Text>
 
-                                                        {/* Debug Date Label to help user verify filter */}
-                                                        <Text className="text-[10px] text-gray-400 dark:text-gray-600 font-mono">
-                                                            {session.date}
-                                                        </Text>
 
                                                         {session.is_collective && session.djs && session.djs.length > 0 && (
                                                             <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
