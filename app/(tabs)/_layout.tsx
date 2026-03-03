@@ -50,9 +50,7 @@ export default function TabLayout() {
             <ExpoTabs.Screen
                 name="history"
                 options={{
-                    title: t('history'),
-                    // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
+                    href: null,
                 }}
             />
             <ExpoTabs.Screen

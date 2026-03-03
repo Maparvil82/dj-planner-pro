@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight } from 'lucide-react-native';
+import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar } from 'lucide-react-native';
 import { useContext, useState, useMemo } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -143,7 +143,17 @@ export default function HomeScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-center h-10">
+                <View className="flex-row items-center justify-between h-10">
+                    {/* Left Actions */}
+                    <View className="flex-row items-center gap-3 w-20">
+                        <TouchableOpacity
+                            onPress={() => router.push('/history')}
+                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                        >
+                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
+                        </TouchableOpacity>
+                    </View>
+
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
                         <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">

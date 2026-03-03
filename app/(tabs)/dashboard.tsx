@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { LayoutDashboard, Wallet, Calendar, ArrowUpRight, TrendingUp, Plus } from 'lucide-react-native';
+import { LayoutDashboard, Wallet, Calendar, ArrowUpRight, TrendingUp, Plus, History } from 'lucide-react-native';
 import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -37,7 +37,17 @@ export default function DashboardScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top']}>
             {/* Header */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-center h-10">
+                <View className="flex-row items-center justify-between h-10">
+                    {/* Left Actions */}
+                    <View className="flex-row items-center gap-3 w-20">
+                        <TouchableOpacity
+                            onPress={() => router.push('/history')}
+                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                        >
+                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
+                        </TouchableOpacity>
+                    </View>
+
                     {/* Centered Title */}
                     <View className="absolute left-0 right-0 items-center justify-center">
                         <Text className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">{t('dashboard')}</Text>
