@@ -23,11 +23,14 @@ import {
     Search,
     Filter,
     X,
-    Check
+    Check,
+    Plus
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { Avatar } from '../../src/components/ui/Avatar';
 import { useRouter } from 'expo-router';
 import { format, parseISO, isSameMonth, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
@@ -55,6 +58,7 @@ const calculateSessionEarnings = (session: any) => {
 
 export default function HistoryScreen() {
     const { t, i18n, currentLanguage } = useTranslation();
+    const { session, profile } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
@@ -342,41 +346,57 @@ export default function HistoryScreen() {
                     </View>
 
                     {/* Right Actions */}
-                    <View className="flex-row items-center gap-2 ml-auto">
-                        {/* View Switcher */}
-                        <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1 mr-1">
-                            <TouchableOpacity
-                                onPress={() => setViewMode('list')}
-                                className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
-                            >
-                                <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
-                                    {t('view_list')}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setViewMode('calendar')}
-                                className={`px-4 py-1.5 rounded-full ${viewMode === 'calendar' ? 'bg-white dark:bg-gray-800' : ''}`}
-                            >
-                                <Text className={`text-xs font-bold ${viewMode === 'calendar' ? 'text-blue-600' : 'text-gray-400'}`}>
-                                    {t('view_calendar')}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Advanced Filter Trigger */}
+                    <View className="flex-row items-center gap-3 ml-auto">
                         <TouchableOpacity
-                            onPress={() => setIsAdvancedModalVisible(true)}
-                            className={`w-10 h-10 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
+                            onPress={() => router.push('/add-session')}
+                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
                         >
-                            <Filter size={20} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
-                            {activeFiltersCount > 0 && (
-                                <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950 items-center justify-center">
-                                    <Text className="text-[10px] font-bold text-white">{activeFiltersCount}</Text>
-                                </View>
-                            )}
+                            <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
+                        <Avatar
+                            url={profile?.avatar_url}
+                            name={session?.user?.email || '?'}
+                            size="md"
+                            onPress={() => router.push('/settings')}
+                        />
                     </View>
                 </View>
+            </View>
+
+            {/* Sub-Header: Controls */}
+            <View className="px-6 pt-4 flex-row items-center justify-between">
+                {/* View Switcher */}
+                <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1">
+                    <TouchableOpacity
+                        onPress={() => setViewMode('list')}
+                        className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
+                    >
+                        <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            {t('view_list')}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setViewMode('calendar')}
+                        className={`px-4 py-1.5 rounded-full ${viewMode === 'calendar' ? 'bg-white dark:bg-gray-800' : ''}`}
+                    >
+                        <Text className={`text-xs font-bold ${viewMode === 'calendar' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            {t('view_calendar')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Advanced Filter Trigger */}
+                <TouchableOpacity
+                    onPress={() => setIsAdvancedModalVisible(true)}
+                    className={`w-9 h-9 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
+                >
+                    <Filter size={18} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
+                    {activeFiltersCount > 0 && (
+                        <View className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950 items-center justify-center">
+                            <Text className="text-[10px] font-bold text-white">{activeFiltersCount}</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
             </View>
 
             {/* Search Bar */}

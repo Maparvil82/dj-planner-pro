@@ -26,13 +26,16 @@ import {
     ArrowRight
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { Avatar } from '../../src/components/ui/Avatar';
 import { useContext } from 'react';
 import { useRouter } from 'expo-router';
 
 export default function VenuesScreen() {
     const { t } = useTranslation();
+    const { session, profile } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
@@ -105,13 +108,19 @@ export default function VenuesScreen() {
                     </View>
 
                     {/* Right Actions */}
-                    <View className="ml-auto">
+                    <View className="flex-row items-center gap-3 ml-auto">
                         <TouchableOpacity
                             onPress={() => setIsAddModalVisible(true)}
                             className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
                         >
                             <Plus size={20} color="#FFFFFF" />
                         </TouchableOpacity>
+                        <Avatar
+                            url={profile?.avatar_url}
+                            name={session?.user?.email || '?'}
+                            size="md"
+                            onPress={() => router.push('/settings')}
+                        />
                     </View>
                 </View>
             </View>
