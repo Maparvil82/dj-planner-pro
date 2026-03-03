@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable } from 'react-native';
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -8,6 +8,7 @@ import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, Chevro
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useSessionByIdQuery, useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../../src/hooks/useTagsQuery';
+import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 
@@ -40,6 +41,7 @@ export default function EditSessionScreen() {
 function EditSessionContent({ session: initialSession, onBack }: { session: any, onBack: () => void }) {
     const { t, currentLanguage } = useTranslation();
     const { session: authSession } = useAuthStore();
+    const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -49,6 +51,8 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
     const [venue, setVenue] = useState(initialSession.venue || '');
     const [startTime, setStartTime] = useState(initialSession.start_time || '22:00');
     const [endTime, setEndTime] = useState(initialSession.end_time || '04:00');
+    const [venueId, setVenueId] = useState<string | null>(initialSession.venue_id || null);
+    const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
 
     // Earnings State
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>(initialSession.earning_type || 'free');
@@ -81,6 +85,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
     // Autocomplete Tags
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venueTags = [] } = useTagsQuery('venue');
+    const { data: venues = [] } = useVenuesQuery();
     const { data: djTags = [] } = useTagsQuery('dj');
 
     const filteredTitleTags = title.trim().length > 0
@@ -122,6 +127,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
             date: sessionDate,
             title: title.trim(),
             venue: venue.trim(),
+            venue_id: venueId || undefined,
             start_time: startTime.trim(),
             end_time: endTime.trim(),
             is_collective: isCollective,
@@ -275,26 +281,92 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">
                                 {t('venue')} *
                             </Text>
-                            {focusedInput === 'venue' && filteredVenueTags.length > 0 && (
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="mb-3">
-                                    {filteredVenueTags.map((tag) => (
-                                        <TouchableOpacity key={tag.name} className="mr-2 mb-2 px-3 py-1.5 rounded-full bg-gray-800 border border-gray-700 flex-row items-center" onPress={() => setVenue(tag.name)}>
-                                            <MapPin size={14} color="#A3A3A3" className="mr-1.5" />
-                                            <Text className="text-gray-400">{tag.name}</Text>
+
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => {
+                                    Keyboard.dismiss();
+                                    setIsVenueModalVisible(true);
+                                }}
+                                className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-blue-500 bg-blue-50/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}
+                            >
+                                <MapPin size={22} color={venueId ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                                <Text className={`flex-1 ml-3 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+                                    {venue || t('venue_placeholder')}
+                                </Text>
+                                <ChevronRight size={20} color={isDark ? '#4B5563' : '#D1D5DB'} />
+                            </TouchableOpacity>
+
+                            {/* Venue Selection Modal */}
+                            <Modal visible={isVenueModalVisible} animationType="slide" transparent>
+                                <View className="flex-1 justify-end bg-black/60">
+                                    <Pressable className="flex-1" onPress={() => setIsVenueModalVisible(false)} />
+                                    <KeyboardAvoidingView
+                                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                                        className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 h-[80%]"
+                                    >
+                                        <View className="flex-row items-center justify-between mb-6">
+                                            <Text className="text-2xl font-black text-gray-900 dark:text-white">{t('venues_title')}</Text>
+                                            <TouchableOpacity onPress={() => setIsVenueModalVisible(false)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center">
+                                                <X size={24} color={isDark ? '#FFF' : '#000'} />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <ScrollView showsVerticalScrollIndicator={false}>
+                                            <View className="mb-6">
+                                                <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('search_placeholder')}</Text>
+                                                <TextInput
+                                                    className="bg-gray-50 dark:bg-gray-900 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
+                                                    placeholder={t('venue_placeholder')}
+                                                    value={venue}
+                                                    onChangeText={setVenue}
+                                                    onFocus={() => setVenueId(null)}
+                                                />
+                                            </View>
+
+                                            <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('venues_title')}</Text>
+                                            {venues.length === 0 ? (
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        setIsVenueModalVisible(false);
+                                                        router.push('/(tabs)/venues');
+                                                    }}
+                                                    className="items-center py-10 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700"
+                                                >
+                                                    <MapPin size={24} color="#3B82F6" />
+                                                    <Text className="text-blue-600 font-bold mt-2">{t('add_venue')}</Text>
+                                                </TouchableOpacity>
+                                            ) : (
+                                                venues.map((v) => (
+                                                    <TouchableOpacity
+                                                        key={v.id}
+                                                        onPress={() => {
+                                                            setVenue(v.name);
+                                                            setVenueId(v.id);
+                                                            setIsVenueModalVisible(false);
+                                                        }}
+                                                        className={`flex-row items-center p-4 mb-3 rounded-2xl border ${venueId === v.id ? 'border-blue-500 bg-blue-50/10' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900'}`}
+                                                    >
+                                                        <MapPin size={20} color={venueId === v.id ? '#3B82F6' : '#9CA3AF'} />
+                                                        <View className="ml-3 flex-1">
+                                                            <Text className={`font-bold ${venueId === v.id ? 'text-blue-600' : 'text-gray-900 dark:text-white'}`}>{v.name}</Text>
+                                                            {v.address && <Text className="text-xs text-gray-400" numberOfLines={1}>{v.address}</Text>}
+                                                        </View>
+                                                        {venueId === v.id && <ChevronRight size={20} color="#3B82F6" />}
+                                                    </TouchableOpacity>
+                                                ))
+                                            )}
+                                        </ScrollView>
+
+                                        <TouchableOpacity
+                                            onPress={() => setIsVenueModalVisible(false)}
+                                            className="mt-6 bg-blue-600 py-4 rounded-2xl items-center"
+                                        >
+                                            <Text className="text-white font-black text-lg">{t('filter_apply')}</Text>
                                         </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            )}
-                            <View className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'venue' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-transparent bg-white dark:bg-gray-900'}`}>
-                                <MapPin size={22} color={focusedInput === 'venue' ? '#3B82F6' : '#9CA3AF'} />
-                                <TextInput
-                                    className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium"
-                                    value={venue}
-                                    onChangeText={setVenue}
-                                    onFocus={() => handleFocus('venue')}
-                                    onBlur={handleBlur}
-                                />
-                            </View>
+                                    </KeyboardAvoidingView>
+                                </View>
+                            </Modal>
                         </View>
 
                         {/* Crew */}

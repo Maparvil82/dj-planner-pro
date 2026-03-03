@@ -126,5 +126,16 @@
     "no_sessions_this_day": "No sessions scheduled for this day",
     "filter_earnings_range": "Earnings Range",
     "filter_min_earnings": "Min",
-    "filter_max_earnings": "Max"
+    "filter_max_earnings": "Max",
+    "venues_title": "Venues",
+    "add_venue": "Add Venue",
+    "venue_name": "Venue Name",
+    "venue_address": "Address",
+    "venue_contact": "Contact",
+    "venue_notes": "Notes",
+    "no_venues_yet": "No venues saved yet",
+    "edit_venue": "Edit Venue",
+    "delete_venue": "Delete Venue",
+    "venue_deleted_success": "Venue deleted successfully",
+    "venue_added_success": "Venue saved successfully"
 }

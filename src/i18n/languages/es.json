@@ -126,5 +126,16 @@
     "no_sessions_this_day": "No hay sesiones programadas para este día",
     "filter_earnings_range": "Rango de ingresos",
     "filter_min_earnings": "Mínimo",
-    "filter_max_earnings": "Máximo"
+    "filter_max_earnings": "Máximo",
+    "venues_title": "Lugares",
+    "add_venue": "Añadir lugar",
+    "venue_name": "Nombre del lugar",
+    "venue_address": "Dirección",
+    "venue_contact": "Contacto",
+    "venue_notes": "Notas",
+    "no_venues_yet": "No tienes lugares guardados aún",
+    "edit_venue": "Editar lugar",
+    "delete_venue": "Eliminar lugar",
+    "venue_deleted_success": "El lugar ha sido eliminado correctamente",
+    "venue_added_success": "El lugar ha sido guardado correctamente"
 }

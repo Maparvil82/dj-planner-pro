@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSessionByIdQuery, useDeleteSessionMutation, useUpdateSessionColorMutation } from '../../src/hooks/useSessionsQuery';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X, Pencil } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X, Pencil, ArrowRight } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -193,7 +193,16 @@ export default function SessionDetailScreen() {
                 </View>
 
                 {/* Venue Section (Flat Style) */}
-                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6">
+                <TouchableOpacity
+                    onPress={() => {
+                        if (session.venue_id) {
+                            router.push(`/venue/${session.venue_id}`);
+                        }
+                    }}
+                    disabled={!session.venue_id}
+                    className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6"
+                    activeOpacity={session.venue_id ? 0.7 : 1}
+                >
                     <View className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full items-center justify-center mr-4 shadow-sm border border-gray-100 dark:border-gray-700">
                         <MapPinned size={22} color={isDark ? '#FFFFFF' : '#111827'} />
                     </View>
@@ -205,7 +214,10 @@ export default function SessionDetailScreen() {
                             {session.venue}
                         </Text>
                     </View>
-                </View>
+                    {session.venue_id && (
+                        <ArrowRight size={20} color={isDark ? '#4B5563' : '#D1D5DB'} />
+                    )}
+                </TouchableOpacity>
 
                 {/* Summary Section (Mockup Inspiration) */}
                 <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8">

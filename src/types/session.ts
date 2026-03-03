@@ -15,6 +15,7 @@ export interface Session {
     recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
+    venue_id?: string; // uuid
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
 }
@@ -34,4 +35,5 @@ export interface CreateSessionInput {
     recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
+    venue_id?: string; // uuid
 }

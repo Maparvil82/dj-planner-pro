@@ -1,13 +1,14 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable } from 'react-native';
 import React, { useState, useRef, useContext } from 'react';
 import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Check, Plus } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
+import { useVenuesQuery } from '../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../src/i18n/calendarLocales';
 import { supabase } from '../src/lib/supabase';
@@ -51,6 +52,7 @@ export default function AddSessionModal() {
 function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => void }) {
     const { t, currentLanguage } = useTranslation();
     const { session } = useAuthStore();
+    const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -60,6 +62,8 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
+    const [venueId, setVenueId] = useState<string | null>(null);
+    const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
 
     // Earnings State
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
@@ -135,6 +139,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
     // Tags and Autocomplete
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venueTags = [] } = useTagsQuery('venue');
+    const { data: venues = [] } = useVenuesQuery();
     const { data: djTags = [] } = useTagsQuery('dj');
 
     const filteredTitleTags = title.trim().length > 0
@@ -208,6 +213,7 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                     date: dateIsoStr,
                     title: title.trim(),
                     venue: venue.trim(),
+                    venue_id: venueId || undefined,
                     start_time: startTime.trim(),
                     end_time: endTime.trim(),
                     is_collective: isCollective,
@@ -533,7 +539,6 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                             </View>
                         </View>
 
-                        {/* Venue Input */}
                         <View className="z-40">
                             <View className="flex-row justify-between items-end mb-2">
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
@@ -541,47 +546,92 @@ function AddSessionModalContent({ date, onBack }: { date: string, onBack: () => 
                                 </Text>
                             </View>
 
-                            {/* Autocomplete Tags */}
-                            {focusedInput === 'venue' && filteredVenueTags.length > 0 && (
-                                <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    keyboardShouldPersistTaps="handled"
-                                    className="mb-3"
-                                >
-                                    {filteredVenueTags.map((tag) => (
-                                        <TouchableOpacity
-                                            key={tag.name}
-                                            activeOpacity={0.7}
-                                            className="mr-2 mb-2 px-3 py-1.5 rounded-full border flex-row items-center"
-                                            style={{ backgroundColor: '#262626', borderColor: '#404040' }}
-                                            onPress={() => {
-                                                setVenue(tag.name);
-                                                Keyboard.dismiss();
-                                                setFocusedInput(null);
-                                            }}
-                                        >
-                                            <MapPin size={14} color="#A3A3A3" className="mr-1.5" />
-                                            <Text className="font-medium" style={{ color: '#A3A3A3' }}>{tag.name}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            )}
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => {
+                                    Keyboard.dismiss();
+                                    setIsVenueModalVisible(true);
+                                }}
+                                className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-blue-500 bg-blue-50/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}
+                            >
+                                <MapPin size={22} color={venueId ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                                <Text className={`flex-1 ml-3 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+                                    {venue || t('venue_placeholder')}
+                                </Text>
+                                <ChevronRight size={20} color={isDark ? '#4B5563' : '#D1D5DB'} />
+                            </TouchableOpacity>
 
-                            <View className={`relative justify-center rounded-2xl border-2 overflow-hidden ${focusedInput === 'venue' ? 'border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-900 shadow-sm shadow-blue-500/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
-                                <View className="absolute left-5 z-10 w-6 items-center">
-                                    <MapPin size={22} color={focusedInput === 'venue' ? (isDark ? '#60A5FA' : '#3B82F6') : (isDark ? '#6B7280' : '#9CA3AF')} />
+                            {/* Venue Selection Modal */}
+                            <Modal visible={isVenueModalVisible} animationType="slide" transparent>
+                                <View className="flex-1 justify-end bg-black/60">
+                                    <Pressable className="flex-1" onPress={() => setIsVenueModalVisible(false)} />
+                                    <KeyboardAvoidingView
+                                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                                        className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 h-[80%]"
+                                    >
+                                        <View className="flex-row items-center justify-between mb-6">
+                                            <Text className="text-2xl font-black text-gray-900 dark:text-white">{t('venues_title')}</Text>
+                                            <TouchableOpacity onPress={() => setIsVenueModalVisible(false)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center">
+                                                <X size={24} color={isDark ? '#FFF' : '#000'} />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <ScrollView showsVerticalScrollIndicator={false}>
+                                            {/* Option to just use text if they want */}
+                                            <View className="mb-6">
+                                                <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('search_placeholder')}</Text>
+                                                <TextInput
+                                                    className="bg-gray-50 dark:bg-gray-900 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
+                                                    placeholder={t('venue_placeholder')}
+                                                    value={venue}
+                                                    onChangeText={setVenue}
+                                                    onFocus={() => setVenueId(null)}
+                                                />
+                                            </View>
+
+                                            <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('venues_title')}</Text>
+                                            {venues.length === 0 ? (
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        setIsVenueModalVisible(false);
+                                                        router.push('/(tabs)/venues');
+                                                    }}
+                                                    className="items-center py-10 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700"
+                                                >
+                                                    <Plus size={24} color="#3B82F6" />
+                                                    <Text className="text-blue-600 font-bold mt-2">{t('add_venue')}</Text>
+                                                </TouchableOpacity>
+                                            ) : (
+                                                venues.map((v) => (
+                                                    <TouchableOpacity
+                                                        key={v.id}
+                                                        onPress={() => {
+                                                            setVenue(v.name);
+                                                            setVenueId(v.id);
+                                                            setIsVenueModalVisible(false);
+                                                        }}
+                                                        className={`flex-row items-center p-4 mb-3 rounded-2xl border ${venueId === v.id ? 'border-blue-500 bg-blue-50/10' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900'}`}
+                                                    >
+                                                        <MapPin size={20} color={venueId === v.id ? '#3B82F6' : '#9CA3AF'} />
+                                                        <View className="ml-3 flex-1">
+                                                            <Text className={`font-bold ${venueId === v.id ? 'text-blue-600' : 'text-gray-900 dark:text-white'}`}>{v.name}</Text>
+                                                            {v.address && <Text className="text-xs text-gray-400" numberOfLines={1}>{v.address}</Text>}
+                                                        </View>
+                                                        {venueId === v.id && <Check size={20} color="#3B82F6" />}
+                                                    </TouchableOpacity>
+                                                ))
+                                            )}
+                                        </ScrollView>
+
+                                        <TouchableOpacity
+                                            onPress={() => setIsVenueModalVisible(false)}
+                                            className="mt-6 bg-blue-600 py-4 rounded-2xl items-center"
+                                        >
+                                            <Text className="text-white font-black text-lg">{t('filter_apply')}</Text>
+                                        </TouchableOpacity>
+                                    </KeyboardAvoidingView>
                                 </View>
-                                <TextInput
-                                    className="pl-14 pr-5 py-4 text-gray-900 dark:text-white text-base font-medium"
-                                    placeholder={t('venue_placeholder')}
-                                    placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-                                    value={venue}
-                                    onChangeText={setVenue}
-                                    onFocus={() => handleFocus('venue')}
-                                    onBlur={handleBlur}
-                                />
-                            </View>
+                            </Modal>
                         </View>
 
                         {/* Collective Session Toggle */}

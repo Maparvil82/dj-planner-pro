@@ -1,5 +1,5 @@
 import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, Calendar } from 'lucide-react-native';
+import { Home, Calendar, MapPin } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
@@ -45,6 +45,14 @@ export default function TabLayout() {
                     title: t('history'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
+                }}
+            />
+            <ExpoTabs.Screen
+                name="venues"
+                options={{
+                    title: t('venues_title'),
+                    // @ts-ignore
+                    tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
                 }}
             />
         </ExpoTabs>
