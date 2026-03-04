@@ -154,5 +154,11 @@
     "next_30_days": "Next 30 days",
     "confirmed": "CONFIRMED",
     "dj": "DJ",
-    "monthly_goal": "MONTHLY GOAL"
+    "monthly_goal": "MONTHLY GOAL",
+    "net_profit": "Net Profit",
+    "expenses": "Expenses",
+    "avg_per_session": "Avg € / Session",
+    "prev_month_income": "Prev. Month Income",
+    "pending": "PENDING",
+    "top_venue_year": "Top Venue (Year)"
 }

@@ -154,5 +154,11 @@
     "next_30_days": "Próximos 30 días",
     "confirmed": "CONFIRMADAS",
     "dj": "DJ",
-    "monthly_goal": "OBJ. MENSUAL"
+    "monthly_goal": "OBJ. MENSUAL",
+    "net_profit": "Beneficio Neto",
+    "expenses": "Gastos",
+    "avg_per_session": "Media € / Sesión",
+    "prev_month_income": "Ingresos Mes Ant.",
+    "pending": "PENDIENTES",
+    "top_venue_year": "Local más rentable (Año)"
 }

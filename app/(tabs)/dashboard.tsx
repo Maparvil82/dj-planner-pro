@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Avatar } from '../../src/components/ui/Avatar';
@@ -35,6 +36,7 @@ export default function DashboardScreen() {
 
     const { data: sessions = [], isLoading: isLoadingAll } = useAllSessionsQuery();
     const { data: upcomingSessions = [], isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
+    const { data: expenses = [], isLoading: isLoadingExpenses } = useAllExpensesQuery();
 
     const locale = useMemo(() => {
         switch (i18n.language) {
@@ -49,7 +51,7 @@ export default function DashboardScreen() {
     }, [i18n.language]);
 
     // Financial calculations
-    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions } = useMemo(() => {
+    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue } = useMemo(() => {
         let thisMonth = 0;
         let lastMonth = 0;
         let sessionsThisMonth = 0;
@@ -60,11 +62,18 @@ export default function DashboardScreen() {
         const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
         const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
 
+        let currentYearVenues: Record<string, number> = {};
+        const currentYear = now.getFullYear();
+
         sessions.forEach(session => {
             const earnings = calculateSessionEarnings(session);
 
             if (session.date) {
                 const sessionDate = parseISO(session.date);
+                if (sessionDate.getFullYear() === currentYear && session.venue) {
+                    currentYearVenues[session.venue] = (currentYearVenues[session.venue] || 0) + earnings;
+                }
+
                 if (isThisMonth(sessionDate)) {
                     thisMonth += earnings;
                     sessionsThisMonth++;
@@ -75,14 +84,56 @@ export default function DashboardScreen() {
             }
         });
 
-        return { thisMonthEarnings: thisMonth, lastMonthEarnings: lastMonth, totalSessionsThisMonth: sessionsThisMonth, lastMonthSessions: prevMonthSessions };
+        // Find top venue
+        let topVenueName = '—';
+        let topVenueEarnings = 0;
+        Object.entries(currentYearVenues).forEach(([venue, amount]) => {
+            if (amount > topVenueEarnings) {
+                topVenueEarnings = amount;
+                topVenueName = venue;
+            }
+        });
+
+        return {
+            thisMonthEarnings: thisMonth,
+            lastMonthEarnings: lastMonth,
+            totalSessionsThisMonth: sessionsThisMonth,
+            lastMonthSessions: prevMonthSessions,
+            topVenue: { name: topVenueName, amount: topVenueEarnings }
+        };
     }, [sessions]);
 
+    const { thisMonthExpenses, lastMonthExpenses } = useMemo(() => {
+        let thisMonthExp = 0;
+        let lastMonthExp = 0;
+
+        const now = new Date();
+        const startOfCurrentMonth = startOfMonth(now);
+        const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
+        const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
+
+        expenses.forEach(expense => {
+            if (expense.date) {
+                const expenseDate = parseISO(expense.date);
+                if (isThisMonth(expenseDate)) {
+                    thisMonthExp += Number(expense.amount) || 0;
+                } else if (isWithinInterval(expenseDate, { start: startOfPreviousMonth, end: endOfPreviousMonth })) {
+                    lastMonthExp += Number(expense.amount) || 0;
+                }
+            }
+        });
+
+        return { thisMonthExpenses: thisMonthExp, lastMonthExpenses: lastMonthExp };
+    }, [expenses]);
+
     const differencePercentage = lastMonthEarnings === 0
-        ? 100
+        ? null
         : Math.round(((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100);
 
-    const isPositiveGrowth = differencePercentage >= 0;
+    const isPositiveGrowth = differencePercentage !== null && differencePercentage >= 0;
+
+    const netProfit = thisMonthEarnings - thisMonthExpenses;
+    const avgPerSession = totalSessionsThisMonth > 0 ? (thisMonthEarnings / totalSessionsThisMonth) : 0;
 
     // Derived values for progress bars (visual only, max 100%)
     const sessionGoal = lastMonthSessions > 0 ? Math.max(lastMonthSessions, 10) : 10;
@@ -92,9 +143,13 @@ export default function DashboardScreen() {
     const earningsPercentage = Math.min(Math.round((thisMonthEarnings / earningsGoal) * 100), 100);
 
     const upcomingCount = upcomingSessions.length;
-    const upcomingRatio = Math.min(Math.round((upcomingCount / 10) * 100), 100); // Visual max 10
+    const confirmedUpcoming = upcomingSessions.filter(s => s.status === 'confirmed' || !s.status).length;
+    const pendingUpcoming = upcomingSessions.filter(s => s.status === 'pending').length;
 
-    const isLoading = isLoadingAll || isLoadingUpcoming;
+    // Total upcoming is used to calculate the visual ratio. Let's base it out of 10.
+    const upcomingRatio = Math.min(Math.round((upcomingCount > 0 ? (confirmedUpcoming / upcomingCount) : 0) * 100), 100);
+
+    const isLoading = isLoadingAll || isLoadingUpcoming || isLoadingExpenses;
 
     if (isLoading) {
         return (
@@ -186,15 +241,39 @@ export default function DashboardScreen() {
                         <Text className="text-gray-500 dark:text-gray-400 text-xs mb-8">{t('past_30_days')}</Text>
 
                         <Text className="text-[28px] font-black text-gray-900 dark:text-white mb-4 tracking-tighter leading-none">
-                            {isPositiveGrowth ? '+' : ''}{differencePercentage}%
+                            {differencePercentage === null ? '—' : `${isPositiveGrowth ? '+' : ''}${differencePercentage}%`}
                         </Text>
 
                         <View className="w-full h-1.5 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden">
                             <View
                                 className="h-full bg-blue-600 rounded-full"
-                                style={{ width: `${Math.min(Math.abs(differencePercentage), 100)}%` }}
+                                style={{ width: differencePercentage === null ? '0%' : `${Math.min(Math.abs(differencePercentage), 100)}%` }}
                             />
                         </View>
+                    </View>
+                </View>
+
+                {/* KPI Metrics Row 1 */}
+                <View className="flex-row gap-4 mb-4">
+                    <View className="flex-1 bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[24px] p-5">
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('net_profit')}</Text>
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{netProfit.toLocaleString()}€</Text>
+                    </View>
+                    <View className="flex-1 bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[24px] p-5">
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('expenses')}</Text>
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{thisMonthExpenses.toLocaleString()}€</Text>
+                    </View>
+                </View>
+
+                {/* KPI Metrics Row 2 */}
+                <View className="flex-row gap-4 mb-4">
+                    <View className="flex-1 bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[24px] p-5">
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('avg_per_session')}</Text>
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{Math.round(avgPerSession).toLocaleString()}€</Text>
+                    </View>
+                    <View className="flex-1 bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[24px] p-5">
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('prev_month_income')}</Text>
+                        <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{lastMonthEarnings.toLocaleString()}€</Text>
                     </View>
                 </View>
 
@@ -220,8 +299,14 @@ export default function DashboardScreen() {
                             <View className="flex-row items-center gap-4">
                                 <View className="flex-row items-center">
                                     <View className="w-2.5 h-2.5 bg-blue-600 rounded mr-2" />
-                                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('confirmed')}</Text>
+                                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('confirmed')} ({confirmedUpcoming})</Text>
                                 </View>
+                                {pendingUpcoming > 0 && (
+                                    <View className="flex-row items-center">
+                                        <View className="w-2.5 h-2.5 bg-orange-500 rounded mr-2" />
+                                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('pending')} ({pendingUpcoming})</Text>
+                                    </View>
+                                )}
                             </View>
                         </View>
                         <View className="flex-row items-start relative pb-1">
@@ -235,6 +320,15 @@ export default function DashboardScreen() {
                         </View>
                     </View>
                 </TouchableOpacity>
+
+                {/* Top Venue Card */}
+                <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
+                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('top_venue_year')}</Text>
+                    <Text className="text-xl font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{topVenue.name}</Text>
+                    {topVenue.amount > 0 && (
+                        <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">{topVenue.amount.toLocaleString()}€</Text>
+                    )}
+                </View>
 
                 <View className="h-28" />
             </ScrollView>
