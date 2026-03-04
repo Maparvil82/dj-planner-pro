@@ -20,7 +20,10 @@ import {
     Phone,
     FileText,
     X,
-    Check
+    Check,
+    Cloud,
+    CloudOff,
+    Loader
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useVenueByIdQuery, useUpdateVenueMutation, useDeleteVenueMutation } from '../../src/hooks/useVenuesQuery';
@@ -42,6 +45,8 @@ export default function VenueDetailScreen() {
     const [contact, setContact] = useState('');
     const [notes, setNotes] = useState('');
     const [hasChanges, setHasChanges] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
         if (venue) {
@@ -52,28 +57,34 @@ export default function VenueDetailScreen() {
         }
     }, [venue]);
 
-    const handleSave = async () => {
-        if (!name.trim()) {
-            Alert.alert(t('error'), t('missing_fields'));
-            return;
-        }
+    // Auto-save effect
+    useEffect(() => {
+        if (!hasChanges || !venue || !name.trim()) return;
 
-        try {
-            await updateVenueMutation.mutateAsync({
-                venueId: venue!.id,
-                input: {
-                    name: name.trim(),
-                    address: address.trim(),
-                    contact_info: contact.trim(),
-                    notes: notes.trim()
-                }
-            });
-            setHasChanges(false);
-            Alert.alert(t('success'), t('venue_added_success'));
-        } catch (err) {
-            Alert.alert(t('error'), t('error_saving_session'));
-        }
-    };
+        const timeoutId = setTimeout(async () => {
+            setSaveStatus('saving');
+            try {
+                await updateVenueMutation.mutateAsync({
+                    venueId: venue.id,
+                    input: {
+                        name: name.trim(),
+                        address: address.trim(),
+                        contact_info: contact.trim(),
+                        notes: notes.trim()
+                    }
+                });
+                setHasChanges(false);
+                setSaveStatus('saved');
+
+                // Reset to idle after 2s
+                setTimeout(() => setSaveStatus('idle'), 2000);
+            } catch (err) {
+                setSaveStatus('error');
+            }
+        }, 1000); // 1 second debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [name, address, contact, notes, hasChanges, venue]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -130,9 +141,32 @@ export default function VenueDetailScreen() {
                 >
                     <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#000000'} />
                 </TouchableOpacity>
-                <Text className="text-xl font-black text-gray-900 dark:text-white flex-1 text-center mx-2" numberOfLines={1}>
-                    {venue.name}
-                </Text>
+                <View className="flex-1 items-center justify-center mx-2">
+                    <Text className="text-xl font-black text-gray-900 dark:text-white text-center" numberOfLines={1}>
+                        {venue.name}
+                    </Text>
+                    {/* Auto-save status indicator */}
+                    <View className="flex-row items-center mt-1">
+                        {saveStatus === 'saving' && (
+                            <>
+                                <Loader size={12} color="#2563EB" className="mr-1 animate-spin" />
+                                <Text className="text-[10px] text-blue-600 font-bold uppercase">{t('saving') || 'Guardando...'}</Text>
+                            </>
+                        )}
+                        {saveStatus === 'saved' && (
+                            <>
+                                <Cloud size={12} color="#10B981" className="mr-1" />
+                                <Text className="text-[10px] text-green-500 font-bold uppercase">{t('saved') || 'Guardado'}</Text>
+                            </>
+                        )}
+                        {saveStatus === 'error' && (
+                            <>
+                                <CloudOff size={12} color="#EF4444" className="mr-1" />
+                                <Text className="text-[10px] text-red-500 font-bold uppercase">{t('error') || 'Error'}</Text>
+                            </>
+                        )}
+                    </View>
+                </View>
                 <TouchableOpacity
                     onPress={handleDelete}
                     className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/30 items-center justify-center"
@@ -220,27 +254,6 @@ export default function VenueDetailScreen() {
                                 textAlignVertical="top"
                             />
                         </View>
-                        {/* Save Button (only if changes) */}
-                        {hasChanges && (
-                            <View className="mt-8 mb-6">
-                                <TouchableOpacity
-                                    onPress={handleSave}
-                                    disabled={updateVenueMutation.isPending}
-                                    className="bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row shadow-lg shadow-blue-500/30"
-                                >
-                                    {updateVenueMutation.isPending ? (
-                                        <ActivityIndicator color="#FFFFFF" />
-                                    ) : (
-                                        <>
-                                            <Save size={20} color="#FFFFFF" className="mr-2" />
-                                            <Text className="text-white font-black text-lg ml-2">
-                                                {t('save_session')}
-                                            </Text>
-                                        </>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        )}
                     </View>
                     <View className="h-20" />
                 </ScrollView>
