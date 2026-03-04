@@ -66,7 +66,7 @@ export default function DashboardScreen() {
         const currentYear = now.getFullYear();
 
         sessions.forEach(session => {
-            const earnings = calculateSessionEarnings(session);
+            const earnings = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
 
             if (session.date) {
                 const sessionDate = parseISO(session.date);
@@ -150,7 +150,7 @@ export default function DashboardScreen() {
             let cancelled = 0;
 
             sessions.forEach(session => {
-                const earnings = calculateSessionEarnings(session);
+                const earnings = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
                 if (session.date) {
                     const sessionDate = parseISO(session.date);
                     if (isWithinInterval(sessionDate, { start, end })) {

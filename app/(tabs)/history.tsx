@@ -318,9 +318,12 @@ export default function HistoryScreen() {
 
                     {session.earning_type && session.earning_type !== 'free' && (
                         <View className="items-end justify-center mr-2">
-                            <View className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
-                                <Text className="text-xs font-bold text-green-700 dark:text-green-400">
-                                    {earnings.toFixed(0)} {session.currency || '€'}
+                            {session.status === 'cancelled' && (
+                                <Text className="text-[9px] font-bold text-red-500 uppercase mb-0.5">{t('status_cancelled')}</Text>
+                            )}
+                            <View className={`px-3 py-1.5 rounded-lg border ${session.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'}`}>
+                                <Text className={`text-xs font-bold ${session.status === 'cancelled' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
+                                    {session.status === 'cancelled' ? '-' : ''}{earnings.toFixed(0)} {session.currency || '€'}
                                 </Text>
                             </View>
                         </View>
