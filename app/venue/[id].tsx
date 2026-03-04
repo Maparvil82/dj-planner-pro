@@ -131,7 +131,7 @@ export default function VenueDetailScreen() {
                     <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#000000'} />
                 </TouchableOpacity>
                 <Text className="text-xl font-black text-gray-900 dark:text-white flex-1 text-center mx-2" numberOfLines={1}>
-                    {t('edit_venue')}
+                    {venue.name}
                 </Text>
                 <TouchableOpacity
                     onPress={handleDelete}
@@ -220,32 +220,33 @@ export default function VenueDetailScreen() {
                                 textAlignVertical="top"
                             />
                         </View>
+                        {/* Save Button (only if changes) */}
+                        {hasChanges && (
+                            <View className="mt-8 mb-6">
+                                <TouchableOpacity
+                                    onPress={handleSave}
+                                    disabled={updateVenueMutation.isPending}
+                                    className="bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row shadow-lg shadow-blue-500/30"
+                                >
+                                    {updateVenueMutation.isPending ? (
+                                        <ActivityIndicator color="#FFFFFF" />
+                                    ) : (
+                                        <>
+                                            <Save size={20} color="#FFFFFF" className="mr-2" />
+                                            <Text className="text-white font-black text-lg ml-2">
+                                                {t('save_session')}
+                                            </Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                     <View className="h-20" />
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Save Button Overlay (only if changes) */}
-            {hasChanges && (
-                <View className="absolute bottom-10 left-6 right-6">
-                    <TouchableOpacity
-                        onPress={handleSave}
-                        disabled={updateVenueMutation.isPending}
-                        className="bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row shadow-lg shadow-blue-500/30"
-                    >
-                        {updateVenueMutation.isPending ? (
-                            <ActivityIndicator color="#FFFFFF" />
-                        ) : (
-                            <>
-                                <Save size={20} color="#FFFFFF" className="mr-2" />
-                                <Text className="text-white font-black text-lg ml-2">
-                                    {t('save_session')}
-                                </Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-                </View>
-            )}
+
         </SafeAreaView>
     );
 }

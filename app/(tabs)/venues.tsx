@@ -222,9 +222,6 @@ export default function VenuesScreen() {
                                     onPress={() => router.push(`/venue/${venue.id}`)}
                                     className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 flex-row items-center"
                                 >
-                                    <View className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl items-center justify-center mr-4">
-                                        <MapPin size={24} color="#2563EB" />
-                                    </View>
                                     <View className="flex-1">
                                         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
                                             {venue.name}
