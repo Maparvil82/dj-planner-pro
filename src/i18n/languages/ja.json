@@ -101,5 +101,6 @@
     "tab_you": "自分",
     "save_venue": "場所を保存",
     "duplicate_venue_title": "場所の重複",
-    "duplicate_venue_message": "この名前の場所は既に保存されています。"
+    "duplicate_venue_message": "この名前の場所は既に保存されています。",
+    "go_to_venue": "場所へ移動"
 }

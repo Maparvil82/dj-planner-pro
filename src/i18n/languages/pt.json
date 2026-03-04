@@ -102,5 +102,6 @@
     "tab_you": "Tu",
     "save_venue": "Guardar lugar",
     "duplicate_venue_title": "Lugar Duplicado",
-    "duplicate_venue_message": "Já tens un lugar guardado com este nombre."
+    "duplicate_venue_message": "Já tens un lugar guardado com este nombre.",
+    "go_to_venue": "Ir para o lugar"
 }

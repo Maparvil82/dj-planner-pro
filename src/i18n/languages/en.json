@@ -144,5 +144,6 @@
     "tab_you": "You",
     "save_venue": "Save Venue",
     "duplicate_venue_title": "Duplicate Venue",
-    "duplicate_venue_message": "You already have a venue saved with this name."
+    "duplicate_venue_message": "You already have a venue saved with this name.",
+    "go_to_venue": "Go to Venue"
 }

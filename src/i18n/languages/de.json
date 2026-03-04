@@ -101,5 +101,6 @@
     "tab_you": "Du",
     "save_venue": "Ort speichern",
     "duplicate_venue_title": "Doppelter Ort",
-    "duplicate_venue_message": "Sie haben bereits einen Ort mit diesem Namen gespeichert."
+    "duplicate_venue_message": "Sie haben bereits einen Ort mit diesem Namen gespeichert.",
+    "go_to_venue": "Zum Ort gehen"
 }

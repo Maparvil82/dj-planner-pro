@@ -101,5 +101,6 @@
     "tab_you": "Moi",
     "save_venue": "Enregistrer le lieu",
     "duplicate_venue_title": "Lieu déjà existant",
-    "duplicate_venue_message": "Vous avez déjà un lieu enregistré avec ce nom."
+    "duplicate_venue_message": "Vous avez déjà un lieu enregistré avec ce nom.",
+    "go_to_venue": "Aller au lieu"
 }

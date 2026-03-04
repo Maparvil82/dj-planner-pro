@@ -73,9 +73,22 @@ export default function VenuesScreen() {
             return;
         }
 
-        const isDuplicate = venues?.some(v => v.name.toLowerCase() === normalizedName.toLowerCase());
-        if (isDuplicate) {
-            Alert.alert(t('duplicate_venue_title'), t('duplicate_venue_message'));
+        const duplicateVenue = venues?.find(v => v.name.toLowerCase() === normalizedName.toLowerCase());
+        if (duplicateVenue) {
+            Alert.alert(
+                t('duplicate_venue_title'),
+                t('duplicate_venue_message'),
+                [
+                    { text: t('cancel'), style: 'cancel' },
+                    {
+                        text: t('go_to_venue'),
+                        onPress: () => {
+                            setIsAddModalVisible(false);
+                            router.push(`/venue/${duplicateVenue.id}`);
+                        }
+                    }
+                ]
+            );
             return;
         }
 
@@ -119,12 +132,6 @@ export default function VenuesScreen() {
 
                     {/* Right Actions */}
                     <View className="flex-row items-center gap-3 ml-auto">
-                        <TouchableOpacity
-                            onPress={() => router.push('/history')}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
-                        >
-                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
-                        </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => setIsAddModalVisible(true)}
                             className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
