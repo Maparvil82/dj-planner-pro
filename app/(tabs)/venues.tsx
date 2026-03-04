@@ -55,15 +55,43 @@ export default function VenuesScreen() {
     const [newContact, setNewContact] = useState('');
     const [newNotes, setNewNotes] = useState('');
 
-    const filteredVenues = useMemo(() => {
+    const groupedVenues = useMemo(() => {
         if (!venues) return [];
-        if (!searchQuery) return venues;
+        let filtered = venues;
 
-        const lowerQuery = searchQuery.toLowerCase();
-        return venues.filter(v =>
-            v.name.toLowerCase().includes(lowerQuery) ||
-            v.address?.toLowerCase().includes(lowerQuery)
-        );
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            filtered = venues.filter(v =>
+                v.name.toLowerCase().includes(lowerQuery) ||
+                v.address?.toLowerCase().includes(lowerQuery)
+            );
+        }
+
+        // Sort alphabetically
+        filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+
+        const groups: { letter: string; data: typeof venues }[] = [];
+        filtered.forEach(venue => {
+            const letter = venue.name ? venue.name.charAt(0).toUpperCase() : '?';
+            // Group non-letters in '#'
+            const indexLetter = /[A-Z0-9ÄÖÜÑ]/.test(letter) ? letter : '#';
+
+            let group = groups.find(g => g.letter === indexLetter);
+            if (!group) {
+                group = { letter: indexLetter, data: [] };
+                groups.push(group);
+            }
+            group.data.push(venue);
+        });
+
+        // Ensure '#' is at the end if exists, otherwise normal sort
+        groups.sort((a, b) => {
+            if (a.letter === '#') return 1;
+            if (b.letter === '#') return -1;
+            return a.letter.localeCompare(b.letter);
+        });
+
+        return groups;
     }, [venues, searchQuery]);
 
     const handleCreateVenue = async () => {
@@ -172,7 +200,7 @@ export default function VenuesScreen() {
                     />
                 }
             >
-                {filteredVenues.length === 0 ? (
+                {groupedVenues.length === 0 ? (
                     <View className="py-20 items-center justify-center">
                         <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
                             <MapPin size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
@@ -182,32 +210,39 @@ export default function VenuesScreen() {
                         </Text>
                     </View>
                 ) : (
-                    filteredVenues.map((venue) => (
-                        <TouchableOpacity
-                            key={venue.id}
-                            activeOpacity={0.7}
-                            onPress={() => router.push(`/venue/${venue.id}`)}
-                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 flex-row items-center"
-                        >
-                            <View className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl items-center justify-center mr-4">
-                                <MapPin size={24} color="#2563EB" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
-                                    {venue.name}
-                                </Text>
-                                {venue.address ? (
-                                    <Text className="text-gray-500 dark:text-gray-400 text-xs" numberOfLines={1}>
-                                        {venue.address}
-                                    </Text>
-                                ) : (
-                                    <Text className="text-gray-400 dark:text-gray-600 text-xs italic">
-                                        {t('venue_address')}...
-                                    </Text>
-                                )}
-                            </View>
-                            <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                        </TouchableOpacity>
+                    groupedVenues.map((group) => (
+                        <View key={group.letter} className="mb-2">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 mb-3 ml-2 mt-2 uppercase tracking-widest">
+                                {group.letter}
+                            </Text>
+                            {group.data.map((venue) => (
+                                <TouchableOpacity
+                                    key={venue.id}
+                                    activeOpacity={0.7}
+                                    onPress={() => router.push(`/venue/${venue.id}`)}
+                                    className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 flex-row items-center"
+                                >
+                                    <View className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl items-center justify-center mr-4">
+                                        <MapPin size={24} color="#2563EB" />
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
+                                            {venue.name}
+                                        </Text>
+                                        {venue.address ? (
+                                            <Text className="text-gray-500 dark:text-gray-400 text-xs" numberOfLines={1}>
+                                                {venue.address}
+                                            </Text>
+                                        ) : (
+                                            <Text className="text-gray-400 dark:text-gray-600 text-xs italic">
+                                                {t('venue_address')}...
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     ))
                 )}
                 <View className="h-20" />
