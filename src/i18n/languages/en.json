@@ -145,5 +145,14 @@
     "save_venue": "Save Venue",
     "duplicate_venue_title": "Duplicate Venue",
     "duplicate_venue_message": "You already have a venue saved with this name.",
-    "go_to_venue": "Go to Venue"
+    "go_to_venue": "Go to Venue",
+    "schedule_this_month": "This month's schedule",
+    "sessions": "sessions",
+    "earnings": "Earnings",
+    "growth": "Growth",
+    "past_30_days": "Past 30 days",
+    "next_30_days": "Next 30 days",
+    "confirmed": "CONFIRMED",
+    "dj": "DJ",
+    "monthly_goal": "MONTHLY GOAL"
 }

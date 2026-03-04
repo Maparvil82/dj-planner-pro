@@ -103,5 +103,14 @@
     "save_venue": "Guardar lugar",
     "duplicate_venue_title": "Lugar Duplicado",
     "duplicate_venue_message": "Já tens un lugar guardado com este nombre.",
-    "go_to_venue": "Ir para o lugar"
+    "go_to_venue": "Ir para o lugar",
+    "schedule_this_month": "This month's schedule",
+    "sessions": "sessions",
+    "earnings": "Earnings",
+    "growth": "Growth",
+    "past_30_days": "Past 30 days",
+    "next_30_days": "Next 30 days",
+    "confirmed": "CONFIRMED",
+    "dj": "DJ",
+    "monthly_goal": "MONTHLY GOAL"
 }

@@ -102,5 +102,14 @@
     "save_venue": "Ort speichern",
     "duplicate_venue_title": "Doppelter Ort",
     "duplicate_venue_message": "Sie haben bereits einen Ort mit diesem Namen gespeichert.",
-    "go_to_venue": "Zum Ort gehen"
+    "go_to_venue": "Zum Ort gehen",
+    "schedule_this_month": "This month's schedule",
+    "sessions": "sessions",
+    "earnings": "Earnings",
+    "growth": "Growth",
+    "past_30_days": "Past 30 days",
+    "next_30_days": "Next 30 days",
+    "confirmed": "CONFIRMED",
+    "dj": "DJ",
+    "monthly_goal": "MONTHLY GOAL"
 }

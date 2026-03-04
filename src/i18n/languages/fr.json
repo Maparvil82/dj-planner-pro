@@ -102,5 +102,14 @@
     "save_venue": "Enregistrer le lieu",
     "duplicate_venue_title": "Lieu déjà existant",
     "duplicate_venue_message": "Vous avez déjà un lieu enregistré avec ce nom.",
-    "go_to_venue": "Aller au lieu"
+    "go_to_venue": "Aller au lieu",
+    "schedule_this_month": "This month's schedule",
+    "sessions": "sessions",
+    "earnings": "Earnings",
+    "growth": "Growth",
+    "past_30_days": "Past 30 days",
+    "next_30_days": "Next 30 days",
+    "confirmed": "CONFIRMED",
+    "dj": "DJ",
+    "monthly_goal": "MONTHLY GOAL"
 }
