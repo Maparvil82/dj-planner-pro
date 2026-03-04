@@ -160,5 +160,9 @@
     "avg_per_session": "Media € / Sesión",
     "prev_month_income": "Ingresos Mes Ant.",
     "pending": "PENDIENTES",
-    "top_venue_year": "Local más rentable (Año)"
+    "top_venue_year": "Local más rentable (Año)",
+    "monthly_comparison": "Comparativa Mensual",
+    "status_confirmed": "Confirmada",
+    "status_pending": "Pendiente",
+    "status_cancelled": "Caída"
 }

@@ -66,6 +66,9 @@ function AddSessionContent({ date, onBack }: { date: string, onBack: () => void 
     const [venueId, setVenueId] = useState<string | null>(null);
     const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
 
+    // Status State
+    const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled'>('confirmed');
+
     // Earnings State
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
     const [earningAmount, setEarningAmount] = useState('');
@@ -232,7 +235,8 @@ function AddSessionContent({ date, onBack }: { date: string, onBack: () => void 
                     currency: currency,
                     recurrence_type: recurrenceType,
                     recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
-                    color: selectedColor || undefined
+                    color: selectedColor || undefined,
+                    status: status
                 });
 
                 Alert.alert(t('success'), t('session_added_success'), [
@@ -808,6 +812,33 @@ function AddSessionContent({ date, onBack }: { date: string, onBack: () => void 
                                         onBlur={() => setFocusedInput(null)}
                                     />
                                 </View>
+                            </View>
+                        </View>
+
+                        {/* Status Section */}
+                        <View className="z-10 mt-6">
+                            <View className="flex-row justify-between items-end mb-2">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 uppercase tracking-wide">
+                                    {t('session_status', { status: '' }).replace(':', '').trim() || 'Status'}
+                                </Text>
+                            </View>
+
+                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
+                                {[
+                                    { id: 'confirmed', label: t('status_confirmed') || 'Confirmada', color: isDark ? '#60A5FA' : '#2563EB', activeBg: isDark ? '#374151' : '#FFFFFF' },
+                                    { id: 'pending', label: t('status_pending') || 'Pendiente', color: isDark ? '#F97316' : '#EA580C', activeBg: isDark ? '#374151' : '#FFFFFF' },
+                                    { id: 'cancelled', label: t('status_cancelled') || 'Caída', color: isDark ? '#EF4444' : '#DC2626', activeBg: isDark ? '#374151' : '#FFFFFF' }
+                                ].map((type) => (
+                                    <TouchableOpacity
+                                        key={type.id}
+                                        onPress={() => setStatus(type.id as any)}
+                                        style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: status === type.id ? type.activeBg : 'transparent' }}
+                                    >
+                                        <Text style={{ fontSize: 13, fontWeight: '600', color: status === type.id ? type.color : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                            {type.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
                         </View>
 

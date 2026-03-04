@@ -155,9 +155,24 @@ export default function SessionDetailScreen() {
             >
                 {/* Title Section */}
                 <View className="mb-6">
-                    <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
-                        {t('session_summary_label') || 'Resumen de la sesión'}
-                    </Text>
+                    <View className="flex-row items-center justify-between mb-2">
+                        <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                            {t('session_summary_label') || 'Resumen de la sesión'}
+                        </Text>
+                        {session.status && (
+                            <View className={`px-3 py-1 rounded-full ${session.status === 'confirmed' ? 'bg-blue-100 dark:bg-blue-900/40' :
+                                    session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
+                                        'bg-red-100 dark:bg-red-900/40'
+                                }`}>
+                                <Text className={`text-xs font-bold ${session.status === 'confirmed' ? 'text-blue-700 dark:text-blue-400' :
+                                        session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
+                                            'text-red-700 dark:text-red-400'
+                                    }`}>
+                                    {t(`status_${session.status}`) || session.status.toUpperCase()}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
                     <Text className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         {session.title}
                     </Text>

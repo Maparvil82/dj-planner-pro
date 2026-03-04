@@ -135,6 +135,58 @@ export default function DashboardScreen() {
     const netProfit = thisMonthEarnings - thisMonthExpenses;
     const avgPerSession = totalSessionsThisMonth > 0 ? (thisMonthEarnings / totalSessionsThisMonth) : 0;
 
+    const monthlyChartData = useMemo(() => {
+        const data = [];
+        const now = new Date();
+
+        for (let i = 11; i >= 0; i--) {
+            const targetMonth = subMonths(now, i);
+            const start = startOfMonth(targetMonth);
+            const end = endOfMonth(targetMonth);
+
+            let monthEarnings = 0;
+            let confirmed = 0;
+            let pending = 0;
+            let cancelled = 0;
+
+            sessions.forEach(session => {
+                const earnings = calculateSessionEarnings(session);
+                if (session.date) {
+                    const sessionDate = parseISO(session.date);
+                    if (isWithinInterval(sessionDate, { start, end })) {
+                        monthEarnings += earnings;
+
+                        if (session.status === 'pending') {
+                            pending++;
+                        } else if (session.status === 'cancelled') {
+                            cancelled++;
+                        } else {
+                            // Defaults to confirmed to support old sessions without status
+                            confirmed++;
+                        }
+                    }
+                }
+            });
+
+            data.push({
+                month: format(targetMonth, 'MMM', { locale }),
+                earnings: monthEarnings,
+                confirmed,
+                pending,
+                cancelled,
+                isCurrentMonth: i === 0
+            });
+        }
+
+        // Find max earnings for relative bar height
+        const maxEarnings = Math.max(...data.map(d => d.earnings), 1); // Avoid div by 0
+
+        return data.map(d => ({
+            ...d,
+            percentage: (d.earnings / maxEarnings) * 100
+        }));
+    }, [sessions, locale]);
+
     // Derived values for progress bars (visual only, max 100%)
     const sessionGoal = lastMonthSessions > 0 ? Math.max(lastMonthSessions, 10) : 10;
     const sessionPercentage = Math.min(Math.round((totalSessionsThisMonth / sessionGoal) * 100), 100);
@@ -320,6 +372,55 @@ export default function DashboardScreen() {
                         </View>
                     </View>
                 </TouchableOpacity>
+
+                {/* Monthly Comparison Chart */}
+                <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
+                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-6">{t('monthly_comparison')}</Text>
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
+                        <View className="flex-row items-end h-40 gap-4">
+                            {monthlyChartData.map((data, index) => (
+                                <View key={index} className="items-center justify-end" style={{ minWidth: 44 }}>
+
+                                    {/* Bar area */}
+                                    <View className="w-full h-24 items-center justify-end mb-3">
+                                        <View
+                                            className={`w-full max-w-[32px] rounded-t-lg ${data.isCurrentMonth ? 'bg-blue-600' : 'bg-gray-200 dark:bg-[#2A2A2A]'}`}
+                                            style={{ height: `${Math.max(data.percentage, 2)}%` }}
+                                        />
+                                    </View>
+
+                                    {/* Indicators area */}
+                                    <View className="flex-row items-center gap-1 mb-2">
+                                        {data.confirmed > 0 && (
+                                            <View className="flex-row items-center">
+                                                <View className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-0.5" />
+                                                <Text className="text-[9px] text-gray-500 font-bold">{data.confirmed}</Text>
+                                            </View>
+                                        )}
+                                        {data.pending > 0 && (
+                                            <View className="flex-row items-center">
+                                                <View className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-0.5" />
+                                                <Text className="text-[9px] text-gray-500 font-bold">{data.pending}</Text>
+                                            </View>
+                                        )}
+                                        {data.cancelled > 0 && (
+                                            <View className="flex-row items-center">
+                                                <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" />
+                                                <Text className="text-[9px] text-gray-500 font-bold">{data.cancelled}</Text>
+                                            </View>
+                                        )}
+                                    </View>
+
+                                    {/* Month Label */}
+                                    <Text className={`text-[10px] uppercase tracking-wider ${data.isCurrentMonth ? 'text-blue-600 font-bold' : 'text-gray-500 dark:text-gray-400 font-semibold'}`}>
+                                        {data.month}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    </ScrollView>
+                </View>
 
                 {/* Top Venue Card */}
                 <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">

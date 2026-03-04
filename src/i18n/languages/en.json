@@ -160,5 +160,9 @@
     "avg_per_session": "Avg € / Session",
     "prev_month_income": "Prev. Month Income",
     "pending": "PENDING",
-    "top_venue_year": "Top Venue (Year)"
+    "top_venue_year": "Top Venue (Year)",
+    "monthly_comparison": "Monthly Comparison",
+    "status_confirmed": "Confirmed",
+    "status_pending": "Pending",
+    "status_cancelled": "Cancelled"
 }
