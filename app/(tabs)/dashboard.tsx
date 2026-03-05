@@ -13,15 +13,16 @@ import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 
 const { width } = Dimensions.get('window');
 
-const calculateSessionEarnings = (session: any) => {
-    if (session.earning_type === 'fixed') return session.earning_amount || 0;
+const calculateSessionEarnings = (session: any): number => {
+    const amount = Number(session.earning_amount) || 0;
+    if (session.earning_type === 'fixed') return amount;
     if (session.earning_type === 'hourly') {
         const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
         const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
         let startMins = startH * 60 + startM;
         let endMins = endH * 60 + endM;
         if (endMins <= startMins) endMins += 24 * 60;
-        return (session.earning_amount || 0) * ((endMins - startMins) / 60);
+        return amount * ((endMins - startMins) / 60);
     }
     return 0;
 };
@@ -137,58 +138,59 @@ export default function DashboardScreen() {
     const avgPerSession = totalSessionsThisMonth > 0 ? (thisMonthEarnings / totalSessionsThisMonth) : 0;
 
     const monthlyChartData = useMemo(() => {
-        const data = [];
         const now = new Date();
         const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
 
-        for (let i = 0; i < 12; i++) {
-            const targetMonth = new Date(currentYear, i, 1);
-            const start = startOfMonth(targetMonth);
-            const end = endOfMonth(targetMonth);
+        // Build 12 buckets for Jan-Dec of the current year
+        const buckets = Array.from({ length: 12 }, (_, i) => ({
+            monthIndex: i,
+            month: format(new Date(currentYear, i, 1), 'MMM', { locale }),
+            earnings: 0,
+            lostEarnings: 0,
+            confirmed: 0,
+            pending: 0,
+            cancelled: 0,
+            isCurrentMonth: i === currentMonth
+        }));
 
-            let monthEarnings = 0;
-            let lostEarnings = 0;
-            let confirmed = 0;
-            let pending = 0;
-            let cancelled = 0;
+        // Fill buckets from sessions
+        sessions.forEach(session => {
+            if (!session.date) return;
+            // Parse YYYY-MM-DD safely
+            const parts = session.date.split('T')[0].split('-');
+            if (parts.length < 3) return;
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // 0-indexed
+            if (year !== currentYear || month < 0 || month > 11) return;
 
-            sessions.forEach(session => {
-                const earnings = calculateSessionEarnings(session);
-                if (session.date) {
-                    const sessionDate = parseISO(session.date);
-                    if (isWithinInterval(sessionDate, { start, end })) {
-                        if (session.status === 'cancelled') {
-                            lostEarnings += earnings;
-                            cancelled++;
-                        } else {
-                            monthEarnings += earnings;
-                            if (session.status === 'pending') {
-                                pending++;
-                            } else {
-                                confirmed++;
-                            }
-                        }
-                    }
-                }
-            });
+            const earnings = calculateSessionEarnings(session);
+            const bucket = buckets[month];
 
-            data.push({
-                month: format(targetMonth, 'MMM', { locale }),
-                earnings: monthEarnings,
-                lostEarnings: lostEarnings,
-                confirmed,
-                pending,
-                cancelled,
-                isCurrentMonth: i === now.getMonth()
-            });
-        }
+            if (session.status === 'cancelled') {
+                bucket.lostEarnings += earnings;
+                bucket.cancelled++;
+            } else if (session.status === 'pending') {
+                bucket.earnings += earnings;
+                bucket.pending++;
+            } else {
+                // confirmed or undefined (legacy)
+                bucket.earnings += earnings;
+                bucket.confirmed++;
+            }
+        });
 
-        const maxVal = Math.max(...data.map(d => Math.max(d.earnings, d.lostEarnings)), 1);
+        // Calculate max values for scaling
+        const maxEarnings = Math.max(...buckets.map(b => Math.max(b.earnings, b.lostEarnings)), 1);
+        const maxSessions = Math.max(...buckets.map(b => b.confirmed + b.pending + b.cancelled), 1);
+        const BAR_HEIGHT = 80; // px
 
-        return data.map(d => ({
-            ...d,
-            percentage: (d.earnings / maxVal) * 100,
-            lostPercentage: (d.lostEarnings / maxVal) * 100
+        return buckets.map(b => ({
+            ...b,
+            sessionCount: b.confirmed + b.pending + b.cancelled,
+            earningsPx: Math.max(Math.round((b.earnings / maxEarnings) * BAR_HEIGHT), b.earnings > 0 ? 4 : 0),
+            lostPx: Math.max(Math.round((b.lostEarnings / maxEarnings) * BAR_HEIGHT), b.lostEarnings > 0 ? 4 : 0),
+            sessionsPx: Math.max(Math.round(((b.confirmed + b.pending + b.cancelled) / maxSessions) * BAR_HEIGHT), b.confirmed + b.pending + b.cancelled > 0 ? 4 : 0)
         }));
     }, [sessions, locale]);
 
@@ -419,74 +421,91 @@ export default function DashboardScreen() {
                     </View>
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
-                        <View className="flex-row items-end h-40 gap-4">
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 160, gap: 8 }}>
                             {monthlyChartData.map((data, index) => (
-                                <View key={index} className="items-center justify-end" style={{ minWidth: 44 }}>
+                                <View key={index} style={{ alignItems: 'center', justifyContent: 'flex-end', minWidth: 44 }}>
 
-                                    {/* Bar area */}
-                                    {chartView === 'sessions' ? (
-                                        <View className="w-full h-24 items-center justify-end mb-3">
+                                    {/* BAR AREA — 96px tall container */}
+                                    <View style={{ height: 96, justifyContent: 'flex-end', alignItems: 'center', marginBottom: 4 }}>
+                                        {chartView === 'sessions' ? (
                                             <View
                                                 style={{
-                                                    width: '100%',
-                                                    maxWidth: 32,
-                                                    borderTopLeftRadius: 8,
-                                                    borderTopRightRadius: 8,
-                                                    backgroundColor: data.isCurrentMonth ? '#2563EB' : (isDark ? '#2A2A2A' : '#E5E7EB'),
-                                                    height: `${Math.max(data.percentage, 2)}%`
+                                                    width: 24,
+                                                    borderTopLeftRadius: 6,
+                                                    borderTopRightRadius: 6,
+                                                    backgroundColor: data.isCurrentMonth ? '#2563EB' : (isDark ? '#4B5563' : '#D1D5DB'),
+                                                    height: data.sessionsPx
                                                 }}
                                             />
-                                        </View>
-                                    ) : (
-                                        <View className="w-full h-24 flex-row items-end justify-center mb-3">
-                                            <View
-                                                className="w-3 rounded-t-sm bg-blue-600 mr-0.5"
-                                                style={{ height: `${Math.max(data.percentage, 2)}%` }}
-                                            />
-                                            <View
-                                                className="w-3 rounded-t-sm bg-red-400 opacity-40"
-                                                style={{ height: `${Math.max(data.lostPercentage, 2)}%` }}
-                                            />
-                                        </View>
-                                    )}
+                                        ) : (
+                                            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                                                <View
+                                                    style={{
+                                                        width: 14,
+                                                        borderTopLeftRadius: 4,
+                                                        borderTopRightRadius: 4,
+                                                        backgroundColor: '#3B82F6',
+                                                        marginRight: 2,
+                                                        height: data.earningsPx
+                                                    }}
+                                                />
+                                                <View
+                                                    style={{
+                                                        width: 14,
+                                                        borderTopLeftRadius: 4,
+                                                        borderTopRightRadius: 4,
+                                                        backgroundColor: '#F87171',
+                                                        height: data.lostPx
+                                                    }}
+                                                />
+                                            </View>
+                                        )}
+                                    </View>
 
-                                    {/* Indicators area (only for sessions) */}
+                                    {/* LABEL AREA */}
                                     {chartView === 'sessions' ? (
-                                        <View className="flex-row items-center gap-1 mb-2">
+                                        <View style={{ height: 20, flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 4 }}>
                                             {data.confirmed > 0 && (
-                                                <View className="flex-row items-center">
-                                                    <View className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-0.5" />
-                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.confirmed}</Text>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#3B82F6', marginRight: 1 }} />
+                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.confirmed}</Text>
                                                 </View>
                                             )}
                                             {data.pending > 0 && (
-                                                <View className="flex-row items-center">
-                                                    <View className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-0.5" />
-                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.pending}</Text>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#FB923C', marginRight: 1 }} />
+                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.pending}</Text>
                                                 </View>
                                             )}
                                             {data.cancelled > 0 && (
-                                                <View className="flex-row items-center">
-                                                    <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" />
-                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.cancelled}</Text>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#F87171', marginRight: 1 }} />
+                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.cancelled}</Text>
                                                 </View>
                                             )}
                                         </View>
                                     ) : (
-                                        <View className="h-4 mb-2 justify-center">
-                                            <Text style={{ fontSize: 8, fontWeight: '700', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                                {data.earnings > 0 ? `${Math.round(data.earnings)}€` : ''}
-                                            </Text>
+                                        <View style={{ height: 28, marginBottom: 4, alignItems: 'center', justifyContent: 'flex-end' }}>
+                                            {data.earnings > 0 && (
+                                                <Text style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#60A5FA' : '#2563EB' }}>
+                                                    {data.earnings >= 1000 ? `${Math.round(data.earnings / 1000)}k` : `${Math.round(data.earnings)}`}€
+                                                </Text>
+                                            )}
+                                            {data.lostEarnings > 0 && (
+                                                <Text style={{ fontSize: 7, fontWeight: '700', color: '#F87171' }}>
+                                                    -{data.lostEarnings >= 1000 ? `${Math.round(data.lostEarnings / 1000)}k` : `${Math.round(data.lostEarnings)}`}€
+                                                </Text>
+                                            )}
                                         </View>
                                     )}
 
-                                    {/* Month Label */}
+                                    {/* MONTH LABEL */}
                                     <Text
                                         style={{
                                             fontSize: 10,
                                             textTransform: 'uppercase',
-                                            letterSpacing: 1,
-                                            fontWeight: data.isCurrentMonth ? '700' : '600',
+                                            letterSpacing: 0.5,
+                                            fontWeight: data.isCurrentMonth ? '800' : '500',
                                             color: data.isCurrentMonth ? '#2563EB' : (isDark ? '#9CA3AF' : '#6B7280')
                                         }}
                                     >
