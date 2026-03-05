@@ -190,6 +190,8 @@ export default function DashboardScreen() {
             sessionCount: b.confirmed + b.pending + b.cancelled,
             earningsPx: Math.max(Math.round((b.earnings / maxEarnings) * BAR_HEIGHT), b.earnings > 0 ? 4 : 0),
             lostPx: Math.max(Math.round((b.lostEarnings / maxEarnings) * BAR_HEIGHT), b.lostEarnings > 0 ? 4 : 0),
+            activePx: Math.max(Math.round(((b.confirmed + b.pending) / maxSessions) * BAR_HEIGHT), b.confirmed + b.pending > 0 ? 4 : 0),
+            cancelledPx: Math.max(Math.round((b.cancelled / maxSessions) * BAR_HEIGHT), b.cancelled > 0 ? 4 : 0),
             sessionsPx: Math.max(Math.round(((b.confirmed + b.pending + b.cancelled) / maxSessions) * BAR_HEIGHT), b.confirmed + b.pending + b.cancelled > 0 ? 4 : 0)
         }));
     }, [sessions, locale]);
@@ -428,15 +430,31 @@ export default function DashboardScreen() {
                                     {/* BAR AREA — 96px tall container */}
                                     <View style={{ height: 96, justifyContent: 'flex-end', alignItems: 'center', marginBottom: 4 }}>
                                         {chartView === 'sessions' ? (
-                                            <View
-                                                style={{
-                                                    width: 24,
-                                                    borderTopLeftRadius: 6,
-                                                    borderTopRightRadius: 6,
-                                                    backgroundColor: data.isCurrentMonth ? '#2563EB' : (isDark ? '#4B5563' : '#D1D5DB'),
-                                                    height: data.sessionsPx
-                                                }}
-                                            />
+                                            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                                                {/* Active (confirmed + pending) bar */}
+                                                <View
+                                                    style={{
+                                                        width: 14,
+                                                        borderTopLeftRadius: 4,
+                                                        borderTopRightRadius: 4,
+                                                        backgroundColor: data.isCurrentMonth ? '#2563EB' : '#3B82F6',
+                                                        marginRight: 2,
+                                                        height: data.activePx
+                                                    }}
+                                                />
+                                                {/* Cancelled bar (only shows if there are cancelled sessions) */}
+                                                {data.cancelled > 0 && (
+                                                    <View
+                                                        style={{
+                                                            width: 14,
+                                                            borderTopLeftRadius: 4,
+                                                            borderTopRightRadius: 4,
+                                                            backgroundColor: '#F87171',
+                                                            height: data.cancelledPx
+                                                        }}
+                                                    />
+                                                )}
+                                            </View>
                                         ) : (
                                             <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
                                                 <View
