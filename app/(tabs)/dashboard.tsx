@@ -28,6 +28,7 @@ const calculateSessionEarnings = (session: any) => {
 
 export default function DashboardScreen() {
     const { t, i18n } = useTranslation();
+    const [chartView, setChartView] = React.useState<'sessions' | 'finances'>('sessions');
     const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const { profile, user } = useAuthStore();
@@ -146,23 +147,26 @@ export default function DashboardScreen() {
             const end = endOfMonth(targetMonth);
 
             let monthEarnings = 0;
+            let lostEarnings = 0;
             let confirmed = 0;
             let pending = 0;
             let cancelled = 0;
 
             sessions.forEach(session => {
-                const earnings = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
+                const earnings = calculateSessionEarnings(session);
                 if (session.date) {
                     const sessionDate = parseISO(session.date);
                     if (isWithinInterval(sessionDate, { start, end })) {
-                        monthEarnings += earnings;
-
-                        if (session.status === 'pending') {
-                            pending++;
-                        } else if (session.status === 'cancelled') {
+                        if (session.status === 'cancelled') {
+                            lostEarnings += earnings;
                             cancelled++;
                         } else {
-                            confirmed++;
+                            monthEarnings += earnings;
+                            if (session.status === 'pending') {
+                                pending++;
+                            } else {
+                                confirmed++;
+                            }
                         }
                     }
                 }
@@ -171,6 +175,7 @@ export default function DashboardScreen() {
             data.push({
                 month: format(targetMonth, 'MMM', { locale }),
                 earnings: monthEarnings,
+                lostEarnings: lostEarnings,
                 confirmed,
                 pending,
                 cancelled,
@@ -178,11 +183,12 @@ export default function DashboardScreen() {
             });
         }
 
-        const maxEarnings = Math.max(...data.map(d => d.earnings), 1);
+        const maxVal = Math.max(...data.map(d => Math.max(d.earnings, d.lostEarnings)), 1);
 
         return data.map(d => ({
             ...d,
-            percentage: (d.earnings / maxEarnings) * 100
+            percentage: (d.earnings / maxVal) * 100,
+            lostPercentage: (d.lostEarnings / maxVal) * 100
         }));
     }, [sessions, locale]);
 
@@ -372,9 +378,45 @@ export default function DashboardScreen() {
                     </View>
                 </TouchableOpacity>
 
-                {/* Monthly Comparison Chart */}
+                {/* Annual Comparison Chart */}
                 <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
-                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-6">{t('monthly_comparison')}</Text>
+                    <View className="flex-row justify-between items-center mb-6">
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison') || 'Annual Comparison'}</Text>
+                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
+                            <TouchableOpacity
+                                onPress={() => setChartView('sessions')}
+                                style={{
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 6,
+                                    borderRadius: 6,
+                                    backgroundColor: chartView === 'sessions' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: chartView === 'sessions' ? 0.1 : 0,
+                                    shadowRadius: 1,
+                                    elevation: chartView === 'sessions' ? 1 : 0
+                                }}
+                            >
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>SESSIONS</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setChartView('finances')}
+                                style={{
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 6,
+                                    borderRadius: 6,
+                                    backgroundColor: chartView === 'finances' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: chartView === 'finances' ? 0.1 : 0,
+                                    shadowRadius: 1,
+                                    elevation: chartView === 'finances' ? 1 : 0
+                                }}
+                            >
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>FINANCES</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
                         <View className="flex-row items-end h-40 gap-4">
@@ -382,37 +424,72 @@ export default function DashboardScreen() {
                                 <View key={index} className="items-center justify-end" style={{ minWidth: 44 }}>
 
                                     {/* Bar area */}
-                                    <View className="w-full h-24 items-center justify-end mb-3">
-                                        <View
-                                            className={`w-full max-w-[32px] rounded-t-lg ${data.isCurrentMonth ? 'bg-blue-600' : 'bg-gray-200 dark:bg-[#2A2A2A]'}`}
-                                            style={{ height: `${Math.max(data.percentage, 2)}%` }}
-                                        />
-                                    </View>
+                                    {chartView === 'sessions' ? (
+                                        <View className="w-full h-24 items-center justify-end mb-3">
+                                            <View
+                                                style={{
+                                                    width: '100%',
+                                                    maxWidth: 32,
+                                                    borderTopLeftRadius: 8,
+                                                    borderTopRightRadius: 8,
+                                                    backgroundColor: data.isCurrentMonth ? '#2563EB' : (isDark ? '#2A2A2A' : '#E5E7EB'),
+                                                    height: `${Math.max(data.percentage, 2)}%`
+                                                }}
+                                            />
+                                        </View>
+                                    ) : (
+                                        <View className="w-full h-24 flex-row items-end justify-center mb-3">
+                                            <View
+                                                className="w-3 rounded-t-sm bg-blue-600 mr-0.5"
+                                                style={{ height: `${Math.max(data.percentage, 2)}%` }}
+                                            />
+                                            <View
+                                                className="w-3 rounded-t-sm bg-red-400 opacity-40"
+                                                style={{ height: `${Math.max(data.lostPercentage, 2)}%` }}
+                                            />
+                                        </View>
+                                    )}
 
-                                    {/* Indicators area */}
-                                    <View className="flex-row items-center gap-1 mb-2">
-                                        {data.confirmed > 0 && (
-                                            <View className="flex-row items-center">
-                                                <View className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-0.5" />
-                                                <Text className="text-[9px] text-gray-500 font-bold">{data.confirmed}</Text>
-                                            </View>
-                                        )}
-                                        {data.pending > 0 && (
-                                            <View className="flex-row items-center">
-                                                <View className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-0.5" />
-                                                <Text className="text-[9px] text-gray-500 font-bold">{data.pending}</Text>
-                                            </View>
-                                        )}
-                                        {data.cancelled > 0 && (
-                                            <View className="flex-row items-center">
-                                                <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" />
-                                                <Text className="text-[9px] text-gray-500 font-bold">{data.cancelled}</Text>
-                                            </View>
-                                        )}
-                                    </View>
+                                    {/* Indicators area (only for sessions) */}
+                                    {chartView === 'sessions' ? (
+                                        <View className="flex-row items-center gap-1 mb-2">
+                                            {data.confirmed > 0 && (
+                                                <View className="flex-row items-center">
+                                                    <View className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-0.5" />
+                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.confirmed}</Text>
+                                                </View>
+                                            )}
+                                            {data.pending > 0 && (
+                                                <View className="flex-row items-center">
+                                                    <View className="w-1.5 h-1.5 rounded-full bg-orange-500 mr-0.5" />
+                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.pending}</Text>
+                                                </View>
+                                            )}
+                                            {data.cancelled > 0 && (
+                                                <View className="flex-row items-center">
+                                                    <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-0.5" />
+                                                    <Text className="text-[9px] text-gray-500 font-bold">{data.cancelled}</Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                    ) : (
+                                        <View className="h-4 mb-2 justify-center">
+                                            <Text style={{ fontSize: 8, fontWeight: '700', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                                {data.earnings > 0 ? `${Math.round(data.earnings)}€` : ''}
+                                            </Text>
+                                        </View>
+                                    )}
 
                                     {/* Month Label */}
-                                    <Text className={`text-[10px] uppercase tracking-wider ${data.isCurrentMonth ? 'text-blue-600 font-bold' : 'text-gray-500 dark:text-gray-400 font-semibold'}`}>
+                                    <Text
+                                        style={{
+                                            fontSize: 10,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 1,
+                                            fontWeight: data.isCurrentMonth ? '700' : '600',
+                                            color: data.isCurrentMonth ? '#2563EB' : (isDark ? '#9CA3AF' : '#6B7280')
+                                        }}
+                                    >
                                         {data.month}
                                     </Text>
                                 </View>
