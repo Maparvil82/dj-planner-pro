@@ -13,7 +13,6 @@ export default function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="add-session" options={{ headerShown: false }} />
-                <Stack.Screen name="edit-session/[id]" options={{ headerShown: false }} />
             </Stack>
             <StatusBar style="auto" />
         </AppProviders>

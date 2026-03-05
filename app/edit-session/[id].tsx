@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Plus } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Plus, Check } from 'lucide-react-native';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useSessionByIdQuery, useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../../src/hooks/useTagsQuery';
@@ -15,78 +15,60 @@ import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 setupCalendarLocales();
 
 export default function EditSessionScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
-    const { data: sessionData, isLoading: isLoadingSession } = useSessionByIdQuery(id);
+    const { id: rawId } = useLocalSearchParams();
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    const { data: initialSession, isLoading: isLoadingSession } = useSessionByIdQuery(id);
     const router = useRouter();
-
-    if (isLoadingSession) {
-        return (
-            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <ActivityIndicator size="large" color="#3B82F6" />
-            </View>
-        );
-    }
-
-    if (!sessionData) {
-        return (
-            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <Text className="text-gray-500 dark:text-gray-400">Session not found</Text>
-            </View>
-        );
-    }
-
-    return <EditSessionContent session={sessionData} onBack={() => router.back()} />;
-}
-
-function EditSessionContent({ session: initialSession, onBack }: { session: any, onBack: () => void }) {
     const { t, currentLanguage } = useTranslation();
     const { session: authSession } = useAuthStore();
-    const router = useRouter();
     const createVenueMutation = useCreateVenueMutation();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
-
     const updateSessionMutation = useUpdateSessionMutation();
 
-    const [title, setTitle] = useState(initialSession.title || '');
-    const [venue, setVenue] = useState(initialSession.venue || '');
-    const [startTime, setStartTime] = useState(initialSession.start_time || '22:00');
-    const [endTime, setEndTime] = useState(initialSession.end_time || '04:00');
-    const [venueId, setVenueId] = useState<string | null>(initialSession.venue_id || null);
+    // Form states (initialized after data is loaded via useEffect)
+    const [title, setTitle] = useState('');
+    const [venue, setVenue] = useState('');
+    const [startTime, setStartTime] = useState('22:00');
+    const [endTime, setEndTime] = useState('04:00');
+    const [venueId, setVenueId] = useState<string | null>(null);
     const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
-
-    // Status State
-    const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled'>(initialSession.status || 'confirmed');
-
-    // Earnings State
-    const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>(initialSession.earning_type || 'free');
-    const [earningAmount, setEarningAmount] = useState(initialSession.earning_amount?.toString() || '');
-    const [currency, setCurrency] = useState(initialSession.currency || '€');
-
-    const [sessionDate, setSessionDate] = useState(initialSession.date || new Date().toISOString().split('T')[0]);
+    const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled'>('confirmed');
+    const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
+    const [earningAmount, setEarningAmount] = useState('');
+    const [currency, setCurrency] = useState('€');
+    const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
     const [showCalendar, setShowCalendar] = useState(false);
-
-    // Color State
-    const [selectedColor, setSelectedColor] = useState<string | null>(initialSession.color || null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [isColorModalVisible, setIsColorModalVisible] = useState(false);
-
-    // Collective Session State
-    const [isCollective, setIsCollective] = useState(initialSession.is_collective || false);
+    const [isCollective, setIsCollective] = useState(false);
     const [djInput, setDjInput] = useState('');
-    const [selectedDjs, setSelectedDjs] = useState<string[]>(initialSession.djs || []);
-
-    // Focus state
+    const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
-    const handleFocus = (type: string) => {
-        setFocusedInput(type);
-    };
+    // Sync initial data
+    useEffect(() => {
+        if (initialSession) {
+            setTitle(initialSession.title || '');
+            setVenue(initialSession.venue || '');
+            setStartTime(initialSession.start_time || '22:00');
+            setEndTime(initialSession.end_time || '04:00');
+            setVenueId(initialSession.venue_id || null);
+            setStatus(initialSession.status || 'confirmed');
+            setEarningType(initialSession.earning_type || 'free');
+            setEarningAmount(initialSession.earning_amount?.toString() || '');
+            setCurrency(initialSession.currency || '€');
+            setSessionDate(initialSession.date || new Date().toISOString().split('T')[0]);
+            setSelectedColor(initialSession.color || null);
+            setIsCollective(initialSession.is_collective || false);
+            setSelectedDjs(initialSession.djs || []);
+        }
+    }, [initialSession]);
 
-    const handleBlur = () => {
-        setTimeout(() => setFocusedInput(null), 150);
-    };
+    const handleFocus = (type: string) => setFocusedInput(type);
+    const handleBlur = () => setTimeout(() => setFocusedInput(null), 150);
 
-    // Autocomplete Tags
+    // Queries and memoized filters
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venueTags = [] } = useTagsQuery('venue');
     const { data: venues = [] } = useVenuesQuery();
@@ -101,26 +83,20 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
     }, [venue, venues]);
 
     const filteredTitleTags = title.trim().length > 0
-        ? titleTags
-            .filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase())
-            .slice(0, 10)
+        ? titleTags.filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase()).slice(0, 10)
         : [];
 
     const filteredVenueTags = venue.trim().length > 0
-        ? venueTags
-            .filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase())
-            .slice(0, 10)
+        ? venueTags.filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase()).slice(0, 10)
         : [];
 
     const filteredDjTags = djInput.trim().length > 0
-        ? djTags
-            .filter(d => d.name.toLowerCase().includes(djInput.toLowerCase()) && !selectedDjs.includes(d.name))
-            .slice(0, 10)
+        ? djTags.filter(d => d.name.toLowerCase().includes(djInput.toLowerCase()) && !selectedDjs.includes(d.name)).slice(0, 10)
         : [];
 
     // Local Date Parsing
-    const [y, m, d] = sessionDate.split('-');
-    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const dateParts = sessionDate.split('-');
+    const dateObj = dateParts.length === 3 ? new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2])) : new Date();
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
     LocaleConfig.defaultLocale = currentLanguage;
 
@@ -153,41 +129,51 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
 
         const performUpdate = async (updateAll: boolean) => {
             try {
+                if (!id) throw new Error("Missing ID");
                 await updateSessionMutation.mutateAsync({
-                    sessionId: initialSession.id,
+                    sessionId: id,
                     input,
                     updateAll
                 });
-
                 Alert.alert(t('success'), t('session_added_success'), [
-                    { text: 'OK', onPress: onBack }
+                    { text: 'OK', onPress: () => router.back() }
                 ]);
-            } catch (error) {
-                Alert.alert(t('error'), t('error_saving_session'));
+            } catch (error: any) {
+                Alert.alert(t('error'), error.message || t('error_saving_session'));
             }
         };
 
         Alert.alert(
             t('apply_color_to_all_title') || '¿Actualizar sesiones?',
-            t('apply_changes_to_all_message', { title: initialSession.title }),
+            t('apply_changes_to_all_message', { title: initialSession?.title }),
             [
                 { text: t('cancel'), style: 'cancel' },
-                {
-                    text: t('apply_only_this'),
-                    onPress: () => performUpdate(false)
-                },
-                {
-                    text: t('apply_all_related', { title: initialSession.title }),
-                    onPress: () => performUpdate(true)
-                }
+                { text: t('apply_only_this'), onPress: () => performUpdate(false) },
+                { text: t('apply_all_related', { title: initialSession?.title }), onPress: () => performUpdate(true) }
             ]
         );
     };
 
+    if (isLoadingSession) {
+        return (
+            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+                <ActivityIndicator size="large" color="#3B82F6" />
+            </View>
+        );
+    }
+
+    if (!initialSession) {
+        return (
+            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+                <Text className="text-gray-500 dark:text-gray-400">Session not found</Text>
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
             <View className="flex-row items-center justify-between px-5 pt-2 pb-4 border-b border-gray-100 dark:border-gray-900">
-                <TouchableOpacity onPress={onBack} className="p-2 -ml-2">
+                <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
                     <X size={24} color={isDark ? '#FFF' : '#000'} />
                 </TouchableOpacity>
                 <Text className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
@@ -328,7 +314,6 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                                         </View>
 
                                         <ScrollView showsVerticalScrollIndicator={false}>
-                                            {/* Option to just use text if they want */}
                                             <View className="mb-6">
                                                 <View className="flex-row items-center bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 pr-3">
                                                     <TextInput
@@ -396,7 +381,7 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                                                             <Text className={`font-bold ${venueId === v.id ? 'text-blue-600' : 'text-gray-900 dark:text-white'}`}>{v.name}</Text>
                                                             {v.address && <Text className="text-xs text-gray-400" numberOfLines={1}>{v.address}</Text>}
                                                         </View>
-                                                        {venueId === v.id && <ChevronRight size={20} color="#3B82F6" />}
+                                                        {venueId === v.id && <Check size={20} color="#3B82F6" />}
                                                     </TouchableOpacity>
                                                 ))
                                             )}
@@ -505,19 +490,30 @@ function EditSessionContent({ session: initialSession, onBack }: { session: any,
                         {/* Earnings */}
                         <View>
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('earning_type')}</Text>
-                            <View className="flex-row bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-4">
-                                {['free', 'hourly', 'fixed'].map(type => (
-                                    <TouchableOpacity key={type} className={`flex-1 py-2 rounded-lg items-center ${earningType === type ? 'bg-white dark:bg-gray-700 shadow-sm' : ''}`} onPress={() => setEarningType(type as any)}>
-                                        <Text className={`font-semibold ${earningType === type ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}>{t(`earning_${type}`)}</Text>
-                                    </TouchableOpacity>
-                                ))}
+                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'free' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('free')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'free' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_free')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'hourly' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('hourly')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'hourly' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_hourly')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'fixed' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('fixed')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'fixed' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_fixed')}</Text>
+                                </TouchableOpacity>
                             </View>
-                            {earningType !== 'free' && (
-                                <View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-5 border border-transparent">
-                                    <Text className="text-xl font-medium text-gray-400">{currency}</Text>
-                                    <TextInput className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium" keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
-                                </View>
-                            )}
+                            <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20 }}>
+                                <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
+                                <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
+                            </View>
                         </View>
                     </View>
                 </ScrollView>
