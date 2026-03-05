@@ -138,9 +138,10 @@ export default function DashboardScreen() {
     const monthlyChartData = useMemo(() => {
         const data = [];
         const now = new Date();
+        const currentYear = now.getFullYear();
 
-        for (let i = 11; i >= 0; i--) {
-            const targetMonth = subMonths(now, i);
+        for (let i = 0; i < 12; i++) {
+            const targetMonth = new Date(currentYear, i, 1);
             const start = startOfMonth(targetMonth);
             const end = endOfMonth(targetMonth);
 
@@ -161,7 +162,6 @@ export default function DashboardScreen() {
                         } else if (session.status === 'cancelled') {
                             cancelled++;
                         } else {
-                            // Defaults to confirmed to support old sessions without status
                             confirmed++;
                         }
                     }
@@ -174,12 +174,11 @@ export default function DashboardScreen() {
                 confirmed,
                 pending,
                 cancelled,
-                isCurrentMonth: i === 0
+                isCurrentMonth: i === now.getMonth()
             });
         }
 
-        // Find max earnings for relative bar height
-        const maxEarnings = Math.max(...data.map(d => d.earnings), 1); // Avoid div by 0
+        const maxEarnings = Math.max(...data.map(d => d.earnings), 1);
 
         return data.map(d => ({
             ...d,
