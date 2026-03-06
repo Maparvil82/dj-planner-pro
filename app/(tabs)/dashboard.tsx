@@ -9,7 +9,7 @@ import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { Calendar, Plus } from 'lucide-react-native';
+import { Calendar, Plus, ChevronRight } from 'lucide-react-native';
 import { format, parseISO, isThisMonth, isWithinInterval, startOfMonth, subMonths, endOfMonth, addDays } from 'date-fns';
 import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 
@@ -283,23 +283,43 @@ export default function DashboardScreen() {
             venueSessionCount[s.venue] = (venueSessionCount[s.venue] || 0) + 1;
         });
 
-        // "Dormant" threshold: let's try 45 days instead of 60 to be more reactive
-        const dormantThreshold = addDays(new Date(), -45);
+        // "Dormant" threshold: 30 days is enough to be pro-active
+        const dormantThreshold = addDays(new Date(), -30);
 
         const candidates = Object.keys(venueLastVisit).filter(v => {
             const lastVisit = venueLastVisit[v];
-            const hasUpcoming = upcomingSessions.some(us => us.venue === v);
-
-            // Only suggest if the last visit was long ago AND there's nothing scheduled
-            return lastVisit < dormantThreshold && !hasUpcoming;
+            // Only count as "upcoming" if it's NOT cancelled
+            const hasFutureActiveSession = upcomingSessions.some(us => us.venue === v && us.status !== 'cancelled');
+            return lastVisit < dormantThreshold && !hasFutureActiveSession;
         });
 
-        if (candidates.length === 0) return null;
+        if (candidates.length === 0) {
+            // Fallback: any venue where they've played that doesn't have an upcoming active session
+            const allPastVenues = Object.keys(venueLastVisit).filter(v => {
+                const hasFutureActiveSession = upcomingSessions.some(us => us.venue === v && us.status !== 'cancelled');
+                return !hasFutureActiveSession;
+            });
+            return allPastVenues.length > 0 ? allPastVenues[0] : null;
+        }
 
-        // Sort by session count (relevance) but maybe pick from top 3 to vary it
         candidates.sort((a, b) => venueSessionCount[b] - venueSessionCount[a]);
         return candidates[0];
     }, [sessions, upcomingSessions]);
+
+    const hasCancelledThisMonth = useMemo(() => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const startOfMonthStr = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        const endOfMonthDate = endOfMonth(now);
+        const endOfMonthStr = format(endOfMonthDate, 'yyyy-MM-dd');
+
+        return sessions.some(s => {
+            if (s.status !== 'cancelled' || !s.date) return false;
+            const d = s.date.split('T')[0];
+            return d >= startOfMonthStr && d <= endOfMonthStr;
+        });
+    }, [sessions]);
 
     const isLoading = isLoadingAll || isLoadingUpcoming || isLoadingExpenses;
 
@@ -384,18 +404,55 @@ export default function DashboardScreen() {
                     const label = isFlat
                         ? t('earnings_vs_last_flat')
                         : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
+
+                    const showSuggestion = pct < 0 || hasCancelledThisMonth;
+
+                    let suggestionText = '';
+                    if (showSuggestion) {
+                        if (hasCancelledThisMonth) {
+                            suggestionText = dormantVenue
+                                ? t('recovery_suggestion', { name: dormantVenue })
+                                : t('recovery_no_venue'); // Fallback if no venue found
+                        } else if (pct < 0 && dormantVenue) {
+                            suggestionText = t('venue_suggestion', { name: dormantVenue });
+                        } else {
+                            // If pct < 0 but no dormant venue, show nothing or a generic one
+                            // For now let's just use dormantVenue check inside here too
+                        }
+                    }
+
+                    if (showSuggestion && !suggestionText) return (
+                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
+                        </View>
+                    );
+
                     return (
-                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: dormantVenue && !isUp && !isFlat ? 8 : 0 }}>
+                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: showSuggestion ? 8 : 0 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                 <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
                                 <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
                             </View>
-                            {dormantVenue && pct < 0 && (
-                                <View style={{ marginTop: 4, paddingTop: 6, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
-                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563' }}>
-                                        {t('venue_suggestion', { name: dormantVenue })}
+                            {showSuggestion && (
+                                <TouchableOpacity
+                                    onPress={() => router.push('/venues')}
+                                    activeOpacity={0.7}
+                                    style={{
+                                        marginTop: 4,
+                                        paddingTop: 6,
+                                        borderTopWidth: 1,
+                                        borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between'
+                                    }}
+                                >
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563', flex: 1 }}>
+                                        {suggestionText}
                                     </Text>
-                                </View>
+                                    <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                                </TouchableOpacity>
                             )}
                         </View>
                     );

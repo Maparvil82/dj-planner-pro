@@ -183,6 +183,8 @@
     "avg_sessions_month": "Media sesiones/mes",
     "annual_comparison": "Comparativa Anual",
     "venue_suggestion": "Hace tiempo que no pinchas en {{name}}. ¿Le damos un toque?",
+    "recovery_suggestion": "Vaya, se ha cancelado una sesión este mes. ¿Intentamos cubrir el hueco contactando con {{name}}?",
+    "recovery_no_venue": "Vaya, se ha cancelado una sesión. Ir a locales para buscar una alternativa.",
     "chart_sessions": "SESIONES",
     "chart_finances": "FINANZAS",
     "sound_quality": "Calidad de Sonido",

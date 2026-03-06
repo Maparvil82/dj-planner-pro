@@ -140,6 +140,8 @@
     "avg_sessions_month": "月平均セッション数",
     "annual_comparison": "年間比較",
     "venue_suggestion": "{{name}}でしばらくプレイしていませんね。連絡してみませんか？",
+    "recovery_suggestion": "今月、セッションが1件キャンセルされました。{{name}}に連絡して穴を埋めてみませんか？",
+    "recovery_no_venue": "セッションがキャンセルされました。代替案を探すために会場リストへ移動します。",
     "chart_sessions": "セッション数",
     "chart_finances": "収支",
     "sound_quality": "音質",

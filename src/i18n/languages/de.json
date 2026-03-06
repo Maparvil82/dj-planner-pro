@@ -140,6 +140,8 @@
     "avg_sessions_month": "Sitzungen/Monat Durchschn.",
     "annual_comparison": "Jahresvergleich",
     "venue_suggestion": "Es ist schon eine Weile her, seit du im {{name}} aufgelegt hast. Sollen wir mal anklopfen?",
+    "recovery_suggestion": "Hoppla, diesen Monat wurde eine Sitzung abgesagt. Sollen wir versuchen, die Lücke zu füllen, indem wir das {{name}} kontaktieren?",
+    "recovery_no_venue": "Hoppla, eine Sitzung wurde abgesagt. Zu den Lokalen gehen, um eine Alternative zu finden.",
     "chart_sessions": "SITZUNGEN",
     "chart_finances": "FINANZEN",
     "sound_quality": "Tonqualität",

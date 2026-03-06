@@ -140,6 +140,8 @@
     "avg_sessions_month": "Moyenne sessions/mois",
     "annual_comparison": "Comparaison Annuelle",
     "venue_suggestion": "Cela fait un moment que tu n'as pas mixé au {{name}}. On leur fait un signe ?",
+    "recovery_suggestion": "Mince, une session a été annulée ce mois-ci. On essaie de combler le vide en contactant le {{name}} ?",
+    "recovery_no_venue": "Mince, une session a été annulée. Aller aux lieux pour trouver une alternative.",
     "chart_sessions": "SESSIONS",
     "chart_finances": "FINANCES",
     "sound_quality": "Qualité Sonore",

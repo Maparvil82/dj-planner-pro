@@ -183,6 +183,8 @@
     "avg_sessions_month": "Avg sessions/month",
     "annual_comparison": "Annual Comparison",
     "venue_suggestion": "It's been a while since you played at {{name}}. Should we give them a shout?",
+    "recovery_suggestion": "Oops, a session was cancelled this month. Should we try to fill the gap by contacting {{name}}?",
+    "recovery_no_venue": "Oops, a session was cancelled. Go to venues to find an alternative.",
     "chart_sessions": "SESSIONS",
     "chart_finances": "FINANCES",
     "sound_quality": "Sound Quality",

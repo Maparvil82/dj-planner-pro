@@ -142,6 +142,8 @@
     "avg_sessions_month": "Media sessioni/mese",
     "annual_comparison": "Confronto Annuale",
     "venue_suggestion": "È da un po' che non suoni al {{name}}. Li contattiamo?",
+    "recovery_suggestion": "Ops, una sessione è stata annullata questo mese. Proviamo a colmare il vuoto contattando il {{name}}?",
+    "recovery_no_venue": "Ops, una sessione è stata annullata. Vai ai locali per trovare un'alternativa.",
     "chart_sessions": "SESSIONI",
     "chart_finances": "FINANZA",
     "sound_quality": "Qualità del Suono",
