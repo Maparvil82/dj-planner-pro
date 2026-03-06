@@ -493,7 +493,7 @@ export default function DashboardScreen() {
                 })()}
 
                 {/* Annual Comparison Chart */}
-                <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
+                <View style={{ backgroundColor: isDark ? '#121212' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 24, marginBottom: 16 }}>
                     <View className="flex-row justify-between items-center mb-6">
                         <TouchableOpacity
                             onPress={() => router.push('/history')}
@@ -655,7 +655,7 @@ export default function DashboardScreen() {
                 {/* Upcoming Sessions Card with filter toggle */}
                 <View
                     style={{
-                        backgroundColor: isDark ? '#1E1E1E' : '#F3F4F6',
+                        backgroundColor: isDark ? '#1F2937' : '#F9FAFB',
                         borderRadius: 12,
                         padding: 20,
                         marginBottom: 16
@@ -769,7 +769,7 @@ export default function DashboardScreen() {
                     return (
                         <>
                             <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-                                <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                <View style={{ flex: 1, backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16 }}>
                                     <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
                                         {t('avg_price_session')}
                                     </Text>
@@ -777,7 +777,7 @@ export default function DashboardScreen() {
                                         {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
                                     </Text>
                                 </View>
-                                <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                <View style={{ flex: 1, backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16 }}>
                                     <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
                                         {t('avg_sessions_month')}
                                     </Text>
@@ -787,7 +787,7 @@ export default function DashboardScreen() {
                                 </View>
                             </View>
 
-                            <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+                            <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16, marginBottom: 12 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
                                     {t('top_collaborator')} (TOP 3)
                                 </Text>
@@ -816,7 +816,7 @@ export default function DashboardScreen() {
                 {/* Ranking Lists: Rentable & Visited */}
                 <View style={{ gap: 12, marginBottom: 12 }}>
                     {/* Most profitable list */}
-                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
                         <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
                             {t('top_venue_year')} (TOP 3)
                         </Text>
@@ -840,7 +840,7 @@ export default function DashboardScreen() {
                     </View>
 
                     {/* Most visited list */}
-                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
                         <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
                             {t('top_venue_visits')} (TOP 3)
                         </Text>
@@ -867,7 +867,7 @@ export default function DashboardScreen() {
                 {/* Ranking Lists: Sound & Experience */}
                 <View style={{ gap: 12, marginBottom: 16 }}>
                     {/* Best sound quality list */}
-                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
                         <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
                             {t('best_sound_venue')} (TOP 3)
                         </Text>
@@ -893,7 +893,7 @@ export default function DashboardScreen() {
                     </View>
 
                     {/* Best experience list */}
-                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
                         <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
                             {t('best_exp_venue')} (TOP 3)
                         </Text>
