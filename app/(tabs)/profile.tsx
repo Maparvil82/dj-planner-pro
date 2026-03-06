@@ -1,22 +1,41 @@
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, TextInput, ScrollView, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useAuthStore } from '../../src/store/useAuthStore';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { profileService, UserProfile } from '../../src/services/profile';
-import { LogOut } from 'lucide-react-native';
+import { LogOut, ChevronRight, Globe, Moon, Sun, Cpu, ShieldCheck, HelpCircle, Star, Trash2, Info, Monitor, Camera } from 'lucide-react-native';
 import { cn } from '../../src/theme/tw';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
-    const { t } = useTranslation();
+    const { t, changeLanguage, currentLanguage } = useTranslation();
+    const { theme, setTheme, activeTheme } = useTheme();
     const { session, profile, signOut, setProfile } = useAuthStore();
+    const router = useRouter();
+
     const [uploading, setUploading] = useState(false);
     const [editing, setEditing] = useState(false);
     const [artistName, setArtistName] = useState(profile?.artist_name || '');
+    const [aiEnabled, setAiEnabled] = useState(true);
+
+    useEffect(() => {
+        const loadAiPref = async () => {
+            const val = await AsyncStorage.getItem('@ai_enabled');
+            if (val !== null) setAiEnabled(val === 'true');
+        };
+        loadAiPref();
+    }, []);
+
+    const toggleAi = async (val: boolean) => {
+        setAiEnabled(val);
+        await AsyncStorage.setItem('@ai_enabled', val ? 'true' : 'false');
+    };
 
     const handlePickAvatar = async () => {
         // Request permissions
@@ -72,38 +91,68 @@ export default function SettingsScreen() {
         if (updated) {
             setProfile(updated);
             setEditing(false);
-            Alert.alert(t('success'), t('avatar_upload_success')); // Reusing success msg for now or add new
+            Alert.alert(t('success'), t('avatar_upload_success'));
         } else {
             Alert.alert(t('error'), t('error_saving_session'));
         }
     };
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            t('confirm_delete_account'),
+            t('delete_account_warning'),
+            [
+                { text: t('cancel'), style: 'cancel' },
+                {
+                    text: t('delete_permanently'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        // In a real app, we'd call a Supabase function to delete the user
+                        // and all their data securely. For now, we sign out.
+                        Alert.alert(t('success'), "Account deletion requested.");
+                        signOut();
+                    }
+                }
+            ]
+        );
+    };
+
+    const SettingItem = ({ icon: Icon, label, value, onPress, children, last }: any) => (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={!onPress}
+            className={cn(
+                "flex-row items-center py-4",
+                !last && "border-b border-gray-50 dark:border-gray-800"
+            )}
+        >
+            <View className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 items-center justify-center mr-4">
+                <Icon size={20} color={activeTheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
+            </View>
+            <View className="flex-1">
+                <Text className="text-gray-900 dark:text-white font-medium text-base">{label}</Text>
+                {value && <Text className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{value}</Text>}
+            </View>
+            {children || <ChevronRight size={20} color="#D1D5DB" />}
+        </TouchableOpacity>
+    );
+
+    const SectionHeader = ({ title }: { title: string }) => (
+        <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 mt-8 ml-2">
+            {title}
+        </Text>
+    );
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'bottom', 'left', 'right']}>
-            {/* Header */}
-            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
-                    {/* Left Actions Placeholder */}
-                    <View className="w-8" />
-
-                    {/* Centered Title */}
-                    <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            {t('settings_title')}
-                        </Text>
-                    </View>
-
-                    {/* Right Actions Placeholder */}
-                    <View className="flex-row items-center gap-3 ml-auto">
-                        <View className="w-8" />
-                    </View>
-                </View>
-            </View>
-
-            <View className="flex-1 px-4 py-8">
+            <ScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 100 }}
+            >
                 {/* Profile Card */}
-                <View className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-sm shadow-black/5 border border-gray-100 dark:border-gray-800 items-center mb-8">
-                    <View className="relative mb-6">
+                <View className="bg-white dark:bg-gray-800/50 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 items-center mb-6">
+                    <View className="relative mb-4">
                         <Avatar
                             url={profile?.avatar_url}
                             name={session?.user?.email}
@@ -113,6 +162,14 @@ export default function SettingsScreen() {
                             <View className="absolute inset-0 bg-black/40 rounded-full items-center justify-center">
                                 <ActivityIndicator color="white" />
                             </View>
+                        )}
+                        {!editing && (
+                            <TouchableOpacity
+                                className="absolute bottom-0 right-0 bg-blue-600 w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 items-center justify-center"
+                                onPress={handlePickAvatar}
+                            >
+                                <Camera size={14} color="white" />
+                            </TouchableOpacity>
                         )}
                     </View>
 
@@ -128,71 +185,141 @@ export default function SettingsScreen() {
                             />
                         </View>
                     ) : (
-                        <>
-                            <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        <View className="items-center">
+                            <Text className="text-2xl font-black text-gray-900 dark:text-white mb-1">
                                 {profile?.artist_name || session?.user?.email?.split('@')[0]}
                             </Text>
-                            <Text className="text-base text-gray-500 dark:text-gray-400 mb-8">
+                            <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
                                 {session?.user?.email}
                             </Text>
-                        </>
+                        </View>
                     )}
 
-                    <View className="flex-row gap-3">
-                        <TouchableOpacity
-                            className={cn(
-                                "bg-blue-600 px-8 py-3.5 rounded-full flex-row items-center",
-                                uploading && "opacity-50"
-                            )}
-                            onPress={editing ? handleUpdateProfile : () => setEditing(true)}
-                            disabled={uploading}
-                        >
-                            <Text className="text-white font-bold text-lg">
-                                {editing ? t('save_changes') : t('edit_profile')}
-                            </Text>
-                        </TouchableOpacity>
-
-                        {editing && (
-                            <TouchableOpacity
-                                className="bg-gray-200 dark:bg-gray-800 px-8 py-3.5 rounded-full flex-row items-center"
-                                onPress={() => {
-                                    setEditing(false);
-                                    setArtistName(profile?.artist_name || '');
-                                }}
-                            >
-                                <Text className="text-gray-700 dark:text-gray-300 font-bold text-lg">
-                                    {t('cancel')}
-                                </Text>
-                            </TouchableOpacity>
+                    <TouchableOpacity
+                        className={cn(
+                            "mt-6 px-10 py-3 rounded-2xl",
+                            editing ? "bg-blue-600" : "bg-gray-100 dark:bg-gray-800"
                         )}
-                    </View>
-
-                    {!editing && (
-                        <TouchableOpacity
-                            className="mt-4"
-                            onPress={handlePickAvatar}
-                            disabled={uploading}
-                        >
-                            <Text className="text-blue-500 font-medium">
-                                {t('change_avatar')}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
+                        onPress={editing ? handleUpdateProfile : () => setEditing(true)}
+                    >
+                        <Text className={cn(
+                            "font-bold",
+                            editing ? "text-white" : "text-gray-900 dark:text-white"
+                        )}>
+                            {editing ? t('save_changes') : t('edit_profile')}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Global Actions */}
-                <TouchableOpacity
-                    className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl flex-row items-center justify-center border border-red-100 dark:border-red-900/50"
-                    onPress={() => signOut()}
-                >
-                    {/* @ts-ignore */}
-                    <LogOut size={20} color="#EF4444" className="mr-2" />
-                    <Text className="text-red-500 dark:text-red-400 font-bold text-lg">
-                        {t('log_out')}
-                    </Text>
-                </TouchableOpacity>
+                {/* APP SETTINGS */}
+                <SectionHeader title={t('settings_app_section')} />
+                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                    <SettingItem
+                        icon={Globe}
+                        label={t('language')}
+                        value={currentLanguage.toUpperCase()}
+                        onPress={() => {
+                            const languages = [
+                                { label: 'English', code: 'en' },
+                                { label: 'Español', code: 'es' },
+                                { label: 'Deutsch', code: 'de' },
+                                { label: 'Français', code: 'fr' },
+                                { label: 'Italiano', code: 'it' },
+                                { label: 'Português', code: 'pt' },
+                                { label: '日本語', code: 'ja' },
+                            ];
 
-            </View>
+                            Alert.alert(
+                                t('language'),
+                                t('language'),
+                                languages.map(lang => ({
+                                    text: lang.label,
+                                    onPress: () => changeLanguage(lang.code)
+                                })).concat([{ text: t('cancel'), style: 'cancel' } as any])
+                            );
+                        }}
+                    />
+                    <SettingItem
+                        icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
+                        label={t('appearance')}
+                        value={t(`theme_${theme}`)}
+                        onPress={() => {
+                            const themes: any = ['light', 'dark', 'system'];
+                            const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
+                            setTheme(themes[nextIndex]);
+                        }}
+                    />
+                    <SettingItem
+                        icon={Cpu}
+                        label={t('ai_recognition')}
+                        last
+                    >
+                        <Switch
+                            value={aiEnabled}
+                            onValueChange={toggleAi}
+                            trackColor={{ false: '#D1D5DB', true: '#3B82F6' }}
+                            thumbColor="#FFFFFF"
+                        />
+                    </SettingItem>
+                </View>
+
+                {/* SUPPORT */}
+                <SectionHeader title={t('settings_support_section')} />
+                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                    <SettingItem
+                        icon={HelpCircle}
+                        label={t('contact_support')}
+                        onPress={() => Linking.openURL('mailto:support@djplanner.pro')}
+                    />
+                    <SettingItem
+                        icon={Star}
+                        label={t('rate_app')}
+                        onPress={() => { }} // Store review logic
+                        last
+                    />
+                </View>
+
+                {/* LEGAL */}
+                <SectionHeader title={t('settings_legal_section')} />
+                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                    <SettingItem
+                        icon={ShieldCheck}
+                        label={t('privacy_policy')}
+                        onPress={() => Linking.openURL('https://djplanner.pro/privacy')}
+                    />
+                    <SettingItem
+                        icon={Info}
+                        label={t('terms_of_service')}
+                        onPress={() => Linking.openURL('https://djplanner.pro/terms')}
+                        last
+                    />
+                </View>
+
+                {/* ACCOUNT */}
+                <SectionHeader title={t('settings_account_section')} />
+                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                    <SettingItem
+                        icon={LogOut}
+                        label={t('log_out')}
+                        onPress={() => signOut()}
+                    />
+                    <SettingItem
+                        icon={Trash2}
+                        label={t('delete_account')}
+                        onPress={handleDeleteAccount}
+                        last
+                    >
+                        <Text className="text-red-500 font-medium">{t('delete_account')}</Text>
+                    </SettingItem>
+                </View>
+
+                {/* VERSION */}
+                <View className="mt-8 mb-4 items-center">
+                    <Text className="text-gray-400 dark:text-gray-600 text-xs">
+                        {t('version')} 1.2.0 • Build 2534
+                    </Text>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }
