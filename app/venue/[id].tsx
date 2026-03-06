@@ -44,6 +44,8 @@ export default function VenueDetailScreen() {
     const [address, setAddress] = useState('');
     const [contact, setContact] = useState('');
     const [notes, setNotes] = useState('');
+    const [soundQuality, setSoundQuality] = useState<number>(0);
+    const [experienceRating, setExperienceRating] = useState<number>(0);
     const [hasChanges, setHasChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -54,6 +56,8 @@ export default function VenueDetailScreen() {
             setAddress(venue.address || '');
             setContact(venue.contact_info || '');
             setNotes(venue.notes || '');
+            setSoundQuality(venue.sound_quality || 0);
+            setExperienceRating(venue.experience_rating || 0);
         }
     }, [venue]);
 
@@ -70,7 +74,9 @@ export default function VenueDetailScreen() {
                         name: name.trim(),
                         address: address.trim(),
                         contact_info: contact.trim(),
-                        notes: notes.trim()
+                        notes: notes.trim(),
+                        sound_quality: soundQuality || undefined,
+                        experience_rating: experienceRating || undefined
                     }
                 });
                 setHasChanges(false);
@@ -84,7 +90,7 @@ export default function VenueDetailScreen() {
         }, 1000); // 1 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [name, address, contact, notes, hasChanges, venue]);
+    }, [name, address, contact, notes, soundQuality, experienceRating, hasChanges, venue]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -253,6 +259,60 @@ export default function VenueDetailScreen() {
                                 numberOfLines={6}
                                 textAlignVertical="top"
                             />
+                        </View>
+
+                        {/* Sound Quality Rating */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('sound_quality') || 'Calidad de Sonido'}
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <TouchableOpacity
+                                        key={star}
+                                        onPress={() => {
+                                            setSoundQuality(star === soundQuality ? 0 : star);
+                                            setHasChanges(true);
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 32, color: star <= soundQuality ? '#FACC15' : (isDark ? '#374151' : '#E5E7EB') }}>
+                                            ★
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                            {soundQuality > 0 && (
+                                <Text style={{ fontSize: 11, color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 4, marginLeft: 2 }}>
+                                    {['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][soundQuality]}
+                                </Text>
+                            )}
+                        </View>
+
+                        {/* Experience Rating */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('experience_rating') || 'Experiencia General'}
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <TouchableOpacity
+                                        key={star}
+                                        onPress={() => {
+                                            setExperienceRating(star === experienceRating ? 0 : star);
+                                            setHasChanges(true);
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 32, color: star <= experienceRating ? '#3B82F6' : (isDark ? '#374151' : '#E5E7EB') }}>
+                                            ★
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                            {experienceRating > 0 && (
+                                <Text style={{ fontSize: 11, color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 4, marginLeft: 2 }}>
+                                    {['', 'Muy mala', 'Mala', 'Regular', 'Buena', 'Excelente'][experienceRating]}
+                                </Text>
+                            )}
                         </View>
                     </View>
                     <View className="h-20" />

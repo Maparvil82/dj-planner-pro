@@ -6,6 +6,8 @@ export interface Venue {
     contact_info?: string;
     notes?: string;
     color?: string;
+    sound_quality?: number; // 1-5
+    experience_rating?: number; // 1-5
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
 }
@@ -16,4 +18,6 @@ export interface CreateVenueInput {
     contact_info?: string;
     notes?: string;
     color?: string;
+    sound_quality?: number; // 1-5
+    experience_rating?: number; // 1-5
 }

@@ -5,6 +5,7 @@ import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
+import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Avatar } from '../../src/components/ui/Avatar';
@@ -30,6 +31,7 @@ const calculateSessionEarnings = (session: any): number => {
 export default function DashboardScreen() {
     const { t, i18n } = useTranslation();
     const [chartView, setChartView] = React.useState<'sessions' | 'finances'>('sessions');
+    const [upcomingFilter, setUpcomingFilter] = React.useState<'month' | 'future' | 'past' | 'all'>('month');
     const router = useRouter();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const { profile, user } = useAuthStore();
@@ -39,6 +41,7 @@ export default function DashboardScreen() {
     const { data: sessions = [], isLoading: isLoadingAll } = useAllSessionsQuery();
     const { data: upcomingSessions = [], isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
     const { data: expenses = [], isLoading: isLoadingExpenses } = useAllExpensesQuery();
+    const { data: venues = [] } = useVenuesQuery();
 
     const locale = useMemo(() => {
         switch (i18n.language) {
@@ -53,7 +56,7 @@ export default function DashboardScreen() {
     }, [i18n.language]);
 
     // Financial calculations
-    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue } = useMemo(() => {
+    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue, topVisitedVenue } = useMemo(() => {
         let thisMonth = 0;
         let lastMonth = 0;
         let sessionsThisMonth = 0;
@@ -65,6 +68,7 @@ export default function DashboardScreen() {
         const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
 
         let currentYearVenues: Record<string, number> = {};
+        let currentYearVenueCounts: Record<string, number> = {};
         const currentYear = now.getFullYear();
 
         sessions.forEach(session => {
@@ -74,6 +78,7 @@ export default function DashboardScreen() {
                 const sessionDate = parseISO(session.date);
                 if (sessionDate.getFullYear() === currentYear && session.venue) {
                     currentYearVenues[session.venue] = (currentYearVenues[session.venue] || 0) + earnings;
+                    currentYearVenueCounts[session.venue] = (currentYearVenueCounts[session.venue] || 0) + 1;
                 }
 
                 if (isThisMonth(sessionDate)) {
@@ -86,7 +91,7 @@ export default function DashboardScreen() {
             }
         });
 
-        // Find top venue
+        // Find top earning venue
         let topVenueName = '—';
         let topVenueEarnings = 0;
         Object.entries(currentYearVenues).forEach(([venue, amount]) => {
@@ -96,12 +101,23 @@ export default function DashboardScreen() {
             }
         });
 
+        // Find most visited venue (by session count)
+        let topVisitedName = '—';
+        let topVisitedCount = 0;
+        Object.entries(currentYearVenueCounts).forEach(([venue, count]) => {
+            if (count > topVisitedCount) {
+                topVisitedCount = count;
+                topVisitedName = venue;
+            }
+        });
+
         return {
             thisMonthEarnings: thisMonth,
             lastMonthEarnings: lastMonth,
             totalSessionsThisMonth: sessionsThisMonth,
             lastMonthSessions: prevMonthSessions,
-            topVenue: { name: topVenueName, amount: topVenueEarnings }
+            topVenue: { name: topVenueName, amount: topVenueEarnings },
+            topVisitedVenue: { name: topVisitedName, count: topVisitedCount }
         };
     }, [sessions]);
 
@@ -209,6 +225,34 @@ export default function DashboardScreen() {
 
     // Total upcoming is used to calculate the visual ratio. Let's base it out of 10.
     const upcomingRatio = Math.min(Math.round((upcomingCount > 0 ? (confirmedUpcoming / upcomingCount) : 0) * 100), 100);
+
+    const filteredUpcoming = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        if (upcomingFilter === 'month') {
+            // All sessions of current month (past and future)
+            return sessions.filter(s => s.date >= startOfCurrentMonth && s.date <= endOfCurrentMonth);
+        }
+        if (upcomingFilter === 'future') {
+            return upcomingSessions;
+        }
+        if (upcomingFilter === 'past') {
+            // Sessions before today (current year)
+            const startOfYear = `${now.getFullYear()}-01-01`;
+            return sessions.filter(s => s.date >= startOfYear && s.date < today);
+        }
+        // 'all'
+        return sessions;
+    }, [upcomingFilter, sessions, upcomingSessions]);
+
+    const filteredConfirmed = filteredUpcoming.filter(s => s.status === 'confirmed' || !s.status).length;
+    const filteredPending = filteredUpcoming.filter(s => s.status === 'pending').length;
+    const filteredCancelled = filteredUpcoming.filter(s => s.status === 'cancelled').length;
+    const filteredTotal = filteredUpcoming.length;
+    const filteredRatio = filteredTotal > 0 ? Math.min(Math.round((filteredConfirmed / filteredTotal) * 100), 100) : 0;
 
     const isLoading = isLoadingAll || isLoadingUpcoming || isLoadingExpenses;
 
@@ -338,49 +382,96 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                {/* Full Width Card: New clients -> Upcoming sessions */}
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => upcomingCount > 0 ? router.push(`/session/${upcomingSessions[0].id}`) : router.push('/add-session')}
-                    className="bg-gray-100 dark:bg-[#1E1E1E] rounded-[32px] p-6 mb-4"
+                {/* Upcoming Sessions Card with filter toggle */}
+                <View
+                    style={{
+                        backgroundColor: isDark ? '#1E1E1E' : '#F3F4F6',
+                        borderRadius: 12,
+                        padding: 20,
+                        marginBottom: 16
+                    }}
                 >
-                    <View className="mb-6">
-                        <Text className="text-gray-900 dark:text-white font-bold text-base mb-1">{t('upcoming_sessions')}</Text>
-                        <Text className="text-gray-500 dark:text-gray-400 text-xs">{t('next_30_days')}</Text>
+                    {/* Header row */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
+                            {t('upcoming_sessions')}
+                        </Text>
+                        {/* Filter toggle */}
+                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
+                            {(['month', 'future', 'past', 'all'] as const).map(filter => {
+                                const labels: Record<string, string> = { month: 'MES', future: 'PRÓX', past: 'PAS', all: 'TODAS' };
+                                const isActive = upcomingFilter === filter;
+                                return (
+                                    <TouchableOpacity
+                                        key={filter}
+                                        onPress={() => setUpcomingFilter(filter)}
+                                        style={{
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 8,
+                                            borderRadius: 6,
+                                            backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                            shadowColor: '#000',
+                                            shadowOffset: { width: 0, height: 1 },
+                                            shadowOpacity: isActive ? 0.1 : 0,
+                                            shadowRadius: 1,
+                                            elevation: isActive ? 1 : 0
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
+                                            {labels[filter]}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </View>
 
-                    <View className="flex-row items-end justify-between">
-                        <View className="flex-1 mr-8">
-                            <View className="w-full h-2 bg-gray-200 dark:bg-[#333333] rounded-full overflow-hidden mb-4">
-                                <View
-                                    className="h-full bg-blue-600 rounded-full"
-                                    style={{ width: `${Math.max(upcomingRatio, 10)}%` }}
-                                />
-                            </View>
-                            <View className="flex-row items-center gap-4">
-                                <View className="flex-row items-center">
-                                    <View className="w-2.5 h-2.5 bg-blue-600 rounded mr-2" />
-                                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('confirmed')} ({confirmedUpcoming})</Text>
+                    {/* Progress bar */}
+                    <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+                        <View
+                            style={{
+                                height: '100%',
+                                marginBottom: 2,
+                                width: `${Math.max(filteredRatio, 4)}%`,
+                                backgroundColor: '#2563EB',
+                                borderRadius: 4
+                            }}
+                        />
+                    </View>
+
+                    {/* Stats: number + labels stacked */}
+                    <View style={{ flexDirection: 'column' }}>
+                        <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
+                            {filteredTotal}
+                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                            {filteredConfirmed > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('confirmed')} ({filteredConfirmed})
+                                    </Text>
                                 </View>
-                                {pendingUpcoming > 0 && (
-                                    <View className="flex-row items-center">
-                                        <View className="w-2.5 h-2.5 bg-orange-500 rounded mr-2" />
-                                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('pending')} ({pendingUpcoming})</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </View>
-                        <View className="flex-row items-start relative pb-1">
-                            <Text className="text-[56px] font-black text-gray-900 dark:text-white tracking-tighter leading-none">
-                                {upcomingCount}
-                            </Text>
-                            {/* Decorative green arrow for positive vibe if there are sessions */}
-                            {upcomingCount > 0 && (
-                                <View className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-green-500 ml-2 mt-4" />
+                            )}
+                            {filteredPending > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('pending')} ({filteredPending})
+                                    </Text>
+                                </View>
+                            )}
+                            {filteredCancelled > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('cancelled_label') || 'Canceladas'} ({filteredCancelled})
+                                    </Text>
+                                </View>
                             )}
                         </View>
                     </View>
-                </TouchableOpacity>
+                </View>
 
                 {/* Annual Comparison Chart */}
                 <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
@@ -535,14 +626,105 @@ export default function DashboardScreen() {
                     </ScrollView>
                 </View>
 
-                {/* Top Venue Card */}
-                <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
-                    <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{t('top_venue_year')}</Text>
-                    <Text className="text-xl font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{topVenue.name}</Text>
-                    {topVenue.amount > 0 && (
-                        <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">{topVenue.amount.toLocaleString()}€</Text>
-                    )}
+                {/* Month-over-month earnings KPI */}
+                {(() => {
+                    const diff = thisMonthEarnings - lastMonthEarnings;
+                    const pct = lastMonthEarnings > 0
+                        ? Math.round((diff / lastMonthEarnings) * 100)
+                        : thisMonthEarnings > 0 ? 100 : 0;
+                    const isUp = pct > 0;
+                    const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
+                    const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
+                    const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
+                    const bgColor = isFlat
+                        ? (isDark ? '#1F1F1F' : '#F3F4F6')
+                        : isUp ? (isDark ? '#14532D' : '#F0FDF4')
+                            : (isDark ? '#450A0A' : '#FEF2F2');
+                    const label = isFlat
+                        ? 'Sin datos del mes anterior'
+                        : `Estás un ${isUp ? '+' : ''}${pct}% con respecto al mes pasado`;
+                    return (
+                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
+                        </View>
+                    );
+                })()}
+
+                {/* Top Venue Cards Row: earnings + visits */}
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+                    {/* Most profitable */}
+                    <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                            {t('top_venue_year')}
+                        </Text>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 2 }} numberOfLines={1}>
+                            {topVenue.name}
+                        </Text>
+                        {topVenue.amount > 0 && (
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#60A5FA' : '#2563EB' }}>
+                                {topVenue.amount.toLocaleString()}€
+                            </Text>
+                        )}
+                    </View>
+                    {/* Most visited */}
+                    <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                            {t('top_venue_visits') || 'Local + Visitado'}
+                        </Text>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 2 }} numberOfLines={1}>
+                            {topVisitedVenue.name}
+                        </Text>
+                        {topVisitedVenue.count > 0 && (
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#F9A8D4' : '#DB2777' }}>
+                                {topVisitedVenue.count} {topVisitedVenue.count === 1 ? (t('session_singular') || 'sesión') : (t('sessions_plural') || 'sesiones')}
+                            </Text>
+                        )}
+                    </View>
                 </View>
+
+                {/* Venue Rating Cards Row: best sound + best experience */}
+                {(() => {
+                    const ratedVenues = venues.filter(v => v.sound_quality || v.experience_rating);
+                    const bestSound = ratedVenues.reduce<typeof venues[0] | null>((best, v) =>
+                        (v.sound_quality || 0) > (best?.sound_quality || 0) ? v : best, null);
+                    const bestExp = ratedVenues.reduce<typeof venues[0] | null>((best, v) =>
+                        (v.experience_rating || 0) > (best?.experience_rating || 0) ? v : best, null);
+                    const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+                    return (
+                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                            {/* Best sound quality */}
+                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                                    {t('best_sound_venue') || 'Mejor Sonido'}
+                                </Text>
+                                <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
+                                    {bestSound?.name || '—'}
+                                </Text>
+                                {bestSound?.sound_quality ? (
+                                    <Text style={{ fontSize: 14, color: '#FACC15', letterSpacing: 1 }}>
+                                        {stars(bestSound.sound_quality)}
+                                    </Text>
+                                ) : null}
+                            </View>
+                            {/* Best experience */}
+                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                                    {t('best_exp_venue') || 'Mejor Experiencia'}
+                                </Text>
+                                <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
+                                    {bestExp?.name || '—'}
+                                </Text>
+                                {bestExp?.experience_rating ? (
+                                    <Text style={{ fontSize: 14, color: '#3B82F6', letterSpacing: 1 }}>
+                                        {stars(bestExp.experience_rating)}
+                                    </Text>
+                                ) : null}
+                            </View>
+                        </View>
+                    );
+                })()}
 
                 <View className="h-28" />
             </ScrollView>
