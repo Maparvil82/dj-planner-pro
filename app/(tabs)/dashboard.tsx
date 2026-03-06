@@ -281,25 +281,23 @@ export default function DashboardScreen() {
     const lastName = nameParts.slice(1).join(' ') || '';
 
     return (
-        <View className="flex-1 bg-white dark:bg-[#121212]">
-            {/* Header Area */}
-            <View className="flex-row justify-between items-start px-6 pt-16 pb-6" style={{ paddingTop: insets.top + 20 }}>
-                <View>
-                    <Text className="text-[32px] font-black text-gray-900 dark:text-white leading-[34px] tracking-tight">
-                        {firstName}
-                    </Text>
-                    {lastName !== '' && (
-                        <Text className="text-[32px] font-black text-gray-900 dark:text-white leading-[34px] tracking-tight">
-                            {lastName}
+        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
+            {/* HEADER */}
+            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
+                <View className="flex-row items-center justify-between h-10">
+                    <View className="w-8" />
+                    <View className="absolute left-0 right-0 items-center justify-center">
+                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                            Dashboard
                         </Text>
-                    )}
-                </View>
-                <View className="rounded-2xl overflow-hidden shadow-sm">
-                    <Avatar url={profile?.avatar_url} size="lg" name={fullName} />
+                    </View>
+                    <View className="rounded-xl overflow-hidden">
+                        <Avatar url={profile?.avatar_url} size="sm" name={fullName} />
+                    </View>
                 </View>
             </View>
 
-            <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}>
 
 
                 {/* Upcoming Sessions Card with filter toggle */}
@@ -688,6 +686,6 @@ export default function DashboardScreen() {
 
                 <View className="h-28" />
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
