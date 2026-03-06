@@ -318,7 +318,7 @@ export default function DashboardScreen() {
                             const email = user?.email || '';
                             const prefix = email.split('@')[0];
                             const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-                            return `${t('hello') || 'Hola'}, ${displayName} 👋`;
+                            return `${t('hello')} ${displayName} 👋`;
                         })()}
                     </Text>
                     <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
@@ -332,101 +332,35 @@ export default function DashboardScreen() {
                     </Text>
                 </View>
 
-                {/* Upcoming Sessions Card with filter toggle */}
-                <View
-                    style={{
-                        backgroundColor: isDark ? '#1E1E1E' : '#F3F4F6',
-                        borderRadius: 12,
-                        padding: 20,
-                        marginBottom: 16
-                    }}
-                >
-                    {/* Header row */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
-                            {t('upcoming_sessions')}
-                        </Text>
-                        {/* Filter toggle */}
-                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
-                            {(['month', 'future', 'past', 'all'] as const).map(filter => {
-                                const labels: Record<string, string> = { month: 'MES', future: 'PRÓX', past: 'PAS', all: 'TODAS' };
-                                const isActive = upcomingFilter === filter;
-                                return (
-                                    <TouchableOpacity
-                                        key={filter}
-                                        onPress={() => setUpcomingFilter(filter)}
-                                        style={{
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 8,
-                                            borderRadius: 6,
-                                            backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                            shadowColor: '#000',
-                                            shadowOffset: { width: 0, height: 1 },
-                                            shadowOpacity: isActive ? 0.1 : 0,
-                                            shadowRadius: 1,
-                                            elevation: isActive ? 1 : 0
-                                        }}
-                                    >
-                                        <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
-                                            {labels[filter]}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
+                {/* Month-over-month earnings KPI — shown first */}
+                {(() => {
+                    const diff = thisMonthEarnings - lastMonthEarnings;
+                    const pct = lastMonthEarnings > 0
+                        ? Math.round((diff / lastMonthEarnings) * 100)
+                        : thisMonthEarnings > 0 ? 100 : 0;
+                    const isUp = pct > 0;
+                    const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
+                    const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
+                    const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
+                    const bgColor = isFlat
+                        ? (isDark ? '#1F1F1F' : '#F3F4F6')
+                        : isUp ? (isDark ? '#14532D' : '#F0FDF4')
+                            : (isDark ? '#450A0A' : '#FEF2F2');
+                    const label = isFlat
+                        ? t('earnings_vs_last_flat')
+                        : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
+                    return (
+                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
                         </View>
-                    </View>
-
-                    {/* Progress bar */}
-                    <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
-                        <View
-                            style={{
-                                height: '100%',
-                                marginBottom: 2,
-                                width: `${Math.max(filteredRatio, 4)}%`,
-                                backgroundColor: '#2563EB',
-                                borderRadius: 4
-                            }}
-                        />
-                    </View>
-
-                    {/* Stats: number + labels stacked */}
-                    <View style={{ flexDirection: 'column' }}>
-                        <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
-                            {filteredTotal}
-                        </Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                            {filteredConfirmed > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('confirmed')} ({filteredConfirmed})
-                                    </Text>
-                                </View>
-                            )}
-                            {filteredPending > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('pending')} ({filteredPending})
-                                    </Text>
-                                </View>
-                            )}
-                            {filteredCancelled > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('cancelled_label') || 'Canceladas'} ({filteredCancelled})
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-                </View>
+                    );
+                })()}
 
                 {/* Annual Comparison Chart */}
                 <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
                     <View className="flex-row justify-between items-center mb-6">
-                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison') || 'Annual Comparison'}</Text>
+                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
                         <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
                             <TouchableOpacity
                                 onPress={() => setChartView('sessions')}
@@ -442,7 +376,7 @@ export default function DashboardScreen() {
                                     elevation: chartView === 'sessions' ? 1 : 0
                                 }}
                             >
-                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>SESSIONS</Text>
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_sessions')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => setChartView('finances')}
@@ -458,7 +392,7 @@ export default function DashboardScreen() {
                                     elevation: chartView === 'finances' ? 1 : 0
                                 }}
                             >
-                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>FINANCES</Text>
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_finances')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -576,6 +510,102 @@ export default function DashboardScreen() {
                     </ScrollView>
                 </View>
 
+                {/* Upcoming Sessions Card with filter toggle */}
+                <View
+                    style={{
+                        backgroundColor: isDark ? '#1E1E1E' : '#F3F4F6',
+                        borderRadius: 12,
+                        padding: 20,
+                        marginBottom: 16
+                    }}
+                >
+                    {/* Header row */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
+                            {t('upcoming_sessions')}
+                        </Text>
+                        {/* Filter toggle */}
+                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
+                            {(['month', 'future', 'past', 'all'] as const).map(filter => {
+                                const labels: Record<string, string> = {
+                                    month: t('filter_month'),
+                                    future: t('filter_upcoming'),
+                                    past: t('filter_past'),
+                                    all: t('dash_filter_all')
+                                };
+                                const isActive = upcomingFilter === filter;
+                                return (
+                                    <TouchableOpacity
+                                        key={filter}
+                                        onPress={() => setUpcomingFilter(filter)}
+                                        style={{
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 8,
+                                            borderRadius: 6,
+                                            backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                            shadowColor: '#000',
+                                            shadowOffset: { width: 0, height: 1 },
+                                            shadowOpacity: isActive ? 0.1 : 0,
+                                            shadowRadius: 1,
+                                            elevation: isActive ? 1 : 0
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
+                                            {labels[filter]}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+
+                    {/* Progress bar */}
+                    <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+                        <View
+                            style={{
+                                height: '100%',
+                                marginBottom: 2,
+                                width: `${Math.max(filteredRatio, 4)}%`,
+                                backgroundColor: '#2563EB',
+                                borderRadius: 4
+                            }}
+                        />
+                    </View>
+
+                    {/* Stats: number + labels stacked */}
+                    <View style={{ flexDirection: 'column' }}>
+                        <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
+                            {filteredTotal}
+                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                            {filteredConfirmed > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('confirmed')} ({filteredConfirmed})
+                                    </Text>
+                                </View>
+                            )}
+                            {filteredPending > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('pending')} ({filteredPending})
+                                    </Text>
+                                </View>
+                            )}
+                            {filteredCancelled > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                        {t('cancelled_label')} ({filteredCancelled})
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
                 {/* KPI row: avg price/session + avg sessions/month */}
                 {(() => {
                     const now = new Date();
@@ -598,7 +628,7 @@ export default function DashboardScreen() {
                         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
                             <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                    {t('avg_price_session') || 'Precio medio/sesión'}
+                                    {t('avg_price_session')}
                                 </Text>
                                 <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
                                     {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
@@ -606,37 +636,12 @@ export default function DashboardScreen() {
                             </View>
                             <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                    {t('avg_sessions_month') || 'Media sesiones/mes'}
+                                    {t('avg_sessions_month')}
                                 </Text>
                                 <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
                                     {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
                                 </Text>
                             </View>
-                        </View>
-                    );
-                })()}
-
-                {/* Month-over-month earnings KPI */}
-                {(() => {
-                    const diff = thisMonthEarnings - lastMonthEarnings;
-                    const pct = lastMonthEarnings > 0
-                        ? Math.round((diff / lastMonthEarnings) * 100)
-                        : thisMonthEarnings > 0 ? 100 : 0;
-                    const isUp = pct > 0;
-                    const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
-                    const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
-                    const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
-                    const bgColor = isFlat
-                        ? (isDark ? '#1F1F1F' : '#F3F4F6')
-                        : isUp ? (isDark ? '#14532D' : '#F0FDF4')
-                            : (isDark ? '#450A0A' : '#FEF2F2');
-                    const label = isFlat
-                        ? 'Sin datos del mes anterior'
-                        : `Estás un ${isUp ? '+' : ''}${pct}% con respecto al mes pasado`;
-                    return (
-                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
                         </View>
                     );
                 })()}
@@ -660,14 +665,14 @@ export default function DashboardScreen() {
                     {/* Most visited */}
                     <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
                         <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                            {t('top_venue_visits') || 'Local + Visitado'}
+                            {t('top_venue_visits')}
                         </Text>
                         <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 2 }} numberOfLines={1}>
                             {topVisitedVenue.name}
                         </Text>
                         {topVisitedVenue.count > 0 && (
                             <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#F9A8D4' : '#DB2777' }}>
-                                {topVisitedVenue.count} {topVisitedVenue.count === 1 ? (t('session_singular') || 'sesión') : (t('sessions_plural') || 'sesiones')}
+                                {topVisitedVenue.count} {topVisitedVenue.count === 1 ? t('session_singular') : t('sessions_plural')}
                             </Text>
                         )}
                     </View>
@@ -687,7 +692,7 @@ export default function DashboardScreen() {
                             {/* Best sound quality */}
                             <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                                    {t('best_sound_venue') || 'Mejor Sonido'}
+                                    {t('best_sound_venue')}
                                 </Text>
                                 <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
                                     {bestSound?.name || '—'}
@@ -701,7 +706,7 @@ export default function DashboardScreen() {
                             {/* Best experience */}
                             <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                                    {t('best_exp_venue') || 'Mejor Experiencia'}
+                                    {t('best_exp_venue')}
                                 </Text>
                                 <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
                                     {bestExp?.name || '—'}
