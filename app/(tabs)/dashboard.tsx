@@ -312,7 +312,7 @@ export default function DashboardScreen() {
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}>
 
                 {/* WELCOME SECTION */}
-                <View className="mb-6 mt-6 px-2">
+                <View className="mb-8 mt-6 px-2">
                     <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
                         {(() => {
                             const email = user?.email || '';
