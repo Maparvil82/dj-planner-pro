@@ -227,22 +227,33 @@ export default function DashboardScreen() {
     const upcomingRatio = Math.min(Math.round((upcomingCount > 0 ? (confirmedUpcoming / upcomingCount) : 0) * 100), 100);
 
     const filteredUpcoming = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
         const now = new Date();
-        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        const y = now.getFullYear();
+        const m = now.getMonth(); // 0-indexed
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const today = `${y}-${pad(m + 1)}-${pad(now.getDate())}`;
+        const startOfCurrentMonth = `${y}-${pad(m + 1)}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const endOfCurrentMonth = `${y}-${pad(m + 1)}-${pad(lastDay)}`;
+
+        // Helper: extract YYYY-MM-DD from a session date (handles ISO timestamp too)
+        const getDateStr = (d: string) => d ? d.split('T')[0] : '';
 
         if (upcomingFilter === 'month') {
-            // All sessions of current month (past and future)
-            return sessions.filter(s => s.date >= startOfCurrentMonth && s.date <= endOfCurrentMonth);
+            return sessions.filter(s => {
+                const d = getDateStr(s.date);
+                return d >= startOfCurrentMonth && d <= endOfCurrentMonth;
+            });
         }
         if (upcomingFilter === 'future') {
             return upcomingSessions;
         }
         if (upcomingFilter === 'past') {
-            // Sessions before today (current year)
-            const startOfYear = `${now.getFullYear()}-01-01`;
-            return sessions.filter(s => s.date >= startOfYear && s.date < today);
+            const startOfYear = `${y}-01-01`;
+            return sessions.filter(s => {
+                const d = getDateStr(s.date);
+                return d >= startOfYear && d < today;
+            });
         }
         // 'all'
         return sessions;
@@ -625,6 +636,46 @@ export default function DashboardScreen() {
                         </View>
                     </ScrollView>
                 </View>
+
+                {/* KPI row: avg price/session + avg sessions/month */}
+                {(() => {
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    const monthsElapsed = now.getMonth() + 1; // 1-12
+
+                    // Use yearly sessions data (non-cancelled, current year)
+                    const yearlySessions = sessions.filter(s => {
+                        if (!s.date) return false;
+                        return parseInt(s.date.split('T')[0].split('-')[0], 10) === currentYear
+                            && s.status !== 'cancelled';
+                    });
+                    const yearlyEarnings = yearlySessions.reduce((sum, s) => sum + calculateSessionEarnings(s), 0);
+                    const paidSessions = yearlySessions.filter(s => calculateSessionEarnings(s) > 0);
+
+                    const avgPrice = paidSessions.length > 0 ? Math.round(yearlyEarnings / paidSessions.length) : 0;
+                    const avgSessionsPerMonth = Math.round((yearlySessions.length / monthsElapsed) * 10) / 10;
+
+                    return (
+                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                                    {t('avg_price_session') || 'Precio medio/sesión'}
+                                </Text>
+                                <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                    {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
+                                </Text>
+                            </View>
+                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                                    {t('avg_sessions_month') || 'Media sesiones/mes'}
+                                </Text>
+                                <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                    {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
+                                </Text>
+                            </View>
+                        </View>
+                    );
+                })()}
 
                 {/* Month-over-month earnings KPI */}
                 {(() => {
