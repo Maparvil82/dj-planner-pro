@@ -139,6 +139,7 @@
     "avg_price_session": "単価平均",
     "avg_sessions_month": "月平均セッション数",
     "annual_comparison": "年間比較",
+    "venue_suggestion": "{{name}}でしばらくプレイしていませんね。連絡してみませんか？",
     "chart_sessions": "セッション数",
     "chart_finances": "収支",
     "sound_quality": "音質",

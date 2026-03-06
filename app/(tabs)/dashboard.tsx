@@ -266,6 +266,41 @@ export default function DashboardScreen() {
     const filteredTotal = filteredUpcoming.length;
     const filteredRatio = filteredTotal > 0 ? Math.min(Math.round((filteredConfirmed / filteredTotal) * 100), 100) : 0;
 
+    const dormantVenue = useMemo(() => {
+        if (sessions.length === 0) return null;
+
+        const venueLastVisit: Record<string, Date> = {};
+        const venueSessionCount: Record<string, number> = {};
+
+        sessions.forEach(s => {
+            if (!s.venue || s.status === 'cancelled' || !s.date) return;
+            // Use same date parsing as monthlyChartData for consistency
+            const dateStr = s.date.split('T')[0];
+            const d = parseISO(dateStr);
+            if (!venueLastVisit[s.venue] || d > venueLastVisit[s.venue]) {
+                venueLastVisit[s.venue] = d;
+            }
+            venueSessionCount[s.venue] = (venueSessionCount[s.venue] || 0) + 1;
+        });
+
+        // "Dormant" threshold: let's try 45 days instead of 60 to be more reactive
+        const dormantThreshold = addDays(new Date(), -45);
+
+        const candidates = Object.keys(venueLastVisit).filter(v => {
+            const lastVisit = venueLastVisit[v];
+            const hasUpcoming = upcomingSessions.some(us => us.venue === v);
+
+            // Only suggest if the last visit was long ago AND there's nothing scheduled
+            return lastVisit < dormantThreshold && !hasUpcoming;
+        });
+
+        if (candidates.length === 0) return null;
+
+        // Sort by session count (relevance) but maybe pick from top 3 to vary it
+        candidates.sort((a, b) => venueSessionCount[b] - venueSessionCount[a]);
+        return candidates[0];
+    }, [sessions, upcomingSessions]);
+
     const isLoading = isLoadingAll || isLoadingUpcoming || isLoadingExpenses;
 
     if (isLoading) {
@@ -350,9 +385,18 @@ export default function DashboardScreen() {
                         ? t('earnings_vs_last_flat')
                         : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
                     return (
-                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
+                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: dormantVenue && !isUp && !isFlat ? 8 : 0 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
+                                <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
+                            </View>
+                            {dormantVenue && pct < 0 && (
+                                <View style={{ marginTop: 4, paddingTop: 6, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563' }}>
+                                        {t('venue_suggestion', { name: dormantVenue })}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     );
                 })()}

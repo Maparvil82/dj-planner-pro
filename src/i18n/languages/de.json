@@ -139,6 +139,7 @@
     "avg_price_session": "Durchschnittspreis/Sitzung",
     "avg_sessions_month": "Sitzungen/Monat Durchschn.",
     "annual_comparison": "Jahresvergleich",
+    "venue_suggestion": "Es ist schon eine Weile her, seit du im {{name}} aufgelegt hast. Sollen wir mal anklopfen?",
     "chart_sessions": "SITZUNGEN",
     "chart_finances": "FINANZEN",
     "sound_quality": "Tonqualität",

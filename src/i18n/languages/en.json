@@ -182,6 +182,7 @@
     "avg_price_session": "Avg price/session",
     "avg_sessions_month": "Avg sessions/month",
     "annual_comparison": "Annual Comparison",
+    "venue_suggestion": "It's been a while since you played at {{name}}. Should we give them a shout?",
     "chart_sessions": "SESSIONS",
     "chart_finances": "FINANCES",
     "sound_quality": "Sound Quality",

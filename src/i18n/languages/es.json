@@ -182,6 +182,7 @@
     "avg_price_session": "Precio medio/sesión",
     "avg_sessions_month": "Media sesiones/mes",
     "annual_comparison": "Comparativa Anual",
+    "venue_suggestion": "Hace tiempo que no pinchas en {{name}}. ¿Le damos un toque?",
     "chart_sessions": "SESIONES",
     "chart_finances": "FINANZAS",
     "sound_quality": "Calidad de Sonido",

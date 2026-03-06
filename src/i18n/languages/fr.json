@@ -139,6 +139,7 @@
     "avg_price_session": "Prix moyen/session",
     "avg_sessions_month": "Moyenne sessions/mois",
     "annual_comparison": "Comparaison Annuelle",
+    "venue_suggestion": "Cela fait un moment que tu n'as pas mixé au {{name}}. On leur fait un signe ?",
     "chart_sessions": "SESSIONS",
     "chart_finances": "FINANCES",
     "sound_quality": "Qualité Sonore",
