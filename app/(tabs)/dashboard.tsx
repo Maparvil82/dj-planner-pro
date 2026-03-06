@@ -9,6 +9,7 @@ import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Avatar } from '../../src/components/ui/Avatar';
+import { Calendar, Plus } from 'lucide-react-native';
 import { format, parseISO, isThisMonth, isWithinInterval, startOfMonth, subMonths, endOfMonth, addDays } from 'date-fns';
 import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 
@@ -291,14 +292,45 @@ export default function DashboardScreen() {
                             Dashboard
                         </Text>
                     </View>
-                    <View className="rounded-xl overflow-hidden">
-                        <Avatar url={profile?.avatar_url} size="sm" name={fullName} />
+                    <View className="flex-row items-center gap-3 ml-auto">
+                        <TouchableOpacity
+                            onPress={() => router.push('/history')}
+                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                        >
+                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => router.push('/add-session')}
+                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                        >
+                            <Plus size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}>
 
+                {/* WELCOME SECTION */}
+                <View className="mb-6 mt-6 px-2">
+                    <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                        {(() => {
+                            const email = user?.email || '';
+                            const prefix = email.split('@')[0];
+                            const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+                            return `${t('hello') || 'Hola'}, ${displayName} 👋`;
+                        })()}
+                    </Text>
+                    <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                        {(() => {
+                            let dateStr = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+                            dateStr = dateStr.replace(',', '');
+                            return dateStr.split(' ').map(word =>
+                                word.toLowerCase() === 'de' ? 'de' : word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ');
+                        })()}
+                    </Text>
+                </View>
 
                 {/* Upcoming Sessions Card with filter toggle */}
                 <View
