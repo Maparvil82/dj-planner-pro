@@ -138,6 +138,7 @@
     "best_exp_venue": "Meilleure Expérience",
     "avg_price_session": "Prix moyen/session",
     "avg_sessions_month": "Moyenne sessions/mois",
+    "top_collaborator": "Top Collaborateur DJ",
     "annual_comparison": "Comparaison Annuelle",
     "venue_suggestion": "Cela fait un moment que tu n'as pas mixé au {{name}}. On leur fait un signe ?",
     "recovery_suggestion": "Mince, une session a été annulée ce mois-ci. On essaie de combler le vide en contactant le {{name}} ?",

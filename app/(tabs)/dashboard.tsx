@@ -57,7 +57,7 @@ export default function DashboardScreen() {
     }, [i18n.language]);
 
     // Financial calculations
-    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue, topVisitedVenue } = useMemo(() => {
+    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue, topVisitedVenue, topCollaborator } = useMemo(() => {
         let thisMonth = 0;
         let lastMonth = 0;
         let sessionsThisMonth = 0;
@@ -70,6 +70,7 @@ export default function DashboardScreen() {
 
         let currentYearVenues: Record<string, number> = {};
         let currentYearVenueCounts: Record<string, number> = {};
+        let collaboratorCounts: Record<string, number> = {};
         const currentYear = now.getFullYear();
 
         sessions.forEach(session => {
@@ -80,6 +81,15 @@ export default function DashboardScreen() {
                 if (sessionDate.getFullYear() === currentYear && session.venue) {
                     currentYearVenues[session.venue] = (currentYearVenues[session.venue] || 0) + earnings;
                     currentYearVenueCounts[session.venue] = (currentYearVenueCounts[session.venue] || 0) + 1;
+                }
+
+                // Top Collaborator Logic: Current year only, non-cancelled
+                if (sessionDate.getFullYear() === currentYear && session.status !== 'cancelled' && session.is_collective && session.djs) {
+                    session.djs.forEach((djName: string) => {
+                        if (djName) {
+                            collaboratorCounts[djName] = (collaboratorCounts[djName] || 0) + 1;
+                        }
+                    });
                 }
 
                 if (isThisMonth(sessionDate)) {
@@ -112,13 +122,25 @@ export default function DashboardScreen() {
             }
         });
 
+        // Find top collaborator
+        let topCollabName = '—';
+        let maxCollabCount = 0;
+        Object.entries(collaboratorCounts).forEach(([name, count]) => {
+            if (count > maxCollabCount) {
+                maxCollabCount = count;
+                // Capitalize first letter of each word
+                topCollabName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            }
+        });
+
         return {
             thisMonthEarnings: thisMonth,
             lastMonthEarnings: lastMonth,
             totalSessionsThisMonth: sessionsThisMonth,
             lastMonthSessions: prevMonthSessions,
             topVenue: { name: topVenueName, amount: topVenueEarnings },
-            topVisitedVenue: { name: topVisitedName, count: topVisitedCount }
+            topVisitedVenue: { name: topVisitedName, count: topVisitedCount },
+            topCollaborator: topCollabName
         };
     }, [sessions]);
 
@@ -733,24 +755,35 @@ export default function DashboardScreen() {
                     const avgSessionsPerMonth = Math.round((yearlySessions.length / monthsElapsed) * 10) / 10;
 
                     return (
-                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                        <>
+                            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+                                <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                                        {t('avg_price_session')}
+                                    </Text>
+                                    <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                        {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
+                                    </Text>
+                                </View>
+                                <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                                        {t('avg_sessions_month')}
+                                    </Text>
+                                    <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                        {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16, marginBottom: 12 }}>
                                 <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                    {t('avg_price_session')}
+                                    {t('top_collaborator')}
                                 </Text>
-                                <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                    {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
+                                <Text numberOfLines={1} style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                    {topCollaborator !== '—' ? topCollaborator : '—'}
                                 </Text>
                             </View>
-                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                    {t('avg_sessions_month')}
-                                </Text>
-                                <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                    {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
-                                </Text>
-                            </View>
-                        </View>
+                        </>
                     );
                 })()}
 

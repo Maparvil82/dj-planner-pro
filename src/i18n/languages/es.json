@@ -181,6 +181,7 @@
     "best_exp_venue": "Mejor Experiencia",
     "avg_price_session": "Precio medio/sesión",
     "avg_sessions_month": "Media sesiones/mes",
+    "top_collaborator": "Top Colaborador DJ",
     "annual_comparison": "Comparativa Anual",
     "venue_suggestion": "Hace tiempo que no pinchas en {{name}}. ¿Le damos un toque?",
     "recovery_suggestion": "Vaya, se ha cancelado una sesión este mes. ¿Intentamos cubrir el hueco contactando con {{name}}?",
