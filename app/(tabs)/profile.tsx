@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { Stack } from 'expo-router';
@@ -7,7 +7,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useState } from 'react';
-import { profileService } from '../../src/services/profile';
+import { profileService, UserProfile } from '../../src/services/profile';
 import { LogOut } from 'lucide-react-native';
 import { cn } from '../../src/theme/tw';
 
@@ -15,6 +15,8 @@ export default function SettingsScreen() {
     const { t } = useTranslation();
     const { session, profile, signOut, setProfile } = useAuthStore();
     const [uploading, setUploading] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [artistName, setArtistName] = useState(profile?.artist_name || '');
 
     const handlePickAvatar = async () => {
         // Request permissions
@@ -47,15 +49,32 @@ export default function SettingsScreen() {
 
             if (newAvatarUrl) {
                 setProfile({
+                    ...profile,
                     id: session.user.id,
                     avatar_url: newAvatarUrl,
                     updated_at: new Date().toISOString()
-                });
+                } as UserProfile);
                 Alert.alert(t('settings_title'), t('avatar_upload_success'));
             } else {
                 Alert.alert("Error", "There was an issue uploading the avatar.");
             }
             setUploading(false);
+        }
+    };
+
+    const handleUpdateProfile = async () => {
+        if (!session?.user?.id) return;
+
+        const updated = await profileService.updateProfile(session.user.id, {
+            artist_name: artistName.trim()
+        });
+
+        if (updated) {
+            setProfile(updated);
+            setEditing(false);
+            Alert.alert(t('success'), t('avatar_upload_success')); // Reusing success msg for now or add new
+        } else {
+            Alert.alert(t('error'), t('error_saving_session'));
         }
     };
 
@@ -97,25 +116,68 @@ export default function SettingsScreen() {
                         )}
                     </View>
 
-                    <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                        {session?.user?.email?.split('@')[0]}
-                    </Text>
-                    <Text className="text-base text-gray-500 dark:text-gray-400 mb-8">
-                        {session?.user?.email}
-                    </Text>
+                    {editing ? (
+                        <View className="w-full mb-4">
+                            <TextInput
+                                value={artistName}
+                                onChangeText={setArtistName}
+                                placeholder={t('artist_name_placeholder')}
+                                placeholderTextColor="#9CA3AF"
+                                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-center text-lg font-bold text-gray-900 dark:text-white"
+                                autoFocus
+                            />
+                        </View>
+                    ) : (
+                        <>
+                            <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                                {profile?.artist_name || session?.user?.email?.split('@')[0]}
+                            </Text>
+                            <Text className="text-base text-gray-500 dark:text-gray-400 mb-8">
+                                {session?.user?.email}
+                            </Text>
+                        </>
+                    )}
 
-                    <TouchableOpacity
-                        className={cn(
-                            "bg-blue-600 px-8 py-3.5 rounded-full flex-row items-center",
-                            uploading && "opacity-50"
+                    <View className="flex-row gap-3">
+                        <TouchableOpacity
+                            className={cn(
+                                "bg-blue-600 px-8 py-3.5 rounded-full flex-row items-center",
+                                uploading && "opacity-50"
+                            )}
+                            onPress={editing ? handleUpdateProfile : () => setEditing(true)}
+                            disabled={uploading}
+                        >
+                            <Text className="text-white font-bold text-lg">
+                                {editing ? t('save_changes') : t('edit_profile')}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {editing && (
+                            <TouchableOpacity
+                                className="bg-gray-200 dark:bg-gray-800 px-8 py-3.5 rounded-full flex-row items-center"
+                                onPress={() => {
+                                    setEditing(false);
+                                    setArtistName(profile?.artist_name || '');
+                                }}
+                            >
+                                <Text className="text-gray-700 dark:text-gray-300 font-bold text-lg">
+                                    {t('cancel')}
+                                </Text>
+                            </TouchableOpacity>
                         )}
-                        onPress={handlePickAvatar}
-                        disabled={uploading}
-                    >
-                        <Text className="text-white font-bold text-lg">
-                            {t('change_avatar')}
-                        </Text>
-                    </TouchableOpacity>
+                    </View>
+
+                    {!editing && (
+                        <TouchableOpacity
+                            className="mt-4"
+                            onPress={handlePickAvatar}
+                            disabled={uploading}
+                        >
+                            <Text className="text-blue-500 font-medium">
+                                {t('change_avatar')}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Global Actions */}

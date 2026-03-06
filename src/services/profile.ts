@@ -5,6 +5,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 export interface UserProfile {
     id: string;
     avatar_url: string | null;
+    artist_name: string | null;
     updated_at: string;
 }
 
@@ -18,6 +19,20 @@ export const profileService = {
 
         if (error && error.code !== 'PGRST116') {
             console.error('Error fetching profile:', error);
+            return null;
+        }
+        return data;
+    },
+
+    async updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
+        const { data, error } = await supabase
+            .from('users_profile')
+            .upsert({ id: userId, ...updates, updated_at: new Date().toISOString() })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error updating profile:', error);
             return null;
         }
         return data;

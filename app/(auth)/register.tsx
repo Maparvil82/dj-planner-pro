@@ -4,6 +4,7 @@ import { useTranslation } from '../../src/i18n/useTranslation';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { supabase } from '../../src/lib/supabase';
+import { profileService } from '../../src/services/profile';
 import { cn } from '../../src/theme/tw';
 
 export default function RegisterScreen() {
@@ -12,11 +13,12 @@ export default function RegisterScreen() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [artistName, setArtistName] = useState('');
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-    const canSubmit = isValidEmail(email) && password.length >= 8 && !loading;
+    const canSubmit = isValidEmail(email) && password.length >= 8 && artistName.trim().length > 0 && !loading;
 
     const handleRegister = async () => {
         if (!canSubmit) return;
@@ -24,14 +26,23 @@ export default function RegisterScreen() {
         setLoading(true);
         setErrorMsg('');
 
-        const { error } = await supabase.auth.signUp({
+        const { data: authData, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    artist_name: artistName.trim()
+                }
+            }
         });
 
         if (error) {
             setErrorMsg(error.message);
-        } else {
+        } else if (authData.user) {
+            // Manually create/update profile to ensure consistency
+            await profileService.updateProfile(authData.user.id, {
+                artist_name: artistName.trim()
+            });
             router.replace('/(tabs)/home');
         }
 
@@ -60,6 +71,20 @@ export default function RegisterScreen() {
                 )}
 
                 <View className="space-y-5">
+                    <View>
+                        <TextInput
+                            placeholder={t('artist_name')}
+                            placeholderTextColor="#9CA3AF"
+                            autoCapitalize="words"
+                            onChangeText={(val) => {
+                                setArtistName(val);
+                                setErrorMsg('');
+                            }}
+                            value={artistName}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-500 dark:text-white rounded-2xl px-5 py-4 text-base"
+                        />
+                    </View>
+
                     <View>
                         <TextInput
                             placeholder={t('email_placeholder')}

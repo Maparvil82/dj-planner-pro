@@ -404,6 +404,9 @@ export default function DashboardScreen() {
                 <View className="mb-8 mt-6 px-2">
                     <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
                         {(() => {
+                            if (profile?.artist_name) {
+                                return `${t('hello')} ${profile.artist_name} 👋`;
+                            }
                             const email = user?.email || '';
                             const prefix = email.split('@')[0];
                             const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
