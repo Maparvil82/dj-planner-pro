@@ -461,7 +461,14 @@ export default function DashboardScreen() {
                 {/* Annual Comparison Chart */}
                 <View className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-4">
                     <View className="flex-row justify-between items-center mb-6">
-                        <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
+                        <TouchableOpacity
+                            onPress={() => router.push('/history')}
+                            activeOpacity={0.7}
+                            className="flex-row items-center space-x-1"
+                        >
+                            <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
+                            <ChevronRight size={12} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ marginLeft: 4 }} />
+                        </TouchableOpacity>
                         <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
                             <TouchableOpacity
                                 onPress={() => setChartView('sessions')}
