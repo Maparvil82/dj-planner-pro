@@ -22,20 +22,6 @@ export default function SettingsScreen() {
     const [uploading, setUploading] = useState(false);
     const [editing, setEditing] = useState(false);
     const [artistName, setArtistName] = useState(profile?.artist_name || '');
-    const [aiEnabled, setAiEnabled] = useState(true);
-
-    useEffect(() => {
-        const loadAiPref = async () => {
-            const val = await AsyncStorage.getItem('@ai_enabled');
-            if (val !== null) setAiEnabled(val === 'true');
-        };
-        loadAiPref();
-    }, []);
-
-    const toggleAi = async (val: boolean) => {
-        setAiEnabled(val);
-        await AsyncStorage.setItem('@ai_enabled', val ? 'true' : 'false');
-    };
 
     const handlePickAvatar = async () => {
         // Request permissions
@@ -244,23 +230,19 @@ export default function SettingsScreen() {
                         label={t('appearance')}
                         value={t(`theme_${theme}`)}
                         onPress={() => {
-                            const themes: any = ['light', 'dark', 'system'];
-                            const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
-                            setTheme(themes[nextIndex]);
+                            Alert.alert(
+                                t('appearance'),
+                                t('appearance'),
+                                [
+                                    { text: t('theme_light'), onPress: () => setTheme('light') },
+                                    { text: t('theme_dark'), onPress: () => setTheme('dark') },
+                                    { text: t('theme_system'), onPress: () => setTheme('system') },
+                                    { text: t('cancel'), style: 'cancel' }
+                                ]
+                            );
                         }}
-                    />
-                    <SettingItem
-                        icon={Cpu}
-                        label={t('ai_recognition')}
                         last
-                    >
-                        <Switch
-                            value={aiEnabled}
-                            onValueChange={toggleAi}
-                            trackColor={{ false: '#D1D5DB', true: '#3B82F6' }}
-                            thumbColor="#FFFFFF"
-                        />
-                    </SettingItem>
+                    />
                 </View>
 
                 {/* SUPPORT */}
