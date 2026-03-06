@@ -57,14 +57,23 @@ export default function DashboardScreen() {
     }, [i18n.language]);
 
     // Financial calculations
-    const { thisMonthEarnings, lastMonthEarnings, totalSessionsThisMonth, lastMonthSessions, topVenue, topVisitedVenue, topCollaborator } = useMemo(() => {
+    const {
+        thisMonthEarnings,
+        lastMonthEarnings,
+        totalSessionsThisMonth,
+        lastMonthSessions,
+        topVenues,
+        topVisitedVenues,
+        topCollaborators,
+        bestSoundVenues,
+        bestExpVenues
+    } = useMemo(() => {
         let thisMonth = 0;
         let lastMonth = 0;
         let sessionsThisMonth = 0;
         let prevMonthSessions = 0;
 
         const now = new Date();
-        const startOfCurrentMonth = startOfMonth(now);
         const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
         const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
 
@@ -102,47 +111,50 @@ export default function DashboardScreen() {
             }
         });
 
-        // Find top earning venue
-        let topVenueName = '—';
-        let topVenueEarnings = 0;
-        Object.entries(currentYearVenues).forEach(([venue, amount]) => {
-            if (amount > topVenueEarnings) {
-                topVenueEarnings = amount;
-                topVenueName = venue;
-            }
-        });
+        // Top 3 Rentable Venues
+        const topVenues = Object.entries(currentYearVenues)
+            .map(([name, amount]) => ({ name, amount }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 3);
 
-        // Find most visited venue (by session count)
-        let topVisitedName = '—';
-        let topVisitedCount = 0;
-        Object.entries(currentYearVenueCounts).forEach(([venue, count]) => {
-            if (count > topVisitedCount) {
-                topVisitedCount = count;
-                topVisitedName = venue;
-            }
-        });
+        // Top 3 Visited Venues
+        const topVisitedVenues = Object.entries(currentYearVenueCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3);
 
-        // Find top collaborator
-        let topCollabName = '—';
-        let maxCollabCount = 0;
-        Object.entries(collaboratorCounts).forEach(([name, count]) => {
-            if (count > maxCollabCount) {
-                maxCollabCount = count;
-                // Capitalize first letter of each word
-                topCollabName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-            }
-        });
+        // Top 3 Collaborators
+        const topCollaborators = Object.entries(collaboratorCounts)
+            .map(([name, count]) => ({
+                name: name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '),
+                count
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3);
+
+        // Best Ratings (Sound & Experience)
+        const bestSoundVenues = [...venues]
+            .filter(v => (v.sound_quality || 0) > 0)
+            .sort((a, b) => (b.sound_quality || 0) - (a.sound_quality || 0))
+            .slice(0, 3);
+
+        const bestExpVenues = [...venues]
+            .filter(v => (v.experience_rating || 0) > 0)
+            .sort((a, b) => (b.experience_rating || 0) - (a.experience_rating || 0))
+            .slice(0, 3);
 
         return {
             thisMonthEarnings: thisMonth,
             lastMonthEarnings: lastMonth,
             totalSessionsThisMonth: sessionsThisMonth,
             lastMonthSessions: prevMonthSessions,
-            topVenue: { name: topVenueName, amount: topVenueEarnings },
-            topVisitedVenue: { name: topVisitedName, count: topVisitedCount },
-            topCollaborator: topCollabName
+            topVenues,
+            topVisitedVenues,
+            topCollaborators,
+            bestSoundVenues,
+            bestExpVenues
         };
-    }, [sessions]);
+    }, [sessions, venues]);
 
     const { thisMonthExpenses, lastMonthExpenses } = useMemo(() => {
         let thisMonthExp = 0;
@@ -776,91 +788,136 @@ export default function DashboardScreen() {
                             </View>
 
                             <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                    {t('top_collaborator')}
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                    {t('top_collaborator')} (TOP 3)
                                 </Text>
-                                <Text numberOfLines={1} style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                    {topCollaborator !== '—' ? topCollaborator : '—'}
-                                </Text>
+                                <View style={{ gap: 10 }}>
+                                    {topCollaborators.length > 0 ? topCollaborators.map((c, i) => (
+                                        <View key={c.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                    <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                                </View>
+                                                <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                    {c.name}
+                                                </Text>
+                                            </View>
+                                            <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                                {c.count} {c.count === 1 ? t('session_singular') : t('sessions_plural')}
+                                            </Text>
+                                        </View>
+                                    )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                                </View>
                             </View>
                         </>
                     );
                 })()}
 
-                {/* Top Venue Cards Row: earnings + visits */}
-                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-                    {/* Most profitable */}
-                    <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                            {t('top_venue_year')}
+                {/* Ranking Lists: Rentable & Visited */}
+                <View style={{ gap: 12, marginBottom: 12 }}>
+                    {/* Most profitable list */}
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                            {t('top_venue_year')} (TOP 3)
                         </Text>
-                        <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 2 }} numberOfLines={1}>
-                            {topVenue.name}
-                        </Text>
-                        {topVenue.amount > 0 && (
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#60A5FA' : '#2563EB' }}>
-                                {topVenue.amount.toLocaleString()}€
-                            </Text>
-                        )}
+                        <View style={{ gap: 10 }}>
+                            {topVenues.length > 0 ? topVenues.map((v, i) => (
+                                <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                        </View>
+                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                            {v.name}
+                                        </Text>
+                                    </View>
+                                    <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                        {v.amount.toLocaleString()}€
+                                    </Text>
+                                </View>
+                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                        </View>
                     </View>
-                    {/* Most visited */}
-                    <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                            {t('top_venue_visits')}
+
+                    {/* Most visited list */}
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                            {t('top_venue_visits')} (TOP 3)
                         </Text>
-                        <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 2 }} numberOfLines={1}>
-                            {topVisitedVenue.name}
-                        </Text>
-                        {topVisitedVenue.count > 0 && (
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#F9A8D4' : '#DB2777' }}>
-                                {topVisitedVenue.count} {topVisitedVenue.count === 1 ? t('session_singular') : t('sessions_plural')}
-                            </Text>
-                        )}
+                        <View style={{ gap: 10 }}>
+                            {topVisitedVenues.length > 0 ? topVisitedVenues.map((v, i) => (
+                                <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                        </View>
+                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                            {v.name}
+                                        </Text>
+                                    </View>
+                                    <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                        {v.count} {v.count === 1 ? t('session_singular') : t('sessions_plural')}
+                                    </Text>
+                                </View>
+                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                        </View>
                     </View>
                 </View>
 
-                {/* Venue Rating Cards Row: best sound + best experience */}
-                {(() => {
-                    const ratedVenues = venues.filter(v => v.sound_quality || v.experience_rating);
-                    const bestSound = ratedVenues.reduce<typeof venues[0] | null>((best, v) =>
-                        (v.sound_quality || 0) > (best?.sound_quality || 0) ? v : best, null);
-                    const bestExp = ratedVenues.reduce<typeof venues[0] | null>((best, v) =>
-                        (v.experience_rating || 0) > (best?.experience_rating || 0) ? v : best, null);
-                    const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
-
-                    return (
-                        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                            {/* Best sound quality */}
-                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                                    {t('best_sound_venue')}
-                                </Text>
-                                <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
-                                    {bestSound?.name || '—'}
-                                </Text>
-                                {bestSound?.sound_quality ? (
-                                    <Text style={{ fontSize: 14, color: '#FACC15', letterSpacing: 1 }}>
-                                        {stars(bestSound.sound_quality)}
-                                    </Text>
-                                ) : null}
-                            </View>
-                            {/* Best experience */}
-                            <View style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                                    {t('best_exp_venue')}
-                                </Text>
-                                <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#FFFFFF' : '#111827', marginBottom: 4 }} numberOfLines={1}>
-                                    {bestExp?.name || '—'}
-                                </Text>
-                                {bestExp?.experience_rating ? (
-                                    <Text style={{ fontSize: 14, color: '#3B82F6', letterSpacing: 1 }}>
-                                        {stars(bestExp.experience_rating)}
-                                    </Text>
-                                ) : null}
-                            </View>
+                {/* Ranking Lists: Sound & Experience */}
+                <View style={{ gap: 12, marginBottom: 16 }}>
+                    {/* Best sound quality list */}
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                            {t('best_sound_venue')} (TOP 3)
+                        </Text>
+                        <View style={{ gap: 10 }}>
+                            {bestSoundVenues.length > 0 ? bestSoundVenues.map((v, i) => (
+                                <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#FACC15' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                        </View>
+                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                            {v.name}
+                                        </Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        {'★'.repeat(v.sound_quality || 0).split('').map((s, si) => (
+                                            <Text key={si} style={{ fontSize: 12, color: '#FACC15' }}>{s}</Text>
+                                        ))}
+                                    </View>
+                                </View>
+                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
                         </View>
-                    );
-                })()}
+                    </View>
+
+                    {/* Best experience list */}
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 24, padding: 20 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                            {t('best_exp_venue')} (TOP 3)
+                        </Text>
+                        <View style={{ gap: 10 }}>
+                            {bestExpVenues.length > 0 ? bestExpVenues.map((v, i) => (
+                                <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                        </View>
+                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                            {v.name}
+                                        </Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row' }}>
+                                        {'★'.repeat(v.experience_rating || 0).split('').map((s, si) => (
+                                            <Text key={si} style={{ fontSize: 12, color: '#3B82F6' }}>{s}</Text>
+                                        ))}
+                                    </View>
+                                </View>
+                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                        </View>
+                    </View>
+                </View>
 
                 <View className="h-28" />
             </ScrollView>
