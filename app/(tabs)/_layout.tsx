@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
 import { Home, Calendar, MapPin, LayoutDashboard } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -10,14 +10,17 @@ import { Avatar } from '../../src/components/ui/Avatar';
 
 export default function TabLayout() {
     const { t } = useTranslation();
-    const { session, profile } = useAuthStore();
+    const { session, profile, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
-
-    if (!session) {
-        return <Redirect href="/(auth)/login" />;
-    }
-
     const isDark = themeCtx?.activeTheme === 'dark';
+
+    if (!initialized) {
+        return (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#111827' : '#FFFFFF' }}>
+                <ActivityIndicator size="large" color="#2563EB" />
+            </View>
+        );
+    }
 
     return (
         <ExpoTabs
