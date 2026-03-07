@@ -347,5 +347,62 @@ export const sessionService = {
             console.error('Error updating multiple sessions:', error);
             throw new Error(error.message);
         }
+    },
+
+    async uploadSessionPoster(userId: string, imageUri: string): Promise<string | null> {
+        try {
+            const { decode } = await import('base64-arraybuffer');
+            const ImageManipulator = await import('expo-image-manipulator');
+
+            // 1. Compress & format image
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+                imageUri,
+                [{ resize: { width: 1200 } }],
+                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+            );
+
+            if (!manipulatedImage.base64) {
+                throw new Error("Failed to get base64 string from image");
+            }
+
+            const filePath = `${userId}/poster_${Date.now()}.jpg`;
+            const contentType = 'image/jpeg';
+
+            // 2. Upload to storage
+            const { error: uploadError } = await supabase.storage
+                .from('sessions')
+                .upload(filePath, decode(manipulatedImage.base64), {
+                    contentType,
+                    upsert: true,
+                });
+
+            if (uploadError) throw uploadError;
+
+            // 3. Get public URL
+            const { data: publicUrlData } = supabase.storage
+                .from('sessions')
+                .getPublicUrl(filePath);
+
+            return publicUrlData.publicUrl;
+        } catch (error) {
+            console.error('Upload Session Poster Error:', error);
+            return null;
+        }
+    },
+
+    async deleteSessionPoster(imageUrl: string): Promise<void> {
+        try {
+            const parts = imageUrl.split('/public/sessions/');
+            if (parts.length < 2) return;
+
+            const filePath = parts[1];
+            const { error } = await supabase.storage
+                .from('sessions')
+                .remove([filePath]);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Delete Session Poster Error:', error);
+        }
     }
 };

@@ -40,6 +40,8 @@
     "session_added_success": "¡La sesión ha sido registrada con éxito!",
     "missing_fields": "Por favor, completa los campos obligatorios.",
     "error_saving_session": "Hubo un error al guardar la sesión.",
+    "session_poster": "Cartel del evento",
+    "add_poster": "Añadir cartel",
     "error": "Error",
     "success": "Éxito",
     "upcoming_sessions": "Próximas Sesiones",

@@ -1,16 +1,18 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable, Image } from 'react-native';
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Plus, Check } from 'lucide-react-native';
+import { Calendar as LucideCalendar, MapPin, Clock, Users, X, DollarSign, ChevronRight, Repeat, Palette, Plus, Check, Camera } from 'lucide-react-native';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useSessionByIdQuery, useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../../src/hooks/useTagsQuery';
 import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
+import * as ImagePicker from 'expo-image-picker';
+import { sessionService } from '../../src/services/sessions';
 
 setupCalendarLocales();
 
@@ -45,6 +47,8 @@ export default function EditSessionScreen() {
     const [djInput, setDjInput] = useState('');
     const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+    const [posterUrl, setPosterUrl] = useState<string | null>(null);
+    const [isUploadingPoster, setIsUploadingPoster] = useState(false);
 
     // Sync initial data
     useEffect(() => {
@@ -62,6 +66,7 @@ export default function EditSessionScreen() {
             setSelectedColor(initialSession.color || null);
             setIsCollective(initialSession.is_collective || false);
             setSelectedDjs(initialSession.djs || []);
+            setPosterUrl(initialSession.poster_url || null);
         }
     }, [initialSession]);
 
@@ -100,6 +105,43 @@ export default function EditSessionScreen() {
     const weekday = dateObj.toLocaleDateString(currentLanguage, { weekday: 'long' });
     LocaleConfig.defaultLocale = currentLanguage;
 
+    const handlePickPoster = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(t('error'), 'Permission to access media library is required');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [3, 4],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets[0].uri) {
+            setIsUploadingPoster(true);
+            try {
+                // Delete old poster if it exists and changed
+                if (posterUrl && posterUrl !== initialSession?.poster_url) {
+                    await sessionService.deleteSessionPoster(posterUrl);
+                }
+
+                const url = await sessionService.uploadSessionPoster(authSession?.user?.id || '', result.assets[0].uri);
+                if (url) {
+                    setPosterUrl(url);
+                } else {
+                    Alert.alert(t('error'), t('error_uploading'));
+                }
+            } catch (error) {
+                console.error('Error picking poster:', error);
+                Alert.alert(t('error'), t('error_uploading'));
+            } finally {
+                setIsUploadingPoster(false);
+            }
+        }
+    };
+
     const handleSave = async () => {
         if (!title.trim() || !venue.trim()) {
             Alert.alert(t('error'), t('missing_fields'));
@@ -124,7 +166,8 @@ export default function EditSessionScreen() {
             earning_amount: parseFloat(earningAmount) || 0,
             currency: currency,
             color: selectedColor || undefined,
-            status: status
+            status: status,
+            poster_url: posterUrl || undefined
         };
 
         const performUpdate = async (updateAll: boolean) => {
@@ -514,6 +557,52 @@ export default function EditSessionScreen() {
                                 <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
                                 <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
                             </View>
+                        </View>
+
+                        {/* Event Poster Section */}
+                        <View className="mt-4 mb-6">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 ml-1 uppercase tracking-wide">
+                                {t('session_poster') || 'Cartel'}
+                            </Text>
+
+                            {posterUrl ? (
+                                <View className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                                    <Image
+                                        source={{ uri: posterUrl }}
+                                        className="w-full h-full"
+                                        resizeMode="cover"
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            if (posterUrl !== initialSession?.poster_url) {
+                                                sessionService.deleteSessionPoster(posterUrl);
+                                            }
+                                            setPosterUrl(null);
+                                        }}
+                                        className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full items-center justify-center backdrop-blur-md"
+                                    >
+                                        <X size={20} color="white" />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={handlePickPoster}
+                                    disabled={isUploadingPoster}
+                                    className="w-full aspect-[3/4] bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl items-center justify-center p-6"
+                                >
+                                    {isUploadingPoster ? (
+                                        <ActivityIndicator color={isDark ? '#60A5FA' : '#3B82F6'} />
+                                    ) : (
+                                        <>
+                                            <View className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full items-center justify-center mb-4 shadow-sm">
+                                                <Camera size={28} color={isDark ? '#D1D5DB' : '#4B5563'} strokeWidth={1.5} />
+                                            </View>
+                                            <Text className="text-gray-900 dark:text-white font-bold text-lg mb-1">{t('add_poster')}</Text>
+                                            <Text className="text-gray-500 dark:text-gray-400 text-sm text-center">Formatos JPG o PNG (3:4 recomendado)</Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                 </ScrollView>

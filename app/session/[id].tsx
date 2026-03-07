@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share, Image } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSessionByIdQuery, useDeleteSessionMutation, useUpdateSessionColorMutation } from '../../src/hooks/useSessionsQuery';
 import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X, Pencil, ArrowRight } from 'lucide-react-native';
@@ -161,12 +161,12 @@ export default function SessionDetailScreen() {
                         </Text>
                         {session.status && (
                             <View className={`px-3 py-1 rounded-full ${session.status === 'confirmed' ? 'bg-blue-100 dark:bg-blue-900/40' :
-                                    session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
-                                        'bg-red-100 dark:bg-red-900/40'
+                                session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
+                                    'bg-red-100 dark:bg-red-900/40'
                                 }`}>
                                 <Text className={`text-xs font-bold ${session.status === 'confirmed' ? 'text-blue-700 dark:text-blue-400' :
-                                        session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
-                                            'text-red-700 dark:text-red-400'
+                                    session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
+                                        'text-red-700 dark:text-red-400'
                                     }`}>
                                     {t(`status_${session.status}`) || session.status.toUpperCase()}
                                 </Text>
@@ -177,6 +177,17 @@ export default function SessionDetailScreen() {
                         {session.title}
                     </Text>
                 </View>
+
+                {/* Poster Display */}
+                {session.poster_url && (
+                    <View className="mb-6 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <Image
+                            source={{ uri: session.poster_url }}
+                            className="w-full aspect-[3/4]"
+                            resizeMode="cover"
+                        />
+                    </View>
+                )}
 
                 {/* Earnings Section (Matching Venue Style) */}
                 <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6">

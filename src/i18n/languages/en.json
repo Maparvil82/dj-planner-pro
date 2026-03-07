@@ -40,6 +40,8 @@
     "session_added_success": "Session registered successfully!",
     "missing_fields": "Please complete required fields.",
     "error_saving_session": "There was an error saving the session.",
+    "session_poster": "Event Poster",
+    "add_poster": "Add Poster",
     "error": "Error",
     "success": "Success",
     "upcoming_sessions": "Upcoming Sessions",
