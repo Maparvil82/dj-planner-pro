@@ -120,5 +120,22 @@ export const venueService = {
             console.error('Error deleting venue:', error);
             throw new Error(error.message);
         }
+    },
+    async deleteVenueImage(imageUrl: string): Promise<void> {
+        try {
+            // Extract path from public URL
+            // Format: .../storage/v1/object/public/venues/[userId]/[filename]
+            const parts = imageUrl.split('/public/venues/');
+            if (parts.length < 2) return;
+
+            const filePath = parts[1];
+            const { error } = await supabase.storage
+                .from('venues')
+                .remove([filePath]);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Delete Venue Image Error:', error);
+        }
     }
 };

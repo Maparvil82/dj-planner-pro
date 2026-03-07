@@ -181,7 +181,11 @@ export default function VenueDetailScreen() {
         }
     };
 
-    const handleDeleteImage = (indexToRemove: number) => {
+    const handleDeleteImage = async (indexToRemove: number) => {
+        const imageUrl = images[indexToRemove];
+        if (imageUrl) {
+            await venueService.deleteVenueImage(imageUrl);
+        }
         const updatedImages = images.filter((_, index) => index !== indexToRemove);
         setImages(updatedImages);
         setHasChanges(true);
@@ -408,38 +412,6 @@ export default function VenueDetailScreen() {
                                 ))}
                             </View>
                         </View>
-                        {/* Images Section */}
-                        <View className="mt-6">
-                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                {t('venue_images')}
-                            </Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                                <TouchableOpacity
-                                    onPress={pickAndUploadImage}
-                                    className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 items-center justify-center mr-3"
-                                >
-                                    <Camera size={24} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                    <Text className="text-[10px] font-bold text-gray-400 mt-1">{t('add_image')}</Text>
-                                </TouchableOpacity>
-                                {images.map((url, index) => (
-                                    <View key={index} className="relative mr-3">
-                                        <View className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                                            <Image
-                                                source={{ uri: url }}
-                                                className="w-full h-full"
-                                                resizeMode="cover"
-                                            />
-                                        </View>
-                                        <TouchableOpacity
-                                            onPress={() => handleDeleteImage(index)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 items-center justify-center border-2 border-white dark:border-gray-950"
-                                        >
-                                            <X size={12} color="#FFFFFF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
-                        </View>
 
                         {/* Sound Quality Rating */}
                         <View className="mt-6">
@@ -495,7 +467,6 @@ export default function VenueDetailScreen() {
                             )}
                         </View>
 
-                        {/* Notes Field */}
                         <View className="mt-6">
                             <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                 {t('venue_notes')}
@@ -511,6 +482,38 @@ export default function VenueDetailScreen() {
                                 numberOfLines={6}
                                 textAlignVertical="top"
                             />
+                        </View>
+
+                        {/* Images Section - Pinterest Style */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_images')}
+                            </Text>
+                            <View className="flex-row flex-wrap gap-3">
+                                <TouchableOpacity
+                                    onPress={pickAndUploadImage}
+                                    style={{ width: '47.5%', aspectRatio: 1 }}
+                                    className="rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 flex-col items-center justify-center"
+                                >
+                                    <Camera size={24} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                    <Text className="text-[12px] font-bold text-gray-400 mt-2 text-center px-2">{t('add_image')}</Text>
+                                </TouchableOpacity>
+                                {images.map((url, index) => (
+                                    <View key={index} style={{ width: '47.5%', aspectRatio: index % 3 === 0 ? 0.8 : 1.2 }} className="rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+                                        <Image
+                                            source={{ uri: url }}
+                                            className="w-full h-full"
+                                            resizeMode="cover"
+                                        />
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteImage(index)}
+                                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 items-center justify-center border border-white/20"
+                                        >
+                                            <X size={16} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
                         </View>
                     </View>
                     <View className="h-20" />
