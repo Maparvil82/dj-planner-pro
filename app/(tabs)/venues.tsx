@@ -52,6 +52,7 @@ export default function VenuesScreen() {
     // New Venue State
     const [newName, setNewName] = useState('');
     const [newAddress, setNewAddress] = useState('');
+    const [newCity, setNewCity] = useState('');
     const [newContact, setNewContact] = useState('');
     const [newNotes, setNewNotes] = useState('');
     const [newCapacity, setNewCapacity] = useState('');
@@ -128,6 +129,7 @@ export default function VenuesScreen() {
             await createVenueMutation.mutateAsync({
                 name: normalizedName,
                 address: newAddress.trim(),
+                city: newCity.trim(),
                 contact_info: newContact.trim(),
                 capacity: newCapacity.trim() ? parseInt(newCapacity) : undefined,
                 equipment: newEquipment.length > 0 ? newEquipment : undefined,
@@ -137,6 +139,7 @@ export default function VenuesScreen() {
             setIsAddModalVisible(false);
             setNewName('');
             setNewAddress('');
+            setNewCity('');
             setNewContact('');
             setNewNotes('');
             setNewCapacity('');
@@ -308,6 +311,45 @@ export default function VenuesScreen() {
                                     value={newCapacity}
                                     onChangeText={setNewCapacity}
                                     keyboardType="numeric"
+                                />
+                            </View>
+
+                            <View className="mt-6">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    {t('venue_address')}
+                                </Text>
+                                <TextInput
+                                    className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
+                                    placeholder={t('address_placeholder') || 'Calle...'}
+                                    placeholderTextColor="#9CA3AF"
+                                    value={newAddress}
+                                    onChangeText={setNewAddress}
+                                />
+                            </View>
+
+                            <View className="mt-6">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    {t('venue_city')}
+                                </Text>
+                                <TextInput
+                                    className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
+                                    placeholder={t('city_placeholder') || 'Ciudad...'}
+                                    placeholderTextColor="#9CA3AF"
+                                    value={newCity}
+                                    onChangeText={setNewCity}
+                                />
+                            </View>
+
+                            <View className="mt-6">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    {t('venue_contact')}
+                                </Text>
+                                <TextInput
+                                    className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
+                                    placeholder={t('contact_placeholder') || 'Teléfono...'}
+                                    placeholderTextColor="#9CA3AF"
+                                    value={newContact}
+                                    onChangeText={setNewContact}
                                 />
                             </View>
 

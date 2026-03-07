@@ -3,6 +3,7 @@ export interface Venue {
     user_id: string; // uuid
     name: string;
     address?: string;
+    city?: string;
     contact_info?: string;
     notes?: string;
     color?: string;
@@ -17,6 +18,7 @@ export interface Venue {
 export interface CreateVenueInput {
     name: string;
     address?: string;
+    city?: string;
     contact_info?: string;
     notes?: string;
     color?: string;

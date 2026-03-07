@@ -42,6 +42,7 @@ export default function VenueDetailScreen() {
 
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
     const [contact, setContact] = useState('');
     const [notes, setNotes] = useState('');
     const [soundQuality, setSoundQuality] = useState<number>(0);
@@ -58,6 +59,7 @@ export default function VenueDetailScreen() {
         if (venue) {
             setName(venue.name || '');
             setAddress(venue.address || '');
+            setCity(venue.city || '');
             setContact(venue.contact_info || '');
             setNotes(venue.notes || '');
             setSoundQuality(venue.sound_quality || 0);
@@ -89,6 +91,7 @@ export default function VenueDetailScreen() {
                     input: {
                         name: name.trim(),
                         address: address.trim(),
+                        city: city.trim(),
                         contact_info: contact.trim(),
                         capacity: capacity.trim() ? parseInt(capacity) : undefined,
                         equipment: equipment.length > 0 ? equipment : [],
@@ -108,7 +111,7 @@ export default function VenueDetailScreen() {
         }, 1000); // 1 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [name, address, contact, notes, soundQuality, experienceRating, capacity, equipment, hasChanges, venue]);
+    }, [name, address, city, contact, notes, soundQuality, experienceRating, capacity, equipment, hasChanges, venue]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -234,6 +237,26 @@ export default function VenueDetailScreen() {
                                         setHasChanges(true);
                                     }}
                                     multiline
+                                />
+                                <View className="absolute left-4 top-4">
+                                    <MapPin size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* City Field */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_city')}
+                            </Text>
+                            <View className="relative">
+                                <TextInput
+                                    className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 pl-12 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
+                                    value={city}
+                                    onChangeText={(val) => {
+                                        setCity(val);
+                                        setHasChanges(true);
+                                    }}
                                 />
                                 <View className="absolute left-4 top-4">
                                     <MapPin size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />

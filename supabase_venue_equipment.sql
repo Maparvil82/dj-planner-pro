@@ -3,7 +3,8 @@
 
 ALTER TABLE public.venues
     ADD COLUMN IF NOT EXISTS capacity integer,
-    ADD COLUMN IF NOT EXISTS equipment JSONB DEFAULT '[]'::jsonb;
+    ADD COLUMN IF NOT EXISTS equipment JSONB DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS city text;
 
 -- If column already exists as text[] or text, you might need to drop and recreate or cast it.
 -- For a clean start or migration:
