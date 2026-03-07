@@ -254,7 +254,7 @@ export default function AddSessionScreen() {
                                 Keyboard.dismiss();
                                 setShowCalendar(!showCalendar);
                             }}
-                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5"
+                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5"
                         >
                             <LucideCalendar size={20} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
                             <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
@@ -262,7 +262,7 @@ export default function AddSessionScreen() {
                             </Text>
                         </TouchableOpacity>
 
-                        <View className="mt-4 bg-white dark:bg-gray-900 rounded-3xl p-3 shadow-md shadow-black/5 border border-gray-100 dark:border-gray-800 overflow-hidden" style={{ display: showCalendar ? 'flex' : 'none' }}>
+                        <View className="mt-4 bg-white dark:bg-gray-900 rounded-3xl p-3 border border-gray-100 dark:border-gray-800 overflow-hidden" style={{ display: showCalendar ? 'flex' : 'none' }}>
                             <Calendar
                                 markingType={'custom'}
                                 theme={{
@@ -300,7 +300,7 @@ export default function AddSessionScreen() {
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => { Keyboard.dismiss(); setIsRepeatModalVisible(true); }}
-                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-4"
+                            className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 mt-4"
                         >
                             <Repeat size={20} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
                             <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
@@ -316,7 +316,7 @@ export default function AddSessionScreen() {
 
                         {recurrenceType !== 'none' && (
                             <>
-                                <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setShowEndCalendar(!showEndCalendar); }} className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-3 ml-8">
+                                <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setShowEndCalendar(!showEndCalendar); }} className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 mt-3 ml-8">
                                     <Text className="text-sm text-gray-500 dark:text-gray-400 mr-2">{t('repeat_until')}</Text>
                                     <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
                                         {(() => {
@@ -326,7 +326,7 @@ export default function AddSessionScreen() {
                                         })()}
                                     </Text>
                                 </TouchableOpacity>
-                                <View className="mt-3 ml-8 bg-white dark:bg-gray-900 rounded-3xl p-3 shadow-md shadow-black/5 border border-gray-100 dark:border-gray-800 overflow-hidden" style={{ display: showEndCalendar ? 'flex' : 'none' }}>
+                                <View className="mt-3 ml-8 bg-white dark:bg-gray-900 rounded-3xl p-3 border border-gray-100 dark:border-gray-800 overflow-hidden" style={{ display: showEndCalendar ? 'flex' : 'none' }}>
                                     <Calendar
                                         markingType={'custom'}
                                         onDayPress={(day: any) => { setRecurrenceEndDate(day.dateString); setShowEndCalendar(false); }}
@@ -337,7 +337,7 @@ export default function AddSessionScreen() {
                             </>
                         )}
 
-                        <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setIsColorModalVisible(true); }} className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 shadow-sm shadow-black/5 mt-4">
+                        <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setIsColorModalVisible(true); }} className="flex-row items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 mt-4">
                             {!selectedColor ? <View className="w-5 h-5 rounded-full mr-3" style={{ backgroundColor: '#262626' }} /> : <View className="w-5 h-5 rounded-full mr-3" style={{ backgroundColor: selectedColor }} />}
                             <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
                                 {!selectedColor && (t('color_default') || 'Color predeterminado')}
@@ -360,19 +360,19 @@ export default function AddSessionScreen() {
                     <View className="flex-col gap-6">
                         <View className="z-50">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('session_title')} *</Text>
-                            <View className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-transparent bg-white dark:bg-gray-900'}`}>
+                            <View className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
                                 <TextInput className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('session_title_placeholder')} value={title} onChangeText={setTitle} onFocus={() => handleFocus('title')} onBlur={handleBlur} />
                             </View>
                         </View>
 
                         <View className="z-40">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('venue')} *</Text>
-                            <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setIsVenueModalVisible(true); }} className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-blue-500 bg-blue-50/10' : 'border-transparent bg-white dark:bg-gray-900 shadow-sm shadow-black/5'}`}>
+                            <TouchableOpacity activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setIsVenueModalVisible(true); }} className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-blue-500 bg-blue-50/10' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
                                 <MapPin size={22} color={venueId ? '#3B82F6' : '#9CA3AF'} /><Text className={`flex-1 ml-3 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>{venue || t('venue_placeholder')}</Text><ChevronRight size={20} color="#D1D5DB" />
                             </TouchableOpacity>
                         </View>
 
-                        <View className="flex-row items-center justify-between mb-4 mt-2 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <View className="flex-row items-center justify-between mb-4 mt-2 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
                             <View className="flex-row items-center"><Users size={20} color={isDark ? '#60A5FA' : '#3B82F6'} className="mr-3" /><Text className="text-base font-semibold text-gray-900 dark:text-white">{t('collective_session')}</Text></View>
                             <Switch value={isCollective} onValueChange={setIsCollective} />
                         </View>
@@ -380,7 +380,7 @@ export default function AddSessionScreen() {
                         {isCollective && (
                             <View className="z-30">
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('add_djs')}</Text>
-                                <View className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'dj' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-transparent bg-white dark:bg-gray-900'}`}>
+                                <View className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'dj' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
                                     <Users size={22} color={focusedInput === 'dj' ? '#3B82F6' : '#9CA3AF'} />
                                     <TextInput className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('add_djs_placeholder')} value={djInput} onChangeText={setDjInput} onFocus={() => handleFocus('dj')} onBlur={handleBlur} onSubmitEditing={() => { if (djInput.trim()) { setSelectedDjs([...selectedDjs, djInput.trim()]); setDjInput(''); } }} />
                                 </View>
@@ -388,8 +388,8 @@ export default function AddSessionScreen() {
                         )}
 
                         <View className="flex-row space-x-4">
-                            <View className="flex-1 mr-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={startTime} onChangeText={setStartTime} /></View></View>
-                            <View className="flex-1 ml-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={endTime} onChangeText={setEndTime} /></View></View>
+                            <View className="flex-1 mr-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={startTime} onChangeText={setStartTime} /></View></View>
+                            <View className="flex-1 ml-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={endTime} onChangeText={setEndTime} /></View></View>
                         </View>
 
                         <View style={{ marginTop: 24, zIndex: 10 }}>
@@ -438,7 +438,7 @@ export default function AddSessionScreen() {
                                     <Text style={{ fontWeight: '600', color: earningType === 'fixed' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_fixed')}</Text>
                                 </TouchableOpacity>
                             </View>
-                            <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20 }}>
+                            <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20, borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6' }}>
                                 <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
                                 <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
                             </View>
