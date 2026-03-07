@@ -11,7 +11,8 @@ import {
     Pressable,
     Alert,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Image
 } from 'react-native';
 import { profileService } from '../../src/services/profile';
 import { cn } from '../../src/theme/tw';
@@ -26,8 +27,14 @@ import {
     Phone,
     FileText,
     ArrowRight,
-    Calendar
+    Calendar,
+    Image as ImageIcon,
+    Camera,
+    Loader
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { venueService } from '../../src/services/venues';
+import { PickedImage } from '../../src/types/venue';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
@@ -59,6 +66,9 @@ export default function VenuesScreen() {
     const [newEquipment, setNewEquipment] = useState<Array<{ name: string; quantity: number }>>([]);
     const [equipInput, setEquipInput] = useState('');
     const [equipQuantity, setEquipQuantity] = useState('');
+    const [selectedImages, setSelectedImages] = useState<PickedImage[]>([]);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const groupedVenues = useMemo(() => {
         if (!venues) return [];
@@ -126,6 +136,18 @@ export default function VenuesScreen() {
         }
 
         try {
+            setIsSaving(true);
+            const imageUrls: string[] = [];
+
+            if (selectedImages.length > 0) {
+                setIsUploadingImage(true);
+                for (const img of selectedImages) {
+                    const uploadedUrl = await venueService.uploadVenueImage(session!.user.id, img.uri);
+                    if (uploadedUrl) imageUrls.push(uploadedUrl);
+                }
+                setIsUploadingImage(false);
+            }
+
             await createVenueMutation.mutateAsync({
                 name: normalizedName,
                 address: newAddress.trim(),
@@ -133,6 +155,7 @@ export default function VenuesScreen() {
                 contact_info: newContact.trim(),
                 capacity: newCapacity.trim() ? parseInt(newCapacity) : undefined,
                 equipment: newEquipment.length > 0 ? newEquipment : undefined,
+                images: imageUrls.length > 0 ? imageUrls : undefined,
                 notes: newNotes.trim()
             });
 
@@ -145,8 +168,34 @@ export default function VenuesScreen() {
             setNewCapacity('');
             setNewEquipment([]);
             setEquipQuantity('');
+            setSelectedImages([]);
         } catch (error) {
             Alert.alert(t('error'), t('error_saving_session'));
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(t('error'), t('camera_permission_denied'));
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsMultipleSelection: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            const newImages: PickedImage[] = result.assets.map(asset => ({
+                uri: asset.uri,
+                width: asset.width,
+                height: asset.height,
+            }));
+            setSelectedImages([...selectedImages, ...newImages]);
         }
     };
 
@@ -237,6 +286,17 @@ export default function VenuesScreen() {
                                     onPress={() => router.push(`/venue/${venue.id}`)}
                                     className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 flex-row items-center"
                                 >
+                                    {venue.images && venue.images.length > 0 ? (
+                                        <Image
+                                            source={{ uri: venue.images[0] }}
+                                            className="w-12 h-12 rounded-xl mr-3"
+                                            resizeMode="cover"
+                                        />
+                                    ) : (
+                                        <View className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-xl items-center justify-center mr-3 border border-gray-100 dark:border-gray-700">
+                                            <ImageIcon size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                        </View>
+                                    )}
                                     <View className="flex-1">
                                         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
                                             {venue.name}
@@ -401,6 +461,44 @@ export default function VenuesScreen() {
                                         </View>
                                     ))}
                                 </View>
+                            </View>
+
+                            <View className="mt-6">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    {t('venue_images')}
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                                    <TouchableOpacity
+                                        onPress={pickImage}
+                                        className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 items-center justify-center mr-3"
+                                    >
+                                        <Camera size={24} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                        <Text className="text-[10px] font-bold text-gray-400 mt-1">{t('add_image')}</Text>
+                                    </TouchableOpacity>
+                                    {selectedImages.map((img, index) => (
+                                        <View key={index} className="relative mr-3">
+                                            <View className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                                <Image
+                                                    source={{ uri: img.uri }}
+                                                    className="w-full h-full"
+                                                    resizeMode="cover"
+                                                />
+                                            </View>
+                                            <TouchableOpacity
+                                                onPress={() => setSelectedImages(selectedImages.filter((_, i) => i !== index))}
+                                                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 items-center justify-center border-2 border-white dark:border-gray-950"
+                                            >
+                                                <X size={12} color="#FFFFFF" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                </ScrollView>
+                                {isUploadingImage && (
+                                    <View className="flex-row items-center mt-2">
+                                        <ActivityIndicator size="small" color="#2563EB" className="mr-2" />
+                                        <Text className="text-xs text-blue-600 font-medium">{t('uploading_image')}</Text>
+                                    </View>
+                                )}
                             </View>
 
                             <View className="mt-6">

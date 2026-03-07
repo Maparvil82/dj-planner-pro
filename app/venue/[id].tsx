@@ -8,7 +8,8 @@ import {
     ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Image
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,8 +24,13 @@ import {
     Check,
     Cloud,
     CloudOff,
-    Loader
+    Loader,
+    Image as ImageIcon,
+    Camera
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { venueService } from '../../src/services/venues';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useVenueByIdQuery, useUpdateVenueMutation, useDeleteVenueMutation } from '../../src/hooks/useVenuesQuery';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -34,6 +40,7 @@ export default function VenueDetailScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
+    const { session } = useAuthStore();
     const isDark = themeCtx?.activeTheme === 'dark';
 
     const { data: venue, isLoading, error } = useVenueByIdQuery(id as string);
@@ -49,6 +56,7 @@ export default function VenueDetailScreen() {
     const [experienceRating, setExperienceRating] = useState<number>(0);
     const [capacity, setCapacity] = useState('');
     const [equipment, setEquipment] = useState<Array<{ name: string; quantity: number }>>([]);
+    const [images, setImages] = useState<string[]>([]);
     const [equipInput, setEquipInput] = useState('');
     const [equipQuantity, setEquipQuantity] = useState('');
     const [hasChanges, setHasChanges] = useState(false);
@@ -56,7 +64,7 @@ export default function VenueDetailScreen() {
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
-        if (venue) {
+        if (venue && !hasChanges) {
             setName(venue.name || '');
             setAddress(venue.address || '');
             setCity(venue.city || '');
@@ -76,6 +84,7 @@ export default function VenueDetailScreen() {
                 }
             }
             setEquipment(Array.isArray(equipData) ? equipData : []);
+            setImages(venue.images || []);
         }
     }, [venue]);
 
@@ -95,6 +104,7 @@ export default function VenueDetailScreen() {
                         contact_info: contact.trim(),
                         capacity: capacity.trim() ? parseInt(capacity) : undefined,
                         equipment: equipment.length > 0 ? equipment : [],
+                        images: images,
                         sound_quality: soundQuality || undefined,
                         experience_rating: experienceRating || undefined,
                         notes: notes.trim()
@@ -111,7 +121,7 @@ export default function VenueDetailScreen() {
         }, 1000); // 1 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [name, address, city, contact, notes, soundQuality, experienceRating, capacity, equipment, hasChanges, venue]);
+    }, [name, address, city, contact, notes, soundQuality, experienceRating, capacity, equipment, images, hasChanges, venue]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -133,6 +143,48 @@ export default function VenueDetailScreen() {
                 }
             ]
         );
+    };
+
+    const pickAndUploadImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert(t('error'), t('camera_permission_denied'));
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsMultipleSelection: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setIsSaving(true);
+            setSaveStatus('saving');
+            const newUrls: string[] = [...images];
+
+            try {
+                for (const asset of result.assets) {
+                    const uploadedUrl = await venueService.uploadVenueImage(session!.user.id, asset.uri);
+                    if (uploadedUrl) {
+                        newUrls.push(uploadedUrl);
+                    }
+                }
+                setImages(newUrls);
+                setHasChanges(true);
+            } catch (error) {
+                setSaveStatus('error');
+                Alert.alert(t('error'), t('error_uploading'));
+            } finally {
+                setIsSaving(false);
+            }
+        }
+    };
+
+    const handleDeleteImage = (indexToRemove: number) => {
+        const updatedImages = images.filter((_, index) => index !== indexToRemove);
+        setImages(updatedImages);
+        setHasChanges(true);
     };
 
     if (isLoading) {
@@ -355,6 +407,38 @@ export default function VenueDetailScreen() {
                                     </View>
                                 ))}
                             </View>
+                        </View>
+                        {/* Images Section */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_images')}
+                            </Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                                <TouchableOpacity
+                                    onPress={pickAndUploadImage}
+                                    className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 items-center justify-center mr-3"
+                                >
+                                    <Camera size={24} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                    <Text className="text-[10px] font-bold text-gray-400 mt-1">{t('add_image')}</Text>
+                                </TouchableOpacity>
+                                {images.map((url, index) => (
+                                    <View key={index} className="relative mr-3">
+                                        <View className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                            <Image
+                                                source={{ uri: url }}
+                                                className="w-full h-full"
+                                                resizeMode="cover"
+                                            />
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => handleDeleteImage(index)}
+                                            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 items-center justify-center border-2 border-white dark:border-gray-950"
+                                        >
+                                            <X size={12} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </ScrollView>
                         </View>
 
                         {/* Sound Quality Rating */}
