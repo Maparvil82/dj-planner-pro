@@ -8,6 +8,8 @@ export interface Venue {
     color?: string;
     sound_quality?: number; // 1-5
     experience_rating?: number; // 1-5
+    capacity?: number;
+    equipment?: Array<{ name: string; quantity: number }>;
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
 }
@@ -20,4 +22,6 @@ export interface CreateVenueInput {
     color?: string;
     sound_quality?: number; // 1-5
     experience_rating?: number; // 1-5
+    capacity?: number;
+    equipment?: Array<{ name: string; quantity: number }>;
 }

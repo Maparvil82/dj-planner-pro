@@ -18,7 +18,7 @@ import {
     Save,
     MapPin,
     Phone,
-    FileText,
+    Plus,
     X,
     Check,
     Cloud,
@@ -46,6 +46,10 @@ export default function VenueDetailScreen() {
     const [notes, setNotes] = useState('');
     const [soundQuality, setSoundQuality] = useState<number>(0);
     const [experienceRating, setExperienceRating] = useState<number>(0);
+    const [capacity, setCapacity] = useState('');
+    const [equipment, setEquipment] = useState<Array<{ name: string; quantity: number }>>([]);
+    const [equipInput, setEquipInput] = useState('');
+    const [equipQuantity, setEquipQuantity] = useState('');
     const [hasChanges, setHasChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -58,6 +62,18 @@ export default function VenueDetailScreen() {
             setNotes(venue.notes || '');
             setSoundQuality(venue.sound_quality || 0);
             setExperienceRating(venue.experience_rating || 0);
+            setCapacity(venue.capacity?.toString() || '');
+
+            // Robust check for equipment array
+            let equipData = venue.equipment;
+            if (typeof equipData === 'string') {
+                try {
+                    equipData = JSON.parse(equipData);
+                } catch (e) {
+                    equipData = [];
+                }
+            }
+            setEquipment(Array.isArray(equipData) ? equipData : []);
         }
     }, [venue]);
 
@@ -74,9 +90,11 @@ export default function VenueDetailScreen() {
                         name: name.trim(),
                         address: address.trim(),
                         contact_info: contact.trim(),
-                        notes: notes.trim(),
+                        capacity: capacity.trim() ? parseInt(capacity) : undefined,
+                        equipment: equipment.length > 0 ? equipment : [],
                         sound_quality: soundQuality || undefined,
-                        experience_rating: experienceRating || undefined
+                        experience_rating: experienceRating || undefined,
+                        notes: notes.trim()
                     }
                 });
                 setHasChanges(false);
@@ -90,7 +108,7 @@ export default function VenueDetailScreen() {
         }, 1000); // 1 second debounce
 
         return () => clearTimeout(timeoutId);
-    }, [name, address, contact, notes, soundQuality, experienceRating, hasChanges, venue]);
+    }, [name, address, contact, notes, soundQuality, experienceRating, capacity, equipment, hasChanges, venue]);
 
     const handleDelete = () => {
         Alert.alert(
@@ -243,22 +261,77 @@ export default function VenueDetailScreen() {
                             </View>
                         </View>
 
-                        {/* Notes Field */}
+                        {/* Capacity Field */}
                         <View className="mt-6">
                             <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                {t('venue_notes')}
+                                {t('venue_capacity')}
                             </Text>
                             <TextInput
-                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[120]"
-                                value={notes}
+                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
+                                placeholder={t('capacity_placeholder')}
+                                placeholderTextColor="#9CA3AF"
+                                value={capacity}
                                 onChangeText={(val) => {
-                                    setNotes(val);
+                                    setCapacity(val);
                                     setHasChanges(true);
                                 }}
-                                multiline
-                                numberOfLines={6}
-                                textAlignVertical="top"
+                                keyboardType="numeric"
                             />
+                        </View>
+
+                        {/* Equipment Field */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_equipment')}
+                            </Text>
+                            <View className="flex-row items-center gap-2 mb-3">
+                                <View className="w-16">
+                                    <TextInput
+                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-3 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800 text-center"
+                                        placeholder="1"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={equipQuantity}
+                                        onChangeText={setEquipQuantity}
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                                <TextInput
+                                    className="flex-1 bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
+                                    placeholder={t('equipment_placeholder')}
+                                    placeholderTextColor="#9CA3AF"
+                                    value={equipInput}
+                                    onChangeText={setEquipInput}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (equipInput.trim()) {
+                                            const qty = equipQuantity.trim() ? (parseInt(equipQuantity) || 1) : 1;
+                                            setEquipment([...equipment, { name: equipInput.trim(), quantity: qty }]);
+                                            setEquipInput('');
+                                            setEquipQuantity('');
+                                            setHasChanges(true);
+                                        }
+                                    }}
+                                    className="w-12 h-12 rounded-2xl bg-blue-600 items-center justify-center"
+                                >
+                                    <Plus size={24} color="#FFFFFF" />
+                                </TouchableOpacity>
+                            </View>
+                            <View className="flex-row flex-wrap gap-2">
+                                {Array.isArray(equipment) && equipment.map((item, index) => (
+                                    <View key={index} className="bg-blue-50 dark:bg-blue-900/30 px-3 py-2 rounded-xl flex-row items-center">
+                                        <Text className="text-blue-600 dark:text-blue-400 font-medium text-sm mr-2">
+                                            {item.quantity} x {item.name}
+                                        </Text>
+                                        <TouchableOpacity onPress={() => {
+                                            setEquipment(equipment.filter((_, i) => i !== index));
+                                            setHasChanges(true);
+                                        }}>
+                                            <X size={14} color={isDark ? '#60A5FA' : '#2563EB'} />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
                         </View>
 
                         {/* Sound Quality Rating */}
@@ -313,6 +386,24 @@ export default function VenueDetailScreen() {
                                     {['', 'Muy mala', 'Mala', 'Regular', 'Buena', 'Excelente'][experienceRating]}
                                 </Text>
                             )}
+                        </View>
+
+                        {/* Notes Field */}
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_notes')}
+                            </Text>
+                            <TextInput
+                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[120]"
+                                value={notes}
+                                onChangeText={(val) => {
+                                    setNotes(val);
+                                    setHasChanges(true);
+                                }}
+                                multiline
+                                numberOfLines={6}
+                                textAlignVertical="top"
+                            />
                         </View>
                     </View>
                     <View className="h-20" />
