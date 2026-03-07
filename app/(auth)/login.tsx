@@ -58,7 +58,7 @@ export default function LoginScreen() {
                     </View>
                 )}
 
-                <View className="space-y-5">
+                <View className="space-y-5 gap-y-4">
                     <View>
                         <TextInput
                             placeholder={t('email_placeholder')}

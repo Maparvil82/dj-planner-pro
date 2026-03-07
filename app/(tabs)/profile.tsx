@@ -9,9 +9,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useState, useEffect } from 'react';
 import { profileService, UserProfile } from '../../src/services/profile';
-import { LogOut, ChevronRight, Globe, Moon, Sun, Cpu, ShieldCheck, HelpCircle, Star, Trash2, Info, Monitor, Camera } from 'lucide-react-native';
+import { LogOut, ChevronRight, Globe, Moon, Sun, ShieldCheck, Star, Trash2, Info, Monitor, Camera } from 'lucide-react-native';
 import { cn } from '../../src/theme/tw';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 export default function SettingsScreen() {
     const { t, changeLanguage, currentLanguage } = useTranslation();
@@ -80,6 +81,28 @@ export default function SettingsScreen() {
             Alert.alert(t('success'), t('avatar_upload_success'));
         } else {
             Alert.alert(t('error'), t('error_saving_session'));
+        }
+    };
+
+    const handleRateApp = async () => {
+        const ITUNES_ID = '6444444444'; // PLACEHOLDER: Replace with real Apple ID
+        const PACKAGE_NAME = 'com.djplannerpro.app';
+
+        const url = Platform.select({
+            ios: `itms-apps://itunes.apple.com/app/id${ITUNES_ID}?action=write-review`,
+            android: `market://details?id=${PACKAGE_NAME}`,
+            default: `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`
+        });
+
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+            await Linking.openURL(url);
+        } else {
+            // Fallback to web URLs
+            const webUrl = Platform.OS === 'ios'
+                ? `https://apps.apple.com/app/id${ITUNES_ID}`
+                : `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`;
+            await Linking.openURL(webUrl);
         }
     };
 
@@ -241,22 +264,11 @@ export default function SettingsScreen() {
                                 ]
                             );
                         }}
-                        last
-                    />
-                </View>
-
-                {/* SUPPORT */}
-                <SectionHeader title={t('settings_support_section')} />
-                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
-                    <SettingItem
-                        icon={HelpCircle}
-                        label={t('contact_support')}
-                        onPress={() => Linking.openURL('mailto:support@djplanner.pro')}
                     />
                     <SettingItem
                         icon={Star}
                         label={t('rate_app')}
-                        onPress={() => { }} // Store review logic
+                        onPress={handleRateApp}
                         last
                     />
                 </View>
