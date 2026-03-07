@@ -19,7 +19,7 @@ export interface Session {
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
     status?: 'pending' | 'confirmed' | 'cancelled';
-    poster_url?: string;
+    poster_url?: string | null;
 }
 
 export interface CreateSessionInput {
@@ -39,5 +39,5 @@ export interface CreateSessionInput {
     parent_session_id?: string;
     venue_id?: string; // uuid
     status?: 'pending' | 'confirmed' | 'cancelled';
-    poster_url?: string;
+    poster_url?: string | null;
 }

@@ -167,7 +167,7 @@ export default function EditSessionScreen() {
             currency: currency,
             color: selectedColor || undefined,
             status: status,
-            poster_url: posterUrl || undefined
+            poster_url: posterUrl
         };
 
         const performUpdate = async (updateAll: boolean) => {

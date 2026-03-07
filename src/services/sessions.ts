@@ -392,7 +392,9 @@ export const sessionService = {
 
     async deleteSessionPoster(imageUrl: string): Promise<void> {
         try {
-            const parts = imageUrl.split('/public/sessions/');
+            // Strip query parameters for correct path extraction
+            const cleanUrl = imageUrl.split('?')[0];
+            const parts = cleanUrl.split('/public/sessions/');
             if (parts.length < 2) return;
 
             const filePath = parts[1];

@@ -164,7 +164,7 @@ export default function AddSessionScreen() {
                     recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
                     color: selectedColor || undefined,
                     status: status,
-                    poster_url: posterUrl || undefined
+                    poster_url: posterUrl
                 });
                 Alert.alert(t('success'), t('session_added_success'), [
                     { text: 'OK', onPress: () => router.back() }
