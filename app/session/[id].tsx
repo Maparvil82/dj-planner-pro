@@ -1,12 +1,47 @@
-import React, { useContext } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Share, Image } from 'react-native';
+import React, { useContext, useState } from 'react';
+import {
+    View,
+    Text,
+    ScrollView,
+    ActivityIndicator,
+    TouchableOpacity,
+    Alert,
+    Share,
+    Image,
+    Modal
+} from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useSessionByIdQuery, useDeleteSessionMutation, useUpdateSessionColorMutation } from '../../src/hooks/useSessionsQuery';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Banknote, Trash2, Share2, ChevronLeft, MapPinned, Palette, ChevronRight, X, Pencil, ArrowRight } from 'lucide-react-native';
+import {
+    useSessionByIdQuery,
+    useDeleteSessionMutation,
+    useUpdateSessionColorMutation
+} from '../../src/hooks/useSessionsQuery';
+import {
+    Calendar,
+    Clock,
+    MapPin,
+    Users,
+    Trash2,
+    Share2,
+    ChevronLeft,
+    MapPinned,
+    Palette,
+    X,
+    Pencil,
+    ArrowRight,
+    Folder,
+    Plus,
+    FolderPlus,
+    Banknote
+} from 'lucide-react-native';
+import {
+    useVaultFoldersByAssociationQuery,
+    useCreateFolderMutation
+} from '../../src/hooks/useVaultQuery';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { Modal } from 'react-native';
 
 export default function SessionDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -19,7 +54,10 @@ export default function SessionDetailScreen() {
     const deleteSessionMutation = useDeleteSessionMutation();
     const updateColorMutation = useUpdateSessionColorMutation();
 
-    const [isColorModalVisible, setIsColorModalVisible] = React.useState(false);
+    const { data: associatedFolders = [], isLoading: isLoadingFolders } = useVaultFoldersByAssociationQuery('session', id as string);
+    const createFolderMutation = useCreateFolderMutation();
+
+    const [isColorModalVisible, setIsColorModalVisible] = useState(false);
 
     const handleDelete = () => {
         Alert.alert(
@@ -108,7 +146,7 @@ export default function SessionDetailScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom']}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Flat Header */}
+            {/* Header */}
             <View className="flex-row items-center justify-between px-6 py-4">
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -153,6 +191,97 @@ export default function SessionDetailScreen() {
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             >
+                {/* VAULT SECTION */}
+                <View className="mb-8 px-2">
+                    <View className="flex-row items-center justify-between mb-4">
+                        <View className="flex-row items-center">
+                            <View className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 items-center justify-center mr-3">
+                                <Folder size={18} color="#2563EB" />
+                            </View>
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                {t('session_vault') || 'Documentos y Carpetas'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => {
+                                Alert.prompt(
+                                    t('new_folder') || 'Nueva Carpeta',
+                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
+                                    [
+                                        { text: t('cancel'), style: 'cancel' },
+                                        {
+                                            text: t('create'),
+                                            onPress: (name) => {
+                                                if (name) createFolderMutation.mutate({
+                                                    name,
+                                                    type: 'session',
+                                                    associatedId: id as string
+                                                });
+                                            }
+                                        }
+                                    ]
+                                );
+                            }}
+                            className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg"
+                        >
+                            <Plus size={14} color="#2563EB" className="mr-1" />
+                            <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                {t('add_folder') || 'Añadir'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {isLoadingFolders ? (
+                        <ActivityIndicator size="small" color="#2563EB" />
+                    ) : associatedFolders.length > 0 ? (
+                        <View className="gap-2">
+                            {associatedFolders.map((folder) => (
+                                <TouchableOpacity
+                                    key={folder.id}
+                                    onPress={() => router.push(`/vault/${folder.id}?name=${encodeURIComponent(folder.name)}` as any)}
+                                    className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl flex-row items-center justify-between shadow-sm shadow-black/5"
+                                >
+                                    <View className="flex-row items-center">
+                                        <Folder size={20} color="#2563EB" fill="#2563EB" fillOpacity={0.1} />
+                                        <Text className="text-sm font-bold text-gray-900 dark:text-white ml-3">
+                                            {folder.name}
+                                        </Text>
+                                    </View>
+                                    <ChevronLeft size={16} color={isDark ? '#4B5563' : '#9CA3AF'} style={{ transform: [{ rotate: '180deg' }] }} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => {
+                                Alert.prompt(
+                                    t('new_folder') || 'Nueva Carpeta',
+                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
+                                    [
+                                        { text: t('cancel'), style: 'cancel' },
+                                        {
+                                            text: t('create'),
+                                            onPress: (name) => {
+                                                if (name) createFolderMutation.mutate({
+                                                    name,
+                                                    type: 'session',
+                                                    associatedId: id as string
+                                                });
+                                            }
+                                        }
+                                    ]
+                                );
+                            }}
+                            className="bg-gray-50 dark:bg-gray-950/50 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl p-8 items-center"
+                        >
+                            <FolderPlus size={32} color={isDark ? '#374151' : '#D1D5DB'} />
+                            <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-3 text-center">
+                                {t('no_associated_folders') || 'No hay carpetas para esta sesión.\nCrea una para guardar contratos o riders.'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
                 {/* Title Section */}
                 <View className="mb-6">
                     <View className="flex-row items-center justify-between mb-2">
@@ -161,12 +290,12 @@ export default function SessionDetailScreen() {
                         </Text>
                         {session.status && (
                             <View className={`px-3 py-1 rounded-full ${session.status === 'confirmed' ? 'bg-blue-100 dark:bg-blue-900/40' :
-                                session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
-                                    'bg-red-100 dark:bg-red-900/40'
+                                    session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
+                                        'bg-red-100 dark:bg-red-900/40'
                                 }`}>
                                 <Text className={`text-xs font-bold ${session.status === 'confirmed' ? 'text-blue-700 dark:text-blue-400' :
-                                    session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
-                                        'text-red-700 dark:text-red-400'
+                                        session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
+                                            'text-red-700 dark:text-red-400'
                                     }`}>
                                     {t(`status_${session.status}`) || session.status.toUpperCase()}
                                 </Text>
@@ -189,7 +318,7 @@ export default function SessionDetailScreen() {
                     </View>
                 )}
 
-                {/* Earnings Section (Matching Venue Style) */}
+                {/* Earnings Section */}
                 <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6">
                     <View className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full items-center justify-center mr-4 shadow-sm border border-gray-100 dark:border-gray-700">
                         <Banknote size={22} color={isDark ? '#FFFFFF' : '#111827'} />
@@ -218,7 +347,7 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
 
-                {/* Venue Section (Flat Style) */}
+                {/* Venue Section */}
                 <TouchableOpacity
                     onPress={() => {
                         if (session.venue_id) {
@@ -245,32 +374,28 @@ export default function SessionDetailScreen() {
                     )}
                 </TouchableOpacity>
 
-                {/* Summary Section (Mockup Inspiration) */}
+                {/* Details Section */}
                 <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-8">
                     <Text className="text-xl font-black text-gray-900 dark:text-white mb-10">
                         {t('session_detail_header') || 'Detalle de la sesión'}
                     </Text>
 
                     <View className="space-y-12">
-                        {/* Date Row */}
                         <View className="flex-row justify-between items-center">
                             <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">{t('date') || 'Fecha'}</Text>
                             <Text className="text-base text-gray-900 dark:text-white font-bold">{capitalizedDate}</Text>
                         </View>
 
-                        {/* Clock Row */}
                         <View className="flex-row justify-between items-center">
                             <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">{t('time_label') || 'Horario'}</Text>
                             <Text className="text-base text-gray-900 dark:text-white font-bold">{session.start_time} — {session.end_time}</Text>
                         </View>
 
-                        {/* Duration Row */}
                         <View className="flex-row justify-between items-center">
                             <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">{t('duration') || 'Duración'}</Text>
                             <Text className="text-base text-gray-900 dark:text-white font-bold">{duration.toFixed(1)} h</Text>
                         </View>
 
-                        {/* Crew Row */}
                         <View className="flex-row justify-between items-center">
                             <Text className="text-base text-gray-500 dark:text-gray-400 font-medium">
                                 {t('djs_label') || 'DJs'}
@@ -285,7 +410,7 @@ export default function SessionDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* Color Selection Modal */}
+            {/* Color Modal */}
             <Modal
                 visible={isColorModalVisible}
                 transparent={true}
@@ -351,8 +476,8 @@ export default function SessionDetailScreen() {
                                                 );
                                             }}
                                             className={`w-[48%] flex-row items-center p-3 rounded-2xl border ${isSelected
-                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                                                 }`}
                                         >
                                             <View className="w-5 h-5 rounded-full mr-3 border border-black/5" style={{ backgroundColor: item.color }} />
@@ -370,6 +495,6 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }

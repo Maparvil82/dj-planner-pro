@@ -180,5 +180,7 @@
     "confirm_delete_account": "Kontolöschung bestätigen",
     "delete_account_warning": "Diese Aktion ist dauerhaft und löscht alle Ihre Daten. Sind Sie sicher?",
     "delete_permanently": "Dauerhaft löschen",
-    "version": "Version"
+    "version": "Version",
+    "vault": "Dokumente",
+    "vault_title": "Dokumente"
 }

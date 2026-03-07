@@ -1,3 +1,5 @@
+import { UserProfile } from "../services/profile";
+
 export interface Session {
     id: string; // uuid
     user_id: string; // uuid
@@ -40,4 +42,25 @@ export interface CreateSessionInput {
     venue_id?: string; // uuid
     status?: 'pending' | 'confirmed' | 'cancelled';
     poster_url?: string | null;
+}
+
+export interface VaultFolder {
+    id: string;
+    user_id: string;
+    name: string;
+    associated_type: 'session' | 'venue' | 'general';
+    associated_id?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface VaultFile {
+    id: string;
+    user_id: string;
+    folder_id: string;
+    name: string;
+    url: string;
+    file_type?: string | null;
+    size?: number | null;
+    created_at: string;
 }

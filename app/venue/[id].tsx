@@ -32,7 +32,20 @@ import * as ImagePicker from 'expo-image-picker';
 import { venueService } from '../../src/services/venues';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
-import { useVenueByIdQuery, useUpdateVenueMutation, useDeleteVenueMutation } from '../../src/hooks/useVenuesQuery';
+import {
+    useVenueByIdQuery,
+    useUpdateVenueMutation,
+    useDeleteVenueMutation
+} from '../../src/hooks/useVenuesQuery';
+import {
+    useVaultFoldersByAssociationQuery,
+    useCreateFolderMutation
+} from '../../src/hooks/useVaultQuery';
+import {
+    Folder,
+    FolderPlus,
+    ChevronRight
+} from 'lucide-react-native';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 
 export default function VenueDetailScreen() {
@@ -46,6 +59,9 @@ export default function VenueDetailScreen() {
     const { data: venue, isLoading, error } = useVenueByIdQuery(id as string);
     const updateVenueMutation = useUpdateVenueMutation();
     const deleteVenueMutation = useDeleteVenueMutation();
+
+    const { data: associatedFolders = [], isLoading: isLoadingFolders } = useVaultFoldersByAssociationQuery('venue', id as string);
+    const createFolderMutation = useCreateFolderMutation();
 
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
@@ -514,6 +530,97 @@ export default function VenueDetailScreen() {
                                     </View>
                                 ))}
                             </View>
+                        </View>
+
+                        {/* VAULT / DOCUMENTS SECTION */}
+                        <View className="mt-10 mb-4 px-1">
+                            <View className="flex-row items-center justify-between mb-4">
+                                <View className="flex-row items-center">
+                                    <View className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 items-center justify-center mr-3">
+                                        <Folder size={18} color="#2563EB" />
+                                    </View>
+                                    <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                        {t('venue_vault') || 'Documentos y Carpetas'}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        Alert.prompt(
+                                            t('new_folder') || 'Nueva Carpeta',
+                                            t('folder_name_placeholder') || 'Ejem: Contratos, Planos...',
+                                            [
+                                                { text: t('cancel'), style: 'cancel' },
+                                                {
+                                                    text: t('create'),
+                                                    onPress: (name) => {
+                                                        if (name) createFolderMutation.mutate({
+                                                            name,
+                                                            type: 'venue',
+                                                            associatedId: id as string
+                                                        });
+                                                    }
+                                                }
+                                            ]
+                                        );
+                                    }}
+                                    className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg"
+                                >
+                                    <Plus size={14} color="#2563EB" style={{ marginRight: 4 }} />
+                                    <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                        {t('add_folder') || 'Añadir'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {isLoadingFolders ? (
+                                <ActivityIndicator size="small" color="#2563EB" />
+                            ) : associatedFolders.length > 0 ? (
+                                <View style={{ gap: 8 }}>
+                                    {associatedFolders.map((folder) => (
+                                        <TouchableOpacity
+                                            key={folder.id}
+                                            onPress={() => router.push(`/vault/${folder.id}?name=${encodeURIComponent(folder.name)}` as any)}
+                                            className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl flex-row items-center justify-between shadow-sm shadow-black/5"
+                                        >
+                                            <View className="flex-row items-center">
+                                                <Folder size={20} color="#2563EB" fill="#2563EB" fillOpacity={0.1} />
+                                                <Text className="text-sm font-bold text-gray-900 dark:text-white ml-3">
+                                                    {folder.name}
+                                                </Text>
+                                            </View>
+                                            <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        Alert.prompt(
+                                            t('new_folder') || 'Nueva Carpeta',
+                                            t('folder_name_placeholder') || 'Ejem: Contratos, Planos...',
+                                            [
+                                                { text: t('cancel'), style: 'cancel' },
+                                                {
+                                                    text: t('create'),
+                                                    onPress: (name) => {
+                                                        if (name) createFolderMutation.mutate({
+                                                            name,
+                                                            type: 'venue',
+                                                            associatedId: id as string
+                                                        });
+                                                    }
+                                                }
+                                            ]
+                                        );
+                                    }}
+                                    className="bg-gray-50 dark:bg-gray-950/50 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl p-8 items-center"
+                                >
+                                    <FolderPlus size={32} color={isDark ? '#374151' : '#D1D5DB'} />
+                                    <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-3 text-center">
+                                        {t('no_associated_folders_venue') || 'No hay carpetas para este lugar.\nCrea una para guardar contratos o planos.'}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                     <View className="h-20" />

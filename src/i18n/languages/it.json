@@ -184,5 +184,7 @@
     "confirm_delete_account": "Conferma eliminazione account",
     "delete_account_warning": "Questa azione è permanente e cancellerà tutti i tuoi dati. Sei sicuro?",
     "delete_permanently": "Elimina permanentemente",
-    "version": "Versione"
+    "version": "Versione",
+    "vault": "Documenti",
+    "vault_title": "Documenti"
 }

@@ -61,6 +61,18 @@ export default function TabLayout() {
             />
 
             <ExpoTabs.Screen
+                name="vault"
+                options={{
+                    title: t('vault_title') || t('vault') || 'Documentos',
+                    // @ts-ignore
+                    tabBarIcon: ({ color, size }) => {
+                        const { FileText } = require('lucide-react-native');
+                        return <FileText color={color} size={size} />;
+                    },
+                }}
+            />
+
+            <ExpoTabs.Screen
                 name="history"
                 options={{
                     href: null,

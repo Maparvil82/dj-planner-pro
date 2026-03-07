@@ -179,5 +179,7 @@
     "confirm_delete_account": "Confirmar exclusão de conta",
     "delete_account_warning": "Esta ação é permanente e excluirá todos os seus datos. Tem certeza?",
     "delete_permanently": "Excluir Permanentemente",
-    "version": "Versão"
+    "version": "Versão",
+    "vault": "Documentos",
+    "vault_title": "Documentos"
 }

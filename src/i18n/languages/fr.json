@@ -182,5 +182,7 @@
     "confirm_delete_account": "Confirmer la suppression",
     "delete_account_warning": "Cette action est permanente et supprimera toutes vos données. Êtes-vous sûr ?",
     "delete_permanently": "Supprimer définitivement",
-    "version": "Version"
+    "version": "Version",
+    "vault": "Documents",
+    "vault_title": "Documents"
 }
