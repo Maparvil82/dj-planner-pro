@@ -10,12 +10,14 @@ interface AuthState {
     user: User | null;
     profile: UserProfile | null;
     initialized: boolean;
+    hasHydrated: boolean;
     hasSeenOnboarding: boolean;
     setSession: (session: Session | null) => void;
     setProfile: (profile: UserProfile | null) => void;
     signOut: () => Promise<void>;
     setInitialized: (val: boolean) => void;
     setHasSeenOnboarding: (val: boolean) => void;
+    setHasHydrated: (val: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             profile: null,
             initialized: false,
+            hasHydrated: false,
             hasSeenOnboarding: false,
             setSession: (session) =>
                 set({
@@ -34,20 +37,24 @@ export const useAuthStore = create<AuthState>()(
             setProfile: (profile) => set({ profile }),
             setInitialized: (initialized) => set({ initialized }),
             setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
+            setHasHydrated: (hasHydrated) => set({ hasHydrated }),
             signOut: async () => {
                 await supabase.auth.signOut();
                 set({ session: null, user: null, profile: null });
             },
         }),
         {
-            name: 'dj-auth-storage', // key in AsyncStorage
+            name: 'dj-auth-storage-v2',
             storage: createJSONStorage(() => AsyncStorage),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
             partialize: (state) => ({
                 session: state.session,
                 user: state.user,
                 profile: state.profile,
                 hasSeenOnboarding: state.hasSeenOnboarding
-            }), // Persist session + profile + onboarding
+            }),
         }
     )
 );

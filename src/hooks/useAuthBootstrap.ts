@@ -5,9 +5,10 @@ import { profileService } from '../services/profile';
 
 export function useAuthBootstrap() {
     const [isLoading, setIsLoading] = useState(true);
-    const { setSession, setProfile, setInitialized } = useAuthStore();
+    const { setSession, setProfile, setInitialized, setHasHydrated } = useAuthStore();
 
     useEffect(() => {
+        setHasHydrated(true);
         // Check active session on boot
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session);

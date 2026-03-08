@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import { supabase } from '../../src/lib/supabase';
 import { cn } from '../../src/theme/tw';
 

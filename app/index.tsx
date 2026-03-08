@@ -3,9 +3,9 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function Index() {
-    const { session, initialized, hasSeenOnboarding } = useAuthStore();
+    const { session, initialized, hasSeenOnboarding, hasHydrated } = useAuthStore();
 
-    if (!initialized) {
+    if (!initialized || !hasHydrated) {
         return (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' }}>
                 <ActivityIndicator size="large" color="#2563EB" />
