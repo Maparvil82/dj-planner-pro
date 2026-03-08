@@ -10,7 +10,7 @@ import {
     Image,
     Modal
 } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, Redirect } from 'expo-router';
 import {
     useSessionByIdQuery,
     useDeleteSessionMutation,
@@ -48,6 +48,11 @@ export default function SessionDetailScreen() {
     const router = useRouter();
     const { t, currentLanguage } = useTranslation();
     const themeCtx = useContext(ThemeContext);
+    const { session: authSession } = useAuthStore();
+
+    if (!authSession) {
+        return <Redirect href="/(auth)/login" />;
+    }
     const isDark = themeCtx?.activeTheme === 'dark';
 
     const { data: session, isLoading, error } = useSessionByIdQuery(id as string);
@@ -211,7 +216,7 @@ export default function SessionDetailScreen() {
                                         { text: t('cancel'), style: 'cancel' },
                                         {
                                             text: t('create'),
-                                            onPress: (name) => {
+                                            onPress: (name?: string) => {
                                                 if (name) createFolderMutation.mutate({
                                                     name,
                                                     type: 'session',
@@ -261,7 +266,7 @@ export default function SessionDetailScreen() {
                                         { text: t('cancel'), style: 'cancel' },
                                         {
                                             text: t('create'),
-                                            onPress: (name) => {
+                                            onPress: (name?: string) => {
                                                 if (name) createFolderMutation.mutate({
                                                     name,
                                                     type: 'session',
@@ -290,12 +295,12 @@ export default function SessionDetailScreen() {
                         </Text>
                         {session.status && (
                             <View className={`px-3 py-1 rounded-full ${session.status === 'confirmed' ? 'bg-blue-100 dark:bg-blue-900/40' :
-                                    session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
-                                        'bg-red-100 dark:bg-red-900/40'
+                                session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
+                                    'bg-red-100 dark:bg-red-900/40'
                                 }`}>
                                 <Text className={`text-xs font-bold ${session.status === 'confirmed' ? 'text-blue-700 dark:text-blue-400' :
-                                        session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
-                                            'text-red-700 dark:text-red-400'
+                                    session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
+                                        'text-red-700 dark:text-red-400'
                                     }`}>
                                     {t(`status_${session.status}`) || session.status.toUpperCase()}
                                 </Text>
@@ -476,8 +481,8 @@ export default function SessionDetailScreen() {
                                                 );
                                             }}
                                             className={`w-[48%] flex-row items-center p-3 rounded-2xl border ${isSelected
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
+                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                                                 }`}
                                         >
                                             <View className="w-5 h-5 rounded-full mr-3 border border-black/5" style={{ backgroundColor: item.color }} />

@@ -10,7 +10,7 @@ import {
     Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import {
@@ -20,6 +20,7 @@ import {
 } from '../../src/hooks/useVaultQuery';
 import { VaultFile } from '../../src/types/session';
 import { vaultService } from '../../src/services/vault';
+import { useAuthStore } from '../../src/store/useAuthStore';
 import {
     File,
     FileText,
@@ -45,6 +46,11 @@ export default function FolderDetailScreen() {
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
+    const { session } = useAuthStore();
+
+    if (!session) {
+        return <Redirect href="/(auth)/login" />;
+    }
 
     const { data: files = [], isLoading } = useVaultFilesQuery(id as string);
     const uploadFileMutation = useUploadFileMutation();
@@ -60,8 +66,6 @@ export default function FolderDetailScreen() {
             if (result.canceled) return;
 
             const file = result.assets[0];
-            // Using a more modern way to read files if readAsStringAsync / legacy is problematic
-            // SDK 54+ recommends using the new File API or just readAsStringAsync from the main entry if legacy is failing
             const base64 = await FileSystem.readAsStringAsync(file.uri, {
                 encoding: 'base64' as any,
             });

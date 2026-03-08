@@ -10,7 +10,7 @@ import { Avatar } from '../../src/components/ui/Avatar';
 
 export default function TabLayout() {
     const { t } = useTranslation();
-    const { session, profile, initialized } = useAuthStore();
+    const { session, profile, initialized, hasSeenOnboarding } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -20,6 +20,14 @@ export default function TabLayout() {
                 <ActivityIndicator size="large" color="#2563EB" />
             </View>
         );
+    }
+
+    if (!session) {
+        return <Redirect href="/(auth)/login" />;
+    }
+
+    if (!hasSeenOnboarding) {
+        return <Redirect href="/(auth)/onboarding" />;
     }
 
     return (

@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable, Image } from 'react-native';
 import React, { useState, useRef, useContext, useEffect } from 'react';
-import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
+import { Stack, useGlobalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
@@ -23,6 +23,10 @@ export default function AddSessionScreen() {
     const { t, currentLanguage } = useTranslation();
     const { session } = useAuthStore();
     const createVenueMutation = useCreateVenueMutation();
+
+    if (!session) {
+        return <Redirect href="/(auth)/login" />;
+    }
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
     const createSessionMutation = useCreateSessionMutation();

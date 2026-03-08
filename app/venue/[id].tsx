@@ -11,7 +11,7 @@ import {
     Platform,
     Image
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, Redirect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ArrowLeft,
@@ -47,13 +47,16 @@ import {
     ChevronRight
 } from 'lucide-react-native';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-
 export default function VenueDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
     const { session } = useAuthStore();
+
+    if (!session) {
+        return <Redirect href="/(auth)/login" />;
+    }
     const isDark = themeCtx?.activeTheme === 'dark';
 
     const { data: venue, isLoading, error } = useVenueByIdQuery(id as string);
@@ -552,7 +555,7 @@ export default function VenueDetailScreen() {
                                                 { text: t('cancel'), style: 'cancel' },
                                                 {
                                                     text: t('create'),
-                                                    onPress: (name) => {
+                                                    onPress: (name?: string) => {
                                                         if (name) createFolderMutation.mutate({
                                                             name,
                                                             type: 'venue',
@@ -602,7 +605,7 @@ export default function VenueDetailScreen() {
                                                 { text: t('cancel'), style: 'cancel' },
                                                 {
                                                     text: t('create'),
-                                                    onPress: (name) => {
+                                                    onPress: (name?: string) => {
                                                         if (name) createFolderMutation.mutate({
                                                             name,
                                                             type: 'venue',

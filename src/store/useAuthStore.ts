@@ -10,10 +10,12 @@ interface AuthState {
     user: User | null;
     profile: UserProfile | null;
     initialized: boolean;
+    hasSeenOnboarding: boolean;
     setSession: (session: Session | null) => void;
     setProfile: (profile: UserProfile | null) => void;
     signOut: () => Promise<void>;
     setInitialized: (val: boolean) => void;
+    setHasSeenOnboarding: (val: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             profile: null,
             initialized: false,
+            hasSeenOnboarding: false,
             setSession: (session) =>
                 set({
                     session,
@@ -30,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
                 }),
             setProfile: (profile) => set({ profile }),
             setInitialized: (initialized) => set({ initialized }),
+            setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
             signOut: async () => {
                 await supabase.auth.signOut();
                 set({ session: null, user: null, profile: null });
@@ -38,7 +42,12 @@ export const useAuthStore = create<AuthState>()(
         {
             name: 'dj-auth-storage', // key in AsyncStorage
             storage: createJSONStorage(() => AsyncStorage),
-            partialize: (state) => ({ session: state.session, user: state.user, profile: state.profile }), // Persist session + profile
+            partialize: (state) => ({
+                session: state.session,
+                user: state.user,
+                profile: state.profile,
+                hasSeenOnboarding: state.hasSeenOnboarding
+            }), // Persist session + profile + onboarding
         }
     )
 );
