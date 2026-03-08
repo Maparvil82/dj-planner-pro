@@ -398,531 +398,533 @@ export default function DashboardScreen() {
                 </View>
             </View>
 
-            <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                <View className="max-w-5xl w-full mx-auto px-5 pt-4">
 
-                {/* WELCOME SECTION */}
-                <View className="mb-8 mt-6 px-2">
-                    <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
-                        {(() => {
-                            if (profile?.artist_name) {
-                                return `${t('hello')} ${profile.artist_name} 👋`;
+                    {/* WELCOME SECTION */}
+                    <View className="mb-8 mt-6 px-2">
+                        <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                            {(() => {
+                                if (profile?.artist_name) {
+                                    return `${t('hello')} ${profile.artist_name} 👋`;
+                                }
+                                const email = user?.email || '';
+                                const prefix = email.split('@')[0];
+                                const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+                                return `${t('hello')} ${displayName} 👋`;
+                            })()}
+                        </Text>
+                        <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                            {(() => {
+                                let dateStr = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+                                dateStr = dateStr.replace(',', '');
+                                return dateStr.split(' ').map(word =>
+                                    word.toLowerCase() === 'de' ? 'de' : word.charAt(0).toUpperCase() + word.slice(1)
+                                ).join(' ');
+                            })()}
+                        </Text>
+                    </View>
+
+                    {/* Month-over-month earnings KPI — shown first */}
+                    {(() => {
+                        const diff = thisMonthEarnings - lastMonthEarnings;
+                        const pct = lastMonthEarnings > 0
+                            ? Math.round((diff / lastMonthEarnings) * 100)
+                            : thisMonthEarnings > 0 ? 100 : 0;
+                        const isUp = pct > 0;
+                        const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
+                        const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
+                        const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
+                        const bgColor = isFlat
+                            ? (isDark ? '#1F1F1F' : '#F3F4F6')
+                            : isUp ? (isDark ? '#14532D' : '#F0FDF4')
+                                : (isDark ? '#450A0A' : '#FEF2F2');
+                        const label = isFlat
+                            ? t('earnings_vs_last_flat')
+                            : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
+
+                        const showSuggestion = pct < 0 || hasCancelledThisMonth;
+
+                        let suggestionText = '';
+                        if (showSuggestion) {
+                            if (hasCancelledThisMonth) {
+                                suggestionText = dormantVenue
+                                    ? t('recovery_suggestion', { name: dormantVenue })
+                                    : t('recovery_no_venue'); // Fallback if no venue found
+                            } else if (pct < 0 && dormantVenue) {
+                                suggestionText = t('venue_suggestion', { name: dormantVenue });
+                            } else {
+                                // If pct < 0 but no dormant venue, show nothing or a generic one
+                                // For now let's just use dormantVenue check inside here too
                             }
-                            const email = user?.email || '';
-                            const prefix = email.split('@')[0];
-                            const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-                            return `${t('hello')} ${displayName} 👋`;
-                        })()}
-                    </Text>
-                    <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                        {(() => {
-                            let dateStr = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-                            dateStr = dateStr.replace(',', '');
-                            return dateStr.split(' ').map(word =>
-                                word.toLowerCase() === 'de' ? 'de' : word.charAt(0).toUpperCase() + word.slice(1)
-                            ).join(' ');
-                        })()}
-                    </Text>
-                </View>
-
-                {/* Month-over-month earnings KPI — shown first */}
-                {(() => {
-                    const diff = thisMonthEarnings - lastMonthEarnings;
-                    const pct = lastMonthEarnings > 0
-                        ? Math.round((diff / lastMonthEarnings) * 100)
-                        : thisMonthEarnings > 0 ? 100 : 0;
-                    const isUp = pct > 0;
-                    const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
-                    const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
-                    const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
-                    const bgColor = isFlat
-                        ? (isDark ? '#1F1F1F' : '#F3F4F6')
-                        : isUp ? (isDark ? '#14532D' : '#F0FDF4')
-                            : (isDark ? '#450A0A' : '#FEF2F2');
-                    const label = isFlat
-                        ? t('earnings_vs_last_flat')
-                        : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
-
-                    const showSuggestion = pct < 0 || hasCancelledThisMonth;
-
-                    let suggestionText = '';
-                    if (showSuggestion) {
-                        if (hasCancelledThisMonth) {
-                            suggestionText = dormantVenue
-                                ? t('recovery_suggestion', { name: dormantVenue })
-                                : t('recovery_no_venue'); // Fallback if no venue found
-                        } else if (pct < 0 && dormantVenue) {
-                            suggestionText = t('venue_suggestion', { name: dormantVenue });
-                        } else {
-                            // If pct < 0 but no dormant venue, show nothing or a generic one
-                            // For now let's just use dormantVenue check inside here too
                         }
-                    }
 
-                    if (showSuggestion && !suggestionText) return (
-                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
-                        </View>
-                    );
-
-                    return (
-                        <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: showSuggestion ? 8 : 0 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        if (showSuggestion && !suggestionText) return (
+                            <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                 <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
                                 <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
                             </View>
-                            {showSuggestion && (
+                        );
+
+                        return (
+                            <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: showSuggestion ? 8 : 0 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                    <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
+                                    <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
+                                </View>
+                                {showSuggestion && (
+                                    <TouchableOpacity
+                                        onPress={() => router.push('/venues')}
+                                        activeOpacity={0.7}
+                                        style={{
+                                            marginTop: 4,
+                                            paddingTop: 6,
+                                            borderTopWidth: 1,
+                                            borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between'
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563', flex: 1 }}>
+                                            {suggestionText}
+                                        </Text>
+                                        <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        );
+                    })()}
+
+                    {/* Annual Comparison Chart */}
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+                        <View className="flex-row justify-between items-center mb-6">
+                            <TouchableOpacity
+                                onPress={() => router.push('/history')}
+                                activeOpacity={0.7}
+                                className="flex-row items-center space-x-1"
+                            >
+                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
+                                <ChevronRight size={12} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ marginLeft: 4 }} />
+                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
                                 <TouchableOpacity
-                                    onPress={() => router.push('/venues')}
-                                    activeOpacity={0.7}
+                                    onPress={() => setChartView('sessions')}
                                     style={{
-                                        marginTop: 4,
-                                        paddingTop: 6,
-                                        borderTopWidth: 1,
-                                        borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between'
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 6,
+                                        borderRadius: 6,
+                                        backgroundColor: chartView === 'sessions' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                        shadowColor: '#000',
+                                        shadowOffset: { width: 0, height: 1 },
+                                        shadowOpacity: chartView === 'sessions' ? 0.1 : 0,
+                                        shadowRadius: 1,
+                                        elevation: chartView === 'sessions' ? 1 : 0
                                     }}
                                 >
-                                    <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563', flex: 1 }}>
-                                        {suggestionText}
-                                    </Text>
-                                    <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                                    <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_sessions')}</Text>
                                 </TouchableOpacity>
-                            )}
+                                <TouchableOpacity
+                                    onPress={() => setChartView('finances')}
+                                    style={{
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 6,
+                                        borderRadius: 6,
+                                        backgroundColor: chartView === 'finances' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                        shadowColor: '#000',
+                                        shadowOffset: { width: 0, height: 1 },
+                                        shadowOpacity: chartView === 'finances' ? 0.1 : 0,
+                                        shadowRadius: 1,
+                                        elevation: chartView === 'finances' ? 1 : 0
+                                    }}
+                                >
+                                    <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_finances')}</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    );
-                })()}
 
-                {/* Annual Comparison Chart */}
-                <View style={{ backgroundColor: isDark ? '#121212' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 24, marginBottom: 16 }}>
-                    <View className="flex-row justify-between items-center mb-6">
-                        <TouchableOpacity
-                            onPress={() => router.push('/history')}
-                            activeOpacity={0.7}
-                            className="flex-row items-center space-x-1"
-                        >
-                            <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
-                            <ChevronRight size={12} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ marginLeft: 4 }} />
-                        </TouchableOpacity>
-                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
-                            <TouchableOpacity
-                                onPress={() => setChartView('sessions')}
-                                style={{
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 6,
-                                    borderRadius: 6,
-                                    backgroundColor: chartView === 'sessions' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                    shadowColor: '#000',
-                                    shadowOffset: { width: 0, height: 1 },
-                                    shadowOpacity: chartView === 'sessions' ? 0.1 : 0,
-                                    shadowRadius: 1,
-                                    elevation: chartView === 'sessions' ? 1 : 0
-                                }}
-                            >
-                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_sessions')}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setChartView('finances')}
-                                style={{
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 6,
-                                    borderRadius: 6,
-                                    backgroundColor: chartView === 'finances' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                    shadowColor: '#000',
-                                    shadowOffset: { width: 0, height: 1 },
-                                    shadowOpacity: chartView === 'finances' ? 0.1 : 0,
-                                    shadowRadius: 1,
-                                    elevation: chartView === 'finances' ? 1 : 0
-                                }}
-                            >
-                                <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_finances')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 160, gap: 8 }}>
+                                {monthlyChartData.map((data, index) => (
+                                    <View key={index} style={{ alignItems: 'center', justifyContent: 'flex-end', minWidth: 44 }}>
 
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 160, gap: 8 }}>
-                            {monthlyChartData.map((data, index) => (
-                                <View key={index} style={{ alignItems: 'center', justifyContent: 'flex-end', minWidth: 44 }}>
-
-                                    {/* BAR AREA — 96px tall container */}
-                                    <View style={{ height: 96, justifyContent: 'flex-end', alignItems: 'center', marginBottom: 4 }}>
-                                        {chartView === 'sessions' ? (
-                                            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                                                {/* Active (confirmed + pending) bar */}
-                                                <View
-                                                    style={{
-                                                        width: 14,
-                                                        borderTopLeftRadius: 4,
-                                                        borderTopRightRadius: 4,
-                                                        backgroundColor: data.isCurrentMonth ? '#2563EB' : '#3B82F6',
-                                                        marginRight: 2,
-                                                        height: data.activePx
-                                                    }}
-                                                />
-                                                {/* Cancelled bar (only shows if there are cancelled sessions) */}
-                                                {data.cancelled > 0 && (
+                                        {/* BAR AREA — 96px tall container */}
+                                        <View style={{ height: 96, justifyContent: 'flex-end', alignItems: 'center', marginBottom: 4 }}>
+                                            {chartView === 'sessions' ? (
+                                                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                                                    {/* Active (confirmed + pending) bar */}
+                                                    <View
+                                                        style={{
+                                                            width: 14,
+                                                            borderTopLeftRadius: 4,
+                                                            borderTopRightRadius: 4,
+                                                            backgroundColor: data.isCurrentMonth ? '#2563EB' : '#3B82F6',
+                                                            marginRight: 2,
+                                                            height: data.activePx
+                                                        }}
+                                                    />
+                                                    {/* Cancelled bar (only shows if there are cancelled sessions) */}
+                                                    {data.cancelled > 0 && (
+                                                        <View
+                                                            style={{
+                                                                width: 14,
+                                                                borderTopLeftRadius: 4,
+                                                                borderTopRightRadius: 4,
+                                                                backgroundColor: '#F87171',
+                                                                height: data.cancelledPx
+                                                            }}
+                                                        />
+                                                    )}
+                                                </View>
+                                            ) : (
+                                                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                                                    <View
+                                                        style={{
+                                                            width: 14,
+                                                            borderTopLeftRadius: 4,
+                                                            borderTopRightRadius: 4,
+                                                            backgroundColor: '#3B82F6',
+                                                            marginRight: 2,
+                                                            height: data.earningsPx
+                                                        }}
+                                                    />
                                                     <View
                                                         style={{
                                                             width: 14,
                                                             borderTopLeftRadius: 4,
                                                             borderTopRightRadius: 4,
                                                             backgroundColor: '#F87171',
-                                                            height: data.cancelledPx
+                                                            height: data.lostPx
                                                         }}
                                                     />
+                                                </View>
+                                            )}
+                                        </View>
+
+                                        {/* LABEL AREA */}
+                                        {chartView === 'sessions' ? (
+                                            <View style={{ height: 20, flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 4 }}>
+                                                {data.confirmed > 0 && (
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#3B82F6', marginRight: 1 }} />
+                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.confirmed}</Text>
+                                                    </View>
+                                                )}
+                                                {data.pending > 0 && (
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#FB923C', marginRight: 1 }} />
+                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.pending}</Text>
+                                                    </View>
+                                                )}
+                                                {data.cancelled > 0 && (
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#F87171', marginRight: 1 }} />
+                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.cancelled}</Text>
+                                                    </View>
                                                 )}
                                             </View>
                                         ) : (
-                                            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                                                <View
-                                                    style={{
-                                                        width: 14,
-                                                        borderTopLeftRadius: 4,
-                                                        borderTopRightRadius: 4,
-                                                        backgroundColor: '#3B82F6',
-                                                        marginRight: 2,
-                                                        height: data.earningsPx
-                                                    }}
-                                                />
-                                                <View
-                                                    style={{
-                                                        width: 14,
-                                                        borderTopLeftRadius: 4,
-                                                        borderTopRightRadius: 4,
-                                                        backgroundColor: '#F87171',
-                                                        height: data.lostPx
-                                                    }}
-                                                />
+                                            <View style={{ height: 28, marginBottom: 4, alignItems: 'center', justifyContent: 'flex-end' }}>
+                                                {data.earnings > 0 && (
+                                                    <Text style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#60A5FA' : '#2563EB' }}>
+                                                        {data.earnings >= 1000 ? `${Math.round(data.earnings / 1000)}k` : `${Math.round(data.earnings)}`}€
+                                                    </Text>
+                                                )}
+                                                {data.lostEarnings > 0 && (
+                                                    <Text style={{ fontSize: 7, fontWeight: '700', color: '#F87171' }}>
+                                                        -{data.lostEarnings >= 1000 ? `${Math.round(data.lostEarnings / 1000)}k` : `${Math.round(data.lostEarnings)}`}€
+                                                    </Text>
+                                                )}
                                             </View>
                                         )}
-                                    </View>
 
-                                    {/* LABEL AREA */}
-                                    {chartView === 'sessions' ? (
-                                        <View style={{ height: 20, flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 4 }}>
-                                            {data.confirmed > 0 && (
-                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#3B82F6', marginRight: 1 }} />
-                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.confirmed}</Text>
-                                                </View>
-                                            )}
-                                            {data.pending > 0 && (
-                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#FB923C', marginRight: 1 }} />
-                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.pending}</Text>
-                                                </View>
-                                            )}
-                                            {data.cancelled > 0 && (
-                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#F87171', marginRight: 1 }} />
-                                                    <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.cancelled}</Text>
-                                                </View>
-                                            )}
-                                        </View>
-                                    ) : (
-                                        <View style={{ height: 28, marginBottom: 4, alignItems: 'center', justifyContent: 'flex-end' }}>
-                                            {data.earnings > 0 && (
-                                                <Text style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#60A5FA' : '#2563EB' }}>
-                                                    {data.earnings >= 1000 ? `${Math.round(data.earnings / 1000)}k` : `${Math.round(data.earnings)}`}€
-                                                </Text>
-                                            )}
-                                            {data.lostEarnings > 0 && (
-                                                <Text style={{ fontSize: 7, fontWeight: '700', color: '#F87171' }}>
-                                                    -{data.lostEarnings >= 1000 ? `${Math.round(data.lostEarnings / 1000)}k` : `${Math.round(data.lostEarnings)}`}€
-                                                </Text>
-                                            )}
-                                        </View>
-                                    )}
-
-                                    {/* MONTH LABEL */}
-                                    <Text
-                                        style={{
-                                            fontSize: 10,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: 0.5,
-                                            fontWeight: data.isCurrentMonth ? '800' : '500',
-                                            color: data.isCurrentMonth ? '#2563EB' : (isDark ? '#9CA3AF' : '#6B7280')
-                                        }}
-                                    >
-                                        {data.month}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    </ScrollView>
-                </View>
-
-                {/* Upcoming Sessions Card with filter toggle */}
-                <View
-                    style={{
-                        backgroundColor: isDark ? '#1F2937' : '#F9FAFB',
-                        borderRadius: 12,
-                        padding: 20,
-                        marginBottom: 16
-                    }}
-                >
-                    {/* Header row */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
-                            {t('upcoming_sessions')}
-                        </Text>
-                        {/* Filter toggle */}
-                        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
-                            {(['month', 'future', 'past', 'all'] as const).map(filter => {
-                                const labels: Record<string, string> = {
-                                    month: t('filter_month'),
-                                    future: t('filter_upcoming'),
-                                    past: t('filter_past'),
-                                    all: t('dash_filter_all')
-                                };
-                                const isActive = upcomingFilter === filter;
-                                return (
-                                    <TouchableOpacity
-                                        key={filter}
-                                        onPress={() => setUpcomingFilter(filter)}
-                                        style={{
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 8,
-                                            borderRadius: 6,
-                                            backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                            shadowColor: '#000',
-                                            shadowOffset: { width: 0, height: 1 },
-                                            shadowOpacity: isActive ? 0.1 : 0,
-                                            shadowRadius: 1,
-                                            elevation: isActive ? 1 : 0
-                                        }}
-                                    >
-                                        <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
-                                            {labels[filter]}
+                                        {/* MONTH LABEL */}
+                                        <Text
+                                            style={{
+                                                fontSize: 10,
+                                                textTransform: 'uppercase',
+                                                letterSpacing: 0.5,
+                                                fontWeight: data.isCurrentMonth ? '800' : '500',
+                                                color: data.isCurrentMonth ? '#2563EB' : (isDark ? '#9CA3AF' : '#6B7280')
+                                            }}
+                                        >
+                                            {data.month}
                                         </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    </View>
-
-                    {/* Progress bar */}
-                    <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
-                        <View
-                            style={{
-                                height: '100%',
-                                marginBottom: 2,
-                                width: `${Math.max(filteredRatio, 4)}%`,
-                                backgroundColor: '#2563EB',
-                                borderRadius: 4
-                            }}
-                        />
-                    </View>
-
-                    {/* Stats: number + labels stacked */}
-                    <View style={{ flexDirection: 'column' }}>
-                        <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
-                            {filteredTotal}
-                        </Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                            {filteredConfirmed > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('confirmed')} ({filteredConfirmed})
-                                    </Text>
-                                </View>
-                            )}
-                            {filteredPending > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('pending')} ({filteredPending})
-                                    </Text>
-                                </View>
-                            )}
-                            {filteredCancelled > 0 && (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                        {t('cancelled_label')} ({filteredCancelled})
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-                </View>
-
-                {/* KPI row: avg price/session + avg sessions/month */}
-                {(() => {
-                    const now = new Date();
-                    const currentYear = now.getFullYear();
-                    const monthsElapsed = now.getMonth() + 1; // 1-12
-
-                    // Use yearly sessions data (non-cancelled, current year)
-                    const yearlySessions = sessions.filter(s => {
-                        if (!s.date) return false;
-                        return parseInt(s.date.split('T')[0].split('-')[0], 10) === currentYear
-                            && s.status !== 'cancelled';
-                    });
-                    const yearlyEarnings = yearlySessions.reduce((sum, s) => sum + calculateSessionEarnings(s), 0);
-                    const paidSessions = yearlySessions.filter(s => calculateSessionEarnings(s) > 0);
-
-                    const avgPrice = paidSessions.length > 0 ? Math.round(yearlyEarnings / paidSessions.length) : 0;
-                    const avgSessionsPerMonth = Math.round((yearlySessions.length / monthsElapsed) * 10) / 10;
-
-                    return (
-                        <>
-                            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-                                <View style={{ flex: 1, backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16 }}>
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                        {t('avg_price_session')}
-                                    </Text>
-                                    <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                        {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
-                                    </Text>
-                                </View>
-                                <View style={{ flex: 1, backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16 }}>
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                                        {t('avg_sessions_month')}
-                                    </Text>
-                                    <Text style={{ fontSize: 22, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                        {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
-                                    </Text>
-                                </View>
+                                    </View>
+                                ))}
                             </View>
+                        </ScrollView>
+                    </View>
 
-                            <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16, marginBottom: 12 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                    {t('top_collaborator')} (TOP 3)
-                                </Text>
-                                <View style={{ gap: 10 }}>
-                                    {topCollaborators.length > 0 ? topCollaborators.map((c, i) => (
-                                        <View key={c.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                    <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                    {/* Upcoming Sessions Card with filter toggle */}
+                    <View
+                        style={{
+                            backgroundColor: isDark ? '#1F2937' : '#F9FAFB',
+                            borderRadius: 12,
+                            padding: 20,
+                            marginBottom: 16
+                        }}
+                    >
+                        {/* Header row */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
+                                {t('upcoming_sessions')}
+                            </Text>
+                            {/* Filter toggle */}
+                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
+                                {(['month', 'future', 'past', 'all'] as const).map(filter => {
+                                    const labels: Record<string, string> = {
+                                        month: t('filter_month'),
+                                        future: t('filter_upcoming'),
+                                        past: t('filter_past'),
+                                        all: t('dash_filter_all')
+                                    };
+                                    const isActive = upcomingFilter === filter;
+                                    return (
+                                        <TouchableOpacity
+                                            key={filter}
+                                            onPress={() => setUpcomingFilter(filter)}
+                                            style={{
+                                                paddingHorizontal: 10,
+                                                paddingVertical: 8,
+                                                borderRadius: 6,
+                                                backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
+                                                shadowColor: '#000',
+                                                shadowOffset: { width: 0, height: 1 },
+                                                shadowOpacity: isActive ? 0.1 : 0,
+                                                shadowRadius: 1,
+                                                elevation: isActive ? 1 : 0
+                                            }}
+                                        >
+                                            <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
+                                                {labels[filter]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </View>
+
+                        {/* Progress bar */}
+                        <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+                            <View
+                                style={{
+                                    height: '100%',
+                                    marginBottom: 2,
+                                    width: `${Math.max(filteredRatio, 4)}%`,
+                                    backgroundColor: '#2563EB',
+                                    borderRadius: 4
+                                }}
+                            />
+                        </View>
+
+                        {/* Stats: number + labels stacked */}
+                        <View style={{ flexDirection: 'column' }}>
+                            <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
+                                {filteredTotal}
+                            </Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                                {filteredConfirmed > 0 && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
+                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                            {t('confirmed')} ({filteredConfirmed})
+                                        </Text>
+                                    </View>
+                                )}
+                                {filteredPending > 0 && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
+                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                            {t('pending')} ({filteredPending})
+                                        </Text>
+                                    </View>
+                                )}
+                                {filteredCancelled > 0 && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
+                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                                            {t('cancelled_label')} ({filteredCancelled})
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* KPI row: avg price/session + avg sessions/month */}
+                    {(() => {
+                        const now = new Date();
+                        const currentYear = now.getFullYear();
+                        const monthsElapsed = now.getMonth() + 1; // 1-12
+
+                        // Use yearly sessions data (non-cancelled, current year)
+                        const yearlySessions = sessions.filter(s => {
+                            if (!s.date) return false;
+                            return parseInt(s.date.split('T')[0].split('-')[0], 10) === currentYear
+                                && s.status !== 'cancelled';
+                        });
+                        const yearlyEarnings = yearlySessions.reduce((sum, s) => sum + calculateSessionEarnings(s), 0);
+                        const paidSessions = yearlySessions.filter(s => calculateSessionEarnings(s) > 0);
+
+                        const avgPrice = paidSessions.length > 0 ? Math.round(yearlyEarnings / paidSessions.length) : 0;
+                        const avgSessionsPerMonth = Math.round((yearlySessions.length / monthsElapsed) * 10) / 10;
+
+                        return (
+                            <>
+                                <View className="flex-row flex-wrap gap-3 mb-3">
+                                    <View className="flex-1 min-w-[150px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800/50 rounded-xl p-4">
+                                        <Text className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
+                                            {t('avg_price_session')}
+                                        </Text>
+                                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                                            {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-1 min-w-[150px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800/50 rounded-xl p-4">
+                                        <Text className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
+                                            {t('avg_sessions_month')}
+                                        </Text>
+                                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
+                                            {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                        {t('top_collaborator')} (TOP 3)
+                                    </Text>
+                                    <View style={{ gap: 10 }}>
+                                        {topCollaborators.length > 0 ? topCollaborators.map((c, i) => (
+                                            <View key={c.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                        <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                                    </View>
+                                                    <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                        {c.name}
+                                                    </Text>
                                                 </View>
-                                                <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                    {c.name}
+                                                <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                                    {c.count} {c.count === 1 ? t('session_singular') : t('sessions_plural')}
                                                 </Text>
                                             </View>
-                                            <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                                {c.count} {c.count === 1 ? t('session_singular') : t('sessions_plural')}
+                                        )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                                    </View>
+                                </View>
+                            </>
+                        );
+                    })()}
+
+                    {/* Ranking Lists: Rentable & Visited */}
+                    <View style={{ gap: 12, marginBottom: 12 }}>
+                        {/* Most profitable list */}
+                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                {t('top_venue_year')} (TOP 3)
+                            </Text>
+                            <View style={{ gap: 10 }}>
+                                {topVenues.length > 0 ? topVenues.map((v, i) => (
+                                    <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                            </View>
+                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                {v.name}
                                             </Text>
                                         </View>
-                                    )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                                </View>
+                                        <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                            {v.amount.toLocaleString()}€
+                                        </Text>
+                                    </View>
+                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
                             </View>
-                        </>
-                    );
-                })()}
+                        </View>
 
-                {/* Ranking Lists: Rentable & Visited */}
-                <View style={{ gap: 12, marginBottom: 12 }}>
-                    {/* Most profitable list */}
-                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                            {t('top_venue_year')} (TOP 3)
-                        </Text>
-                        <View style={{ gap: 10 }}>
-                            {topVenues.length > 0 ? topVenues.map((v, i) => (
-                                <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                        {/* Most visited list */}
+                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                {t('top_venue_visits')} (TOP 3)
+                            </Text>
+                            <View style={{ gap: 10 }}>
+                                {topVisitedVenues.length > 0 ? topVisitedVenues.map((v, i) => (
+                                    <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                            </View>
+                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                {v.name}
+                                            </Text>
                                         </View>
-                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                            {v.name}
+                                        <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>
+                                            {v.count} {v.count === 1 ? t('session_singular') : t('sessions_plural')}
                                         </Text>
                                     </View>
-                                    <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                        {v.amount.toLocaleString()}€
-                                    </Text>
-                                </View>
-                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                            </View>
                         </View>
                     </View>
 
-                    {/* Most visited list */}
-                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                            {t('top_venue_visits')} (TOP 3)
-                        </Text>
-                        <View style={{ gap: 10 }}>
-                            {topVisitedVenues.length > 0 ? topVisitedVenues.map((v, i) => (
-                                <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                    {/* Ranking Lists: Sound & Experience */}
+                    <View style={{ gap: 12, marginBottom: 16 }}>
+                        {/* Best sound quality list */}
+                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                {t('best_sound_venue')} (TOP 3)
+                            </Text>
+                            <View style={{ gap: 10 }}>
+                                {bestSoundVenues.length > 0 ? bestSoundVenues.map((v, i) => (
+                                    <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#FACC15' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                            </View>
+                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                {v.name}
+                                            </Text>
                                         </View>
-                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                            {v.name}
-                                        </Text>
+                                        <View style={{ flexDirection: 'row' }}>
+                                            {'★'.repeat(v.sound_quality || 0).split('').map((s, si) => (
+                                                <Text key={si} style={{ fontSize: 12, color: '#FACC15' }}>{s}</Text>
+                                            ))}
+                                        </View>
                                     </View>
-                                    <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                        {v.count} {v.count === 1 ? t('session_singular') : t('sessions_plural')}
-                                    </Text>
-                                </View>
-                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                            </View>
+                        </View>
+
+                        {/* Best experience list */}
+                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                                {t('best_exp_venue')} (TOP 3)
+                            </Text>
+                            <View style={{ gap: 10 }}>
+                                {bestExpVenues.length > 0 ? bestExpVenues.map((v, i) => (
+                                    <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
+                                            </View>
+                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
+                                                {v.name}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row' }}>
+                                            {'★'.repeat(v.experience_rating || 0).split('').map((s, si) => (
+                                                <Text key={si} style={{ fontSize: 12, color: '#3B82F6' }}>{s}</Text>
+                                            ))}
+                                        </View>
+                                    </View>
+                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
+                            </View>
                         </View>
                     </View>
+
+                    <View className="h-28" />
                 </View>
-
-                {/* Ranking Lists: Sound & Experience */}
-                <View style={{ gap: 12, marginBottom: 16 }}>
-                    {/* Best sound quality list */}
-                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                            {t('best_sound_venue')} (TOP 3)
-                        </Text>
-                        <View style={{ gap: 10 }}>
-                            {bestSoundVenues.length > 0 ? bestSoundVenues.map((v, i) => (
-                                <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#FACC15' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                        </View>
-                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                            {v.name}
-                                        </Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        {'★'.repeat(v.sound_quality || 0).split('').map((s, si) => (
-                                            <Text key={si} style={{ fontSize: 12, color: '#FACC15' }}>{s}</Text>
-                                        ))}
-                                    </View>
-                                </View>
-                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                        </View>
-                    </View>
-
-                    {/* Best experience list */}
-                    <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                            {t('best_exp_venue')} (TOP 3)
-                        </Text>
-                        <View style={{ gap: 10 }}>
-                            {bestExpVenues.length > 0 ? bestExpVenues.map((v, i) => (
-                                <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                            <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                        </View>
-                                        <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                            {v.name}
-                                        </Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        {'★'.repeat(v.experience_rating || 0).split('').map((s, si) => (
-                                            <Text key={si} style={{ fontSize: 12, color: '#3B82F6' }}>{s}</Text>
-                                        ))}
-                                    </View>
-                                </View>
-                            )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                        </View>
-                    </View>
-                </View>
-
-                <View className="h-28" />
             </ScrollView>
         </SafeAreaView>
     );

@@ -157,161 +157,163 @@ export default function SettingsScreen() {
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* Profile Card */}
-                <View className="bg-white dark:bg-gray-800/50 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 items-center mb-6">
-                    <View className="relative mb-4">
-                        <Avatar
-                            url={profile?.avatar_url}
-                            name={session?.user?.email}
-                            size="lg"
-                        />
-                        {uploading && (
-                            <View className="absolute inset-0 bg-black/40 rounded-full items-center justify-center">
-                                <ActivityIndicator color="white" />
+                <View className="max-w-3xl w-full mx-auto px-4 pt-6">
+                    {/* Profile Card */}
+                    <View className="bg-white dark:bg-gray-800/50 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 items-center mb-6">
+                        <View className="relative mb-4">
+                            <Avatar
+                                url={profile?.avatar_url}
+                                name={session?.user?.email}
+                                size="lg"
+                            />
+                            {uploading && (
+                                <View className="absolute inset-0 bg-black/40 rounded-full items-center justify-center">
+                                    <ActivityIndicator color="white" />
+                                </View>
+                            )}
+                            {!editing && (
+                                <TouchableOpacity
+                                    className="absolute bottom-0 right-0 bg-blue-600 w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 items-center justify-center"
+                                    onPress={handlePickAvatar}
+                                >
+                                    <Camera size={14} color="white" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        {editing ? (
+                            <View className="w-full mb-4">
+                                <TextInput
+                                    value={artistName}
+                                    onChangeText={setArtistName}
+                                    placeholder={t('artist_name_placeholder')}
+                                    placeholderTextColor="#9CA3AF"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-center text-lg font-bold text-gray-900 dark:text-white"
+                                    autoFocus
+                                />
+                            </View>
+                        ) : (
+                            <View className="items-center">
+                                <Text className="text-2xl font-black text-gray-900 dark:text-white mb-1">
+                                    {profile?.artist_name || session?.user?.email?.split('@')[0]}
+                                </Text>
+                                <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
+                                    {session?.user?.email}
+                                </Text>
                             </View>
                         )}
-                        {!editing && (
-                            <TouchableOpacity
-                                className="absolute bottom-0 right-0 bg-blue-600 w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 items-center justify-center"
-                                onPress={handlePickAvatar}
-                            >
-                                <Camera size={14} color="white" />
-                            </TouchableOpacity>
-                        )}
+
+                        <TouchableOpacity
+                            className={cn(
+                                "mt-6 px-10 py-3 rounded-2xl",
+                                editing ? "bg-blue-600" : "bg-gray-100 dark:bg-gray-800"
+                            )}
+                            onPress={editing ? handleUpdateProfile : () => setEditing(true)}
+                        >
+                            <Text className={cn(
+                                "font-bold",
+                                editing ? "text-white" : "text-gray-900 dark:text-white"
+                            )}>
+                                {editing ? t('save_changes') : t('edit_profile')}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
 
-                    {editing ? (
-                        <View className="w-full mb-4">
-                            <TextInput
-                                value={artistName}
-                                onChangeText={setArtistName}
-                                placeholder={t('artist_name_placeholder')}
-                                placeholderTextColor="#9CA3AF"
-                                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-center text-lg font-bold text-gray-900 dark:text-white"
-                                autoFocus
-                            />
-                        </View>
-                    ) : (
-                        <View className="items-center">
-                            <Text className="text-2xl font-black text-gray-900 dark:text-white mb-1">
-                                {profile?.artist_name || session?.user?.email?.split('@')[0]}
-                            </Text>
-                            <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
-                                {session?.user?.email}
-                            </Text>
-                        </View>
-                    )}
+                    {/* APP SETTINGS */}
+                    <SectionHeader title={t('settings_app_section')} />
+                    <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                        <SettingItem
+                            icon={Globe}
+                            label={t('language')}
+                            value={currentLanguage.toUpperCase()}
+                            onPress={() => {
+                                const languages = [
+                                    { label: 'English', code: 'en' },
+                                    { label: 'Español', code: 'es' },
+                                    { label: 'Deutsch', code: 'de' },
+                                    { label: 'Français', code: 'fr' },
+                                    { label: 'Italiano', code: 'it' },
+                                    { label: 'Português', code: 'pt' },
+                                    { label: '日本語', code: 'ja' },
+                                ];
 
-                    <TouchableOpacity
-                        className={cn(
-                            "mt-6 px-10 py-3 rounded-2xl",
-                            editing ? "bg-blue-600" : "bg-gray-100 dark:bg-gray-800"
-                        )}
-                        onPress={editing ? handleUpdateProfile : () => setEditing(true)}
-                    >
-                        <Text className={cn(
-                            "font-bold",
-                            editing ? "text-white" : "text-gray-900 dark:text-white"
-                        )}>
-                            {editing ? t('save_changes') : t('edit_profile')}
+                                Alert.alert(
+                                    t('language'),
+                                    t('language'),
+                                    languages.map(lang => ({
+                                        text: lang.label,
+                                        onPress: () => changeLanguage(lang.code)
+                                    })).concat([{ text: t('cancel'), style: 'cancel' } as any])
+                                );
+                            }}
+                        />
+                        <SettingItem
+                            icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
+                            label={t('appearance')}
+                            value={t(`theme_${theme}`)}
+                            onPress={() => {
+                                Alert.alert(
+                                    t('appearance'),
+                                    t('appearance'),
+                                    [
+                                        { text: t('theme_light'), onPress: () => setTheme('light') },
+                                        { text: t('theme_dark'), onPress: () => setTheme('dark') },
+                                        { text: t('theme_system'), onPress: () => setTheme('system') },
+                                        { text: t('cancel'), style: 'cancel' }
+                                    ]
+                                );
+                            }}
+                        />
+                        <SettingItem
+                            icon={Star}
+                            label={t('rate_app')}
+                            onPress={handleRateApp}
+                            last
+                        />
+                    </View>
+
+                    {/* LEGAL */}
+                    <SectionHeader title={t('settings_legal_section')} />
+                    <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                        <SettingItem
+                            icon={ShieldCheck}
+                            label={t('privacy_policy')}
+                            onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5?source=copy_link')}
+                        />
+                        <SettingItem
+                            icon={Info}
+                            label={t('terms_of_service')}
+                            onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619?source=copy_link')}
+                            last
+                        />
+                    </View>
+
+                    {/* ACCOUNT */}
+                    <SectionHeader title={t('settings_account_section')} />
+                    <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
+                        <SettingItem
+                            icon={LogOut}
+                            label={t('log_out')}
+                            onPress={() => signOut()}
+                        />
+                        <SettingItem
+                            icon={Trash2}
+                            label={t('delete_account')}
+                            onPress={handleDeleteAccount}
+                            last
+                        >
+                            <Text className="text-red-500 font-medium">{t('delete_account')}</Text>
+                        </SettingItem>
+                    </View>
+
+                    {/* VERSION */}
+                    <View className="mt-8 mb-4 items-center">
+                        <Text className="text-gray-400 dark:text-gray-600 text-xs">
+                            {t('version')} 1.2.0 • Build 2534
                         </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* APP SETTINGS */}
-                <SectionHeader title={t('settings_app_section')} />
-                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
-                    <SettingItem
-                        icon={Globe}
-                        label={t('language')}
-                        value={currentLanguage.toUpperCase()}
-                        onPress={() => {
-                            const languages = [
-                                { label: 'English', code: 'en' },
-                                { label: 'Español', code: 'es' },
-                                { label: 'Deutsch', code: 'de' },
-                                { label: 'Français', code: 'fr' },
-                                { label: 'Italiano', code: 'it' },
-                                { label: 'Português', code: 'pt' },
-                                { label: '日本語', code: 'ja' },
-                            ];
-
-                            Alert.alert(
-                                t('language'),
-                                t('language'),
-                                languages.map(lang => ({
-                                    text: lang.label,
-                                    onPress: () => changeLanguage(lang.code)
-                                })).concat([{ text: t('cancel'), style: 'cancel' } as any])
-                            );
-                        }}
-                    />
-                    <SettingItem
-                        icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
-                        label={t('appearance')}
-                        value={t(`theme_${theme}`)}
-                        onPress={() => {
-                            Alert.alert(
-                                t('appearance'),
-                                t('appearance'),
-                                [
-                                    { text: t('theme_light'), onPress: () => setTheme('light') },
-                                    { text: t('theme_dark'), onPress: () => setTheme('dark') },
-                                    { text: t('theme_system'), onPress: () => setTheme('system') },
-                                    { text: t('cancel'), style: 'cancel' }
-                                ]
-                            );
-                        }}
-                    />
-                    <SettingItem
-                        icon={Star}
-                        label={t('rate_app')}
-                        onPress={handleRateApp}
-                        last
-                    />
-                </View>
-
-                {/* LEGAL */}
-                <SectionHeader title={t('settings_legal_section')} />
-                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
-                    <SettingItem
-                        icon={ShieldCheck}
-                        label={t('privacy_policy')}
-                        onPress={() => Linking.openURL('https://djplanner.pro/privacy')}
-                    />
-                    <SettingItem
-                        icon={Info}
-                        label={t('terms_of_service')}
-                        onPress={() => Linking.openURL('https://djplanner.pro/terms')}
-                        last
-                    />
-                </View>
-
-                {/* ACCOUNT */}
-                <SectionHeader title={t('settings_account_section')} />
-                <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
-                    <SettingItem
-                        icon={LogOut}
-                        label={t('log_out')}
-                        onPress={() => signOut()}
-                    />
-                    <SettingItem
-                        icon={Trash2}
-                        label={t('delete_account')}
-                        onPress={handleDeleteAccount}
-                        last
-                    >
-                        <Text className="text-red-500 font-medium">{t('delete_account')}</Text>
-                    </SettingItem>
-                </View>
-
-                {/* VERSION */}
-                <View className="mt-8 mb-4 items-center">
-                    <Text className="text-gray-400 dark:text-gray-600 text-xs">
-                        {t('version')} 1.2.0 • Build 2534
-                    </Text>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>

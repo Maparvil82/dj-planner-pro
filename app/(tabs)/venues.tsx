@@ -234,91 +234,95 @@ export default function VenuesScreen() {
                 </View>
             </View>
 
-            {/* Search Bar */}
-            <View className="px-6 mt-4">
-                <View className="flex-row items-center bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800">
-                    <Search size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                    <TextInput
-                        className="flex-1 ml-3 text-gray-900 dark:text-white font-medium"
-                        placeholder={t('search_placeholder')}
-                        placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                    {searchQuery !== '' && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-
-            <ScrollView
-                className="flex-1 px-6 mt-4"
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefetching}
-                        onRefresh={refetch}
-                        tintColor={isDark ? '#FFFFFF' : '#000000'}
-                    />
-                }
-            >
-                {groupedVenues.length === 0 ? (
-                    <View className="py-20 items-center justify-center">
-                        <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
-                            <MapPin size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                        </View>
-                        <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
-                            {searchQuery ? t('no_results_filtered') : t('no_venues_yet')}
-                        </Text>
+            {/* Search Bar & Main Content Container */}
+            <View className="max-w-5xl w-full mx-auto flex-1">
+                <View className="px-6 mt-4">
+                    <View className="flex-row items-center bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800">
+                        <Search size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                        <TextInput
+                            className="flex-1 ml-3 text-gray-900 dark:text-white font-medium"
+                            placeholder={t('search_placeholder')}
+                            placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                        {searchQuery !== '' && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                            </TouchableOpacity>
+                        )}
                     </View>
-                ) : (
-                    groupedVenues.map((group) => (
-                        <View key={group.letter} className="mb-2">
-                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 mb-3 ml-2 mt-2 uppercase tracking-widest">
-                                {group.letter}
+                </View>
+
+                <ScrollView
+                    className="flex-1 px-6 mt-4"
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={refetch}
+                            tintColor={isDark ? '#FFFFFF' : '#000000'}
+                        />
+                    }
+                >
+                    {groupedVenues.length === 0 ? (
+                        <View className="py-20 items-center justify-center">
+                            <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
+                                <MapPin size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                            </View>
+                            <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
+                                {searchQuery ? t('no_results_filtered') : t('no_venues_yet')}
                             </Text>
-                            {group.data.map((venue) => (
-                                <TouchableOpacity
-                                    key={venue.id}
-                                    activeOpacity={0.7}
-                                    onPress={() => router.push(`/venue/${venue.id}`)}
-                                    className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 mb-4 flex-row items-center"
-                                >
-                                    {venue.images && venue.images.length > 0 ? (
-                                        <Image
-                                            source={{ uri: venue.images[0] }}
-                                            className="w-12 h-12 rounded-xl mr-3"
-                                            resizeMode="cover"
-                                        />
-                                    ) : (
-                                        <View className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-xl items-center justify-center mr-3 border border-gray-100 dark:border-gray-700">
-                                            <ImageIcon size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                        </View>
-                                    )}
-                                    <View className="flex-1">
-                                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
-                                            {venue.name}
-                                        </Text>
-                                        {venue.address ? (
-                                            <Text className="text-gray-500 dark:text-gray-400 text-xs" numberOfLines={1}>
-                                                {venue.address}
-                                            </Text>
-                                        ) : (
-                                            <Text className="text-gray-400 dark:text-gray-600 text-xs italic">
-                                                {t('venue_address')}...
-                                            </Text>
-                                        )}
-                                    </View>
-                                    <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                </TouchableOpacity>
-                            ))}
                         </View>
-                    ))
-                )}
-                <View className="h-20" />
-            </ScrollView>
+                    ) : (
+                        groupedVenues.map((group) => (
+                            <View key={group.letter} className="mb-2">
+                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 mb-3 ml-2 mt-2 uppercase tracking-widest">
+                                    {group.letter}
+                                </Text>
+                                <View className="flex-row flex-wrap gap-4 mb-4">
+                                    {group.data.map((venue) => (
+                                        <TouchableOpacity
+                                            key={venue.id}
+                                            activeOpacity={0.7}
+                                            onPress={() => router.push(`/venue/${venue.id}`)}
+                                            className="w-full md:w-[48.5%] lg:w-[32.3%] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 flex-row items-center"
+                                        >
+                                            {venue.images && venue.images.length > 0 ? (
+                                                <Image
+                                                    source={{ uri: venue.images[0] }}
+                                                    className="w-12 h-12 rounded-xl mr-3"
+                                                    resizeMode="cover"
+                                                />
+                                            ) : (
+                                                <View className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-xl items-center justify-center mr-3 border border-gray-100 dark:border-gray-700">
+                                                    <ImageIcon size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                </View>
+                                            )}
+                                            <View className="flex-1">
+                                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
+                                                    {venue.name}
+                                                </Text>
+                                                {venue.address ? (
+                                                    <Text className="text-gray-500 dark:text-gray-400 text-xs" numberOfLines={1}>
+                                                        {venue.address}
+                                                    </Text>
+                                                ) : (
+                                                    <Text className="text-gray-400 dark:text-gray-600 text-xs italic">
+                                                        {t('venue_address')}...
+                                                    </Text>
+                                                )}
+                                            </View>
+                                            <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        ))
+                    )}
+                    <View className="h-20" />
+                </ScrollView>
+            </View>
 
             {/* Add Venue Modal */}
             <Modal
