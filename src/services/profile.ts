@@ -86,4 +86,19 @@ export const profileService = {
             return null;
         }
     },
+
+    async deleteAccount(userId: string): Promise<boolean> {
+        try {
+            // 1. Call the SECURITY DEFINER function to delete the user from auth.users
+            // and all their data (cascades or manual cleanup in SQL)
+            const { error } = await supabase.rpc('delete_user_data');
+
+            if (error) throw error;
+
+            return true;
+        } catch (error) {
+            console.error('Delete Account Error:', error);
+            return false;
+        }
+    }
 };

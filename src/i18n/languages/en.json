@@ -219,6 +219,7 @@
     "confirm_delete_account": "Confirm Account Deletion",
     "delete_account_warning": "This action is permanent and will delete all your data. Are you sure?",
     "delete_permanently": "Delete Permanently",
+    "delete_account_success": "Your account and data have been successfully deleted.",
     "version": "Version",
     "vault": "Documents",
     "vault_subtitle": "Manage your documents and files",

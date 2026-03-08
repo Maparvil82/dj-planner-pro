@@ -224,6 +224,7 @@
     "confirm_delete_account": "Confirmar eliminación",
     "delete_account_warning": "Esta acción es permanente y borrará todos tus datos. ¿Estás seguro?",
     "delete_permanently": "Eliminar Permanentemente",
+    "delete_account_success": "Tu cuenta y datos han sido eliminados correctamente.",
     "version": "Versión",
     "vault": "Documentos",
     "vault_subtitle": "Gestiona tus documentos y archivos",

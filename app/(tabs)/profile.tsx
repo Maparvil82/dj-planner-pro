@@ -116,10 +116,15 @@ export default function SettingsScreen() {
                     text: t('delete_permanently'),
                     style: 'destructive',
                     onPress: async () => {
-                        // In a real app, we'd call a Supabase function to delete the user
-                        // and all their data securely. For now, we sign out.
-                        Alert.alert(t('success'), "Account deletion requested.");
-                        signOut();
+                        if (session?.user?.id) {
+                            const success = await profileService.deleteAccount(session.user.id);
+                            if (success) {
+                                Alert.alert(t('success'), t('delete_account_success') || "Account deleted.");
+                                signOut();
+                            } else {
+                                Alert.alert(t('error'), t('error_saving_session'));
+                            }
+                        }
                     }
                 }
             ]
