@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
+import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
@@ -145,11 +146,11 @@ export default function PaywallScreen() {
                     </TouchableOpacity>
 
                     <View className="flex-row items-center gap-4">
-                        <TouchableOpacity onPress={() => Alert.alert(t('terms_of_use'), t('showing_terms'))}>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619')}>
                             <Text className="text-gray-400 dark:text-gray-500 text-[10px] underline">{t('terms_of_use')}</Text>
                         </TouchableOpacity>
                         <View className="w-1 h-1 rounded-full bg-gray-300" />
-                        <TouchableOpacity onPress={() => Alert.alert(t('privacy_policy'), t('showing_privacy'))}>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5')}>
                             <Text className="text-gray-400 dark:text-gray-500 text-[10px] underline">{t('privacy_policy')}</Text>
                         </TouchableOpacity>
                     </View>
