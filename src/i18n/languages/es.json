@@ -194,7 +194,8 @@
     "avg_sessions_month": "Media sesiones/mes",
     "top_collaborator": "Top Colaborador DJ",
     "annual_comparison": "Comparativa Anual",
-    "venue_suggestion": "Hace tiempo que no pinchas en {{name}}. ¿Le damos un toque?",
+    "venue_suggestion": "Hace tiempo",
+    "legacy_api_fix": "- **File Upload Fix**: Resolved a deprecation error with `readAsStringAsync` by switching to the `expo-file-system/legacy` API, ensuring compatibility with Expo SDK 54+.\n- **Import Paths**: Corrected incorrect relative paths in `app/(tabs)/vault.tsx` and related files to point to the root-level `src` directory.",
     "recovery_suggestion": "Vaya, se ha cancelado una sesión este mes. ¿Intentamos cubrir el hueco contactando con {{name}}?",
     "recovery_no_venue": "Vaya, se ha cancelado una sesión. Ir a locales para buscar una alternativa.",
     "chart_sessions": "SESIONES",
@@ -262,5 +263,10 @@
     "file": "Archivo",
     "folder_empty_title": "Esta carpeta está vacía",
     "folder_empty_desc": "Añade documentos, imágenes o archivos importantes pulsando el botón +.",
-    "error_uploading_file": "Error al subir el archivo"
+    "error_uploading_file": "Error al subir el archivo",
+    "sharing_not_available": "La opción de compartir no está disponible en este dispositivo",
+    "error_sharing_file": "Error al compartir el archivo",
+    "error_deleting_folder": "No se pudo eliminar la carpeta. Verifica que no tenga archivos protegidos.",
+    "error_deleting_file": "No se pudo eliminar el archivo correctamente.",
+    "error_opening_file": "No se pudo abrir el archivo correctamente."
 }

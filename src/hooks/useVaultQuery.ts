@@ -81,6 +81,9 @@ export const useDeleteFolderMutation = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vault', 'folders'] });
         },
+        onError: (error) => {
+            console.error('Delete folder error:', error);
+        }
     });
 };
 
@@ -88,10 +91,13 @@ export const useDeleteFileMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ fileId, fileUrl, folderId }: { fileId: string; fileUrl: string; folderId: string }) =>
-            vaultService.deleteFile(fileId, fileUrl),
+        mutationFn: ({ fileId, filePath, fileUrl, folderId }: { fileId: string; filePath: string; fileUrl?: string; folderId: string }) =>
+            vaultService.deleteFile(fileId, filePath, fileUrl),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['vault', 'files', variables.folderId] });
         },
+        onError: (error) => {
+            console.error('Delete file error:', error);
+        }
     });
 };

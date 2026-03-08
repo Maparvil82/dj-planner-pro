@@ -18,6 +18,8 @@ import {
     useUploadFileMutation,
     useDeleteFileMutation
 } from '../../src/hooks/useVaultQuery';
+import { VaultFile } from '../../src/types/session';
+import { vaultService } from '../../src/services/vault';
 import {
     File,
     FileText,
@@ -27,10 +29,12 @@ import {
     Trash2,
     Download,
     ExternalLink,
-    FileMinus
+    FileMinus,
+    Share2
 } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { decode } from 'base64-arraybuffer';
 
 const { width } = Dimensions.get('window');
@@ -56,8 +60,10 @@ export default function FolderDetailScreen() {
             if (result.canceled) return;
 
             const file = result.assets[0];
+            // Using a more modern way to read files if readAsStringAsync / legacy is problematic
+            // SDK 54+ recommends using the new File API or just readAsStringAsync from the main entry if legacy is failing
             const base64 = await FileSystem.readAsStringAsync(file.uri, {
-                encoding: FileSystem.EncodingType.Base64,
+                encoding: 'base64' as any,
             });
 
             await uploadFileMutation.mutateAsync({
@@ -73,7 +79,7 @@ export default function FolderDetailScreen() {
         }
     };
 
-    const handleDeleteFile = (fileId: string, fileUrl: string, fileName: string) => {
+    const handleDeleteFile = (fileId: string, filePath: string, fileName: string) => {
         Alert.alert(
             t('delete_file_title') || 'Eliminar Archivo',
             t('delete_file_message', { name: fileName }) || `¿Estás seguro de que quieres eliminar "${fileName}"?`,
@@ -82,10 +88,44 @@ export default function FolderDetailScreen() {
                 {
                     text: t('delete'),
                     style: 'destructive',
-                    onPress: () => deleteFileMutation.mutate({ fileId, fileUrl, folderId: id as string })
+                    onPress: () => deleteFileMutation.mutate(
+                        { fileId, filePath, folderId: id as string },
+                        {
+                            onError: (error: any) => {
+                                Alert.alert(t('error'), t('error_deleting_file') || 'No se pudo eliminar el archivo.');
+                            }
+                        }
+                    )
                 }
             ]
         );
+    };
+
+    const handleOpenFile = async (file: VaultFile) => {
+        try {
+            const signedUrl = await vaultService.getSignedUrl(file.path, file.url);
+            await Linking.openURL(signedUrl);
+        } catch (error) {
+            console.error('Open file error:', error);
+            Alert.alert(t('error'), t('error_opening_file') || 'No se pudo abrir el archivo');
+        }
+    };
+
+    const handleShareFile = async (file: VaultFile) => {
+        try {
+            const signedUrl = await vaultService.getSignedUrl(file.path, file.url);
+            const tempUri = FileSystem.cacheDirectory + file.name;
+            const downloadResult = await FileSystem.downloadAsync(signedUrl, tempUri);
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(downloadResult.uri);
+            } else {
+                Alert.alert(t('error'), t('sharing_not_available') || 'La opción de compartir no está disponible en este dispositivo');
+            }
+        } catch (error) {
+            console.error('Sharing error:', error);
+            Alert.alert(t('error'), t('error_sharing_file') || 'Error al compartir el archivo');
+        }
     };
 
     const getFileIcon = (mimeType: string | null | undefined) => {
@@ -164,13 +204,19 @@ export default function FolderDetailScreen() {
                                 </View>
                                 <View className="flex-row items-center gap-2">
                                     <TouchableOpacity
-                                        onPress={() => Linking.openURL(file.url)}
+                                        onPress={() => handleOpenFile(file)}
                                         className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 items-center justify-center"
                                     >
                                         <ExternalLink size={16} color="#2563EB" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        onPress={() => handleDeleteFile(file.id, file.url, file.name)}
+                                        onPress={() => handleShareFile(file)}
+                                        className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 items-center justify-center"
+                                    >
+                                        <Share2 size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => handleDeleteFile(file.id, file.path || file.url, file.name)}
                                         className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 items-center justify-center"
                                     >
                                         <Trash2 size={16} color="#EF4444" />

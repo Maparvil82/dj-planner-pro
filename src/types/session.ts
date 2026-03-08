@@ -60,6 +60,7 @@ export interface VaultFile {
     folder_id: string;
     name: string;
     url: string;
+    path: string;
     file_type?: string | null;
     size?: number | null;
     created_at: string;

@@ -43,8 +43,22 @@ export const vaultService = {
     },
 
     async deleteFolder(folderId: string): Promise<void> {
-        // RLS and ON DELETE CASCADE will handle file records in DB, 
-        // but we might need to handle storage cleanup manually or via Edge Functions.
+        // 1. Get all files in the folder to delete from storage
+        const files = await this.getFiles(folderId);
+
+        // 2. Delete files from storage
+        if (files.length > 0) {
+            const storagePaths = files.map(file => {
+                const parts = file.url.split('/public/vault/')[1]?.split('?')[0];
+                return parts ? decodeURIComponent(parts) : null;
+            }).filter(Boolean) as string[];
+
+            if (storagePaths.length > 0) {
+                await supabase.storage.from('vault').remove(storagePaths);
+            }
+        }
+
+        // 3. Delete from DB (ON DELETE CASCADE will handle vault_files records)
         const { error } = await supabase
             .from('vault_folders')
             .delete()
@@ -84,6 +98,7 @@ export const vaultService = {
                 folder_id: folderId,
                 name: name,
                 url: publicUrlData.publicUrl,
+                path: filePath,
                 file_type: contentType,
                 size: size
             })
@@ -94,11 +109,37 @@ export const vaultService = {
         return data;
     },
 
-    async deleteFile(fileId: string, fileUrl: string): Promise<void> {
-        // 1. Delete from storage
-        const pathParts = fileUrl.split('/public/vault/')[1]?.split('?')[0];
-        if (pathParts) {
-            await supabase.storage.from('vault').remove([pathParts]);
+    async getSignedUrl(path: string, url?: string): Promise<string> {
+        let storagePath = path;
+
+        // Fallback: If path is missing, try to extract from URL
+        if (!storagePath && url) {
+            const parts = url.split('/public/vault/')[1]?.split('?')[0];
+            if (parts) storagePath = decodeURIComponent(parts);
+        }
+
+        if (!storagePath) throw new Error('File path not found');
+
+        const { data, error } = await supabase.storage
+            .from('vault')
+            .createSignedUrl(storagePath, 3600); // 1 hour
+
+        if (error) throw error;
+        return data.signedUrl;
+    },
+
+    async deleteFile(fileId: string, filePath: string, fileUrl?: string): Promise<void> {
+        let storagePath = filePath;
+
+        // Fallback: If path is missing, try to extract from URL
+        if (!storagePath && fileUrl) {
+            const parts = fileUrl.split('/public/vault/')[1]?.split('?')[0];
+            if (parts) storagePath = decodeURIComponent(parts);
+        }
+
+        // 1. Delete from storage if we have a path
+        if (storagePath) {
+            await supabase.storage.from('vault').remove([storagePath]);
         }
 
         // 2. Delete from DB

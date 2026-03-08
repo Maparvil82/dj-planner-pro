@@ -74,7 +74,11 @@ export default function VaultScreen() {
                 {
                     text: t('delete'),
                     style: 'destructive',
-                    onPress: () => deleteFolderMutation.mutate(id)
+                    onPress: () => deleteFolderMutation.mutate(id, {
+                        onError: (error: any) => {
+                            Alert.alert(t('error'), t('error_deleting_folder') || 'No se pudo eliminar la carpeta. Verifica los permisos.');
+                        }
+                    })
                 }
             ]
         );

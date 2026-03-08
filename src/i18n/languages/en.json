@@ -258,5 +258,8 @@
     "file": "File",
     "folder_empty_title": "This folder is empty",
     "folder_empty_desc": "Add documents, images or important files by pressing the + button.",
-    "error_uploading_file": "Error uploading file"
+    "error_uploading_file": "Error uploading file",
+    "error_deleting_folder": "Could not delete folder. Please check your permissions.",
+    "error_deleting_file": "Could not delete file correctly.",
+    "error_opening_file": "Could not open file correctly."
 }
