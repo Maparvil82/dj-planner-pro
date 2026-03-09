@@ -23,6 +23,7 @@ import {
     ShieldCheck,
     BarChart3,
     FileText,
+    Quote,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -88,108 +89,77 @@ export default function PaywallScreen() {
             {/* CONTENT SECTION */}
             <View className="flex-1 px-6 justify-between pb-10">
                 <View>
-                    {/* TESTIMONIALS CAROUSEL */}
-                    <View className="mt-4 mb-2">
-                        <ScrollView
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            className="h-24"
-                        >
-                            {[
-                                { name: 'DJ Shadow', text: 'La mejor herramienta para organizar mis bolos y facturar sin líos.' },
-                                { name: 'Alex Rivera', text: 'Desde que uso DJ Planner Pro no he vuelto a perder un ticket.' },
-                                { name: 'Elena Pulse', text: 'Mis ingresos han subido un 20% gracias a las analíticas.' },
-                            ].map((item, index) => (
-                                <View key={index} style={{ width: width - 48 }} className="justify-center px-2">
-                                    <View className="bg-white/5 p-4 rounded-2xl border border-white/10 italic">
-                                        <Text className="text-white/80 text-sm leading-tight">
-                                            "{item.text}"
-                                        </Text>
-                                        <Text className="text-[#FFC2AD] text-[10px] font-bold mt-2 uppercase tracking-widest">
-                                            — {item.name}
-                                        </Text>
-                                    </View>
+                    <View className="-mt-16">
+                        {/* PRICING PLANS SIDE-BY-SIDE */}
+                        <View className="flex-row mt-4 mb-2 gap-4">
+                            {/* MONTHLY PLAN CARD */}
+                            <TouchableOpacity
+                                onPress={() => setSelectedPlan('monthly')}
+                                activeOpacity={0.8}
+                                className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                    }`}
+                                style={{ minHeight: 120 }}
+                            >
+                                <View className="flex-1">
+                                    <Text className="text-white font-bold text-lg leading-tight">{t('plan_monthly')}</Text>
+                                    <Text className="text-white/60 text-sm mt-1">4,99 € / mes</Text>
+                                    <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
-                            ))}
-                        </ScrollView>
-                        {/* DOTS INDICATOR */}
-                        <View className="flex-row justify-center gap-1.5 mt-2">
-                            {[0, 1, 2].map((i) => (
-                                <View key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                            ))}
+                                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                    }`}>
+                                    {selectedPlan === 'monthly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* YEARLY PLAN CARD */}
+                            <TouchableOpacity
+                                onPress={() => setSelectedPlan('yearly')}
+                                activeOpacity={0.8}
+                                className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                    }`}
+                                style={{ minHeight: 120 }}
+                            >
+                                <View className="flex-1">
+                                    <Text className="text-white font-bold text-lg leading-tight">{t('plan_yearly')}</Text>
+                                    <Text className="text-white/60 text-sm mt-1">14,99 € / año</Text>
+                                    <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
+                                </View>
+                                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                    }`}>
+                                    {selectedPlan === 'yearly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                                </View>
+
+                                {/* SAVE BADGE */}
+                                <View className="absolute -top-3 right-4 bg-white px-2 py-0.5 rounded-full shadow-lg">
+                                    <Text className="text-black font-black text-[9px] uppercase">
+                                        -{t('save_badge', { percent: '70' }).match(/\d+/)?.[0]}%
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
-                    </View>
 
-                    {/* PRICING PLANS SIDE-BY-SIDE */}
-                    <View className="flex-row mt-4 mb-2 gap-4">
-                        {/* MONTHLY PLAN CARD */}
+                        {/* MAIN CTA BUTTON */}
                         <TouchableOpacity
-                            onPress={() => setSelectedPlan('monthly')}
-                            activeOpacity={0.8}
-                            className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
-                                }`}
-                            style={{ minHeight: 120 }}
+                            activeOpacity={0.9}
+                            onPress={handleSubscribe}
+                            className="bg-[#FFC2AD] py-6 rounded-[22px] items-center mt-8 shadow-2xl shadow-[#FFC2AD]/20"
                         >
-                            <View className="flex-1">
-                                <Text className="text-white font-bold text-lg leading-tight">{t('plan_monthly')}</Text>
-                                <Text className="text-white/60 text-sm mt-1">4,99 € / mes</Text>
-                                <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
-                            </View>
-                            <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
-                                }`}>
-                                {selectedPlan === 'monthly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
-                            </View>
+                            <Text className="text-black font-black text-xl uppercase tracking-widest">
+                                {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
+                            </Text>
                         </TouchableOpacity>
 
-                        {/* YEARLY PLAN CARD */}
-                        <TouchableOpacity
-                            onPress={() => setSelectedPlan('yearly')}
-                            activeOpacity={0.8}
-                            className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
-                                }`}
-                            style={{ minHeight: 120 }}
-                        >
-                            <View className="flex-1">
-                                <Text className="text-white font-bold text-lg leading-tight">{t('plan_yearly')}</Text>
-                                <Text className="text-white/60 text-sm mt-1">14,99 € / año</Text>
-                                <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
-                            </View>
-                            <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
-                                }`}>
-                                {selectedPlan === 'yearly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
-                            </View>
-
-                            {/* SAVE BADGE */}
-                            <View className="absolute -top-3 right-4 bg-white px-2 py-0.5 rounded-full shadow-lg">
-                                <Text className="text-black font-black text-[9px] uppercase">
-                                    -{t('save_badge', { percent: '70' }).match(/\d+/)?.[0]}%
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* MAIN CTA BUTTON */}
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={handleSubscribe}
-                        className="bg-[#FFC2AD] py-6 rounded-[22px] items-center mt-8 shadow-2xl shadow-[#FFC2AD]/20"
-                    >
-                        <Text className="text-black font-black text-xl uppercase tracking-widest">
-                            {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
+                        {/* COMPLIANCE INFO */}
+                        <Text className="text-center text-white/40 text-[11px] mt-4 leading-5">
+                            {selectedPlan === 'monthly'
+                                ? "4,99 €/mes tras la primera semana."
+                                : "14,99 €/año tras los primeros 14 días."}
                         </Text>
-                    </TouchableOpacity>
-
-                    {/* COMPLIANCE INFO */}
-                    <Text className="text-center text-white/40 text-[11px] mt-4 leading-5">
-                        {selectedPlan === 'monthly'
-                            ? "4,99 €/mes tras la primera semana."
-                            : "14,99 €/año tras los primeros 14 días."}
-                    </Text>
+                    </View>
                 </View>
 
                 {/* FOOTER */}
-                <View className="items-center pb-6">
+                <View className="items-center pb-8">
                     <View className="flex-row items-center gap-2 px-4">
                         <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619')}>
                             <Text className="text-white/40 text-[11px] font-medium">{t('terms_of_use')}</Text>
