@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Alert,
+    Image,
+    Dimensions,
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,20 +19,24 @@ import {
     Check,
     X,
     ChevronLeft,
-    Zap,
+    Sparkles,
     ShieldCheck,
     BarChart3,
-    FileText
+    FileText,
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 export default function PaywallScreen() {
     const { t } = useTranslation();
     const router = useRouter();
-    const { isPro, setPro } = useSubscriptionStore();
+    const { setPro } = useSubscriptionStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
+    const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
-    const handleSubscribe = (plan: 'monthly' | 'yearly') => {
+    const handleSubscribe = () => {
         // Mock success
         Alert.alert(
             t('subscription_success_title'),
@@ -49,117 +55,123 @@ export default function PaywallScreen() {
     };
 
     const features = [
-        { key: 'unlimited_sessions', icon: Zap, free: false, pro: true },
-        { key: 'advanced_analytics', icon: BarChart3, free: false, pro: true },
-        { key: 'priority_docs', icon: FileText, free: false, pro: true },
-        { key: 'cloud_backup', icon: ShieldCheck, free: true, pro: true },
+        t('unlimited_sessions'),
+        t('advanced_analytics'),
+        t('priority_docs'),
     ];
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-950">
-            {/* HEADER */}
-            <View className="px-6 py-4 flex-row items-center">
-                <TouchableOpacity
-                    onPress={() => router.replace('/')}
-                    className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 items-center justify-center mr-4"
-                >
-                    <ChevronLeft size={24} color={isDark ? '#FFFFFF' : '#111827'} />
-                </TouchableOpacity>
-                <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                    {t('paywall_title')}
-                </Text>
+        <View className="flex-1 bg-black">
+            {/* HEADER IMAGE SECTION */}
+            <View className="relative w-full h-[45%]">
+                <Image
+                    source={require('../assets/paywall_header.png')}
+                    style={{ width: '100%', height: '100%', position: 'absolute' }}
+                    resizeMode="cover"
+                />
+                <LinearGradient
+                    colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'black']}
+                    style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+                />
+                <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+                    <View className="px-6 py-4 flex-row items-center justify-between">
+                        <TouchableOpacity
+                            onPress={() => router.replace('/')}
+                            className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+                        >
+                            <X size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+                </SafeAreaView>
             </View>
 
-            <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-                <View className="items-center mt-6 mb-10">
-                    <View className="w-20 h-20 rounded-3xl bg-blue-600 items-center justify-center mb-6 shadow-xl shadow-blue-500/40">
-                        <Zap size={40} color="#FFFFFF" fill="#FFFFFF" />
-                    </View>
-                    <Text className="text-3xl font-black text-gray-900 dark:text-white text-center">
-                        {t('paywall_main_title')}
-                    </Text>
-                    <Text className="text-gray-500 dark:text-gray-400 text-center mt-3 text-lg">
-                        {t('paywall_subtitle')}
-                    </Text>
-                </View>
+            {/* CONTENT SECTION */}
+            <View className="flex-1 px-6 justify-between pb-10">
+                <View>
+                    {/* PRICING PLANS SIDE-BY-SIDE */}
+                    <View className="flex-row mt-4 mb-2 gap-4">
+                        {/* MONTHLY PLAN CARD */}
+                        <TouchableOpacity
+                            onPress={() => setSelectedPlan('monthly')}
+                            activeOpacity={0.8}
+                            className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                }`}
+                            style={{ minHeight: 120 }}
+                        >
+                            <View className="flex-1">
+                                <Text className="text-white font-bold text-lg leading-tight">{t('plan_monthly')}</Text>
+                                <Text className="text-white/60 text-sm mt-1">4,99 € / mes</Text>
+                                <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
+                            </View>
+                            <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                }`}>
+                                {selectedPlan === 'monthly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                            </View>
+                        </TouchableOpacity>
 
-                {/* COMPARISON TABLE */}
-                <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 mb-10 border border-gray-100 dark:border-gray-800">
-                    <View className="flex-row mb-6 border-b border-gray-100 dark:border-gray-800 pb-4">
-                        <View className="flex-1" />
-                        <Text className="w-16 text-center font-bold text-gray-400 uppercase text-[10px] tracking-widest">Free</Text>
-                        <Text className="w-16 text-center font-bold text-blue-600 uppercase text-[10px] tracking-widest">Pro</Text>
-                    </View>
+                        {/* YEARLY PLAN CARD */}
+                        <TouchableOpacity
+                            onPress={() => setSelectedPlan('yearly')}
+                            activeOpacity={0.8}
+                            className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                }`}
+                            style={{ minHeight: 120 }}
+                        >
+                            <View className="flex-1">
+                                <Text className="text-white font-bold text-lg leading-tight">{t('plan_yearly')}</Text>
+                                <Text className="text-white/60 text-sm mt-1">14,99 € / año</Text>
+                                <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
+                            </View>
+                            <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                }`}>
+                                {selectedPlan === 'yearly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                            </View>
 
-                    {features.map((feature, index) => (
-                        <View key={index} className="flex-row items-center py-4">
-                            <View className="flex-1 flex-row items-center">
-                                <feature.icon size={18} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-3" />
-                                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {t(feature.key) || feature.key.replace(/_/g, ' ')}
+                            {/* SAVE BADGE */}
+                            <View className="absolute -top-3 right-4 bg-white px-2 py-0.5 rounded-full shadow-lg">
+                                <Text className="text-black font-black text-[9px] uppercase">
+                                    -{t('save_badge', { percent: '70' }).match(/\d+/)?.[0]}%
                                 </Text>
                             </View>
-                            <View className="w-16 items-center">
-                                {feature.free ? <Check size={20} color="#10B981" /> : <X size={20} color="#EF4444" opacity={0.3} />}
-                            </View>
-                            <View className="w-16 items-center">
-                                <Check size={24} color="#2563EB" strokeWidth={3} />
-                            </View>
-                        </View>
-                    ))}
-                </View>
+                        </TouchableOpacity>
+                    </View>
 
-                {/* PRICING PLANS */}
-                <View className="gap-4">
+                    {/* MAIN CTA BUTTON */}
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => handleSubscribe('yearly')}
-                        className="bg-blue-600 p-6 rounded-3xl flex-row items-center justify-between shadow-xl shadow-blue-500/20"
+                        onPress={handleSubscribe}
+                        className="bg-[#FFC2AD] py-6 rounded-[22px] items-center mt-8 shadow-2xl shadow-[#FFC2AD]/20"
                     >
-                        <View>
-                            <Text className="text-white font-bold text-lg">{t('plan_yearly')}</Text>
-                            <Text className="text-blue-100 text-xs mt-1">{t('plan_yearly_desc')}</Text>
-                        </View>
-                        <View className="bg-white/20 px-3 py-1 rounded-full">
-                            <Text className="text-white font-black text-xs uppercase">{t('best_value')}</Text>
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => handleSubscribe('monthly')}
-                        className="bg-white dark:bg-gray-900 border-2 border-blue-600 p-6 rounded-3xl flex-row items-center justify-between"
-                    >
-                        <View>
-                            <Text className="text-gray-900 dark:text-white font-bold text-lg">{t('plan_monthly')}</Text>
-                            <Text className="text-gray-500 dark:text-gray-400 text-xs mt-1">{t('plan_monthly_desc')}</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* COMPLIANCE FOOTER */}
-                <View className="mt-10 mb-10 items-center">
-                    <TouchableOpacity onPress={handleRestore} className="mb-6">
-                        <Text className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-[10px]">
-                            {t('restore_purchases')}
+                        <Text className="text-black font-black text-xl uppercase tracking-widest">
+                            {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
                         </Text>
                     </TouchableOpacity>
 
-                    <View className="flex-row items-center gap-4">
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619')}>
-                            <Text className="text-gray-400 dark:text-gray-500 text-[10px] underline">{t('terms_of_use')}</Text>
-                        </TouchableOpacity>
-                        <View className="w-1 h-1 rounded-full bg-gray-300" />
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5')}>
-                            <Text className="text-gray-400 dark:text-gray-500 text-[10px] underline">{t('privacy_policy')}</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text className="text-center text-gray-400 dark:text-gray-600 text-[9px] mt-6 leading-4">
-                        {t('subscription_notice')}
+                    {/* COMPLIANCE INFO */}
+                    <Text className="text-center text-white/40 text-[11px] mt-4 leading-5">
+                        {selectedPlan === 'monthly'
+                            ? "4,99 €/mes tras la primera semana."
+                            : "14,99 €/año tras los primeros 14 días."}
                     </Text>
                 </View>
-            </ScrollView>
-        </SafeAreaView>
+
+                {/* FOOTER */}
+                <View className="items-center pb-6">
+                    <View className="flex-row items-center gap-2 px-4">
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619')}>
+                            <Text className="text-white/40 text-[11px] font-medium">{t('terms_of_use')}</Text>
+                        </TouchableOpacity>
+                        <View className="w-1 h-1 rounded-full bg-white/10" />
+                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5')}>
+                            <Text className="text-white/40 text-[11px] font-medium">{t('privacy_policy')}</Text>
+                        </TouchableOpacity>
+                        <View className="w-1 h-1 rounded-full bg-white/10" />
+                        <TouchableOpacity onPress={handleRestore}>
+                            <Text className="text-white/40 text-[11px] font-medium">{t('restore_purchases')}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </View>
     );
 }

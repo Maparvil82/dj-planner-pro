@@ -13,6 +13,9 @@ export default function Index() {
         );
     }
 
+    // TEMPORARY: Redirect to paywall for design
+    return <Redirect href="/paywall" />;
+
     // For now, if no session we go to auth layout, else to tabs
     if (!hasSeenOnboarding) {
         return <Redirect href="/(auth)/onboarding" />;

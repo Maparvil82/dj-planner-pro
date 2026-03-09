@@ -7,13 +7,13 @@ import {
     Dimensions,
     TouchableOpacity,
     Animated,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { Calendar, Shield, TrendingUp } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,7 +21,7 @@ interface OnboardingSlide {
     id: string;
     titleKey: string;
     subtitleKey: string;
-    Icon: any;
+    image: any;
     color: string;
 }
 
@@ -30,21 +30,21 @@ const slides: OnboardingSlide[] = [
         id: '1',
         titleKey: 'onboarding_title_1',
         subtitleKey: 'onboarding_subtitle_1',
-        Icon: Calendar,
+        image: require('../../assets/onboarding/onboarding_1.png'),
         color: '#2563EB',
     },
     {
         id: '2',
         titleKey: 'onboarding_title_2',
         subtitleKey: 'onboarding_subtitle_2',
-        Icon: Shield,
+        image: require('../../assets/onboarding/onboarding_2.png'),
         color: '#10B981',
     },
     {
         id: '3',
         titleKey: 'onboarding_title_3',
         subtitleKey: 'onboarding_subtitle_3',
-        Icon: TrendingUp,
+        image: require('../../assets/onboarding/onboarding_3.png'),
         color: '#8B5CF6',
     },
 ];
@@ -84,17 +84,18 @@ export default function OnboardingScreen() {
 
     const renderSlide = ({ item }: { item: OnboardingSlide }) => {
         return (
-            <View style={{ width }} className="items-center justify-center px-10">
-                <View
-                    style={{ backgroundColor: item.color + '20' }}
-                    className="w-40 h-40 rounded-full items-center justify-center mb-10"
-                >
-                    <item.Icon size={80} color={item.color} />
+            <View style={{ width }} className="items-center justify-center px-8">
+                <View className="w-full aspect-square max-w-[320px] rounded-[40px] overflow-hidden mb-12 shadow-2xl shadow-black/20">
+                    <Image
+                        source={item.image}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                    />
                 </View>
-                <Text className="text-3xl font-black text-gray-900 dark:text-white text-center mb-4">
+                <Text className="text-3xl font-black text-gray-900 dark:text-white text-center mb-4 tracking-tight">
                     {t(item.titleKey)}
                 </Text>
-                <Text className="text-lg text-gray-500 dark:text-gray-400 text-center leading-6">
+                <Text className="text-lg text-gray-500 dark:text-gray-400 text-center leading-7 px-4">
                     {t(item.subtitleKey)}
                 </Text>
             </View>
@@ -164,7 +165,7 @@ export default function OnboardingScreen() {
                 <TouchableOpacity
                     onPress={handleNext}
                     activeOpacity={0.8}
-                    style={{ backgroundColor: slides[currentIndex].color }}
+                    style={{ backgroundColor: slides[currentIndex]?.color || '#2563EB' }}
                     className="px-12 py-4 rounded-2xl shadow-lg shadow-black/10"
                 >
                     <Text className="text-white font-bold text-lg">

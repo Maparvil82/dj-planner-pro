@@ -8,7 +8,6 @@ export function useAuthBootstrap() {
     const { setSession, setProfile, setInitialized, setHasHydrated } = useAuthStore();
 
     useEffect(() => {
-        setHasHydrated(true);
         // Check active session on boot
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session);
