@@ -88,6 +88,39 @@ export default function PaywallScreen() {
             {/* CONTENT SECTION */}
             <View className="flex-1 px-6 justify-between pb-10">
                 <View>
+                    {/* TESTIMONIALS CAROUSEL */}
+                    <View className="mt-4 mb-2">
+                        <ScrollView
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            className="h-24"
+                        >
+                            {[
+                                { name: 'DJ Shadow', text: 'La mejor herramienta para organizar mis bolos y facturar sin líos.' },
+                                { name: 'Alex Rivera', text: 'Desde que uso DJ Planner Pro no he vuelto a perder un ticket.' },
+                                { name: 'Elena Pulse', text: 'Mis ingresos han subido un 20% gracias a las analíticas.' },
+                            ].map((item, index) => (
+                                <View key={index} style={{ width: width - 48 }} className="justify-center px-2">
+                                    <View className="bg-white/5 p-4 rounded-2xl border border-white/10 italic">
+                                        <Text className="text-white/80 text-sm leading-tight">
+                                            "{item.text}"
+                                        </Text>
+                                        <Text className="text-[#FFC2AD] text-[10px] font-bold mt-2 uppercase tracking-widest">
+                                            — {item.name}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </ScrollView>
+                        {/* DOTS INDICATOR */}
+                        <View className="flex-row justify-center gap-1.5 mt-2">
+                            {[0, 1, 2].map((i) => (
+                                <View key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                            ))}
+                        </View>
+                    </View>
+
                     {/* PRICING PLANS SIDE-BY-SIDE */}
                     <View className="flex-row mt-4 mb-2 gap-4">
                         {/* MONTHLY PLAN CARD */}
