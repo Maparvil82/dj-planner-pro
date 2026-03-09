@@ -101,9 +101,9 @@ export default function PaywallScreen() {
                                 style={{ minHeight: 120 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-white font-bold text-lg leading-tight">{t('plan_monthly')}</Text>
-                                    <Text className="text-white/60 text-sm mt-1">4,99 € / mes</Text>
-                                    <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
+                                    <Text className="text-white font-bold text-xl leading-tight">{t('plan_monthly')}</Text>
+                                    <Text className="text-white/60 text-base mt-1">4,99 € / mes</Text>
+                                    <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
                                 <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
                                     }`}>
@@ -120,9 +120,9 @@ export default function PaywallScreen() {
                                 style={{ minHeight: 120 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-white font-bold text-lg leading-tight">{t('plan_yearly')}</Text>
-                                    <Text className="text-white/60 text-sm mt-1">14,99 € / año</Text>
-                                    <Text className="text-[#4FD1C5] text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
+                                    <Text className="text-white font-bold text-xl leading-tight">{t('plan_yearly')}</Text>
+                                    <Text className="text-white/60 text-base mt-1">14,99 € / año</Text>
+                                    <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_yearly_trial')}</Text>
                                 </View>
                                 <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
                                     }`}>
