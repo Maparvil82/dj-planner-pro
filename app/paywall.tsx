@@ -89,9 +89,16 @@ export default function PaywallScreen() {
             {/* CONTENT SECTION */}
             <View className="flex-1 px-6 justify-between pb-10">
                 <View>
-                    <View className="-mt-16">
+                    <View className="-mt-24">
+                        <Text className="text-white font-black text-4xl mb-10 tracking-tighter">
+                            {t('choose_plan').split('|').map((part, index) => (
+                                <Text key={index} style={index % 2 === 1 ? { color: '#FFC2AD' } : undefined}>
+                                    {part}
+                                </Text>
+                            ))}
+                        </Text>
                         {/* PRICING PLANS SIDE-BY-SIDE */}
-                        <View className="flex-row mt-4 mb-2 gap-4">
+                        <View className="flex-row mb-2 gap-4">
                             {/* MONTHLY PLAN CARD */}
                             <TouchableOpacity
                                 onPress={() => setSelectedPlan('monthly')}
