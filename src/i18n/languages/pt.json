@@ -219,7 +219,7 @@
     "contact_support": "Contatar Suporte",
     "rate_app": "Avaliar App",
     "privacy_policy": "Política de Privacidade",
-    "terms_of_service": "Termos de Serviço",
+    "terms_of_use": "Termos de Serviço",
     "delete_account": "Excluir Conta",
     "confirm_delete_account": "Confirmar exclusão",
     "delete_account_warning": "Esta ação é permanente e excluirá todos os seus dados. Tem certeza?",
@@ -300,6 +300,10 @@
     "priority_docs": "Histórico de locais",
     "cloud_backup": "Exportar faturas PDF",
     "trial_button": "EXPERIMENTE 7 DIAS GRÁTIS",
-    "plan_monthly_trial": "¡7 dias de teste grátis!",
-    "plan_yearly_trial": "¡14 dias de teste grátis!"
+    "plan_monthly_trial": "¡7 dias grátis!",
+    "plan_yearly_trial": "¡14 dias grátis!",
+    "plan_monthly_disclaimer": "4,99 €/mês após a primera semana.",
+    "plan_yearly_disclaimer": "14,99 €/ano após los primeros 14 dias.",
+    "terms_of_use_url": "https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619",
+    "privacy_policy_url": "https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5"
 }

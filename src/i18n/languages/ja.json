@@ -219,7 +219,7 @@
     "contact_support": "サポートに連絡",
     "rate_app": "アプリを評価",
     "privacy_policy": "プライバシーポリシー",
-    "terms_of_service": "利用規約",
+    "terms_of_use": "利用規約",
     "delete_account": "アカウントを削除",
     "confirm_delete_account": "削除を確認",
     "delete_account_warning": "この操作は完全に実行され、すべてのデータが削除されます。よろしいですか？",
@@ -300,6 +300,10 @@
     "priority_docs": "会場履歴",
     "cloud_backup": "PDF請求書の書き出し",
     "trial_button": "7日間の無料トライアルを開始",
-    "plan_monthly_trial": "7日間の無料トライアル！",
-    "plan_yearly_trial": "14日間の無料トライアル！"
+    "plan_monthly_trial": "残り7日間無料！",
+    "plan_yearly_trial": "残り14日間無料！",
+    "plan_monthly_disclaimer": "最初の1週間後は月額4.99ユーロ。",
+    "plan_yearly_disclaimer": "最初の14日間後は年額14.99ユーロ。",
+    "terms_of_use_url": "https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619",
+    "privacy_policy_url": "https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5"
 }

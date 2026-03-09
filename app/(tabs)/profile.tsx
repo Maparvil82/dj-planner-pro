@@ -285,12 +285,12 @@ export default function SettingsScreen() {
                         <SettingItem
                             icon={ShieldCheck}
                             label={t('privacy_policy')}
-                            onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5?source=copy_link')}
+                            onPress={() => Linking.openURL(t('privacy_policy_url'))}
                         />
                         <SettingItem
                             icon={Info}
-                            label={t('terms_of_service')}
-                            onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619?source=copy_link')}
+                            label={t('terms_of_use')}
+                            onPress={() => Linking.openURL(t('terms_of_use_url'))}
                             last
                         />
                     </View>

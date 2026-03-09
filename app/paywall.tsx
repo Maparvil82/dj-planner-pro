@@ -102,7 +102,7 @@ export default function PaywallScreen() {
                             >
                                 <View className="flex-1">
                                     <Text className="text-white font-bold text-xl leading-tight">{t('plan_monthly')}</Text>
-                                    <Text className="text-white/60 text-base mt-1">4,99 € / mes</Text>
+                                    <Text className="text-white/60 text-base mt-1">{t('plan_monthly_desc')}</Text>
                                     <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
                                 <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
@@ -121,7 +121,7 @@ export default function PaywallScreen() {
                             >
                                 <View className="flex-1">
                                     <Text className="text-white font-bold text-xl leading-tight">{t('plan_yearly')}</Text>
-                                    <Text className="text-white/60 text-base mt-1">14,99 € / año</Text>
+                                    <Text className="text-white/60 text-base mt-1">{t('plan_yearly_desc')}</Text>
                                     <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_yearly_trial')}</Text>
                                 </View>
                                 <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
@@ -152,8 +152,8 @@ export default function PaywallScreen() {
                         {/* COMPLIANCE INFO */}
                         <Text className="text-center text-white/40 text-[11px] mt-4 leading-5">
                             {selectedPlan === 'monthly'
-                                ? "4,99 €/mes tras la primera semana."
-                                : "14,99 €/año tras los primeros 14 días."}
+                                ? t('plan_monthly_disclaimer')
+                                : t('plan_yearly_disclaimer')}
                         </Text>
                     </View>
                 </View>
@@ -161,11 +161,11 @@ export default function PaywallScreen() {
                 {/* FOOTER */}
                 <View className="items-center pb-8">
                     <View className="flex-row items-center gap-2 px-4">
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619')}>
+                        <TouchableOpacity onPress={() => Linking.openURL(t('terms_of_use_url'))}>
                             <Text className="text-white/40 text-[11px] font-medium">{t('terms_of_use')}</Text>
                         </TouchableOpacity>
                         <View className="w-1 h-1 rounded-full bg-white/10" />
-                        <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5')}>
+                        <TouchableOpacity onPress={() => Linking.openURL(t('privacy_policy_url'))}>
                             <Text className="text-white/40 text-[11px] font-medium">{t('privacy_policy')}</Text>
                         </TouchableOpacity>
                         <View className="w-1 h-1 rounded-full bg-white/10" />

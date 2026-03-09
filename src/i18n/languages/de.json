@@ -219,7 +219,7 @@
     "contact_support": "Support kontaktieren",
     "rate_app": "App bewerten",
     "privacy_policy": "Datenschutzbestimmungen",
-    "terms_of_service": "Nutzungsbedingungen",
+    "terms_of_use": "Nutzungsbedingungen",
     "delete_account": "Konto löschen",
     "confirm_delete_account": "Löschung bestätigen",
     "delete_account_warning": "Diese Aktion ist dauerhaft und löscht alle Ihre Daten. Sind Sie sicher?",
@@ -301,5 +301,9 @@
     "cloud_backup": "PDF-Rechnungen exportieren",
     "trial_button": "7 TAGE KOSTENLOS TESTEN",
     "plan_monthly_trial": "7 Tage kostenlos!",
-    "plan_yearly_trial": "14 Tage kostenlos!"
+    "plan_yearly_trial": "14 Tage kostenlos!",
+    "plan_monthly_disclaimer": "4,99 €/Monat nach der ersten Woche.",
+    "plan_yearly_disclaimer": "14,99 €/Jahr nach den ersten 14 Tagen.",
+    "terms_of_use_url": "https://www.notion.so/Terms-of-Use-Dj-Planner-Pro-31df3ade92a98085a4a0cebf75fed619",
+    "privacy_policy_url": "https://www.notion.so/Privacy-Policy-Dj-Planner-Pro-31df3ade92a9808588b2e54ac612c8b5"
 }
