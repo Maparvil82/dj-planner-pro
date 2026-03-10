@@ -25,6 +25,7 @@ export default function HomeScreen() {
     const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('all');
     const [isEarningsModalVisible, setIsEarningsModalVisible] = useState(false);
     const [isProjectedModalVisible, setIsProjectedModalVisible] = useState(false);
+    const [visibleDate, setVisibleDate] = useState(startOfToday());
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
@@ -183,13 +184,13 @@ export default function HomeScreen() {
         const flatListRef = useRef<FlatList>(null);
 
         const renderWeek = ({ item: weekDays }: { item: any[] }) => (
-            <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between">
+            <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between mb-2">
                 {weekDays.map((day, index) => (
                     <View key={index} className="items-center" style={{ width: CALENDAR_WIDTH / 7 }}>
                         <Text className={`text-[10px] font-bold mb-3 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
                             {day.dayName}
                         </Text>
-                        <View className={`w-10 h-14 items-center justify-center rounded-2xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm' : 'bg-transparent'}`}>
+                        <View className={`w-10 h-14 items-center justify-center rounded-2xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-700' : 'bg-transparent'}`}>
                             <Text className={`text-lg font-bold ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-700'}`}>
                                 {day.dayNumber}
                             </Text>
@@ -229,6 +230,12 @@ export default function HomeScreen() {
                         offset: CALENDAR_WIDTH * index,
                         index,
                     })}
+                    onMomentumScrollEnd={(e) => {
+                        const index = Math.round(e.nativeEvent.contentOffset.x / CALENDAR_WIDTH);
+                        if (weeks[index] && weeks[index][0]) {
+                            setVisibleDate(weeks[index][0].date);
+                        }
+                    }}
                 />
             </View>
         );
@@ -271,19 +278,8 @@ export default function HomeScreen() {
                 <View className="max-w-5xl w-full mx-auto px-4">
                     {/* WELCOME SECTION */}
                     <View className="mb-6 mt-6 px-2">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            {(() => {
-                                const todayStr = t('today') || 'Hoy';
-                                let dateStr = new Intl.DateTimeFormat(currentLanguage, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-                                // Remove comma after weekday if exists to match "Martes 3"
-                                dateStr = dateStr.replace(',', '');
-                                const fullStr = `${todayStr}, ${dateStr}`;
-                                // Capitalize words except "de" (common in Spanish dates)
-                                return fullStr.split(' ').map(word => {
-                                    if (word.toLowerCase() === 'de') return 'de';
-                                    return word.charAt(0).toUpperCase() + word.slice(1);
-                                }).join(' ');
-                            })()}
+                        <Text className="text-3xl font-black text-gray-900 dark:text-white tracking-tight capitalize">
+                            {new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(visibleDate)}
                         </Text>
                     </View>
 
