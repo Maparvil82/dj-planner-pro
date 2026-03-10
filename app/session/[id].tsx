@@ -196,97 +196,6 @@ export default function SessionDetailScreen() {
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             >
-                {/* VAULT SECTION */}
-                <View className="mb-8 px-2">
-                    <View className="flex-row items-center justify-between mb-4">
-                        <View className="flex-row items-center">
-                            <View className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 items-center justify-center mr-3">
-                                <Folder size={18} color="#2563EB" />
-                            </View>
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
-                                {t('session_vault') || 'Documentos y Carpetas'}
-                            </Text>
-                        </View>
-                        <TouchableOpacity
-                            onPress={() => {
-                                Alert.prompt(
-                                    t('new_folder') || 'Nueva Carpeta',
-                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
-                                    [
-                                        { text: t('cancel'), style: 'cancel' },
-                                        {
-                                            text: t('create'),
-                                            onPress: (name?: string) => {
-                                                if (name) createFolderMutation.mutate({
-                                                    name,
-                                                    type: 'session',
-                                                    associatedId: id as string
-                                                });
-                                            }
-                                        }
-                                    ]
-                                );
-                            }}
-                            className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg"
-                        >
-                            <Plus size={14} color="#2563EB" className="mr-1" />
-                            <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                                {t('add_folder') || 'Añadir'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {isLoadingFolders ? (
-                        <ActivityIndicator size="small" color="#2563EB" />
-                    ) : associatedFolders.length > 0 ? (
-                        <View className="gap-2">
-                            {associatedFolders.map((folder) => (
-                                <TouchableOpacity
-                                    key={folder.id}
-                                    onPress={() => router.push(`/vault/${folder.id}?name=${encodeURIComponent(folder.name)}` as any)}
-                                    className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl flex-row items-center justify-between shadow-sm shadow-black/5"
-                                >
-                                    <View className="flex-row items-center">
-                                        <Folder size={20} color="#2563EB" fill="#2563EB" fillOpacity={0.1} />
-                                        <Text className="text-sm font-bold text-gray-900 dark:text-white ml-3">
-                                            {folder.name}
-                                        </Text>
-                                    </View>
-                                    <ChevronLeft size={16} color={isDark ? '#4B5563' : '#9CA3AF'} style={{ transform: [{ rotate: '180deg' }] }} />
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    ) : (
-                        <TouchableOpacity
-                            onPress={() => {
-                                Alert.prompt(
-                                    t('new_folder') || 'Nueva Carpeta',
-                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
-                                    [
-                                        { text: t('cancel'), style: 'cancel' },
-                                        {
-                                            text: t('create'),
-                                            onPress: (name?: string) => {
-                                                if (name) createFolderMutation.mutate({
-                                                    name,
-                                                    type: 'session',
-                                                    associatedId: id as string
-                                                });
-                                            }
-                                        }
-                                    ]
-                                );
-                            }}
-                            className="bg-gray-50 dark:bg-gray-950/50 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl p-8 items-center"
-                        >
-                            <FolderPlus size={32} color={isDark ? '#374151' : '#D1D5DB'} />
-                            <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-3 text-center">
-                                {t('no_associated_folders') || 'No hay carpetas para esta sesión.\nCrea una para guardar contratos o riders.'}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
                 {/* Title Section */}
                 <View className="mb-6">
                     <View className="flex-row items-center justify-between mb-2">
@@ -412,6 +321,97 @@ export default function SessionDetailScreen() {
                             </Text>
                         </View>
                     </View>
+                </View>
+
+                {/* VAULT SECTION (MOVED TO BOTTOM) */}
+                <View className="mt-8 px-2">
+                    <View className="flex-row items-center justify-between mb-4">
+                        <View className="flex-row items-center">
+                            <View className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 items-center justify-center mr-3">
+                                <Folder size={18} color="#2563EB" />
+                            </View>
+                            <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                                {t('session_vault') || 'Documentos y Carpetas'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => {
+                                Alert.prompt(
+                                    t('new_folder') || 'Nueva Carpeta',
+                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
+                                    [
+                                        { text: t('cancel'), style: 'cancel' },
+                                        {
+                                            text: t('create'),
+                                            onPress: (name?: string) => {
+                                                if (name) createFolderMutation.mutate({
+                                                    name,
+                                                    type: 'session',
+                                                    associatedId: id as string
+                                                });
+                                            }
+                                        }
+                                    ]
+                                );
+                            }}
+                            className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg"
+                        >
+                            <Plus size={14} color="#2563EB" className="mr-1" />
+                            <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                {t('add_folder') || 'Añadir'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {isLoadingFolders ? (
+                        <ActivityIndicator size="small" color="#2563EB" />
+                    ) : associatedFolders.length > 0 ? (
+                        <View className="gap-2">
+                            {associatedFolders.map((folder) => (
+                                <TouchableOpacity
+                                    key={folder.id}
+                                    onPress={() => router.push(`/vault/${folder.id}?name=${encodeURIComponent(folder.name)}` as any)}
+                                    className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 rounded-xl flex-row items-center justify-between shadow-sm shadow-black/5"
+                                >
+                                    <View className="flex-row items-center">
+                                        <Folder size={20} color="#2563EB" fill="#2563EB" fillOpacity={0.1} />
+                                        <Text className="text-sm font-bold text-gray-900 dark:text-white ml-3">
+                                            {folder.name}
+                                        </Text>
+                                    </View>
+                                    <ChevronLeft size={16} color={isDark ? '#4B5563' : '#9CA3AF'} style={{ transform: [{ rotate: '180deg' }] }} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => {
+                                Alert.prompt(
+                                    t('new_folder') || 'Nueva Carpeta',
+                                    t('folder_name_placeholder') || 'Ejem: Contratos, Riders...',
+                                    [
+                                        { text: t('cancel'), style: 'cancel' },
+                                        {
+                                            text: t('create'),
+                                            onPress: (name?: string) => {
+                                                if (name) createFolderMutation.mutate({
+                                                    name,
+                                                    type: 'session',
+                                                    associatedId: id as string
+                                                });
+                                            }
+                                        }
+                                    ]
+                                );
+                            }}
+                            className="bg-gray-50 dark:bg-gray-950/50 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl p-8 items-center"
+                        >
+                            <FolderPlus size={32} color={isDark ? '#374151' : '#D1D5DB'} />
+                            <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-3 text-center">
+                                {t('no_associated_folders') || 'No hay carpetas para esta sesión.\nCrea una para guardar contratos o riders.'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </ScrollView>
 

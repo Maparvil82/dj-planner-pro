@@ -186,7 +186,15 @@ export default function HomeScreen() {
         <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between mb-2 mt-4">
             {weekDays.map((day, index) => (
                 <View key={index} className="items-center" style={{ width: CALENDAR_WIDTH / 7 }}>
-                    <View className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700' : 'bg-transparent'}`}>
+                    <TouchableOpacity
+                        activeOpacity={day.sessions.length > 0 ? 0.6 : 1}
+                        onPress={() => {
+                            if (day.sessions.length > 0) {
+                                router.push(`/session/${day.sessions[0].id}` as any);
+                            }
+                        }}
+                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700' : 'bg-transparent'}`}
+                    >
                         <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
                             {day.dayName}
                         </Text>
@@ -194,7 +202,7 @@ export default function HomeScreen() {
                             {day.dayNumber}
                         </Text>
                         {day.sessions.length > 0 && (
-                            <View className="absolute bottom-2 flex-row gap-0.5">
+                            <View className="absolute bottom-1.5 flex-row gap-0.5">
                                 {day.sessions.slice(0, 3).map((s: any, i: number) => (
                                     <View
                                         key={i}
@@ -204,7 +212,7 @@ export default function HomeScreen() {
                                 ))}
                             </View>
                         )}
-                    </View>
+                    </TouchableOpacity>
                 </View>
             ))}
         </View>
