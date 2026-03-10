@@ -183,18 +183,18 @@ export default function HomeScreen() {
     }, [currentLanguage, allSessions]);
 
     const renderWeek = ({ item: weekDays }: { item: any[] }) => (
-        <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between mb-2">
+        <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between mb-2 mt-4">
             {weekDays.map((day, index) => (
                 <View key={index} className="items-center" style={{ width: CALENDAR_WIDTH / 7 }}>
-                    <Text className={`text-[10px] font-bold mb-3 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
-                        {day.dayName}
-                    </Text>
-                    <View className={`w-10 h-14 items-center justify-center rounded-2xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-700' : 'bg-transparent'}`}>
-                        <Text className={`text-lg font-bold ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-700'}`}>
+                    <View className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700' : 'bg-transparent'}`}>
+                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+                            {day.dayName}
+                        </Text>
+                        <Text className={`text-md font-normal ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-800'}`}>
                             {day.dayNumber}
                         </Text>
                         {day.sessions.length > 0 && (
-                            <View className="absolute bottom-1.5 flex-row gap-0.5">
+                            <View className="absolute bottom-2 flex-row gap-0.5">
                                 {day.sessions.slice(0, 3).map((s: any, i: number) => (
                                     <View
                                         key={i}
@@ -245,12 +245,7 @@ export default function HomeScreen() {
 
             <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="max-w-5xl w-full mx-auto px-4">
-                    {/* WELCOME SECTION */}
-                    <View className="mb-6 mt-4 px-2">
-                        <Text className="text-xl font-bold text-gray-500 dark:text-white tracking-tight capitalize">
-                            {new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(visibleDate)}
-                        </Text>
-                    </View>
+
 
                     {/* WEEKLY CALENDAR */}
                     <View className="mb-8">
@@ -285,7 +280,7 @@ export default function HomeScreen() {
                         <View className="flex-row gap-4 px-2">
                             {/* Earned So Far Card */}
                             <TouchableOpacity
-                                className="flex-1 bg-neutral-200 dark:bg-gray-900 rounded-xl p-5 shadow-sm shadow-black/5 border border-indigo-100 dark:border-indigo-900/40"
+                                className="flex-1 bg-neutral-200 dark:bg-gray-900 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/40"
                                 activeOpacity={0.7}
                                 onPress={() => setIsEarningsModalVisible(true)}
                             >
