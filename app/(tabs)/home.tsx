@@ -4,13 +4,18 @@ import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar } from 'lucide-react-native';
-import { useContext, useState, useMemo } from 'react';
+import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
+import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
+import { startOfWeek, addDays, format, isSameDay, addWeeks, subWeeks, startOfToday } from 'date-fns';
+import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
+import { FlatList, Dimensions, useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
+    const { width: windowWidth } = useWindowDimensions();
+    const CALENDAR_WIDTH = windowWidth > 1024 ? 1024 - 32 : windowWidth - 32;
     const { t, currentLanguage } = useTranslation();
     const { session, profile } = useAuthStore();
     const router = useRouter();
@@ -23,9 +28,10 @@ export default function HomeScreen() {
     // Calendar localization is now handled where the calendar is used
 
     const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
+    const { data: allSessions } = useAllSessionsQuery();
     const deleteSessionMutation = useDeleteSessionMutation();
 
-    const now = new Date();
+    const now = startOfToday();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
     const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
@@ -139,6 +145,95 @@ export default function HomeScreen() {
         });
     }, [upcomingSessions, sessionFilter, currentYear, currentMonth]);
 
+    const locale = useMemo(() => {
+        switch (currentLanguage) {
+            case 'es': return es;
+            case 'de': return de;
+            case 'fr': return fr;
+            case 'it': return it;
+            case 'pt': return ptBR;
+            case 'ja': return ja;
+            default: return enUS;
+        }
+    }, [currentLanguage]);
+
+    const weeks = useMemo(() => {
+        // Generate 52 weeks around the current date (26 before, 26 after)
+        const currentWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+        return Array.from({ length: 53 }).map((_, i) => {
+            const weekStart = addWeeks(currentWeekStart, i - 26);
+            return Array.from({ length: 7 }).map((_, dayIndex) => {
+                const date = addDays(weekStart, dayIndex);
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const daySessions = allSessions?.filter((s: any) => s.date === dateStr) || [];
+
+                return {
+                    date,
+                    dateStr,
+                    dayName: format(date, 'EEEEEE', { locale }).toUpperCase(),
+                    dayNumber: format(date, 'd'),
+                    isToday: isSameDay(date, now),
+                    sessions: daySessions
+                };
+            });
+        });
+    }, [currentLanguage, allSessions]);
+
+    const WeeklyCalendar = () => {
+        const flatListRef = useRef<FlatList>(null);
+
+        const renderWeek = ({ item: weekDays }: { item: any[] }) => (
+            <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between">
+                {weekDays.map((day, index) => (
+                    <View key={index} className="items-center" style={{ width: CALENDAR_WIDTH / 7 }}>
+                        <Text className={`text-[10px] font-bold mb-3 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+                            {day.dayName}
+                        </Text>
+                        <View className={`w-10 h-14 items-center justify-center rounded-2xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm' : 'bg-transparent'}`}>
+                            <Text className={`text-lg font-bold ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-700'}`}>
+                                {day.dayNumber}
+                            </Text>
+                            {day.sessions.length > 0 && (
+                                <View className="absolute bottom-1.5 flex-row gap-0.5">
+                                    {day.sessions.slice(0, 3).map((s: any, i: number) => (
+                                        <View
+                                            key={i}
+                                            className="w-1.5 h-1.5 rounded-full"
+                                            style={{ backgroundColor: s.color || '#3B82F6' }}
+                                        />
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                ))}
+            </View>
+        );
+
+        return (
+            <View className="mb-8">
+                <FlatList
+                    ref={flatListRef}
+                    data={weeks}
+                    renderItem={renderWeek}
+                    keyExtractor={(_, index) => `week-${index}`}
+                    horizontal
+                    pagingEnabled={false} // Use snapToInterval instead for better control
+                    snapToInterval={CALENDAR_WIDTH}
+                    snapToAlignment="start"
+                    decelerationRate="fast"
+                    showsHorizontalScrollIndicator={false}
+                    initialScrollIndex={26}
+                    getItemLayout={(_, index) => ({
+                        length: CALENDAR_WIDTH,
+                        offset: CALENDAR_WIDTH * index,
+                        index,
+                    })}
+                />
+            </View>
+        );
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
@@ -191,6 +286,9 @@ export default function HomeScreen() {
                             })()}
                         </Text>
                     </View>
+
+                    {/* WEEKLY CALENDAR */}
+                    <WeeklyCalendar />
 
                     {/* MONTHLY EARNINGS CARD */}
                     <View className="mb-10">
