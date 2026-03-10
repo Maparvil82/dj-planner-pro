@@ -317,8 +317,12 @@ export const sessionService = {
 
         if (!session) throw new Error('Session not found');
 
+        // SAFEGUARD: If updating all, we MUST NOT update the date or unique IDs
+        // to avoid overwriting the specific dates of recurring events.
+        const { date, id, user_id, parent_session_id, ...syncableInput } = input as any;
+
         let query = supabase.from('sessions').update({
-            ...input,
+            ...syncableInput,
             updated_at: new Date().toISOString()
         }).eq('user_id', session.user_id);
 

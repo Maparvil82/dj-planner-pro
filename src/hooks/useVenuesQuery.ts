@@ -57,6 +57,9 @@ export const useUpdateVenueMutation = () => {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
             queryClient.invalidateQueries({ queryKey: ['venue', data.id] });
+            // Invalidate sessions and tags to reflect name changes in real-time
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });
 };

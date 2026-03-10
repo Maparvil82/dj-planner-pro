@@ -153,7 +153,8 @@ export default function EditSessionScreen() {
             finalDjs.push(djInput.trim());
         }
 
-        const input = {
+        // 1. Build FULL current input for validation or single update
+        const fullInput = {
             date: sessionDate,
             title: title.trim(),
             venue: venue.trim(),
@@ -170,14 +171,46 @@ export default function EditSessionScreen() {
             poster_url: posterUrl
         };
 
+        // 2. Diffing logic: only include fields that actually changed
+        const getChangedFields = () => {
+            const changes: any = {};
+            if (title.trim() !== initialSession?.title) changes.title = title.trim();
+            if (venue.trim() !== initialSession?.venue) changes.venue = venue.trim();
+            if (venueId !== initialSession?.venue_id) changes.venue_id = venueId || null;
+            if (startTime.trim() !== initialSession?.start_time) changes.start_time = startTime.trim();
+            if (endTime.trim() !== initialSession?.end_time) changes.end_time = endTime.trim();
+            if (sessionDate !== initialSession?.date) changes.date = sessionDate;
+            if (isCollective !== initialSession?.is_collective) changes.is_collective = isCollective;
+            if (JSON.stringify(finalDjs) !== JSON.stringify(initialSession?.djs)) changes.djs = finalDjs;
+            if (earningType !== initialSession?.earning_type) changes.earning_type = earningType;
+            if (parseFloat(earningAmount) !== initialSession?.earning_amount) changes.earning_amount = parseFloat(earningAmount) || 0;
+            if (currency !== initialSession?.currency) changes.currency = currency;
+            if (selectedColor !== initialSession?.color) changes.color = selectedColor;
+            if (status !== initialSession?.status) changes.status = status;
+            if (posterUrl !== initialSession?.poster_url) changes.poster_url = posterUrl;
+            return changes;
+        };
+
+        const changedFields = getChangedFields();
+
+        if (Object.keys(changedFields).length === 0) {
+            router.back();
+            return;
+        }
+
         const performUpdate = async (updateAll: boolean) => {
             try {
                 if (!id) throw new Error("Missing ID");
+
+                // If updateAll is true, we ONLY send the changed fields
+                // If updateAll is false, we send the full input (standard behavior)
+                // Actually, sending only changed fields is safer in BOTH cases.
                 await updateSessionMutation.mutateAsync({
                     sessionId: id,
-                    input,
+                    input: updateAll ? changedFields : fullInput,
                     updateAll
                 });
+
                 Alert.alert(t('success'), t('session_added_success'), [
                     { text: 'OK', onPress: () => router.back() }
                 ]);

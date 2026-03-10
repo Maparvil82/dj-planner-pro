@@ -107,6 +107,20 @@ export const venueService = {
             throw new Error(error.message);
         }
 
+        // SIDE EFFECT: If name changed, update all sessions that reference this venue_id
+        if (input.name) {
+            const { error: sessionUpdateError } = await supabase
+                .from('sessions')
+                .update({ venue: input.name.trim() })
+                .eq('venue_id', venueId);
+
+            if (sessionUpdateError) {
+                console.warn('Failed to sync venue name to sessions:', sessionUpdateError);
+                // We don't throw here to not block the venue update itself, 
+                // but we warn in console.
+            }
+        }
+
         return data;
     },
 
