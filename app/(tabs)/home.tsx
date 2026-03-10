@@ -361,9 +361,12 @@ export default function HomeScreen() {
 
                                                                     {session.earning_type && session.earning_type !== 'free' && (
                                                                         <View className="items-end justify-center mr-2">
+                                                                            {session.status === 'cancelled' && (
+                                                                                <Text className="text-[9px] font-bold text-red-500 uppercase mb-0.5">{t('status_cancelled')}</Text>
+                                                                            )}
                                                                             <View className={`px-2 py-1 rounded-lg border ${session.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'}`}>
                                                                                 <Text className={`text-[10px] font-bold ${session.status === 'cancelled' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
-                                                                                    {calculateSessionEarnings(session)} {session.currency || '€'}
+                                                                                    {session.status === 'cancelled' ? '-' : ''}{calculateSessionEarnings(session).toFixed(0)} {session.currency || '€'}
                                                                                 </Text>
                                                                             </View>
                                                                         </View>

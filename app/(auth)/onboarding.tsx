@@ -2,7 +2,6 @@ import React, { useState, useRef, useContext } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     FlatList,
     Dimensions,
     TouchableOpacity,
@@ -14,8 +13,9 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface OnboardingSlide {
     id: string;
@@ -31,21 +31,21 @@ const slides: OnboardingSlide[] = [
         titleKey: 'onboarding_title_1',
         subtitleKey: 'onboarding_subtitle_1',
         image: require('../../assets/onboarding/onboarding_1.png'),
-        color: '#2563EB',
+        color: '#FFC2AD', // Matching Paywall coral for consistency
     },
     {
         id: '2',
         titleKey: 'onboarding_title_2',
         subtitleKey: 'onboarding_subtitle_2',
         image: require('../../assets/onboarding/onboarding_2.png'),
-        color: '#10B981',
+        color: '#4FD1C5', // Fresh teal
     },
     {
         id: '3',
         titleKey: 'onboarding_title_3',
         subtitleKey: 'onboarding_subtitle_3',
         image: require('../../assets/onboarding/onboarding_3.png'),
-        color: '#8B5CF6',
+        color: '#8B5CF6', // Vibrant purple
     },
 ];
 
@@ -53,8 +53,6 @@ export default function OnboardingScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const setHasSeenOnboarding = useAuthStore((state) => state.setHasSeenOnboarding);
-    const themeCtx = useContext(ThemeContext);
-    const isDark = themeCtx?.activeTheme === 'dark';
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollX = useRef(new Animated.Value(0)).current;
@@ -84,18 +82,22 @@ export default function OnboardingScreen() {
 
     const renderSlide = ({ item }: { item: OnboardingSlide }) => {
         return (
-            <View style={{ width }} className="items-center justify-center px-8">
-                <View className="w-full aspect-square max-w-[320px] rounded-[40px] overflow-hidden mb-12 shadow-2xl shadow-black/20">
+            <View style={{ width }} className="items-center justify-center px-10">
+                <View className="w-full aspect-square max-w-[340px] rounded-[50px] overflow-hidden mb-16 shadow-2xl shadow-black">
                     <Image
                         source={item.image}
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="cover"
                     />
                 </View>
-                <Text className="text-3xl font-black text-gray-900 dark:text-white text-center mb-4 tracking-tight">
-                    {t(item.titleKey)}
+                <Text className="text-5xl font-black text-white text-center mb-6 tracking-tighter leading-none">
+                    {t(item.titleKey).split('|').map((part, index) => (
+                        <Text key={index} style={index % 2 === 1 ? { color: item.color } : undefined}>
+                            {part}
+                        </Text>
+                    ))}
                 </Text>
-                <Text className="text-lg text-gray-500 dark:text-gray-400 text-center leading-7 px-4">
+                <Text className="text-xl text-white/50 text-center leading-8 px-2 font-medium">
                     {t(item.subtitleKey)}
                 </Text>
             </View>
@@ -103,76 +105,82 @@ export default function OnboardingScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-950">
-            <View className="flex-row justify-end px-6 pt-4">
-                <TouchableOpacity onPress={handleSkip}>
-                    <Text className="text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest text-xs">
-                        {t('skip') || 'Skip'}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
-            <FlatList
-                data={slides}
-                renderItem={renderSlide}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                pagingEnabled
-                bounces={false}
-                keyExtractor={(item) => item.id}
-                onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-                    useNativeDriver: false,
-                })}
-                scrollEventThrottle={32}
-                onViewableItemsChanged={viewableItemsChanged}
-                viewabilityConfig={viewConfig}
-                ref={slidesRef}
+        <View className="flex-1 bg-black">
+            <LinearGradient
+                colors={['rgba(255,194,173,0.05)', 'transparent', 'transparent']}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '40%' }}
             />
 
-            <View className="items-center pb-20">
-                {/* DOTS PAGINATION */}
-                <View className="flex-row h-10 items-center justify-center mb-10">
-                    {slides.map((_, i) => {
-                        const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
-                        const dotWidth = scrollX.interpolate({
-                            inputRange,
-                            outputRange: [10, 24, 10],
-                            extrapolate: 'clamp',
-                        });
-                        const opacity = scrollX.interpolate({
-                            inputRange,
-                            outputRange: [0.3, 1, 0.3],
-                            extrapolate: 'clamp',
-                        });
-
-                        return (
-                            <Animated.View
-                                key={i.toString()}
-                                style={{
-                                    width: dotWidth,
-                                    height: 10,
-                                    borderRadius: 5,
-                                    backgroundColor: slides[i].color,
-                                    opacity,
-                                    marginHorizontal: 4,
-                                }}
-                            />
-                        );
-                    })}
+            <SafeAreaView className="flex-1">
+                <View className="flex-row justify-end px-8 pt-6">
+                    <TouchableOpacity onPress={handleSkip}>
+                        <Text className="text-white/30 font-black uppercase tracking-widest text-[10px]">
+                            {t('skip') || 'Skip'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* NEXT BUTTON */}
-                <TouchableOpacity
-                    onPress={handleNext}
-                    activeOpacity={0.8}
-                    style={{ backgroundColor: slides[currentIndex]?.color || '#2563EB' }}
-                    className="px-12 py-4 rounded-2xl shadow-lg shadow-black/10"
-                >
-                    <Text className="text-white font-bold text-lg">
-                        {currentIndex === slides.length - 1 ? t('get_started') : t('next')}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+                <FlatList
+                    data={slides}
+                    renderItem={renderSlide}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    pagingEnabled
+                    bounces={false}
+                    keyExtractor={(item) => item.id}
+                    onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+                        useNativeDriver: false,
+                    })}
+                    scrollEventThrottle={32}
+                    onViewableItemsChanged={viewableItemsChanged}
+                    viewabilityConfig={viewConfig}
+                    ref={slidesRef}
+                />
+
+                <View className="items-center pb-16">
+                    {/* DOTS PAGINATION */}
+                    <View className="flex-row h-10 items-center justify-center mb-12">
+                        {slides.map((_, i) => {
+                            const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+                            const dotWidth = scrollX.interpolate({
+                                inputRange,
+                                outputRange: [8, 28, 8],
+                                extrapolate: 'clamp',
+                            });
+                            const opacity = scrollX.interpolate({
+                                inputRange,
+                                outputRange: [0.2, 1, 0.2],
+                                extrapolate: 'clamp',
+                            });
+
+                            return (
+                                <Animated.View
+                                    key={i.toString()}
+                                    style={{
+                                        width: dotWidth,
+                                        height: 8,
+                                        borderRadius: 4,
+                                        backgroundColor: slides[i].color,
+                                        opacity,
+                                        marginHorizontal: 4,
+                                    }}
+                                />
+                            );
+                        })}
+                    </View>
+
+                    {/* NEXT BUTTON */}
+                    <TouchableOpacity
+                        onPress={handleNext}
+                        activeOpacity={0.9}
+                        className="w-[80%] bg-[#FFC2AD] py-6 rounded-[22px] items-center shadow-2xl shadow-[#FFC2AD]/20"
+                    >
+                        <Text className="text-black font-black text-xl uppercase tracking-widest">
+                            {currentIndex === slides.length - 1 ? t('get_started') : t('next')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </View>
     );
 }

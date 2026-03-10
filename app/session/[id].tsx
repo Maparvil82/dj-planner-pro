@@ -335,7 +335,7 @@ export default function SessionDetailScreen() {
                                     {t('estimated_total_label') || 'Total estimado'}
                                 </Text>
                                 <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                    {earnings.toFixed(2)} {session.currency || '€'}
+                                    {session.status === 'cancelled' ? '-' : ''}{earnings.toFixed(2)} {session.currency || '€'}
                                 </Text>
                             </View>
                             <View className="items-end">

@@ -13,8 +13,8 @@ export default function Index() {
         );
     }
 
-    // TEMPORARY: Redirect to paywall for design
-    return <Redirect href="/paywall" />;
+    // TEMPORARY: Redirect to tabs for screenshots
+    return <Redirect href="/(tabs)/home" />;
 
     // For now, if no session we go to auth layout, else to tabs
     if (!hasSeenOnboarding) {
