@@ -486,22 +486,6 @@ export default function VenueDetailScreen() {
                             )}
                         </View>
 
-                        <View className="mt-6">
-                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                {t('venue_notes')}
-                            </Text>
-                            <TextInput
-                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[120]"
-                                value={notes}
-                                onChangeText={(val) => {
-                                    setNotes(val);
-                                    setHasChanges(true);
-                                }}
-                                multiline
-                                numberOfLines={6}
-                                textAlignVertical="top"
-                            />
-                        </View>
 
                         {/* Images Section - Pinterest Style */}
                         <View className="mt-6">
@@ -624,6 +608,23 @@ export default function VenueDetailScreen() {
                                     </Text>
                                 </TouchableOpacity>
                             )}
+                        </View>
+
+                        <View className="mt-6">
+                            <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                {t('venue_notes')}
+                            </Text>
+                            <TextInput
+                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[120]"
+                                value={notes}
+                                onChangeText={(val) => {
+                                    setNotes(val);
+                                    setHasChanges(true);
+                                }}
+                                multiline
+                                numberOfLines={6}
+                                textAlignVertical="top"
+                            />
                         </View>
                     </View>
                     <View className="h-20" />

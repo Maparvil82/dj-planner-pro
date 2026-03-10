@@ -490,20 +490,6 @@ export default function VenuesScreen() {
 
                                 <View className="mt-6">
                                     <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_notes')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[100px]"
-                                        placeholder={t('venue_notes_placeholder') || 'Notas...'}
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newNotes}
-                                        onChangeText={setNewNotes}
-                                        multiline
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                         {t('venue_images')}
                                     </Text>
                                     <View className="flex-row flex-wrap gap-3">
@@ -537,6 +523,20 @@ export default function VenuesScreen() {
                                             <Text className="text-xs text-blue-600 dark:text-blue-400 font-bold text-center flex-1">{t('uploading_image')}</Text>
                                         </View>
                                     )}
+                                </View>
+
+                                <View className="mt-6">
+                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                        {t('venue_notes')}
+                                    </Text>
+                                    <TextInput
+                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[100px]"
+                                        placeholder={t('venue_notes_placeholder') || 'Notas...'}
+                                        placeholderTextColor="#9CA3AF"
+                                        value={newNotes}
+                                        onChangeText={setNewNotes}
+                                        multiline
+                                    />
                                 </View>
                             </View>
                             <View className="h-10" />
