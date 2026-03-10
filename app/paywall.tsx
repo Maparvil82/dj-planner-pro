@@ -1,10 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
-    ScrollView,
     TouchableOpacity,
-    StyleSheet,
     Alert,
     Image,
     Dimensions,
@@ -13,19 +11,11 @@ import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useSubscriptionStore } from '../src/store/useSubscriptionStore';
 import {
-    Check,
     X,
-    ChevronLeft,
-    Sparkles,
-    ShieldCheck,
-    BarChart3,
-    FileText,
-    Quote,
+    ArrowRight,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -33,8 +23,6 @@ export default function PaywallScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const { setPro } = useSubscriptionStore();
-    const themeCtx = useContext(ThemeContext);
-    const isDark = themeCtx?.activeTheme === 'dark';
     const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
     const handleSubscribe = () => {
@@ -55,32 +43,24 @@ export default function PaywallScreen() {
         Alert.alert(t('restore_purchases'), t('restore_no_purchases'));
     };
 
-    const features = [
-        t('unlimited_sessions'),
-        t('advanced_analytics'),
-        t('priority_docs'),
-    ];
-
     return (
-        <View className="flex-1 bg-black">
+        <View className="flex-1 bg-white">
             {/* HEADER IMAGE SECTION */}
-            <View className="relative w-full h-[45%]">
-                <Image
-                    source={require('../assets/paywall_header.png')}
-                    style={{ width: '100%', height: '100%', position: 'absolute' }}
-                    resizeMode="cover"
-                />
-                <LinearGradient
-                    colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.8)', 'black']}
-                    style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-                />
+            <View className="w-full h-[40%] items-center justify-center pt-8">
+                <View className="w-[80%] aspect-square max-w-[300px]">
+                    <Image
+                        source={require('../assets/paywall_header_new.png')}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="contain"
+                    />
+                </View>
                 <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
                     <View className="px-6 py-4 flex-row items-center justify-between">
                         <TouchableOpacity
                             onPress={() => router.replace('/')}
-                            className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+                            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
                         >
-                            <X size={24} color="#FFFFFF" />
+                            <X size={24} color="#000000" />
                         </TouchableOpacity>
                     </View>
                 </SafeAreaView>
@@ -89,32 +69,29 @@ export default function PaywallScreen() {
             {/* CONTENT SECTION */}
             <View className="flex-1 px-6 justify-between pb-10">
                 <View>
-                    <View className="-mt-24">
-                        <Text className="text-white font-black text-4xl mb-10 tracking-tighter">
-                            {t('choose_plan').split('|').map((part, index) => (
-                                <Text key={index} style={index % 2 === 1 ? { color: '#FFC2AD' } : undefined}>
-                                    {part}
-                                </Text>
-                            ))}
+                    <View className="mt-4">
+                        <Text className="text-black font-semibold text-3xl mb-8 tracking-tight text-center">
+                            {t('choose_plan').replace(/\|/g, '')}
                         </Text>
+
                         {/* PRICING PLANS SIDE-BY-SIDE */}
                         <View className="flex-row mb-2 gap-4">
                             {/* MONTHLY PLAN CARD */}
                             <TouchableOpacity
                                 onPress={() => setSelectedPlan('monthly')}
                                 activeOpacity={0.8}
-                                className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                className={`flex-1 p-5 rounded-3xl border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
                                 style={{ minHeight: 120 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-white font-bold text-xl leading-tight">{t('plan_monthly')}</Text>
-                                    <Text className="text-white/60 text-base mt-1">{t('plan_monthly_desc')}</Text>
-                                    <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_monthly_trial')}</Text>
+                                    <Text className="text-black font-semibold text-lg leading-tight">{t('plan_monthly')}</Text>
+                                    <Text className="text-gray-500 text-sm mt-1">{t('plan_monthly_desc')}</Text>
+                                    <Text className="text-black text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
-                                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-black' : 'border-gray-300'
                                     }`}>
-                                    {selectedPlan === 'monthly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                                    {selectedPlan === 'monthly' && <View className="w-2.5 h-2.5 rounded-full bg-black" />}
                                 </View>
                             </TouchableOpacity>
 
@@ -122,23 +99,23 @@ export default function PaywallScreen() {
                             <TouchableOpacity
                                 onPress={() => setSelectedPlan('yearly')}
                                 activeOpacity={0.8}
-                                className={`flex-1 p-5 rounded-[22px] border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-[#FFC2AD] bg-[#1C1C1E]' : 'border-white/10 bg-[#1C1C1E]'
+                                className={`flex-1 p-5 rounded-3xl border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
                                 style={{ minHeight: 120 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-white font-bold text-xl leading-tight">{t('plan_yearly')}</Text>
-                                    <Text className="text-white/60 text-base mt-1">{t('plan_yearly_desc')}</Text>
-                                    <Text className="text-[#4FD1C5] text-sm font-bold mt-2">{t('plan_yearly_trial')}</Text>
+                                    <Text className="text-black font-semibold text-lg leading-tight">{t('plan_yearly')}</Text>
+                                    <Text className="text-gray-500 text-sm mt-1">{t('plan_yearly_desc')}</Text>
+                                    <Text className="text-black text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
                                 </View>
-                                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-[#FFC2AD]' : 'border-white/30'
+                                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-black' : 'border-gray-300'
                                     }`}>
-                                    {selectedPlan === 'yearly' && <View className="w-3 h-3 rounded-full bg-[#FFC2AD]" />}
+                                    {selectedPlan === 'yearly' && <View className="w-2.5 h-2.5 rounded-full bg-black" />}
                                 </View>
 
                                 {/* SAVE BADGE */}
-                                <View className="absolute -top-3 right-4 bg-white px-2 py-0.5 rounded-full shadow-lg">
-                                    <Text className="text-black font-black text-[9px] uppercase">
+                                <View className="absolute -top-3 right-4 bg-black px-2 py-0.5 rounded-full shadow-sm">
+                                    <Text className="text-white font-bold text-[9px] uppercase">
                                         -{t('save_badge', { percent: '70' }).match(/\d+/)?.[0]}%
                                     </Text>
                                 </View>
@@ -147,17 +124,18 @@ export default function PaywallScreen() {
 
                         {/* MAIN CTA BUTTON */}
                         <TouchableOpacity
-                            activeOpacity={0.9}
+                            activeOpacity={0.8}
                             onPress={handleSubscribe}
-                            className="bg-[#FFC2AD] py-6 rounded-[22px] items-center mt-8 shadow-2xl shadow-[#FFC2AD]/20"
+                            className="bg-black py-5 rounded-full flex-row items-center justify-center mt-8 shadow-lg"
                         >
-                            <Text className="text-black font-black text-xl uppercase tracking-widest">
+                            <Text className="text-white font-semibold text-lg mr-2">
                                 {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
                             </Text>
+                            <ArrowRight size={20} color="white" />
                         </TouchableOpacity>
 
                         {/* COMPLIANCE INFO */}
-                        <Text className="text-center text-white/40 text-[11px] mt-4 leading-5">
+                        <Text className="text-center text-gray-400 text-[11px] mt-4 leading-5 px-4">
                             {selectedPlan === 'monthly'
                                 ? t('plan_monthly_disclaimer')
                                 : t('plan_yearly_disclaimer')}
@@ -166,18 +144,18 @@ export default function PaywallScreen() {
                 </View>
 
                 {/* FOOTER */}
-                <View className="items-center pb-8">
+                <View className="items-center pb-4">
                     <View className="flex-row items-center gap-2 px-4">
                         <TouchableOpacity onPress={() => Linking.openURL(t('terms_of_use_url'))}>
-                            <Text className="text-white/40 text-[11px] font-medium">{t('terms_of_use')}</Text>
+                            <Text className="text-gray-400 text-[11px] font-medium">{t('terms_of_use')}</Text>
                         </TouchableOpacity>
-                        <View className="w-1 h-1 rounded-full bg-white/10" />
+                        <View className="w-1 h-1 rounded-full bg-gray-200" />
                         <TouchableOpacity onPress={() => Linking.openURL(t('privacy_policy_url'))}>
-                            <Text className="text-white/40 text-[11px] font-medium">{t('privacy_policy')}</Text>
+                            <Text className="text-gray-400 text-[11px] font-medium">{t('privacy_policy')}</Text>
                         </TouchableOpacity>
-                        <View className="w-1 h-1 rounded-full bg-white/10" />
+                        <View className="w-1 h-1 rounded-full bg-gray-200" />
                         <TouchableOpacity onPress={handleRestore}>
-                            <Text className="text-white/40 text-[11px] font-medium">{t('restore_purchases')}</Text>
+                            <Text className="text-gray-400 text-[11px] font-medium">{t('restore_purchases')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
