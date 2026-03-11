@@ -6,12 +6,13 @@ import {
     Alert,
     Image,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { useSubscriptionStore } from '../src/store/useSubscriptionStore';
+import { useSubscription } from '../src/hooks/useSubscription';
 import {
     X,
     ArrowRight,
@@ -22,26 +23,47 @@ const { width } = Dimensions.get('window');
 export default function PaywallScreen() {
     const { t } = useTranslation();
     const router = useRouter();
-    const { setPro } = useSubscriptionStore();
+
+    const {
+        purchaseMonthly,
+        purchaseAnnual,
+        restorePurchases,
+        isLoading,
+        monthlyPackage,
+        annualPackage
+    } = useSubscription();
+
     const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
-    const handleSubscribe = () => {
-        // Mock success
-        Alert.alert(
-            t('subscription_success_title'),
-            t('subscription_success_msg'),
-            [{
-                text: "OK", onPress: () => {
-                    setPro(true);
-                    router.replace('/');
-                }
-            }]
-        );
+    const handleSubscribe = async () => {
+        let success = false;
+        if (selectedPlan === 'monthly') {
+            success = await purchaseMonthly();
+        } else {
+            success = await purchaseAnnual();
+        }
+
+        if (success) {
+            router.replace('/');
+        }
     };
 
-    const handleRestore = () => {
-        Alert.alert(t('restore_purchases'), t('restore_no_purchases'));
+    const handleRestore = async () => {
+        const success = await restorePurchases();
+        if (success) {
+            Alert.alert(
+                t('restore_purchases_success_title', { defaultValue: 'Restored' }),
+                t('restore_purchases_success_msg', { defaultValue: 'Your purchases have been restored successfully.' })
+            );
+            router.replace('/');
+        } else {
+            Alert.alert(t('restore_purchases'), t('restore_no_purchases'));
+        }
     };
+
+    // Use dynamic prices from RevenueCat if available, fallback to translations
+    const monthlyPriceString = monthlyPackage?.product.priceString || t('plan_monthly_desc');
+    const annualPriceString = annualPackage?.product.priceString || t('plan_yearly_desc');
 
     return (
         <View className="flex-1 bg-white">
@@ -86,7 +108,7 @@ export default function PaywallScreen() {
                             >
                                 <View className="flex-1">
                                     <Text className="text-black font-semibold text-lg leading-tight">{t('plan_monthly')}</Text>
-                                    <Text className="text-gray-500 text-sm mt-1">{t('plan_monthly_desc')}</Text>
+                                    <Text className="text-gray-500 text-sm mt-1">{monthlyPriceString}</Text>
                                     <Text className="text-black text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
                                 <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-black' : 'border-gray-300'
@@ -105,7 +127,7 @@ export default function PaywallScreen() {
                             >
                                 <View className="flex-1">
                                     <Text className="text-black font-semibold text-lg leading-tight">{t('plan_yearly')}</Text>
-                                    <Text className="text-gray-500 text-sm mt-1">{t('plan_yearly_desc')}</Text>
+                                    <Text className="text-gray-500 text-sm mt-1">{annualPriceString}</Text>
                                     <Text className="text-black text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
                                 </View>
                                 <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-black' : 'border-gray-300'
@@ -126,12 +148,19 @@ export default function PaywallScreen() {
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={handleSubscribe}
-                            className="bg-black py-5 rounded-full flex-row items-center justify-center mt-8 shadow-lg"
+                            disabled={isLoading}
+                            className={`py-5 rounded-full flex-row items-center justify-center mt-8 shadow-lg ${isLoading ? 'bg-gray-400' : 'bg-black'}`}
                         >
-                            <Text className="text-white font-semibold text-lg mr-2">
-                                {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
-                            </Text>
-                            <ArrowRight size={20} color="white" />
+                            {isLoading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <>
+                                    <Text className="text-white font-semibold text-lg mr-2">
+                                        {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
+                                    </Text>
+                                    <ArrowRight size={20} color="white" />
+                                </>
+                            )}
                         </TouchableOpacity>
 
                         {/* COMPLIANCE INFO */}
@@ -154,8 +183,8 @@ export default function PaywallScreen() {
                             <Text className="text-gray-400 text-[11px] font-medium">{t('privacy_policy')}</Text>
                         </TouchableOpacity>
                         <View className="w-1 h-1 rounded-full bg-gray-200" />
-                        <TouchableOpacity onPress={handleRestore}>
-                            <Text className="text-gray-400 text-[11px] font-medium">{t('restore_purchases')}</Text>
+                        <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
+                            <Text className={`text-[11px] font-medium ${isLoading ? 'text-gray-300' : 'text-gray-400'}`}>{t('restore_purchases')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
