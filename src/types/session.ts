@@ -20,7 +20,7 @@ export interface Session {
     venue_id?: string; // uuid
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
-    status?: 'pending' | 'confirmed' | 'cancelled';
+    status?: 'confirmed' | 'cancelled';
     poster_url?: string | null;
 }
 
@@ -40,7 +40,7 @@ export interface CreateSessionInput {
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
     venue_id?: string; // uuid
-    status?: 'pending' | 'confirmed' | 'cancelled';
+    status?: 'confirmed' | 'cancelled';
     poster_url?: string | null;
 }
 

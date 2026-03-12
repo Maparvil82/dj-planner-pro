@@ -37,7 +37,6 @@ export default function AddSessionScreen() {
     const [endTime, setEndTime] = useState('04:00');
     const [venueId, setVenueId] = useState<string | null>(null);
     const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
-    const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled'>('confirmed');
     const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>('free');
     const [earningAmount, setEarningAmount] = useState('');
     const [currency, setCurrency] = useState('€');
@@ -167,7 +166,7 @@ export default function AddSessionScreen() {
                     recurrence_type: recurrenceType,
                     recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
                     color: selectedColor || undefined,
-                    status: status,
+                    status: 'confirmed',
                     poster_url: posterUrl
                 });
                 Alert.alert(t('success'), t('session_added_success'), [
@@ -385,13 +384,46 @@ export default function AddSessionScreen() {
                             </TouchableOpacity>
                         </View>
 
+                        <View className="flex-row space-x-4 mb-4">
+                            <View className="flex-1 mr-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={startTime} onChangeText={setStartTime} /></View></View>
+                            <View className="flex-1 ml-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={endTime} onChangeText={setEndTime} /></View></View>
+                        </View>
+
+                        <View style={{ zIndex: 10, marginTop: 8 }}>
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('earning_type')}</Text>
+                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'free' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('free')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'free' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_free')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'hourly' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('hourly')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'hourly' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_hourly')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'fixed' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
+                                    onPress={() => setEarningType('fixed')}
+                                >
+                                    <Text style={{ fontWeight: '600', color: earningType === 'fixed' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_fixed')}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20, borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', marginBottom: 20 }}>
+                                <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
+                                <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
+                            </View>
+                        </View>
+
                         <View className="flex-row items-center justify-between mb-4 mt-2 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
                             <View className="flex-row items-center"><Users size={20} color={isDark ? '#60A5FA' : '#3B82F6'} className="mr-3" /><Text className="text-base font-semibold text-gray-900 dark:text-white">{t('collective_session')}</Text></View>
                             <Switch value={isCollective} onValueChange={setIsCollective} />
                         </View>
 
                         {isCollective && (
-                            <View className="z-30">
+                            <View className="z-30 mb-6">
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('add_djs')}</Text>
                                 <View className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'dj' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
                                     <Users size={22} color={focusedInput === 'dj' ? '#3B82F6' : '#9CA3AF'} />
@@ -421,61 +453,14 @@ export default function AddSessionScreen() {
                             </View>
                         )}
 
-                        <View className="flex-row space-x-4">
-                            <View className="flex-1 mr-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={startTime} onChangeText={setStartTime} /></View></View>
-                            <View className="flex-1 ml-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={endTime} onChangeText={setEndTime} /></View></View>
-                        </View>
-
-                        <View style={{ marginTop: 24, zIndex: 10 }}>
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('session_status', { status: '' }).replace(':', '').trim()}</Text>
-                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: status === 'confirmed' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setStatus('confirmed')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: status === 'confirmed' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('status_confirmed')}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: status === 'pending' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setStatus('pending')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: status === 'pending' ? (isDark ? '#F97316' : '#EA580C') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('status_pending')}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: status === 'cancelled' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setStatus('cancelled')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: status === 'cancelled' ? (isDark ? '#EF4444' : '#DC2626') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('status_cancelled')}</Text>
-                                </TouchableOpacity>
+                        <View className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30 mb-6">
+                            <View className="flex-row items-center mb-1">
+                                <Check size={16} color="#3B82F6" />
+                                <Text className="ml-2 text-blue-700 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">{t('status_confirmed')}</Text>
                             </View>
-                        </View>
-
-                        <View style={{ zIndex: 10, marginTop: 8 }}>
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('earning_type')}</Text>
-                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 }}>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'free' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setEarningType('free')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: earningType === 'free' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_free')}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'hourly' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setEarningType('hourly')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: earningType === 'hourly' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_hourly')}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: earningType === 'fixed' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent' }}
-                                    onPress={() => setEarningType('fixed')}
-                                >
-                                    <Text style={{ fontWeight: '600', color: earningType === 'fixed' ? (isDark ? '#60A5FA' : '#2563EB') : (isDark ? '#9CA3AF' : '#6B7280') }}>{t('earning_fixed')}</Text>
-                                </TouchableOpacity>
-                            </View>
-                            <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20, borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6' }}>
-                                <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
-                                <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
-                            </View>
+                            <Text className="text-gray-600 dark:text-gray-400 text-sm leading-5">
+                                {t('add_session_status_info')}
+                            </Text>
                         </View>
 
                         {/* Event Poster Section */}

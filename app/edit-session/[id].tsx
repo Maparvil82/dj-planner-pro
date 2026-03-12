@@ -563,7 +563,6 @@ export default function EditSessionScreen() {
                             <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 4 }}>
                                 {[
                                     { id: 'confirmed', label: t('status_confirmed') || 'Confirmada', color: isDark ? '#60A5FA' : '#2563EB', activeBg: isDark ? '#374151' : '#FFFFFF' },
-                                    { id: 'pending', label: t('status_pending') || 'Pendiente', color: isDark ? '#F97316' : '#EA580C', activeBg: isDark ? '#374151' : '#FFFFFF' },
                                     { id: 'cancelled', label: t('status_cancelled') || 'Caída', color: isDark ? '#EF4444' : '#DC2626', activeBg: isDark ? '#374151' : '#FFFFFF' }
                                 ].map((type) => (
                                     <TouchableOpacity
