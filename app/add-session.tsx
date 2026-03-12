@@ -90,15 +90,15 @@ export default function AddSessionScreen() {
         );
     }, [venue, venues]);
 
-    const filteredTitleTags = title.trim().length > 0
+    const filteredTitleTags = focusedInput === 'title'
         ? titleTags.filter(t => t.name.toLowerCase().includes(title.toLowerCase()) && t.name.toLowerCase() !== title.toLowerCase()).slice(0, 10)
         : [];
 
-    const filteredVenueTags = venue.trim().length > 0
+    const filteredVenueTags = focusedInput === 'venue'
         ? venueTags.filter(v => v.name.toLowerCase().includes(venue.toLowerCase()) && v.name.toLowerCase() !== venue.toLowerCase()).slice(0, 10)
         : [];
 
-    const filteredDjTags = djInput.trim().length > 0
+    const filteredDjTags = focusedInput === 'dj'
         ? djTags.filter(d => d.name.toLowerCase().includes(djInput.toLowerCase()) && !selectedDjs.includes(d.name)).slice(0, 10)
         : [];
 
@@ -365,8 +365,17 @@ export default function AddSessionScreen() {
                         <View className="z-50">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('session_title')} *</Text>
                             <View className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
-                                <TextInput className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('session_title_placeholder')} value={title} onChangeText={setTitle} onFocus={() => handleFocus('title')} onBlur={handleBlur} />
+                                <TextInput className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('session_title_placeholder')} value={title} onChangeText={setTitle} onFocus={() => handleFocus('title')} onBlur={handleBlur} autoCapitalize="words" />
                             </View>
+                            {filteredTitleTags.length > 0 && (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2" contentContainerStyle={{ paddingHorizontal: 4 }} keyboardShouldPersistTaps="always">
+                                    {filteredTitleTags.map((tag, idx) => (
+                                        <TouchableOpacity key={idx} onPress={() => { setTitle(tag.name); Keyboard.dismiss(); }} className="bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-100 dark:border-gray-700">
+                                            <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">{tag.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            )}
                         </View>
 
                         <View className="z-40">
@@ -386,8 +395,29 @@ export default function AddSessionScreen() {
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('add_djs')}</Text>
                                 <View className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'dj' ? 'border-blue-500 bg-white dark:bg-gray-900' : 'border-gray-100 dark:border-gray-900 bg-white dark:bg-gray-900'}`}>
                                     <Users size={22} color={focusedInput === 'dj' ? '#3B82F6' : '#9CA3AF'} />
-                                    <TextInput className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('add_djs_placeholder')} value={djInput} onChangeText={setDjInput} onFocus={() => handleFocus('dj')} onBlur={handleBlur} onSubmitEditing={() => { if (djInput.trim()) { setSelectedDjs([...selectedDjs, djInput.trim()]); setDjInput(''); } }} />
+                                    <TextInput className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium" placeholder={t('add_djs_placeholder')} value={djInput} onChangeText={setDjInput} onFocus={() => handleFocus('dj')} onBlur={handleBlur} autoCapitalize="words" onSubmitEditing={() => { if (djInput.trim()) { setSelectedDjs([...selectedDjs, djInput.trim()]); setDjInput(''); } }} />
                                 </View>
+                                {filteredDjTags.length > 0 && (
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2" contentContainerStyle={{ paddingHorizontal: 4 }} keyboardShouldPersistTaps="always">
+                                        {filteredDjTags.map((tag, idx) => (
+                                            <TouchableOpacity key={idx} onPress={() => { setSelectedDjs([...selectedDjs, tag.name]); setDjInput(''); }} className="bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-100 dark:border-gray-700">
+                                                <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">{tag.name}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                )}
+                                {selectedDjs.length > 0 && (
+                                    <View className="flex-row flex-wrap gap-2 mt-3 ml-1">
+                                        {selectedDjs.map((dj, index) => (
+                                            <View key={index} className="flex-row items-center bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-800">
+                                                <Text className="text-blue-600 dark:text-blue-400 text-sm font-bold">{dj}</Text>
+                                                <TouchableOpacity onPress={() => setSelectedDjs(selectedDjs.filter((_, i) => i !== index))} className="ml-2">
+                                                    <X size={14} color="#3B82F6" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
                             </View>
                         )}
 
@@ -551,9 +581,18 @@ export default function AddSessionScreen() {
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View className="mb-6">
                                 <View className="flex-row items-center bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 pr-3">
-                                    <TextInput className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold" value={venue} onChangeText={setVenue} onFocus={() => setVenueId(null)} />
+                                    <TextInput className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold" value={venue} onChangeText={setVenue} onFocus={() => { setVenueId(null); handleFocus('venue'); }} onBlur={handleBlur} autoCapitalize="words" />
                                     {venue.length > 0 && (<TouchableOpacity onPress={() => { setVenue(''); setVenueId(null); }}><X size={18} color="#9CA3AF" /></TouchableOpacity>)}
                                 </View>
+                                {filteredVenueTags.length > 0 && (
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2" contentContainerStyle={{ paddingHorizontal: 4 }} keyboardShouldPersistTaps="always">
+                                        {filteredVenueTags.map((tag, idx) => (
+                                            <TouchableOpacity key={idx} onPress={() => { setVenue(tag.name); setVenueId(null); }} className="bg-white dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-200 dark:border-gray-700">
+                                                <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">{tag.name}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                )}
                                 {venue.trim().length > 0 && !venues.some(v => v.name.toLowerCase() === venue.toLowerCase()) && (
                                     <TouchableOpacity onPress={async () => {
                                         try {

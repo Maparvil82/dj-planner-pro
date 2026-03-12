@@ -108,38 +108,61 @@ export const sessionService = {
         }
 
         // 2. Silently insert tags in the background (ignore errors and duplicates)
-        // By not awaiting this, we guarantee the UI never hangs for the user.
-        const insertTags = async () => {
-            try {
-                if (input.title) {
-                    const { error: tErr } = await supabase.from('user_tags').insert(
-                        { user_id: userId, type: 'title', name: input.title.trim(), color: sessionColor }
-                    );
-                    if (tErr && tErr.code !== '23505') console.warn('Supabase title tag error:', tErr);
-                }
-                if (input.venue) {
-                    const { error: vErr } = await supabase.from('user_tags').insert(
-                        { user_id: userId, type: 'venue', name: input.venue.trim(), color: getColorForString(input.venue.trim()) }
-                    );
-                    if (vErr && vErr.code !== '23505') console.warn('Supabase venue tag error:', vErr);
-                }
-
-                if (input.is_collective && input.djs && input.djs.length > 0) {
-                    for (const dj of input.djs) {
-                        const { error: dErr } = await supabase.from('user_tags').insert(
-                            { user_id: userId, type: 'dj', name: dj.trim(), color: getColorForString(dj.trim()) }
-                        );
-                        if (dErr && dErr.code !== '23505') console.warn('Supabase dj tag error:', dErr);
-                    }
-                }
-            } catch (err) {
-                console.warn('Silent tag insertion failed', err);
-            }
-        };
-
-        await insertTags();
+        this.syncTags(input, userId).catch(err => console.warn('Silent tag insertion failed', err));
 
         return sessionData;
+    },
+
+    /**
+     * Non-blocking tag synchronization.
+     * Uses Promise.allSettled to parallelize inserts and ignore duplicate errors (23505).
+     */
+    async syncTags(input: Partial<CreateSessionInput>, userId: string): Promise<void> {
+        try {
+            const tagsToSync = [];
+            
+            if (input.title) {
+                tagsToSync.push(
+                    supabase.from('user_tags').insert({
+                        user_id: userId,
+                        type: 'title',
+                        name: input.title.trim(),
+                        color: input.color || getColorForString(input.title)
+                    })
+                );
+            }
+            
+            if (input.venue) {
+                tagsToSync.push(
+                    supabase.from('user_tags').insert({
+                        user_id: userId,
+                        type: 'venue',
+                        name: input.venue.trim(),
+                        color: getColorForString(input.venue.trim())
+                    })
+                );
+            }
+
+            if (input.is_collective && input.djs && input.djs.length > 0) {
+                input.djs.forEach(dj => {
+                    tagsToSync.push(
+                        supabase.from('user_tags').insert({
+                            user_id: userId,
+                            type: 'dj',
+                            name: dj.trim(),
+                            color: getColorForString(dj.trim())
+                        })
+                    );
+                });
+            }
+
+            if (tagsToSync.length > 0) {
+                // Use allSettled so one failure doesn't block others
+                await Promise.allSettled(tagsToSync);
+            }
+        } catch (err) {
+            console.warn('[syncTags] Silent failure:', err);
+        }
     },
 
     async getAllSessions(userId: string): Promise<Session[]> {
@@ -291,7 +314,7 @@ export const sessionService = {
             throw new Error(error.message);
         }
     },
-    async updateSession(sessionId: string, input: Partial<CreateSessionInput>, updateAll: boolean = false): Promise<void> {
+    async updateSession(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll: boolean = false): Promise<void> {
         if (!updateAll) {
             const { error } = await supabase
                 .from('sessions')
@@ -305,6 +328,10 @@ export const sessionService = {
                 console.error('Error updating session:', error);
                 throw new Error(error.message);
             }
+            
+            // Sync tags in background
+            this.syncTags(input, userId).catch(e => console.warn('Tag sync error:', e));
+            
             return;
         }
 
@@ -351,6 +378,9 @@ export const sessionService = {
             console.error('Error updating multiple sessions:', error);
             throw new Error(error.message);
         }
+
+        // Sync tags in background
+        this.syncTags(input, userId).catch(e => console.warn('Tag sync error:', e));
     },
 
     async uploadSessionPoster(userId: string, imageUri: string): Promise<string | null> {

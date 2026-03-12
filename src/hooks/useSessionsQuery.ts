@@ -102,10 +102,13 @@ export const useUpdateSessionColorMutation = () => {
 
 export const useUpdateSessionMutation = () => {
     const queryClient = useQueryClient();
+    const { session } = useAuthStore();
+    const userId = session?.user?.id;
 
     return useMutation({
         mutationFn: ({ sessionId, input, updateAll }: { sessionId: string; input: Partial<CreateSessionInput>; updateAll?: boolean }) => {
-            return sessionService.updateSession(sessionId, input, updateAll);
+            if (!userId) throw new Error('User not authenticated');
+            return sessionService.updateSession(sessionId, input, userId, updateAll);
         },
         onSuccess: (_, variables) => {
             if (variables.updateAll) {
