@@ -79,17 +79,17 @@ export default function PaywallScreen() {
             <View className="flex-1 px-6 justify-between pt-10 pb-10">
                 <View>
                     <View className="mt-4">
-                        <Text className="text-black font-semibold text-3xl mb-8 tracking-tight text-center">
+                        <Text className="text-black font-semibold text-3xl mb-8 tracking-tight text-left">
                             {t('choose_plan').replace(/\|/g, '')}
                         </Text>
 
-                        {/* PRICING PLANS SIDE-BY-SIDE */}
-                        <View className="flex-row mb-2 gap-4">
+                        {/* PRICING PLANS STACKED */}
+                        <View className="flex-col mb-2 gap-4">
                             {/* MONTHLY PLAN CARD */}
                             <TouchableOpacity
                                 onPress={() => setSelectedPlan('monthly')}
                                 activeOpacity={0.8}
-                                className={`flex-1 p-5 rounded-3xl border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
+                                className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
                                 style={{ minHeight: 120 }}
                             >
@@ -108,7 +108,7 @@ export default function PaywallScreen() {
                             <TouchableOpacity
                                 onPress={() => setSelectedPlan('yearly')}
                                 activeOpacity={0.8}
-                                className={`flex-1 p-5 rounded-3xl border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
+                                className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
                                 style={{ minHeight: 120 }}
                             >
