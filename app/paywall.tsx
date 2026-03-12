@@ -4,8 +4,6 @@ import {
     Text,
     TouchableOpacity,
     Alert,
-    Image,
-    Dimensions,
     ActivityIndicator,
 } from 'react-native';
 import * as Linking from 'expo-linking';
@@ -17,8 +15,6 @@ import {
     X,
     ArrowRight,
 } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
 
 export default function PaywallScreen() {
     const { t } = useTranslation();
@@ -67,29 +63,20 @@ export default function PaywallScreen() {
 
     return (
         <View className="flex-1 bg-white">
-            {/* HEADER IMAGE SECTION */}
-            <View className="w-full h-[40%] items-center justify-center pt-8">
-                <View className="w-[80%] aspect-square max-w-[300px]">
-                    <Image
-                        source={require('../assets/paywall_header_new.png')}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode="contain"
-                    />
+            {/* HEADER SECTION */}
+            <SafeAreaView edges={['top']}>
+                <View className="px-6 py-4 flex-row items-center justify-between">
+                    <TouchableOpacity
+                        onPress={() => router.replace('/')}
+                        className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+                    >
+                        <X size={24} color="#000000" />
+                    </TouchableOpacity>
                 </View>
-                <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-                    <View className="px-6 py-4 flex-row items-center justify-between">
-                        <TouchableOpacity
-                            onPress={() => router.replace('/')}
-                            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
-                        >
-                            <X size={24} color="#000000" />
-                        </TouchableOpacity>
-                    </View>
-                </SafeAreaView>
-            </View>
+            </SafeAreaView>
 
             {/* CONTENT SECTION */}
-            <View className="flex-1 px-6 justify-between pb-10">
+            <View className="flex-1 px-6 justify-between pt-10 pb-10">
                 <View>
                     <View className="mt-4">
                         <Text className="text-black font-semibold text-3xl mb-8 tracking-tight text-center">
