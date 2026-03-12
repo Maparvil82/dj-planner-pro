@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
     const renderSlide = ({ item }: { item: OnboardingSlide }) => {
         return (
             <View style={{ width }} className="items-center justify-center px-10">
-                <View className="w-full aspect-square max-w-[340px] items-center justify-center mb-12">
+                <View className="w-full aspect-square max-w-[400px] items-center justify-center mb-8">
                     <Image
                         source={item.image}
                         style={{ width: '100%', height: '100%' }}
