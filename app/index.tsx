@@ -13,9 +13,6 @@ export default function Index() {
         );
     }
 
-    // TEMPORARY: Redirect to onboarding for screenshots
-    return <Redirect href="/(auth)/onboarding" />;
-
     // For now, if no session we go to auth layout, else to tabs
     if (!hasSeenOnboarding) {
         return <Redirect href="/(auth)/onboarding" />;
