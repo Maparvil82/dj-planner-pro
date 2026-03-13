@@ -1,4 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable, Image } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import { Stack, useGlobalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
@@ -63,6 +64,8 @@ export default function AddSessionScreen() {
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
     const [posterUrl, setPosterUrl] = useState<string | null>(null);
     const [isUploadingPoster, setIsUploadingPoster] = useState(false);
+    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
     useEffect(() => {
         const sd = new Date(sessionDate + 'T12:00:00Z');
@@ -75,6 +78,32 @@ export default function AddSessionScreen() {
 
     const handleFocus = (type: string) => setFocusedInput(type);
     const handleBlur = () => setTimeout(() => setFocusedInput(null), 150);
+
+    const onStartTimeChange = (event: any, selectedDate?: Date) => {
+        if (Platform.OS === 'android') setShowStartTimePicker(false);
+        if (selectedDate) {
+            const hours = selectedDate.getHours().toString().padStart(2, '0');
+            const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+            setStartTime(`${hours}:${minutes}`);
+        }
+    };
+
+    const onEndTimeChange = (event: any, selectedDate?: Date) => {
+        if (Platform.OS === 'android') setShowEndTimePicker(false);
+        if (selectedDate) {
+            const hours = selectedDate.getHours().toString().padStart(2, '0');
+            const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+            setEndTime(`${hours}:${minutes}`);
+        }
+    };
+
+    const getTimeDate = (timeStr: string) => {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours);
+        date.setMinutes(minutes);
+        return date;
+    };
 
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venueTags = [] } = useTagsQuery('venue');
@@ -385,8 +414,94 @@ export default function AddSessionScreen() {
                         </View>
 
                         <View className="flex-row space-x-4 mb-4">
-                            <View className="flex-1 mr-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={startTime} onChangeText={setStartTime} /></View></View>
-                            <View className="flex-1 ml-2"><Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text><View className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900"><Clock size={20} color="#9CA3AF" /><TextInput className="flex-1 px-3 py-4 text-gray-900 dark:text-white font-medium" value={endTime} onChangeText={setEndTime} /></View></View>
+                            <View className="flex-1 mr-2">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text>
+                                <TouchableOpacity 
+                                    onPress={() => setShowStartTimePicker(true)}
+                                    className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900 py-4"
+                                >
+                                    <Clock size={20} color="#9CA3AF" />
+                                    <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">{startTime}</Text>
+                                </TouchableOpacity>
+                                {showStartTimePicker && (
+                                    Platform.OS === 'ios' ? (
+                                        <Modal transparent animationType="fade" visible={showStartTimePicker}>
+                                            <TouchableOpacity 
+                                                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} 
+                                                onPress={() => setShowStartTimePicker(false)}
+                                            >
+                                                <View className="bg-white dark:bg-gray-900 m-5 p-5 rounded-3xl w-full max-w-[300px]">
+                                                    <DateTimePicker
+                                                        value={getTimeDate(startTime)}
+                                                        mode="time"
+                                                        is24Hour={true}
+                                                        display="spinner"
+                                                        onChange={onStartTimeChange}
+                                                    />
+                                                    <TouchableOpacity 
+                                                        className="mt-4 bg-blue-600 py-3 rounded-2xl items-center" 
+                                                        onPress={() => setShowStartTimePicker(false)}
+                                                    >
+                                                        <Text className="text-white font-bold">{t('confirm') || 'OK'}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </Modal>
+                                    ) : (
+                                        <DateTimePicker
+                                            value={getTimeDate(startTime)}
+                                            mode="time"
+                                            is24Hour={true}
+                                            display="default"
+                                            onChange={onStartTimeChange}
+                                        />
+                                    )
+                                )}
+                            </View>
+                            <View className="flex-1 ml-2">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text>
+                                <TouchableOpacity 
+                                    onPress={() => setShowEndTimePicker(true)}
+                                    className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900 py-4"
+                                >
+                                    <Clock size={20} color="#9CA3AF" />
+                                    <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">{endTime}</Text>
+                                </TouchableOpacity>
+                                {showEndTimePicker && (
+                                    Platform.OS === 'ios' ? (
+                                        <Modal transparent animationType="fade" visible={showEndTimePicker}>
+                                            <TouchableOpacity 
+                                                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} 
+                                                onPress={() => setShowEndTimePicker(false)}
+                                            >
+                                                <View className="bg-white dark:bg-gray-900 m-5 p-5 rounded-3xl w-full max-w-[300px]">
+                                                    <DateTimePicker
+                                                        value={getTimeDate(endTime)}
+                                                        mode="time"
+                                                        is24Hour={true}
+                                                        display="spinner"
+                                                        onChange={onEndTimeChange}
+                                                    />
+                                                    <TouchableOpacity 
+                                                        className="mt-4 bg-blue-600 py-3 rounded-2xl items-center" 
+                                                        onPress={() => setShowEndTimePicker(false)}
+                                                    >
+                                                        <Text className="text-white font-bold">{t('confirm') || 'OK'}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </Modal>
+                                    ) : (
+                                        <DateTimePicker
+                                            value={getTimeDate(endTime)}
+                                            mode="time"
+                                            is24Hour={true}
+                                            display="default"
+                                            onChange={onEndTimeChange}
+                                        />
+                                    )
+                                )}
+                            </View>
                         </View>
 
                         <View style={{ zIndex: 10, marginTop: 8 }}>
