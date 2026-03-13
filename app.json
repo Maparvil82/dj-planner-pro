@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "dj-planner-pro",
+    "name": "DJ Planner PRO",
     "slug": "dj-planner-pro",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.djplannerpro.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "DJ Planner Pro necesita acceso a la cámara para que puedas tomar fotos de tus carteles y avatares.",
+        "NSPhotoLibraryUsageDescription": "DJ Planner Pro necesita acceso a tu galería para que puedas seleccionar fotos de tus carteles y avatares."
       }
     },
     "android": {
