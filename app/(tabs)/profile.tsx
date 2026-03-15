@@ -13,6 +13,7 @@ import { LogOut, ChevronRight, Globe, Moon, Sun, ShieldCheck, Star, Trash2, Info
 import { cn } from '../../src/theme/tw';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { supabase } from '../../src/lib/supabase';
 
 export default function SettingsScreen() {
     const { t, currentLanguage } = useTranslation();
@@ -23,6 +24,8 @@ export default function SettingsScreen() {
     const [uploading, setUploading] = useState(false);
     const [editing, setEditing] = useState(false);
     const [artistName, setArtistName] = useState(profile?.artist_name || '');
+    const [email, setEmail] = useState(session?.user?.email || '');
+    const [password, setPassword] = useState('');
 
     const handlePickAvatar = async () => {
         // Request permissions
@@ -71,16 +74,48 @@ export default function SettingsScreen() {
     const handleUpdateProfile = async () => {
         if (!session?.user?.id) return;
 
+        let hasError = false;
+
+        // 1. Update Profile (Artist Name)
         const updated = await profileService.updateProfile(session.user.id, {
             artist_name: artistName.trim()
         });
 
         if (updated) {
             setProfile(updated);
-            setEditing(false);
-            Alert.alert(t('success'), t('avatar_upload_success'));
         } else {
+            hasError = true;
             Alert.alert(t('error'), t('error_saving_session'));
+        }
+
+        // 2. Update Auth Config (Email / Password)
+        const authUpdates: any = {};
+        if (email.trim() && email.trim() !== session.user.email) {
+            authUpdates.email = email.trim();
+        }
+        if (password) {
+            authUpdates.password = password;
+        }
+
+        if (Object.keys(authUpdates).length > 0) {
+            const { error: authError } = await supabase.auth.updateUser(authUpdates);
+            if (authError) {
+                console.error("Auth update error:", authError);
+                hasError = true;
+                Alert.alert(t('error'), authError.message);
+            } else {
+                if (authUpdates.email) {
+                    Alert.alert(t('success'), "A confirmation link has been sent to your new email. Please verify it.");
+                }
+                if (authUpdates.password) {
+                    Alert.alert(t('success'), "Password updated successfully.");
+                }
+            }
+        }
+
+        if (!hasError) {
+            setEditing(false);
+            setPassword(''); // Reset password field after edit
         }
     };
 
@@ -131,7 +166,7 @@ export default function SettingsScreen() {
         );
     };
 
-    const SettingItem = ({ icon: Icon, label, value, onPress, children, last }: any) => (
+    const SettingItem = ({ icon: Icon, label, value, onPress, children, last, isDestructive }: any) => (
         <TouchableOpacity
             onPress={onPress}
             disabled={!onPress}
@@ -140,11 +175,11 @@ export default function SettingsScreen() {
                 !last && "border-b border-gray-50 dark:border-gray-800"
             )}
         >
-            <View className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 items-center justify-center mr-4">
-                <Icon size={20} color={activeTheme === 'dark' ? '#9CA3AF' : '#6B7280'} />
+            <View className={cn("w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 items-center justify-center mr-4", isDestructive && "bg-red-50 dark:bg-red-500/10")}>
+                <Icon size={20} color={isDestructive ? '#EF4444' : (activeTheme === 'dark' ? '#9CA3AF' : '#6B7280')} />
             </View>
             <View className="flex-1">
-                <Text className="text-gray-900 dark:text-white font-medium text-base">{label}</Text>
+                <Text className={cn("font-medium text-base", isDestructive ? "text-red-500" : "text-gray-900 dark:text-white")}>{label}</Text>
                 {value && <Text className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{value}</Text>}
             </View>
             {children || <ChevronRight size={20} color="#D1D5DB" />}
@@ -189,14 +224,30 @@ export default function SettingsScreen() {
                         </View>
 
                         {editing ? (
-                            <View className="w-full mb-4">
+                            <View className="w-full mb-4 space-y-3">
                                 <TextInput
                                     value={artistName}
                                     onChangeText={setArtistName}
                                     placeholder={t('artist_name_placeholder')}
                                     placeholderTextColor="#9CA3AF"
                                     className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 text-center text-lg font-bold text-gray-900 dark:text-white"
-                                    autoFocus
+                                />
+                                <TextInput
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder={t('email_placeholder')}
+                                    placeholderTextColor="#9CA3AF"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-3 text-center text-base text-gray-900 dark:text-white mt-3"
+                                />
+                                <TextInput
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    placeholder={t('password_placeholder') + " (optional)"}
+                                    placeholderTextColor="#9CA3AF"
+                                    secureTextEntry
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-3 text-center text-base text-gray-900 dark:text-white mt-3"
                                 />
                             </View>
                         ) : (
@@ -283,10 +334,9 @@ export default function SettingsScreen() {
                             icon={Trash2}
                             label={t('delete_account')}
                             onPress={handleDeleteAccount}
+                            isDestructive
                             last
-                        >
-                            <Text className="text-red-500 font-medium">{t('delete_account')}</Text>
-                        </SettingItem>
+                        />
                     </View>
 
                     {/* VERSION */}
