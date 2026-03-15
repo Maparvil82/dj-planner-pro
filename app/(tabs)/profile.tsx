@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 export default function SettingsScreen() {
-    const { t, changeLanguage, currentLanguage } = useTranslation();
+    const { t, currentLanguage } = useTranslation();
     const { theme, setTheme, activeTheme } = useTheme();
     const { session, profile, signOut, setProfile } = useAuthStore();
     const router = useRouter();
@@ -229,31 +229,7 @@ export default function SettingsScreen() {
                     {/* APP SETTINGS */}
                     <SectionHeader title={t('settings_app_section')} />
                     <View className="bg-white dark:bg-gray-800/50 rounded-3xl px-5 border border-gray-100 dark:border-gray-800">
-                        <SettingItem
-                            icon={Globe}
-                            label={t('language')}
-                            value={currentLanguage.toUpperCase()}
-                            onPress={() => {
-                                const languages = [
-                                    { label: 'English', code: 'en' },
-                                    { label: 'Español', code: 'es' },
-                                    { label: 'Deutsch', code: 'de' },
-                                    { label: 'Français', code: 'fr' },
-                                    { label: 'Italiano', code: 'it' },
-                                    { label: 'Português', code: 'pt' },
-                                    { label: '日本語', code: 'ja' },
-                                ];
 
-                                Alert.alert(
-                                    t('language'),
-                                    t('language'),
-                                    languages.map(lang => ({
-                                        text: lang.label,
-                                        onPress: () => changeLanguage(lang.code)
-                                    })).concat([{ text: t('cancel'), style: 'cancel' } as any])
-                                );
-                            }}
-                        />
                         <SettingItem
                             icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
                             label={t('appearance')}
