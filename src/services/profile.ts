@@ -89,8 +89,17 @@ export const profileService = {
 
     async deleteAccount(userId: string): Promise<boolean> {
         try {
-            // 1. Call the SECURITY DEFINER function to delete the user from auth.users
-            // and all their data (cascades or manual cleanup in SQL)
+            // Manual cleanup of dependent tables to work around missing ON DELETE CASCADE
+            // Order is important to respect foreign keys (delete children before parents)
+            await supabase.from('vault_files').delete().eq('user_id', userId);
+            await supabase.from('vault_folders').delete().eq('user_id', userId);
+            await supabase.from('user_tags').delete().eq('user_id', userId);
+            await supabase.from('expenses').delete().eq('user_id', userId);
+            await supabase.from('sessions').delete().eq('user_id', userId);
+            await supabase.from('venues').delete().eq('user_id', userId);
+            await supabase.from('users_profile').delete().eq('id', userId);
+
+            // Call the SECURITY DEFINER function to delete the user from auth.users
             const { error } = await supabase.rpc('delete_user_data');
 
             if (error) throw error;
