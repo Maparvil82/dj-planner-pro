@@ -33,9 +33,7 @@ import {
     Camera,
     Loader
 } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { venueService } from '../../src/services/venues';
-import { PickedImage } from '../../src/types/venue';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
@@ -59,16 +57,6 @@ export default function VenuesScreen() {
 
     // New Venue State
     const [newName, setNewName] = useState('');
-    const [newAddress, setNewAddress] = useState('');
-    const [newCity, setNewCity] = useState('');
-    const [newContact, setNewContact] = useState('');
-    const [newNotes, setNewNotes] = useState('');
-    const [newCapacity, setNewCapacity] = useState('');
-    const [newEquipment, setNewEquipment] = useState<Array<{ name: string; quantity: number }>>([]);
-    const [equipInput, setEquipInput] = useState('');
-    const [equipQuantity, setEquipQuantity] = useState('');
-    const [selectedImages, setSelectedImages] = useState<PickedImage[]>([]);
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const groupedVenues = useMemo(() => {
@@ -138,38 +126,14 @@ export default function VenuesScreen() {
 
         try {
             setIsSaving(true);
-            const imageUrls: string[] = [];
-
-            if (selectedImages.length > 0) {
-                setIsUploadingImage(true);
-                for (const img of selectedImages) {
-                    const uploadedUrl = await venueService.uploadVenueImage(session!.user.id, img.uri);
-                    if (uploadedUrl) imageUrls.push(uploadedUrl);
-                }
-                setIsUploadingImage(false);
-            }
-
+            
             await createVenueMutation.mutateAsync({
-                name: normalizedName,
-                address: newAddress.trim(),
-                city: newCity.trim(),
-                contact_info: newContact.trim(),
-                capacity: newCapacity.trim() ? parseInt(newCapacity) : undefined,
-                equipment: newEquipment.length > 0 ? newEquipment : undefined,
-                images: imageUrls.length > 0 ? imageUrls : undefined,
-                notes: newNotes.trim()
+                name: normalizedName
             });
 
             setIsAddModalVisible(false);
             setNewName('');
-            setNewAddress('');
-            setNewCity('');
-            setNewContact('');
-            setNewNotes('');
-            setNewCapacity('');
-            setNewEquipment([]);
-            setEquipQuantity('');
-            setSelectedImages([]);
+
         } catch (error) {
             Alert.alert(t('error'), t('error_saving_session'));
         } finally {
@@ -177,28 +141,7 @@ export default function VenuesScreen() {
         }
     };
 
-    const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(t('error'), t('camera_permission_denied'));
-            return;
-        }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsMultipleSelection: true,
-            quality: 0.8,
-        });
-
-        if (!result.canceled) {
-            const newImages: PickedImage[] = result.assets.map(asset => ({
-                uri: asset.uri,
-                width: asset.width,
-                height: asset.height,
-            }));
-            setSelectedImages([...selectedImages, ...newImages]);
-        }
-    };
 
     if (isLoading && !isRefetching) {
         return (
@@ -327,247 +270,72 @@ export default function VenuesScreen() {
 
             <Modal
                 visible={isAddModalVisible}
-                animationType="slide"
-                transparent={false}
+                animationType="fade"
+                transparent={true}
                 onRequestClose={() => setIsAddModalVisible(false)}
             >
-                <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom']}>
-                    {/* Full Screen Header */}
-                    <View className="px-6 py-4 flex-row items-center justify-between">
-                        <TouchableOpacity
-                            onPress={() => setIsAddModalVisible(false)}
-                            className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 items-center justify-center"
-                        >
-                            <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#000000'} />
-                        </TouchableOpacity>
-                        <View className="flex-1 items-center justify-center mx-2">
-                            <Text className="text-xl font-black text-gray-900 dark:text-white text-center" numberOfLines={1}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    className="flex-1 bg-black/60 items-center justify-center p-4"
+                >
+                    <Pressable
+                        className="absolute inset-0"
+                        onPress={() => setIsAddModalVisible(false)}
+                    />
+                    
+                    <View className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative">
+                        {/* Header */}
+                        <View className="flex-row items-center justify-between mb-6">
+                            <Text className="text-xl font-black text-gray-900 dark:text-white">
                                 {t('add_venue')}
                             </Text>
-                        </View>
-                        {/* Empty view for balance */}
-                        <View className="w-10" />
-                    </View>
-
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        className="flex-1"
-                    >
-                        <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-                            <View className="space-y-6">
-                                <View>
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_name')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
-                                        placeholder={t('venue_placeholder')}
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newName}
-                                        onChangeText={setNewName}
-                                        autoFocus
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_capacity')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800"
-                                        placeholder={t('capacity_placeholder')}
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newCapacity}
-                                        onChangeText={setNewCapacity}
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_address')}
-                                    </Text>
-                                    <View className="relative">
-                                        <TextInput
-                                            className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 pl-12 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                            placeholder={t('address_placeholder') || 'Calle...'}
-                                            placeholderTextColor="#9CA3AF"
-                                            value={newAddress}
-                                            onChangeText={setNewAddress}
-                                            multiline
-                                        />
-                                        <View className="absolute left-4 top-4">
-                                            <MapPin size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_city')}
-                                    </Text>
-                                    <View className="relative">
-                                        <TextInput
-                                            className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 pl-12 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                            placeholder={t('city_placeholder') || 'Ciudad...'}
-                                            placeholderTextColor="#9CA3AF"
-                                            value={newCity}
-                                            onChangeText={setNewCity}
-                                        />
-                                        <View className="absolute left-4 top-4">
-                                            <MapPin size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_contact')}
-                                    </Text>
-                                    <View className="relative">
-                                        <TextInput
-                                            className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 pl-12 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                            placeholder={t('contact_placeholder') || 'Teléfono...'}
-                                            placeholderTextColor="#9CA3AF"
-                                            value={newContact}
-                                            onChangeText={setNewContact}
-                                        />
-                                        <View className="absolute left-4 top-4">
-                                            <Phone size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_equipment')}
-                                    </Text>
-                                    <View className="flex-row items-center gap-2 mb-3">
-                                        <View className="w-16">
-                                            <TextInput
-                                                className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-3 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800 text-center"
-                                                placeholder="1"
-                                                placeholderTextColor="#9CA3AF"
-                                                value={equipQuantity}
-                                                onChangeText={setEquipQuantity}
-                                                keyboardType="numeric"
-                                            />
-                                        </View>
-                                        <TextInput
-                                            className="flex-1 bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800"
-                                            placeholder={t('equipment_placeholder')}
-                                            placeholderTextColor="#9CA3AF"
-                                            value={equipInput}
-                                            onChangeText={setEquipInput}
-                                        />
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                if (equipInput.trim()) {
-                                                    const qty = equipQuantity.trim() ? (parseInt(equipQuantity) || 1) : 1;
-                                                    setNewEquipment([...newEquipment, { name: equipInput.trim(), quantity: qty }]);
-                                                    setEquipInput('');
-                                                    setEquipQuantity('');
-                                                }
-                                            }}
-                                            className="w-12 h-12 rounded-2xl bg-blue-600 items-center justify-center"
-                                        >
-                                            <Plus size={24} color="#FFFFFF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View className="flex-row flex-wrap gap-2">
-                                        {Array.isArray(newEquipment) && newEquipment.map((item, index) => (
-                                            <View key={index} className="bg-blue-50 dark:bg-blue-900/30 px-3 py-2 rounded-xl flex-row items-center">
-                                                <Text className="text-blue-600 dark:text-blue-400 font-medium text-sm mr-2">
-                                                    {item.quantity} x {item.name}
-                                                </Text>
-                                                <TouchableOpacity onPress={() => setNewEquipment(newEquipment.filter((_, i) => i !== index))}>
-                                                    <X size={14} color={isDark ? '#60A5FA' : '#2563EB'} />
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-                                    </View>
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_images')}
-                                    </Text>
-                                    <View className="flex-row flex-wrap gap-3">
-                                        <TouchableOpacity
-                                            onPress={pickImage}
-                                            style={{ width: '47.5%', aspectRatio: 1 }}
-                                            className="rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 flex-col items-center justify-center"
-                                        >
-                                            <Camera size={24} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                            <Text className="text-[12px] font-bold text-gray-400 mt-2 text-center px-2">{t('add_image')}</Text>
-                                        </TouchableOpacity>
-                                        {selectedImages.map((img, index) => (
-                                            <View key={index} style={{ width: '47.5%', aspectRatio: index % 3 === 0 ? 0.8 : 1.2 }} className="rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
-                                                <Image
-                                                    source={{ uri: img.uri }}
-                                                    className="w-full h-full"
-                                                    resizeMode="cover"
-                                                />
-                                                <TouchableOpacity
-                                                    onPress={() => setSelectedImages(selectedImages.filter((_, i) => i !== index))}
-                                                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 items-center justify-center border border-white/20"
-                                                >
-                                                    <X size={16} color="#FFFFFF" />
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-                                    </View>
-                                    {isUploadingImage && (
-                                        <View className="flex-row items-center mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl">
-                                            <ActivityIndicator size="small" color="#2563EB" className="mr-3" />
-                                            <Text className="text-xs text-blue-600 dark:text-blue-400 font-bold text-center flex-1">{t('uploading_image')}</Text>
-                                        </View>
-                                    )}
-                                </View>
-
-                                <View className="mt-6">
-                                    <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                                        {t('venue_notes')}
-                                    </Text>
-                                    <TextInput
-                                        className="bg-gray-50 dark:bg-gray-900 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-medium border border-gray-100 dark:border-gray-800 min-h-[100px]"
-                                        placeholder={t('venue_notes_placeholder') || 'Notas...'}
-                                        placeholderTextColor="#9CA3AF"
-                                        value={newNotes}
-                                        onChangeText={setNewNotes}
-                                        multiline
-                                    />
-                                </View>
-                            </View>
-                            <View className="h-10" />
-                        </ScrollView>
-
-                        <View className="px-6">
                             <TouchableOpacity
-                                onPress={handleCreateVenue}
-                                disabled={!newName.trim() || createVenueMutation.isPending}
-                                className={cn(
-                                    "mt-8 mb-4 bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row",
-                                    (!newName.trim() || createVenueMutation.isPending) && "opacity-50"
-                                )}
+                                onPress={() => setIsAddModalVisible(false)}
+                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
                             >
-                                {createVenueMutation.isPending ? (
-                                    <ActivityIndicator color="#FFFFFF" />
-                                ) : (
-                                    <>
-                                        <Text className="text-white font-bold text-lg mr-2">
-                                            {t('save_venue')}
-                                        </Text>
-                                        {newName.trim().length > 0 && (
-                                            <ArrowRight size={20} color="#FFFFFF" />
-                                        )}
-                                    </>
-                                )}
+                                <X size={20} color={isDark ? '#FFFFFF' : '#000000'} />
                             </TouchableOpacity>
                         </View>
-                    </KeyboardAvoidingView>
-                </SafeAreaView>
-            </Modal >
+
+                        {/* Input */}
+                        <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                            {t('venue_name')}
+                        </Text>
+                        <TextInput
+                            className="bg-gray-50 dark:bg-gray-950 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800 mb-6"
+                            placeholder={t('venue_placeholder')}
+                            placeholderTextColor="#9CA3AF"
+                            value={newName}
+                            onChangeText={setNewName}
+                            autoCapitalize="words"
+                            autoFocus
+                        />
+
+                        {/* Save Button */}
+                        <TouchableOpacity
+                            onPress={handleCreateVenue}
+                            disabled={!newName.trim() || createVenueMutation.isPending}
+                            className={cn(
+                                "bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row",
+                                (!newName.trim() || createVenueMutation.isPending) && "opacity-50"
+                            )}
+                        >
+                            {createVenueMutation.isPending ? (
+                                <ActivityIndicator color="#FFFFFF" />
+                            ) : (
+                                <>
+                                    <Text className="text-white font-bold text-lg mr-2">
+                                        {t('save_venue')}
+                                    </Text>
+                                    {newName.trim().length > 0 && (
+                                        <ArrowRight size={20} color="#FFFFFF" />
+                                    )}
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </SafeAreaView >
     );
 }
