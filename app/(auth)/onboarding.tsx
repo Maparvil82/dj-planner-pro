@@ -66,13 +66,13 @@ export default function OnboardingScreen() {
             slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
             setHasSeenOnboarding(true);
-            router.replace('/paywall');
+            router.replace('/(auth)/register');
         }
     };
 
     const handleSkip = () => {
         setHasSeenOnboarding(true);
-        router.replace('/paywall');
+        router.replace('/(auth)/register');
     };
 
     const renderSlide = ({ item }: { item: OnboardingSlide }) => {

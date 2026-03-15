@@ -43,7 +43,7 @@ export default function RegisterScreen() {
             await profileService.updateProfile(authData.user.id, {
                 artist_name: artistName.trim()
             });
-            router.replace('/(tabs)/home');
+            router.replace('/paywall');
         }
 
         setLoading(false);
