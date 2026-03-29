@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
+    ScrollView,
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import { useSubscription } from '../src/hooks/useSubscription';
 import {
     X,
     ArrowRight,
+    Check,
 } from 'lucide-react-native';
 
 export default function PaywallScreen() {
@@ -76,12 +78,50 @@ export default function PaywallScreen() {
             </SafeAreaView>
 
             {/* CONTENT SECTION */}
-            <View className="flex-1 px-6 justify-between pt-10 pb-10">
-                <View>
-                    <View className="mt-4">
-                        <Text className="text-black font-semibold text-3xl mb-8 tracking-tight text-left">
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 }}
+            >
+                <View className="flex-1 justify-between">
+                    <View className="mt-2">
+                        <Text className="text-black font-semibold text-3xl mb-4 tracking-tight text-left">
                             {t('choose_plan').replace(/\|/g, '')}
                         </Text>
+                        
+                        <Text className="text-gray-600 text-sm mb-6 leading-5">
+                            {t('subscription_explanation')}
+                        </Text>
+
+                        {/* PRO BENEFITS */}
+                        <View className="mb-6 bg-gray-50 p-4 rounded-2xl">
+                            <Text className="text-black font-bold text-base mb-3">{t('pro_benefits_title')}</Text>
+                            <View className="flex-row flex-wrap gap-y-3">
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_sessions')}</Text>
+                                </View>
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_venues_rates')}</Text>
+                                </View>
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_economy')}</Text>
+                                </View>
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_analytics')}</Text>
+                                </View>
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_ai')}</Text>
+                                </View>
+                                <View className="w-1/2 flex-row items-center pr-2">
+                                    <Check size={16} color="#000" className="mr-2" />
+                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_billing')}</Text>
+                                </View>
+                            </View>
+                        </View>
 
                         {/* PRICING PLANS STACKED */}
                         <View className="flex-col mb-2 gap-4">
@@ -91,11 +131,11 @@ export default function PaywallScreen() {
                                 activeOpacity={0.8}
                                 className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
-                                style={{ minHeight: 120 }}
+                                style={{ minHeight: 110 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-black font-semibold text-lg leading-tight">{t('plan_monthly')}</Text>
-                                    <Text className="text-gray-500 text-sm mt-1">{monthlyPriceString}</Text>
+                                    <Text className="text-black font-semibold text-base leading-tight">{t('subscription_name_monthly')}</Text>
+                                    <Text className="text-gray-600 text-sm mt-1">{t('plan_monthly')}: {monthlyPriceString}</Text>
                                     <Text className="text-black text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
                                 </View>
                                 <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-black' : 'border-gray-300'
@@ -110,11 +150,11 @@ export default function PaywallScreen() {
                                 activeOpacity={0.8}
                                 className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
                                     }`}
-                                style={{ minHeight: 120 }}
+                                style={{ minHeight: 110 }}
                             >
                                 <View className="flex-1">
-                                    <Text className="text-black font-semibold text-lg leading-tight">{t('plan_yearly')}</Text>
-                                    <Text className="text-gray-500 text-sm mt-1">{annualPriceString}</Text>
+                                    <Text className="text-black font-semibold text-base leading-tight">{t('subscription_name_yearly')}</Text>
+                                    <Text className="text-gray-600 text-sm mt-1">{t('plan_yearly')}: {annualPriceString}</Text>
                                     <Text className="text-black text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
                                 </View>
                                 <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-black' : 'border-gray-300'
@@ -136,13 +176,13 @@ export default function PaywallScreen() {
                             activeOpacity={0.8}
                             onPress={handleSubscribe}
                             disabled={isLoading}
-                            className={`py-5 rounded-full flex-row items-center justify-center mt-8 shadow-lg ${isLoading ? 'bg-gray-400' : 'bg-black'}`}
+                            className={`py-5 rounded-full flex-row items-center justify-center mt-6 shadow-md ${isLoading ? 'bg-gray-400' : 'bg-black'}`}
                         >
                             {isLoading ? (
                                 <ActivityIndicator color="white" />
                             ) : (
                                 <>
-                                    <Text className="text-white font-semibold text-lg mr-2">
+                                    <Text className="text-white font-semibold text-base mr-2">
                                         {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
                                     </Text>
                                     <ArrowRight size={20} color="white" />
@@ -150,32 +190,42 @@ export default function PaywallScreen() {
                             )}
                         </TouchableOpacity>
 
-                        {/* COMPLIANCE INFO */}
-                        <Text className="text-center text-gray-400 text-[11px] mt-4 leading-5 px-4">
-                            {selectedPlan === 'monthly'
-                                ? t('plan_monthly_disclaimer')
-                                : t('plan_yearly_disclaimer')}
-                        </Text>
-                    </View>
-                </View>
+                        {/* COMPLIANCE INFO & DISCLAIMERS */}
+                        <View className="mt-8">
+                            <Text className="text-center text-gray-500 text-[10px] leading-4 px-2 mb-3">
+                                {selectedPlan === 'monthly'
+                                    ? t('plan_monthly_disclaimer')
+                                    : t('plan_yearly_disclaimer')}
+                            </Text>
 
-                {/* FOOTER */}
-                <View className="items-center pb-4">
-                    <View className="flex-row items-center gap-2 px-4">
-                        <TouchableOpacity onPress={() => Linking.openURL(t('terms_of_use_url'))}>
-                            <Text className="text-gray-400 text-[11px] font-medium">{t('terms_of_use')}</Text>
-                        </TouchableOpacity>
-                        <View className="w-1 h-1 rounded-full bg-gray-200" />
-                        <TouchableOpacity onPress={() => Linking.openURL(t('privacy_policy_url'))}>
-                            <Text className="text-gray-400 text-[11px] font-medium">{t('privacy_policy')}</Text>
-                        </TouchableOpacity>
-                        <View className="w-1 h-1 rounded-full bg-gray-200" />
-                        <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
-                            <Text className={`text-[11px] font-medium ${isLoading ? 'text-gray-300' : 'text-gray-400'}`}>{t('restore_purchases')}</Text>
-                        </TouchableOpacity>
+                            <Text className="text-justify text-gray-400 text-[9px] leading-3 mb-2">
+                                {t('subscription_notice')}
+                            </Text>
+
+                            <Text className="text-justify text-gray-400 text-[9px] leading-3">
+                                {t('manage_apple_id')}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* FOOTER LINKS */}
+                    <View className="items-center mt-8 pb-4 border-t border-gray-100 pt-6">
+                        <View className="flex-row items-center flex-wrap justify-center gap-x-3 gap-y-2">
+                            <TouchableOpacity onPress={() => Linking.openURL(t('terms_of_use_url'))}>
+                                <Text className="text-gray-500 text-[10px] font-medium underline">{t('terms_of_use')}</Text>
+                            </TouchableOpacity>
+                            <View className="w-1 h-1 rounded-full bg-gray-300 hidden sm:flex" />
+                            <TouchableOpacity onPress={() => Linking.openURL(t('privacy_policy_url'))}>
+                                <Text className="text-gray-500 text-[10px] font-medium underline">{t('privacy_policy')}</Text>
+                            </TouchableOpacity>
+                            <View className="w-1 h-1 rounded-full bg-gray-300 hidden sm:flex" />
+                            <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
+                                <Text className={`text-[10px] font-medium underline ${isLoading ? 'text-gray-300' : 'text-gray-500'}`}>{t('restore_purchases')}</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
-            </View>
+            </ScrollView>
         </View>
     );
 }

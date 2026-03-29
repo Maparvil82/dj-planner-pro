@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Animated,
     Image,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -77,23 +78,27 @@ export default function OnboardingScreen() {
 
     const renderSlide = ({ item }: { item: OnboardingSlide }) => {
         return (
-            <View style={{ width }} className="items-center justify-center px-10">
-                <View className="w-full aspect-square max-w-[400px] items-center justify-center mb-8">
+            <ScrollView 
+                style={{ width }} 
+                contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 20 }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View className="w-full aspect-square max-w-[400px] items-center justify-center mb-8 mt-4">
                     <Image
                         source={item.image}
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="contain"
                     />
                 </View>
-                <View className="items-center">
-                    <Text className="text-4xl font-semibold text-black text-center mb-4 tracking-tight">
+                <View className="items-center w-full max-w-[600px]">
+                    <Text className="text-4xl font-semibold text-black text-center mb-4 tracking-tight" style={{ flexShrink: 1 }}>
                         {t(item.titleKey).replace(/\|/g, '')}
                     </Text>
-                    <Text className="text-lg text-gray-500 text-center leading-7 px-4">
+                    <Text className="text-lg text-gray-500 text-center leading-7" style={{ flexShrink: 1 }}>
                         {t(item.subtitleKey)}
                     </Text>
                 </View>
-            </View>
+            </ScrollView>
         );
     };
 

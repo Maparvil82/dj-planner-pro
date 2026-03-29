@@ -311,5 +311,16 @@
     "social_proof": "2,342 people have joined today!",
     "whats_in": "WHAT'S IN",
     "save_badge": "Save {{percent}}%",
-    "plan_yearly_just": "Just {{price}} / year"
+    "plan_yearly_just": "Just {{price}} / year",
+    "pro_benefits_title": "PRO Benefits",
+    "pro_sessions": "PRO Sessions",
+    "pro_venues_rates": "Custom venues and rates",
+    "pro_economy": "PRO Economy",
+    "pro_analytics": "PRO Analytics",
+    "pro_ai": "PRO AI",
+    "pro_billing": "PRO Billing",
+    "subscription_explanation": "Unlock all DJ Planner Pro features to take your career to the next level.",
+    "manage_apple_id": "You can manage or cancel your subscription at any time from your Apple ID account settings.",
+    "subscription_name_monthly": "Monthly Subscription",
+    "subscription_name_yearly": "Yearly Subscription"
 }
