@@ -629,5 +629,13 @@
         "invitation_response_accepted": "{{name}}が「{{title}}」を承認しました",
         "invitation_response_declined": "{{name}}が「{{title}}」を辞退または退出しました",
         "session_update": "{{name}}が「{{title}}」を更新しました"
-    }
+    },
+    "posterFrame": {
+        "title": "カードの表示範囲",
+        "dragHint": "ポスターをドラッグして、カードに表示する部分を選択します。",
+        "center": "画像を中央に戻す",
+        "scope": "保存すると、同じポスターを使用する自分のセッションにも適用されます。詳細ではポスター全体を表示できます。",
+        "error": "ポスターを読み込めませんでした。接続を確認してください。",
+        "remove": "ポスターを削除"
+}
 }

@@ -1,3 +1,5 @@
+import { PosterFrameEditor } from '../src/components/sessions/PosterFrameEditor';
+import type { PosterPosition } from '../src/utils/posterFrame';
 import { SessionDJPicker } from '../src/components/sessions/SessionDJPicker';
 import {
     SessionFormHeader,
@@ -26,7 +28,6 @@ import {
     Platform,
     Modal,
     Pressable,
-    Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState, useRef, useContext, useEffect } from 'react';
@@ -106,6 +107,11 @@ export default function AddSessionScreen() {
     const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
     const [linkedDjs, setLinkedDjs] = useState<Record<string, string>>({});
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+    const [posterPosition, setPosterPosition] = useState<PosterPosition>({
+        x: 0.5,
+        y: 0.5,
+    });
+    const [framingPoster, setFramingPoster] = useState(false);
     const [posterUrl, setPosterUrl] = useState<string | null>(null);
     const [isUploadingPoster, setIsUploadingPoster] = useState(false);
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
@@ -234,6 +240,7 @@ export default function AddSessionScreen() {
             );
             if (!url) throw new Error('error_uploading');
             setPosterUrl(url);
+            setPosterPosition({ x: 0.5, y: 0.5 });
         } catch (error) {
             console.error('Error picking poster:', error);
             showError(
@@ -290,6 +297,8 @@ export default function AddSessionScreen() {
             color: selectedColor || undefined,
             status,
             poster_url: posterUrl,
+            poster_focus_x: posterPosition.x,
+            poster_focus_y: posterPosition.y,
         };
         try {
             Object.assign(input, validateSessionInput(input));
@@ -379,6 +388,7 @@ export default function AddSessionScreen() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView
+                    scrollEnabled={!framingPoster}
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -1083,22 +1093,16 @@ export default function AddSessionScreen() {
                     >
                         <View className="">
                             {posterUrl ? (
-                                <View className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden bg-gray-100 dark:bg-gray-900 border border-[#e9ecf3] dark:border-[#252d40]">
-                                    <Image
-                                        source={{ uri: posterUrl }}
-                                        className="w-full h-full"
-                                        resizeMode="contain"
-                                    />
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            // Keep the saved file until the session changes have been committed.
-                                            setPosterUrl(null);
-                                        }}
-                                        className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full items-center justify-center backdrop-blur-md"
-                                    >
-                                        <X size={20} color="white" />
-                                    </TouchableOpacity>
-                                </View>
+                                <PosterFrameEditor
+                                    uri={posterUrl}
+                                    position={posterPosition}
+                                    onChange={setPosterPosition}
+                                    onDragChange={setFramingPoster}
+                                    onRemove={() => {
+                                        setPosterUrl(null);
+                                        setPosterPosition({ x: 0.5, y: 0.5 });
+                                    }}
+                                />
                             ) : (
                                 <TouchableOpacity
                                     onPress={handlePickPoster}

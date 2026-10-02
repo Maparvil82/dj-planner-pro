@@ -630,5 +630,13 @@
         "invitation_response_accepted": "{{name}} hat „{{title}}“ akzeptiert",
         "invitation_response_declined": "{{name}} hat „{{title}}“ abgelehnt oder verlassen",
         "session_update": "{{name}} hat „{{title}}“ aktualisiert"
-    }
+    },
+    "posterFrame": {
+        "title": "Kartenausschnitt",
+        "dragHint": "Ziehe das Plakat, um den sichtbaren Ausschnitt auszuwählen.",
+        "center": "Bild zentrieren",
+        "scope": "Beim Speichern gilt der Ausschnitt für deine Sessions mit diesem Plakat. Das vollständige Plakat bleibt in den Details sichtbar.",
+        "error": "Das Plakat konnte nicht geladen werden. Prüfe deine Verbindung.",
+        "remove": "Plakat entfernen"
+}
 }

@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { PosterFrameImage } from './PosterFrameImage';
+import { useCallback, useState } from 'react';
+import { Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Session } from '../../types/session';
 
 export function SessionArtwork({ session }: { session: Session }) {
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
+    const onError = useCallback(
+        () => setFailedUrl(session.poster_url || null),
+        [session.poster_url],
+    );
     const hasPoster = !!session.poster_url && failedUrl !== session.poster_url;
     return (
         <LinearGradient
@@ -18,12 +23,11 @@ export function SessionArtwork({ session }: { session: Session }) {
             }}
         >
             {hasPoster ? (
-                <Image
-                    source={{ uri: session.poster_url! }}
-                    resizeMode="contain"
-                    onError={() => setFailedUrl(session.poster_url!)}
-                    style={{ width: '100%', height: '100%' }}
-                    accessible={false}
+                <PosterFrameImage
+                    uri={session.poster_url!}
+                    x={session.poster_focus_x}
+                    y={session.poster_focus_y}
+                    onError={onError}
                 />
             ) : (
                 <View

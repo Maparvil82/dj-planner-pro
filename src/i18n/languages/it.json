@@ -630,5 +630,13 @@
         "invitation_response_accepted": "{{name}} ha accettato «{{title}}»",
         "invitation_response_declined": "{{name}} ha rifiutato o lasciato «{{title}}»",
         "session_update": "{{name}} ha aggiornato «{{title}}»"
-    }
+    },
+    "posterFrame": {
+        "title": "Inquadratura della scheda",
+        "dragHint": "Trascina la locandina per scegliere la parte visibile nelle schede.",
+        "center": "Centra immagine",
+        "scope": "Salvando, l’inquadratura si applica alle tue sessioni con questa locandina. La locandina completa resta visibile nei dettagli.",
+        "error": "Impossibile caricare la locandina. Controlla la connessione.",
+        "remove": "Rimuovi locandina"
+}
 }

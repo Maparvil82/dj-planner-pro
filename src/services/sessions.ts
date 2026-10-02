@@ -216,7 +216,7 @@ export const sessionService = {
         const current = sessions.find(session => session.id === sessionId);
         if (!current || current.is_guest) throw new Error('error_loading_session');
         const targets = relatedSessionTargets(sessions, current, updateAll);
-        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'dj_profile_ids', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', ...(updateAll ? [] : ['date'])];
+        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'dj_profile_ids', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', 'poster_focus_x', 'poster_focus_y', ...(updateAll ? [] : ['date'])];
         const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => allowed.includes(key) && value !== undefined));
         if (!Object.keys(changes).length) return;
         if (Object.keys(changes).some(key => key !== 'color')) {

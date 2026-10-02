@@ -32,14 +32,14 @@ INSERT INTO public.community_session_shares(session_id,user_id) VALUES('00000000
 DO $$
 DECLARE count_rows integer; card jsonb;
 BEGIN
- IF (SELECT count(*) FROM public.community_feed()) <> 2 THEN RAISE EXCEPTION 'Feed consent filtering incorrect'; END IF;
+ IF (SELECT count(*) FROM public.community_feed(false,'00000000-0000-4000-8000-000000000904')) <> 1 OR (SELECT count(*) FROM public.community_feed(false,'00000000-0000-4000-8000-000000000905')) <> 1 OR EXISTS(SELECT 1 FROM public.community_feed(false,'00000000-0000-4000-8000-000000000906')) THEN RAISE EXCEPTION 'Feed consent filtering incorrect'; END IF;
  IF EXISTS(SELECT 1 FROM public.sessions WHERE user_id <> auth.uid()) THEN RAISE EXCEPTION 'Private sessions exposed'; END IF;
  IF EXISTS(SELECT 1 FROM public.users_profile WHERE id <> auth.uid()) THEN RAISE EXCEPTION 'Private account profile exposed'; END IF;
  IF EXISTS(SELECT 1 FROM public.community_profiles WHERE artist_name='Hidden C') THEN RAISE EXCEPTION 'Hidden profile exposed'; END IF;
  IF EXISTS(SELECT 1 FROM public.community_session_shares WHERE user_id <> auth.uid()) THEN RAISE EXCEPTION 'Private sharing ledger exposed'; END IF;
- SELECT to_jsonb(f) INTO card FROM public.community_feed() f LIMIT 1;
+ SELECT to_jsonb(f) INTO card FROM public.community_feed(false,'00000000-0000-4000-8000-000000000904') f LIMIT 1;
  IF card ?| ARRAY['earning_amount','amount_paid','currency','djs','notes','contact_info','email','venue_id','recurrence_type'] THEN RAISE EXCEPTION 'Sensitive field exposed'; END IF;
- IF (select count(*) from jsonb_object_keys(card)) <> 13 THEN RAISE EXCEPTION 'Unexpected feed projection'; END IF;
+ IF (select count(*) from jsonb_object_keys(card)) <> 15 THEN RAISE EXCEPTION 'Unexpected feed projection'; END IF;
  BEGIN
   INSERT INTO public.community_session_shares(session_id,user_id) VALUES('00000000-0000-4000-8000-000000000916',auth.uid());
   RAISE EXCEPTION 'Another owner session published';
@@ -69,20 +69,20 @@ BEGIN
  DELETE FROM public.community_follows WHERE follower_id=auth.uid();
  IF EXISTS(SELECT 1 FROM public.community_feed(true)) THEN RAISE EXCEPTION 'Unfollow failed'; END IF;
  DELETE FROM public.community_session_shares WHERE session_id='00000000-0000-4000-8000-000000000914';
- IF (SELECT count(*) FROM public.community_feed()) <> 1 THEN RAISE EXCEPTION 'Unpublish failed'; END IF;
+ IF EXISTS(SELECT 1 FROM public.community_feed(false,'00000000-0000-4000-8000-000000000904')) OR (SELECT count(*) FROM public.community_feed(false,'00000000-0000-4000-8000-000000000905')) <> 1 THEN RAISE EXCEPTION 'Unpublish failed'; END IF;
 END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000905',true);
 SET LOCAL ROLE authenticated;
 UPDATE public.sessions SET title='Updated title' WHERE id='00000000-0000-4000-8000-000000000915';
 DO $$ BEGIN
- IF NOT EXISTS(SELECT 1 FROM public.community_feed() WHERE title='Updated title') THEN RAISE EXCEPTION 'Published session stale'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.community_feed(false,auth.uid()) WHERE title='Updated title') THEN RAISE EXCEPTION 'Published session stale'; END IF;
 END $$;
 UPDATE public.sessions SET status='cancelled' WHERE id='00000000-0000-4000-8000-000000000915';
-DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.community_feed()) THEN RAISE EXCEPTION 'Cancelled session still visible'; END IF; END $$;
+DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.community_feed(false,auth.uid())) THEN RAISE EXCEPTION 'Cancelled session still visible'; END IF; END $$;
 UPDATE public.sessions SET status='confirmed' WHERE id='00000000-0000-4000-8000-000000000915';
 UPDATE public.community_profiles SET is_visible=false WHERE user_id=auth.uid();
-DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.community_feed()) THEN RAISE EXCEPTION 'Hidden profile sessions still visible'; END IF; END $$;
+DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.community_feed(false,auth.uid())) THEN RAISE EXCEPTION 'Hidden profile sessions still visible'; END IF; END $$;
 DELETE FROM public.sessions WHERE id='00000000-0000-4000-8000-000000000915';
 DO $$ BEGIN IF EXISTS(SELECT 1 FROM public.community_session_shares) THEN RAISE EXCEPTION 'Share not cascaded'; END IF; END $$;
 RESET ROLE;

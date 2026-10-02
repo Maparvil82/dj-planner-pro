@@ -634,5 +634,13 @@
         "invitation_response_accepted": "{{name}} accepted “{{title}}”",
         "invitation_response_declined": "{{name}} declined or left “{{title}}”",
         "session_update": "{{name}} updated “{{title}}”"
-    }
+    },
+    "posterFrame": {
+        "title": "Card framing",
+        "dragHint": "Drag the poster to choose which part appears in cards.",
+        "center": "Center image",
+        "scope": "When saved, this frame applies to your sessions using the same poster. The full poster stays available in session details.",
+        "error": "The poster could not be loaded. Check your connection and try again.",
+        "remove": "Remove poster"
+}
 }

@@ -39,6 +39,8 @@ export interface CommunitySession {
     start_time: string | null;
     end_time: string | null;
     poster_url: string | null;
+    poster_focus_x?: number;
+    poster_focus_y?: number;
     shared_at: string;
     collaborators?: { user_id: string; artist_name: string; avatar_url: string | null }[];
 }

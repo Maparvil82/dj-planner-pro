@@ -1,9 +1,9 @@
+import { PosterFrameImage } from '../sessions/PosterFrameImage';
 import {
     View,
     Text,
     TouchableOpacity,
     ActivityIndicator,
-    Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
@@ -287,16 +287,7 @@ export function CommunitySessionCard({
                 </TouchableOpacity>
             )}
             {!!item.poster_url && (
-                <Image
-                    source={{ uri: item.poster_url }}
-                    accessibilityLabel={item.title}
-                    style={{
-                        width: '100%',
-                        height: 200,
-                        backgroundColor: c.field,
-                    }}
-                    resizeMode="contain"
-                />
+                <PosterFrameImage uri={item.poster_url!} x={item.poster_focus_x} y={item.poster_focus_y} />
             )}
             <View
                 style={{

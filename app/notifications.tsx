@@ -209,6 +209,12 @@ export default function NotificationsScreen() {
                                                     end_time:
                                                         invitation.session
                                                             .end_time,
+                                                    poster_focus_x:
+                                                        invitation.session
+                                                            .poster_focus_x,
+                                                    poster_focus_y:
+                                                        invitation.session
+                                                            .poster_focus_y,
                                                     poster_url:
                                                         invitation.session
                                                             .poster_url || null,

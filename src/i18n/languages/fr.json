@@ -628,5 +628,13 @@
         "invitation_response_accepted": "{{name}} a accepté « {{title}} »",
         "invitation_response_declined": "{{name}} a refusé ou quitté « {{title}} »",
         "session_update": "{{name}} a modifié « {{title}} »"
-    }
+    },
+    "posterFrame": {
+        "title": "Cadrage de la carte",
+        "dragHint": "Faites glisser l’affiche pour choisir la partie visible dans les cartes.",
+        "center": "Centrer l’image",
+        "scope": "À l’enregistrement, ce cadrage s’applique à vos sessions utilisant cette affiche. L’affiche complète reste visible dans le détail.",
+        "error": "Impossible de charger l’affiche. Vérifiez votre connexion.",
+        "remove": "Retirer l’affiche"
+}
 }

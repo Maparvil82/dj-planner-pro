@@ -630,5 +630,13 @@
         "invitation_response_accepted": "{{name}} ha aceptado «{{title}}»",
         "invitation_response_declined": "{{name}} ha rechazado o abandonado «{{title}}»",
         "session_update": "{{name}} ha actualizado «{{title}}»"
-    }
+    },
+    "posterFrame": {
+        "title": "Encuadre de la tarjeta",
+        "dragHint": "Arrastra el cartel para elegir qué parte se verá en las tarjetas.",
+        "center": "Centrar imagen",
+        "scope": "Al guardar, este encuadre se aplicará a tus sesiones que usan este mismo cartel. El cartel completo seguirá disponible en el detalle.",
+        "error": "No se ha podido cargar el cartel. Comprueba tu conexión e inténtalo de nuevo.",
+        "remove": "Quitar cartel"
+}
 }

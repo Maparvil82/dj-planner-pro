@@ -277,7 +277,7 @@ export default function SessionDetailScreen() {
                         <Image
                             source={{ uri: session.poster_url }}
                             className="w-full aspect-[3/4]"
-                            resizeMode="cover"
+                            resizeMode="contain"
                         />
                     </View>
                 )}

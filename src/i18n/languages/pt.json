@@ -628,5 +628,13 @@
         "invitation_response_accepted": "{{name}} aceitou «{{title}}»",
         "invitation_response_declined": "{{name}} recusou ou saiu de «{{title}}»",
         "session_update": "{{name}} atualizou «{{title}}»"
-    }
+    },
+    "posterFrame": {
+        "title": "Enquadramento do cartão",
+        "dragHint": "Arrasta o cartaz para escolher a parte visível nos cartões.",
+        "center": "Centrar imagem",
+        "scope": "Ao guardar, o enquadramento aplica-se às tuas sessões com este cartaz. O cartaz completo continua disponível nos detalhes.",
+        "error": "Não foi possível carregar o cartaz. Verifica a ligação.",
+        "remove": "Remover cartaz"
+}
 }

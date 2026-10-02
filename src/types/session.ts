@@ -26,6 +26,8 @@ export interface Session {
     status?: 'pending' | 'confirmed' | 'cancelled';
     amount_paid?: number;
     poster_url?: string | null;
+    poster_focus_x?: number;
+    poster_focus_y?: number;
 }
 
 export interface CreateSessionInput {
@@ -48,6 +50,8 @@ export interface CreateSessionInput {
     status?: 'pending' | 'confirmed' | 'cancelled';
     amount_paid?: number;
     poster_url?: string | null;
+    poster_focus_x?: number;
+    poster_focus_y?: number;
 }
 
 export interface VaultFolder {
