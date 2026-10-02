@@ -426,7 +426,8 @@
         "following": "Esta e seguintes",
         "seriesHint": "Alterar a data afeta apenas esta sessão. As outras alterações podem aplicar-se às seguintes.",
         "completedFees": "Cachê realizado",
-        "confirmedUpcoming": "Confirmadas por realizar"
+        "confirmedUpcoming": "Confirmadas por realizar",
+        "homeIntro": "A tua agenda, pronta para a próxima sessão."
     },
     "edit_session": "Editar sessão"
 }

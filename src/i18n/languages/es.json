@@ -428,7 +428,8 @@
         "following": "Esta y siguientes",
         "seriesHint": "Cambiar la fecha afecta solo a esta sesión. Los demás cambios pueden aplicarse a esta y las siguientes.",
         "completedFees": "Caché realizado",
-        "confirmedUpcoming": "Confirmadas por realizar"
+        "confirmedUpcoming": "Confirmadas por realizar",
+        "homeIntro": "Tu agenda, lista para la próxima sesión."
     },
     "edit_session": "Editar sesión"
 }

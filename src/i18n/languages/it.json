@@ -428,7 +428,8 @@
         "following": "Questa e successive",
         "seriesHint": "Cambiare la data riguarda solo questa sessione. Le altre modifiche possono applicarsi alle successive.",
         "completedFees": "Compensi maturati",
-        "confirmedUpcoming": "Confermate in programma"
+        "confirmedUpcoming": "Confermate in programma",
+        "homeIntro": "La tua agenda, pronta per la prossima sessione."
     },
     "edit_session": "Modifica sessione"
 }

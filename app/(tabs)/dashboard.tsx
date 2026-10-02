@@ -1,4 +1,4 @@
-import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
+import { PageHeader } from '../../src/components/ui/PageHeader';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     View,
@@ -294,11 +294,10 @@ export default function DashboardScreen() {
                     styles.screen,
                     { backgroundColor: dark ? '#0d1220' : '#f5f6fa' },
                 ]}
+                edges={['top']}
             >
-                <View style={{ padding: 24, gap: 18 }}>
-                    <Text style={[styles.title, { color: text }]}>
-                        {t('dashboard')}
-                    </Text>
+                <PageHeader title={t('dashboard')} subtitle={label('intro')} />
+                <View style={{ paddingHorizontal: 24, gap: 18 }}>
                     <View
                         style={{
                             height: 190,
@@ -320,17 +319,7 @@ export default function DashboardScreen() {
             ]}
             edges={['top']}
         >
-            <View style={styles.header}>
-                <View>
-                    <Text style={[styles.title, { color: text }]}>
-                        {t('dashboard')}
-                    </Text>
-                    <Text style={[styles.hint, { color: muted, marginTop: 4 }]}>
-                        {label('intro')}
-                    </Text>
-                </View>
-                <AddSessionButton />
-            </View>
+            <PageHeader title={t('dashboard')} subtitle={label('intro')} />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -1663,15 +1652,6 @@ export default function DashboardScreen() {
 }
 const styles = StyleSheet.create({
     screen: { flex: 1 },
-    header: {
-        paddingHorizontal: 24,
-        paddingTop: 18,
-        paddingBottom: 24,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    title: { fontSize: 29, fontWeight: '800', letterSpacing: -0.9 },
     controls: { borderRadius: 22, padding: 8, borderWidth: 1 },
     segment: { flexDirection: 'row', borderRadius: 14, padding: 4 },
     segmentButton: {

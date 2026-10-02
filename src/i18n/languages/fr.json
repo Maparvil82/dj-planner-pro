@@ -426,7 +426,8 @@
         "following": "Cette session et les suivantes",
         "seriesHint": "Changer la date affecte uniquement cette session. Les autres changements peuvent concerner les suivantes.",
         "completedFees": "Cachets des sessions terminées",
-        "confirmedUpcoming": "Confirmées à venir"
+        "confirmedUpcoming": "Confirmées à venir",
+        "homeIntro": "Votre agenda, prêt pour la prochaine session."
     },
     "edit_session": "Modifier la session"
 }

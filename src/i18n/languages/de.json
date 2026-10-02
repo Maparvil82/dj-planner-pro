@@ -428,7 +428,8 @@
         "following": "Diese und folgende",
         "seriesHint": "Ein Datumswechsel betrifft nur diese Session. Andere Änderungen können auch folgende Sessions betreffen.",
         "completedFees": "Honorare beendeter Sessions",
-        "confirmedUpcoming": "Anstehende bestätigte"
+        "confirmedUpcoming": "Anstehende bestätigte",
+        "homeIntro": "Dein Plan für die nächste Session."
     },
     "edit_session": "Session bearbeiten"
 }
