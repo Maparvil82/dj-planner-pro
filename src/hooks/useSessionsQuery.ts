@@ -46,6 +46,7 @@ export const useCreateSessionMutation = () => {
         onSuccess: () => {
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
             // Invalidate the tags to reflect newly saved venues/titles in the autocomplete
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
@@ -62,6 +63,7 @@ export const useDeleteSessionMutation = () => {
         onSuccess: () => {
             // Refetch calendar and upcoming sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
         },
     });
 };
@@ -98,6 +100,7 @@ export const useUpdateSessionColorMutation = () => {
             }
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
         },
     });
 };
@@ -119,6 +122,7 @@ export const useUpdateSessionMutation = () => {
                 queryClient.invalidateQueries({ queryKey: ['session', variables.sessionId] });
             }
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });

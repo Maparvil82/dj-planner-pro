@@ -1,6 +1,6 @@
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, Calendar, MapPin, LayoutDashboard } from 'lucide-react-native';
+import { Home, Calendar, MapPin, LayoutDashboard, Users } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
@@ -11,6 +11,7 @@ import { Avatar } from '../../src/components/ui/Avatar';
 
 export default function TabLayout() {
     const { t } = useTranslation();
+    const { width } = useWindowDimensions();
     const { session, profile, initialized, hasSeenOnboarding } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
@@ -35,7 +36,7 @@ export default function TabLayout() {
         <ExpoTabs
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: isDark ? '#60A5FA' : '#2563EB', // blue-400 : blue-600
+                tabBarActiveTintColor: isDark ? '#bdb0f5' : '#6554df',
                 tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF', // gray-500 : gray-400
                 tabBarStyle: {
                     backgroundColor: isDark ? '#111827' : '#fbfbfbff', // gray-900 : white
@@ -46,7 +47,7 @@ export default function TabLayout() {
                     height: 80,
                 },
                 tabBarLabelStyle: {
-                    fontSize: 10,
+                    fontSize: width < 360 ? 9 : 10,
                     fontWeight: '600',
                     marginBottom: 5,
                 },
@@ -97,12 +98,19 @@ export default function TabLayout() {
                 }}
             />
             <ExpoTabs.Screen
+                name="community"
+                options={{
+                    title: t('community.title'),
+                    tabBarIcon: ({ color, size }) => <Users color={color} size={size} />,
+                }}
+            />
+            <ExpoTabs.Screen
                 name="profile"
                 options={{
                     title: t('tab_you'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
-                        <View className={`p-0.5 rounded-full border-2 ${color === (isDark ? '#60A5FA' : '#2563EB') ? 'border-blue-500' : 'border-transparent'}`}>
+                        <View className={`p-0.5 rounded-full border-2 ${color === (isDark ? '#bdb0f5' : '#6554df') ? 'border-violet-500' : 'border-transparent'}`}>
                             <Avatar
                                 url={profile?.avatar_url}
                                 name={session?.user?.email}

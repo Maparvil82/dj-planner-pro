@@ -1,3 +1,4 @@
+import { SessionCommunitySharing } from '../../src/components/community/SessionCommunitySharing';
 import { sessionDuration, sessionEarnings } from '../../src/utils/sessionPlanning';
 import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
 import { FEATURES } from '../../src/config/features';
@@ -408,6 +409,7 @@ export default function SessionDetailScreen() {
                     )}
                 </View>
                 </>)}
+                <SessionCommunitySharing session={session} />
             </ScrollView>
 
             {/* Color Modal */}
