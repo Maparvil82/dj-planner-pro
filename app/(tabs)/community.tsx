@@ -1,3 +1,4 @@
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { useCallback, useEffect, useState } from 'react';
 import {
     View,
@@ -28,6 +29,7 @@ import {
     useCommunityProfile,
 } from '../../src/hooks/useCommunityQuery';
 export default function CommunityScreen() {
+    const onTabScroll = useTabBarScroll();
     const c = useCommunityColors();
     const { t } = useTranslation();
     const router = useRouter();
@@ -89,6 +91,8 @@ export default function CommunityScreen() {
                 action={null}
             />
             <ScrollView
+                onScroll={onTabScroll}
+                scrollEventThrottle={16}
                 keyboardShouldPersistTaps="handled"
                 refreshControl={
                     <RefreshControl
@@ -99,7 +103,7 @@ export default function CommunityScreen() {
                 }
                 contentContainerStyle={{
                     paddingHorizontal: 20,
-                    paddingBottom: 28,
+                    paddingBottom: 108,
                 }}
             >
                 <View
@@ -121,7 +125,6 @@ export default function CommunityScreen() {
                                     gap: 12,
                                 }}
                             >
-
                                 <Text
                                     style={{
                                         color: c.fg,

@@ -47,7 +47,7 @@ import {
 } from '../../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
-import * as ImagePicker from 'expo-image-picker';
+import { pickSessionPoster } from '../../src/services/sessionPoster';
 import { confirmAction } from '../../src/utils/confirmAction';
 import { localDateString } from '../../src/utils/sessionPlanning';
 import { sessionService } from '../../src/services/sessions';
@@ -252,42 +252,36 @@ export default function EditSessionScreen() {
     });
     LocaleConfig.defaultLocale = currentLanguage;
 
+    const posterPicking = useRef(false);
     const handlePickPoster = async () => {
-        const { status } =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
+        if (posterPicking.current || isUploadingPoster || !authSession?.user.id)
+            return;
+        posterPicking.current = true;
+        setIsUploadingPoster(true);
+        try {
+            const asset = await pickSessionPoster();
+            if (!asset?.uri) return;
+            const url = await sessionService.uploadSessionPoster(
+                authSession.user.id,
+                asset.uri,
+                asset,
+            );
+            if (!url) throw new Error('error_uploading');
+            setPosterUrl(url);
+        } catch (error) {
+            console.error('Error picking poster:', error);
             showError(
                 t('error'),
-                'Permission to access media library is required',
+                t(
+                    error instanceof Error &&
+                        error.message === 'poster_permission'
+                        ? 'form.posterPermission'
+                        : 'error_uploading',
+                ),
             );
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [3, 4],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets && result.assets[0].uri) {
-            setIsUploadingPoster(true);
-            try {
-                const url = await sessionService.uploadSessionPoster(
-                    authSession?.user?.id || '',
-                    result.assets[0].uri,
-                );
-                if (url) {
-                    setPosterUrl(url);
-                } else {
-                    showError(t('error'), t('error_uploading'));
-                }
-            } catch (error) {
-                console.error('Error picking poster:', error);
-                showError(t('error'), t('error_uploading'));
-            } finally {
-                setIsUploadingPoster(false);
-            }
+        } finally {
+            posterPicking.current = false;
+            setIsUploadingPoster(false);
         }
     };
 
@@ -443,7 +437,8 @@ export default function EditSessionScreen() {
                     updateAll,
                 });
 
-                router.back();
+                if (router.canGoBack()) router.back();
+                else router.replace(`/session/${id}`);
             } catch (error: any) {
                 showError(
                     t('error'),
@@ -1430,7 +1425,7 @@ export default function EditSessionScreen() {
                                     <Image
                                         source={{ uri: posterUrl }}
                                         className="w-full h-full"
-                                        resizeMode="cover"
+                                        resizeMode="contain"
                                     />
                                     <TouchableOpacity
                                         onPress={() => {

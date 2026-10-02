@@ -1,0 +1,87 @@
+import { useState } from 'react';
+import { Image, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { Session } from '../../types/session';
+
+export function SessionArtwork({ session }: { session: Session }) {
+    const [failedUrl, setFailedUrl] = useState<string | null>(null);
+    const hasPoster = !!session.poster_url && failedUrl !== session.poster_url;
+    return (
+        <LinearGradient
+            colors={[session.color || '#433b65', '#151c30']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+                aspectRatio: 1.55,
+                overflow: 'hidden',
+                justifyContent: 'center',
+            }}
+        >
+            {hasPoster ? (
+                <Image
+                    source={{ uri: session.poster_url! }}
+                    resizeMode="contain"
+                    onError={() => setFailedUrl(session.poster_url!)}
+                    style={{ width: '100%', height: '100%' }}
+                    accessible={false}
+                />
+            ) : (
+                <View
+                    style={{
+                        flex: 1,
+                        padding: 24,
+                        justifyContent: 'flex-end',
+                        gap: 8,
+                    }}
+                >
+                    <View
+                        style={{
+                            position: 'absolute',
+                            width: 250,
+                            height: 250,
+                            borderRadius: 125,
+                            borderWidth: 1,
+                            borderColor: '#ffffff20',
+                            right: -60,
+                            top: -110,
+                        }}
+                    />
+                    <View
+                        style={{
+                            position: 'absolute',
+                            width: 180,
+                            height: 180,
+                            borderRadius: 90,
+                            borderWidth: 1,
+                            borderColor: '#ffffff15',
+                            right: -25,
+                            top: -75,
+                        }}
+                    />
+                    <Text
+                        numberOfLines={3}
+                        style={{
+                            color: '#fff',
+                            fontSize: 28,
+                            lineHeight: 31,
+                            fontWeight: '800',
+                            letterSpacing: -0.7,
+                        }}
+                    >
+                        {session.title}
+                    </Text>
+                    <Text
+                        numberOfLines={1}
+                        style={{
+                            color: '#d3d8e7',
+                            fontSize: 12,
+                            fontWeight: '500',
+                        }}
+                    >
+                        {session.venue}
+                    </Text>
+                </View>
+            )}
+        </LinearGradient>
+    );
+}

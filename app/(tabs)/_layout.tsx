@@ -1,3 +1,5 @@
+import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
+import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
 import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
 import { Home, MapPin, LayoutDashboard, Users } from 'lucide-react-native';
@@ -11,6 +13,14 @@ import { useUnreadNotifications } from '../../src/hooks/useNotifications';
 import { TabProfileIcon } from '../../src/components/ui/TabProfileIcon';
 
 export default function TabLayout() {
+    return (
+        <TabBarVisibilityProvider>
+            <TabLayoutContent />
+        </TabBarVisibilityProvider>
+    );
+}
+
+function TabLayoutContent() {
     const { t } = useTranslation();
     const unread = useUnreadNotifications();
     const unreadCount = unread.data || 0;
@@ -44,6 +54,7 @@ export default function TabLayout() {
 
     return (
         <ExpoTabs
+            tabBar={(props) => <ScrollTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
                 tabBarActiveTintColor: isDark ? '#bdb0f5' : '#6554df',

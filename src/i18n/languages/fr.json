@@ -439,6 +439,7 @@
         "participants": "DJs et participants",
         "addIntro": "Préparez votre prochaine prestation.",
         "editIntro": "Modifiez les détails de votre session.",
+        "posterPermission": "Autorisez l’accès aux photos dans les réglages de votre appareil pour ajouter une affiche.",
         "posterHint": "JPG ou PNG · Format vertical 3:4 recommandé",
         "hourlyAmount": "Montant par heure",
         "fixedAmount": "Montant par session"

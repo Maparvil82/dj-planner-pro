@@ -1,3 +1,4 @@
+import { useTabBarScroll, useTabBarVisibility } from '../../src/contexts/TabBarVisibilityContext';
 import { useCallback, useEffect, useState } from 'react';
 import {
     View,
@@ -95,6 +96,8 @@ function SettingItem({
     );
 }
 export default function ProfileScreen() {
+    const onTabScroll = useTabBarScroll();
+    const { hidden: tabBarHidden } = useTabBarVisibility();
     const { t } = useTranslation();
     const c = useCommunityColors();
     const { theme, setTheme } = useTheme();
@@ -420,10 +423,12 @@ export default function ProfileScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <ScrollView
+                    onScroll={onTabScroll}
+                    scrollEventThrottle={16}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         paddingHorizontal: 20,
-                        paddingBottom: 32,
+                        paddingBottom: 112,
                     }}
                 >
                     <View
@@ -901,6 +906,7 @@ export default function ProfileScreen() {
                         style={{
                             paddingHorizontal: 20,
                             paddingVertical: 14,
+                            marginBottom: tabBarHidden ? 0 : 80,
                             borderTopWidth: 1,
                             borderColor: c.border,
                             backgroundColor: c.bg,

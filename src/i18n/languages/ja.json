@@ -440,6 +440,7 @@
         "participants": "DJと参加者",
         "addIntro": "次の公演を準備しましょう。",
         "editIntro": "セッションの詳細を更新します。",
+        "posterPermission": "ポスターを追加するには、デバイスの設定で写真へのアクセスを許可してください。",
         "posterHint": "JPGまたはPNG · 縦長3:4を推奨",
         "hourlyAmount": "1時間あたりの金額",
         "fixedAmount": "セッションの金額"

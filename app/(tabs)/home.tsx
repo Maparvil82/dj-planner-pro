@@ -1,3 +1,4 @@
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
 import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
@@ -18,6 +19,7 @@ import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 import { FlatList, Dimensions, useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
+    const onTabScroll = useTabBarScroll();
     const { width: windowWidth } = useWindowDimensions();
     const CALENDAR_WIDTH = windowWidth > 1024 ? 1024 - 32 : windowWidth - 32;
     const { t, currentLanguage } = useTranslation();
@@ -191,7 +193,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
             </PageHeader>
 
-            <ScrollView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="max-w-5xl w-full mx-auto px-4">
 
 
@@ -294,6 +296,7 @@ export default function HomeScreen() {
                                                     return (
                                                         <View key={session.id} className="w-full md:w-[48.5%] lg:w-[32%]">
                                                             <SessionPreviewCard
+                                                                showPoster
                                                                 session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
                                                                 onLongPress={session.is_guest ? undefined : () => Alert.alert(t('delete_session_title'), t('delete_session_message'), [

@@ -441,6 +441,7 @@
         "participants": "DJ e partecipanti",
         "addIntro": "Prepara la tua prossima esibizione.",
         "editIntro": "Aggiorna i dettagli della sessione.",
+        "posterPermission": "Consenti l’accesso alle foto nelle impostazioni del dispositivo per aggiungere una locandina.",
         "posterHint": "JPG o PNG · Formato verticale 3:4 consigliato",
         "hourlyAmount": "Importo orario",
         "fixedAmount": "Importo per sessione"

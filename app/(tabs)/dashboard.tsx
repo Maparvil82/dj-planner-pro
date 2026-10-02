@@ -1,3 +1,4 @@
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -87,6 +88,7 @@ function MetricCard({
     );
 }
 export default function DashboardScreen() {
+    const onTabScroll = useTabBarScroll();
     const { t, i18n } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
@@ -309,6 +311,8 @@ export default function DashboardScreen() {
         >
             <PageHeader title={t('dashboard')} subtitle={label('intro')} />
             <ScrollView
+                onScroll={onTabScroll}
+                scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl

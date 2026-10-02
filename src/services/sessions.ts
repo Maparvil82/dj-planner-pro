@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { collaborationService } from './collaborations';
 import { supabase } from '../lib/supabase';
 import { CreateSessionInput, Session } from '../types/session';
@@ -231,21 +232,25 @@ export const sessionService = {
         this.syncTags(changes, userId).catch(error => console.warn('Tag synchronization failed', error));
     },
 
-    async uploadSessionPoster(userId: string, imageUri: string): Promise<string | null> {
+    async uploadSessionPoster(userId: string, imageUri: string, dimensions?: { width: number; height: number }): Promise<string | null> {
         try {
-            const { decode } = await import('base64-arraybuffer');
             const ImageManipulator = await import('expo-image-manipulator');
 
-            // 1. Compress & format image
+            if (!userId) throw new Error('User required');
+            // Limit both axes without upscaling or cropping the artwork.
+            const longest = Math.max(dimensions?.width || 0, dimensions?.height || 0);
+            const resize = longest > 1600
+                ? [{ resize: dimensions!.width >= dimensions!.height ? { width: 1600 } : { height: 1600 } }]
+                : longest ? [] : [{ resize: { width: 1200 } }];
             const manipulatedImage = await ImageManipulator.manipulateAsync(
                 imageUri,
-                [{ resize: { width: 1200 } }],
-                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                resize,
+                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: false }
             );
 
-            if (!manipulatedImage.base64) {
-                throw new Error("Failed to get base64 string from image");
-            }
+            const bytes = Platform.OS === 'web'
+                ? await (await fetch(manipulatedImage.uri)).arrayBuffer()
+                : await new (await import('expo-file-system')).File(manipulatedImage.uri).arrayBuffer();
 
             const filePath = `${userId}/poster_${Date.now()}.jpg`;
             const contentType = 'image/jpeg';
@@ -253,9 +258,9 @@ export const sessionService = {
             // 2. Upload to storage
             const { error: uploadError } = await supabase.storage
                 .from('sessions')
-                .upload(filePath, decode(manipulatedImage.base64), {
+                .upload(filePath, bytes, {
                     contentType,
-                    upsert: true,
+                    upsert: false,
                 });
 
             if (uploadError) throw uploadError;

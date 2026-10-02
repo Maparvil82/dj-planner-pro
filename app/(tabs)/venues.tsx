@@ -1,3 +1,4 @@
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import React, { useState, useMemo, useRef, useContext } from 'react';
 import {
     View,
@@ -38,6 +39,7 @@ const normalized = (value: string) =>
         .toLocaleLowerCase();
 
 export default function VenuesScreen() {
+    const onTabScroll = useTabBarScroll();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
@@ -208,6 +210,8 @@ export default function VenuesScreen() {
                     ) : null}
                 </View>
                 <ScrollView
+                    onScroll={onTabScroll}
+                    scrollEventThrottle={16}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
                         paddingTop: 20,
@@ -267,7 +271,6 @@ export default function VenuesScreen() {
                                 gap: 16,
                             }}
                         >
-
                             <Text
                                 style={{
                                     color: text,

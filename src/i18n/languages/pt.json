@@ -439,6 +439,7 @@
         "participants": "DJs e participantes",
         "addIntro": "Prepara a tua próxima atuação.",
         "editIntro": "Atualiza os detalhes da tua sessão.",
+        "posterPermission": "Permite o acesso às fotos nas definições do dispositivo para adicionar um cartaz.",
         "posterHint": "JPG ou PNG · Formato vertical 3:4 recomendado",
         "hourlyAmount": "Valor por hora",
         "fixedAmount": "Valor por sessão"

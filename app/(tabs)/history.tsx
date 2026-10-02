@@ -1,3 +1,4 @@
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
 import { sessionEarnings } from '../../src/utils/sessionPlanning';
@@ -32,6 +33,7 @@ import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 setupCalendarLocales();
 
 export default function HistoryScreen() {
+    const onTabScroll = useTabBarScroll();
     const { t, i18n, currentLanguage } = useTranslation();
     const { session, profile } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
@@ -350,7 +352,7 @@ export default function HistoryScreen() {
                     <View className="h-20" />
                 </ScrollView>
             ) : (
-                <ScrollView className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
+                <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
                     <View className="px-5">
                         <View className="bg-white dark:bg-[#171d2c] rounded-3xl overflow-hidden border border-[#e9ecf3] dark:border-[#252d40]">
                             <Calendar

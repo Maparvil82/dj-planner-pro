@@ -445,6 +445,7 @@
         "participants": "DJs and participants",
         "addIntro": "Plan your next performance.",
         "editIntro": "Update your session details.",
+        "posterPermission": "Allow photo access in your device settings to add a poster.",
         "posterHint": "JPG or PNG · Vertical 3:4 format recommended",
         "hourlyAmount": "Hourly amount",
         "fixedAmount": "Session amount"

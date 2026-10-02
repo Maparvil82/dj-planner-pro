@@ -441,6 +441,7 @@
         "participants": "DJs y participantes",
         "addIntro": "Prepara tu próxima actuación.",
         "editIntro": "Actualiza los detalles de tu sesión.",
+        "posterPermission": "Permite el acceso a tus fotos en los ajustes del dispositivo para añadir un cartel.",
         "posterHint": "JPG o PNG · Formato vertical 3:4 recomendado",
         "hourlyAmount": "Importe por hora",
         "fixedAmount": "Importe por sesión"

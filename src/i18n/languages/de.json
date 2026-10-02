@@ -441,6 +441,7 @@
         "participants": "DJs und Teilnehmer",
         "addIntro": "Plane deinen nächsten Auftritt.",
         "editIntro": "Aktualisiere deine Sessiondetails.",
+        "posterPermission": "Erlaube den Fotozugriff in den Geräteeinstellungen, um ein Plakat hinzuzufügen.",
         "posterHint": "JPG oder PNG · Hochformat 3:4 empfohlen",
         "hourlyAmount": "Betrag pro Stunde",
         "fixedAmount": "Betrag pro Session"
