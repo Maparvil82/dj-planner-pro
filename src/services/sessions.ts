@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { CreateSessionInput, Session } from '../types/session';
 import { TagOption } from '../types/tag';
+import { recurrenceDates, findSessionConflicts, localDateString, sessionRange } from '../utils/sessionPlanning';
 
 const TAG_COLORS: string[] = [];
 
@@ -11,106 +12,38 @@ export const getColorForString = (str: string) => {
 
 export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
-        const sessionColor = input.color || getColorForString(input.title);
+        const dates = recurrenceDates(input);
+        const { data, error } = await supabase.rpc('create_session_series', {
+            input: { ...input, color: input.color || getColorForString(input.title) },
+            session_dates: dates,
+        }).single();
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error('error_saving_session');
+        this.syncTags(input, userId).catch(err => console.warn('Tag synchronization failed', err));
+        return data as Session;
+    },
 
-        let sessionsToInsert: any[] = [];
+    async getCreationConflicts(input: CreateSessionInput, userId: string): Promise<Session[]> {
+        const candidates = recurrenceDates(input).map(date => ({ ...input, date }));
+        return findSessionConflicts(candidates, await this.getAllSessions(userId));
+    },
 
-        // Helper to add days/months/years robustly
-        const calculateNextDate = (currentDate: string, type: string) => {
-            const d = new Date(currentDate + 'T12:00:00Z');
-            if (type === 'daily') d.setUTCDate(d.getUTCDate() + 1);
-            else if (type === 'weekly') d.setUTCDate(d.getUTCDate() + 7);
-            else if (type === 'monthly') d.setUTCMonth(d.getUTCMonth() + 1);
-            else if (type === 'quarterly') d.setUTCMonth(d.getUTCMonth() + 3);
-            else if (type === 'biannually') d.setUTCMonth(d.getUTCMonth() + 6);
-            else if (type === 'yearly') d.setUTCFullYear(d.getUTCFullYear() + 1);
-            else throw new Error(`Unsupported recurrence type: ${type}`);
-            return d.toISOString().split('T')[0];
-        };
-
-        const baseSession = {
-            ...input,
-            color: sessionColor,
-            user_id: userId
-        };
-
-        if (input.recurrence_type && input.recurrence_type !== 'none' && input.recurrence_end_date) {
-            // Generate all dates
-            let currDate = input.date;
-            const endDate = input.recurrence_end_date;
-
-            // We use 'parent_session_id' dynamically, but for Supabase we can generate a random UUID 
-            // string if needed, or simply let the first session be the parent of the others.
-            // For simplicity, we'll insert the first one to get its ID, then insert the rest.
-
-            const { data: firstSession, error: firstError } = await supabase
-                .from('sessions')
-                .insert(baseSession)
-                .select()
-                .single();
-
-            if (firstError) {
-                console.error('Error creating first recurring session:', firstError);
-                throw new Error(firstError.message);
-            }
-
-            const parentId = firstSession.id;
-            currDate = calculateNextDate(currDate, input.recurrence_type);
-
-            let iterations = 0;
-            const MAX_ITERATIONS = 500; // Safeguard against infinite loops 
-
-            while (currDate <= endDate) {
-                if (iterations > MAX_ITERATIONS) {
-                    console.error('Safeguard reached: too many recurring sessions generated.');
-                    break;
-                }
-                sessionsToInsert.push({
-                    ...baseSession,
-                    date: currDate,
-                    parent_session_id: parentId
-                });
-
-                const nextDate = calculateNextDate(currDate, input.recurrence_type);
-                if (nextDate === currDate) throw new Error('Infinite loop detected in date calculation.');
-                currDate = nextDate;
-                iterations++;
-            }
-
-            if (sessionsToInsert.length > 0) {
-                const { error: bulkError } = await supabase
-                    .from('sessions')
-                    .insert(sessionsToInsert);
-
-                if (bulkError) {
-                    console.error('Error creating recurring sessions instances:', bulkError);
-                    // Decide if you want to throw or continue. We'll throw to alert the user.
-                    throw new Error(bulkError.message);
-                }
-            }
-
-            // Re-assign sessionData to the first created session so it can return successfully
-            var sessionData = firstSession; // using var because block scoping with the single insert above
-            var sessionError = null;
-        } else {
-            // Standard single insert
-            var { data: singleSession, error: singleError } = await supabase
-                .from('sessions')
-                .insert(baseSession)
-                .select()
-                .single();
-
-            if (singleError) {
-                console.error('Error creating session:', singleError);
-                throw new Error(singleError.message);
-            }
-            var sessionData = singleSession;
-        }
-
-        // 2. Silently insert tags in the background (ignore errors and duplicates)
-        this.syncTags(input, userId).catch(err => console.warn('Silent tag insertion failed', err));
-
-        return sessionData;
+    async getUpdateConflicts(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll: boolean): Promise<Session[]> {
+        const sessions = await this.getAllSessions(userId);
+        const current = sessions.find(session => session.id === sessionId);
+        if (!current) throw new Error('error_loading_session');
+        const root = current.parent_session_id || current.id;
+        const hasSeries = !!current.parent_session_id || sessions.some(session => session.parent_session_id === root);
+        const targets = sessions.filter(session => updateAll
+            ? (hasSeries ? session.id === root || session.parent_session_id === root : session.title === current.title)
+            : session.id === sessionId);
+        const candidates = targets.map(session => ({ ...session, ...input, date: updateAll ? session.date : input.date || session.date }))
+            .filter(session => session.status !== 'cancelled');
+        const targetIds = new Set(targets.map(session => session.id));
+        const outside = findSessionConflicts(candidates, sessions.filter(session => !targetIds.has(session.id)));
+        // Changes to all dates can also make members of that series overlap.
+        const inside = candidates.filter((candidate, index) => findSessionConflicts([candidate], candidates.filter((_, other) => index !== other)).length > 0);
+        return [...outside, ...inside];
     },
 
     /**
@@ -166,18 +99,16 @@ export const sessionService = {
     },
 
     async getAllSessions(userId: string): Promise<Session[]> {
-        const { data, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('user_id', userId)
-            .order('date', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching all sessions:', error);
-            throw new Error(error.message);
+        const sessions: Session[] = [];
+        const pageSize = 1000;
+        for (let offset = 0; ; offset += pageSize) {
+            const { data, error } = await supabase.from('sessions').select('*')
+                .eq('user_id', userId).order('date', { ascending: false }).order('id')
+                .range(offset, offset + pageSize - 1);
+            if (error) throw new Error(error.message);
+            sessions.push(...(data || []));
+            if (!data || data.length < pageSize) return sessions;
         }
-
-        return data || [];
     },
     async getSessionsByMonth(year: number, month: number, userId: string): Promise<Session[]> {
         // Construct YYYY-MM prefix for filtering
@@ -206,22 +137,26 @@ export const sessionService = {
     },
 
     async getUpcomingSessions(userId: string): Promise<Session[]> {
-        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const today = localDateString(yesterday);
 
         const { data, error } = await supabase
             .from('sessions')
             .select('*')
             .eq('user_id', userId)
             .gte('date', today)
+            .or('status.is.null,status.neq.cancelled')
             .order('date', { ascending: true })
-            .limit(30);
+            .order('start_time', { ascending: true })
+            .limit(100);
 
         if (error) {
             console.error('Error fetching upcoming sessions:', error);
             throw new Error(error.message);
         }
 
-        return data || [];
+        return (data || []).filter((session: Session) => sessionRange(session).end > new Date()).slice(0, 30);
     },
 
     async getUserTags(userId: string, type: 'title' | 'venue' | 'dj'): Promise<TagOption[]> {
@@ -346,7 +281,7 @@ export const sessionService = {
 
         // SAFEGUARD: If updating all, we MUST NOT update the date or unique IDs
         // to avoid overwriting the specific dates of recurring events.
-        const { date, id, user_id, parent_session_id, ...syncableInput } = input as any;
+        const { date, id, user_id, parent_session_id, amount_paid, ...syncableInput } = input as any;
 
         let query = supabase.from('sessions').update({
             ...syncableInput,

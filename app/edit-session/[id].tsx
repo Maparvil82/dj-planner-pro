@@ -13,6 +13,7 @@ import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenue
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 import * as ImagePicker from 'expo-image-picker';
+import { confirmAction } from '../../src/utils/confirmAction';
 import { sessionService } from '../../src/services/sessions';
 
 setupCalendarLocales();
@@ -30,6 +31,8 @@ export default function EditSessionScreen() {
     const updateSessionMutation = useUpdateSessionMutation();
 
     // Form states (initialized after data is loaded via useEffect)
+    const [isChecking, setIsChecking] = useState(false);
+    const saving = useRef(false);
     const [title, setTitle] = useState('');
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
@@ -172,6 +175,12 @@ export default function EditSessionScreen() {
     };
 
     const handleSave = async () => {
+        if (saving.current) return;
+        const amount = earningType === 'free' ? 0 : Number(earningAmount.replace(',', '.'));
+        if (!Number.isFinite(amount) || amount < 0 || (earningType !== 'free' && !earningAmount.trim())) {
+            Alert.alert(t('error'), t('invalid_earning_amount'));
+            return;
+        }
         if (!title.trim() || !venue.trim()) {
             Alert.alert(t('error'), t('missing_fields'));
             return;
@@ -193,7 +202,7 @@ export default function EditSessionScreen() {
             is_collective: isCollective,
             djs: finalDjs,
             earning_type: earningType,
-            earning_amount: parseFloat(earningAmount) || 0,
+            earning_amount: amount,
             currency: currency,
             color: selectedColor || undefined,
             status: status,
@@ -212,7 +221,7 @@ export default function EditSessionScreen() {
             if (isCollective !== initialSession?.is_collective) changes.is_collective = isCollective;
             if (JSON.stringify(finalDjs) !== JSON.stringify(initialSession?.djs)) changes.djs = finalDjs;
             if (earningType !== initialSession?.earning_type) changes.earning_type = earningType;
-            if (parseFloat(earningAmount) !== initialSession?.earning_amount) changes.earning_amount = parseFloat(earningAmount) || 0;
+            if (amount !== Number(initialSession?.earning_amount || 0)) changes.earning_amount = amount;
             if (currency !== initialSession?.currency) changes.currency = currency;
             if (selectedColor !== initialSession?.color) changes.color = selectedColor;
             if (status !== initialSession?.status) changes.status = status;
@@ -228,8 +237,17 @@ export default function EditSessionScreen() {
         }
 
         const performUpdate = async (updateAll: boolean) => {
+            if (saving.current || !authSession) return;
+            saving.current = true;
+            setIsChecking(true);
             try {
                 if (!id) throw new Error("Missing ID");
+
+                const conflicts = await sessionService.getUpdateConflicts(id, updateAll ? changedFields : fullInput, authSession.user.id, updateAll);
+                if (conflicts.length && !(await confirmAction(t('session_conflict_title'), t('session_conflict_message', {
+                    count: conflicts.length,
+                    sessions: conflicts.slice(0, 3).map(item => `${item.title} · ${item.date} · ${item.start_time}–${item.end_time}`).join('\n')
+                }), t('cancel'), t('continue')))) return;
 
                 // If updateAll is true, we ONLY send the changed fields
                 // If updateAll is false, we send the full input (standard behavior)
@@ -240,13 +258,19 @@ export default function EditSessionScreen() {
                     updateAll
                 });
 
-                Alert.alert(t('success'), t('session_added_success'), [
-                    { text: 'OK', onPress: () => router.back() }
-                ]);
+                router.back();
             } catch (error: any) {
                 Alert.alert(t('error'), error.message || t('error_saving_session'));
+            } finally {
+                saving.current = false;
+                setIsChecking(false);
             }
         };
+
+        if (Platform.OS === 'web') {
+            performUpdate(window.confirm(t('apply_series_web')));
+            return;
+        }
 
         Alert.alert(
             t('apply_color_to_all_title') || '¿Actualizar sesiones?',
@@ -761,11 +785,11 @@ export default function EditSessionScreen() {
                 <View className="absolute bottom-0 left-0 right-0 bg-gray-50/95 dark:bg-gray-950/95 px-5 py-4 pb-8 border-t border-gray-200 dark:border-gray-800">
                     <TouchableOpacity
                         activeOpacity={0.8}
-                        className={`py-4 rounded-2xl items-center ${updateSessionMutation.isPending || !title.trim() || !venue.trim() ? 'bg-blue-300' : 'bg-blue-600'}`}
+                        className={`py-4 rounded-2xl items-center ${isChecking || isUploadingPoster || updateSessionMutation.isPending || !title.trim() || !venue.trim() ? 'bg-blue-300' : 'bg-blue-600'}`}
                         onPress={handleSave}
-                        disabled={updateSessionMutation.isPending || !title.trim() || !venue.trim()}
+                        disabled={isChecking || isUploadingPoster || updateSessionMutation.isPending || !title.trim() || !venue.trim()}
                     >
-                        {updateSessionMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">{t('save_session')}</Text>}
+                        {isChecking || updateSessionMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">{t('save_session')}</Text>}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

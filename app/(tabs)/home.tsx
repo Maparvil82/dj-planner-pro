@@ -3,6 +3,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
+import { PaymentOverview } from '../../src/components/sessions/PaymentOverview';
+import { CurrencyTotals } from '../../src/components/sessions/CurrencyTotals';
+import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
@@ -44,21 +47,10 @@ export default function HomeScreen() {
     const isLoadingUpcoming = isUpcomingLoading || !initialized;
     const isLoadingMonth = isMonthLoading || !initialized;
 
-    const calculateSessionEarnings = (session: any) => {
-        if (session.earning_type === 'fixed') return session.earning_amount || 0;
-        if (session.earning_type === 'hourly') {
-            const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-            const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-            let startMins = startH * 60 + startM;
-            let endMins = endH * 60 + endM;
-            if (endMins <= startMins) endMins += 24 * 60;
-            return (session.earning_amount || 0) * ((endMins - startMins) / 60);
-        }
-        return 0;
-    };
+    const calculateSessionEarnings = sessionEarnings;
 
-    const { earnedSoFar, projectedTotal, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList } = useMemo(() => {
-        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [], pendingSessionsList: [] };
+    const { earnedTotals, projectedTotals, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList } = useMemo(() => {
+        if (!monthSessions) return { earnedTotals: {} as Record<string, number>, projectedTotals: {} as Record<string, number>, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [], pendingSessionsList: [] };
 
         let earned = 0;
         let projected = 0;
@@ -71,10 +63,6 @@ export default function HomeScreen() {
         const pendingSessionsList: any[] = [];
 
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        const currentTotalMinutes = currentHour * 60 + currentMinute;
 
         monthSessions.forEach((session: any) => {
             const amount = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
@@ -84,34 +72,7 @@ export default function HomeScreen() {
             projectedMap[color] = (projectedMap[color] || 0) + amount;
             pCount++;
 
-            let isEarned = false;
-            if (session.date < todayStr) {
-                isEarned = true;
-            } else if (session.date === todayStr) {
-                const [endH, endM] = (session.end_time || '23:59').split(':').map(Number);
-                let endTotalMinutes = endH * 60 + endM;
-
-                // Si la sesión termina al día siguiente (ej. 03:00 am pero empieza el 'mismo' día)
-                // consideramos la lógica real del DJ: si la hora de fin es muy temprana (ej. 00-06h), 
-                // realmente pertenece a la madrugada siguiente.
-                // Como es una aproximación simple, si los minutos de fin son menores o iguales a la hora actual, ha terminado.
-                // Para ser estrictos: si la sesión pasa de las 12 (endT < startT), entonces hoy no ha terminado a no ser que estemos en esa madrugada.
-                // Simplificando usando la hora calculada:
-                const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-                const startTotalMinutes = startH * 60 + startM;
-
-                if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60; // cruza la medianoche
-
-                // También ajustamos la hora actual si "sigue" a la sesión en la madrugada
-                let adjustedCurrentMinutes = currentTotalMinutes;
-                if (currentTotalMinutes < 12 * 60 && startTotalMinutes > 12 * 60) {
-                    adjustedCurrentMinutes += 24 * 60;
-                }
-
-                if (adjustedCurrentMinutes >= endTotalMinutes) {
-                    isEarned = true;
-                }
-            }
+            const isEarned = session.status !== 'pending' && sessionRange(session).end <= now;
 
             if (isEarned) {
                 earned += amount;
@@ -133,7 +94,7 @@ export default function HomeScreen() {
         earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         pendingSessionsList.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
+        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
     }, [monthSessions]);
 
     const filteredUpcomingSessions = useMemo(() => {
@@ -283,6 +244,8 @@ export default function HomeScreen() {
                         />
                     </View>
 
+                    {allSessions && <PaymentOverview sessions={allSessions} />}
+
                     {/* MONTHLY EARNINGS CARD */}
                     <View className="mb-10">
                         <View className="flex-row gap-4 px-2">
@@ -299,12 +262,7 @@ export default function HomeScreen() {
                                     <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
                                 </View>
 
-                                <View className="flex-row items-baseline mt-5">
-                                    <Text className="text-5xl text-gray-900 dark:text-white">
-                                        {earnedSoFar.toFixed(0)}
-                                    </Text>
-                                    <Text className="text-lg font-bold neutral-800  dark:text-gray-400 ml-1 mb-1">€</Text>
-                                </View>
+                                <CurrencyTotals totals={earnedTotals} />
                                 <Text className="text-sm font-medium neutral-800  dark:text-gray-500 mt-2 flex-wrap">
                                     {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                                 </Text>
@@ -323,12 +281,7 @@ export default function HomeScreen() {
                                     <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
                                 </View>
 
-                                <View className="flex-row items-baseline mt-5">
-                                    <Text className="text-5xl text-neutral-400 dark:text-emerald-400">
-                                        {projectedTotal.toFixed(0)}
-                                    </Text>
-                                    <Text className="text-lg font-bold text-neutral-400 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
-                                </View>
+                                <CurrencyTotals totals={projectedTotals} projected />
                                 <Text className="text-sm font-medium text-neutral-400 dark:text-emerald-500/60 mt-2 flex-wrap">
                                     {capitalizedMonthName} • {projectedCount} {projectedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
                                 </Text>

@@ -41,6 +41,8 @@ import {
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
+import { SessionPayments } from '../../src/components/sessions/SessionPayments';
+import { exportSessionCalendar } from '../../src/services/calendarExport';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 
 export default function SessionDetailScreen() {
@@ -50,9 +52,6 @@ export default function SessionDetailScreen() {
     const themeCtx = useContext(ThemeContext);
     const { session: authSession } = useAuthStore();
 
-    if (!authSession) {
-        return <Redirect href="/(auth)/login" />;
-    }
     const isDark = themeCtx?.activeTheme === 'dark';
 
     const { data: session, isLoading, error } = useSessionByIdQuery(id as string);
@@ -62,6 +61,7 @@ export default function SessionDetailScreen() {
     const { data: associatedFolders = [], isLoading: isLoadingFolders } = useVaultFoldersByAssociationQuery('session', id as string);
     const createFolderMutation = useCreateFolderMutation();
 
+    const [isExporting, setIsExporting] = useState(false);
     const [isColorModalVisible, setIsColorModalVisible] = useState(false);
 
     const handleDelete = () => {
@@ -91,6 +91,16 @@ export default function SessionDetailScreen() {
             console.error('Error sharing session:', error);
         }
     };
+
+    const handleCalendarExport = async () => {
+        if (!session || isExporting) return;
+        setIsExporting(true);
+        try { await exportSessionCalendar(session); }
+        catch { Alert.alert(t('error'), t('calendar_export_error')); }
+        finally { setIsExporting(false); }
+    };
+
+    if (!authSession) return <Redirect href="/(auth)/login" />;
 
     if (isLoading) {
         return (
@@ -220,6 +230,16 @@ export default function SessionDetailScreen() {
                         {session.title}
                     </Text>
                 </View>
+
+                <TouchableOpacity onPress={handleCalendarExport} disabled={isExporting} accessibilityRole="button" className="mb-6 py-4 px-5 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex-row items-center gap-3">
+                    <Calendar size={22} color={isDark ? '#60A5FA' : '#2563EB'} />
+                    <View className="flex-1">
+                        <Text className="font-bold text-blue-700 dark:text-blue-300">{t('calendar_export')}</Text>
+                        <Text className="text-xs text-blue-600 dark:text-blue-400 mt-1">{t('calendar_export_hint')}</Text>
+                    </View>
+                    {isExporting && <ActivityIndicator />}
+                </TouchableOpacity>
+                <SessionPayments session={session} />
 
                 {/* Poster Display */}
                 {session.poster_url && (

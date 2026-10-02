@@ -68,14 +68,16 @@ export const useDeleteSessionMutation = () => {
 
 export const useSessionByIdQuery = (sessionId: string | undefined | string[]) => {
     const id = Array.isArray(sessionId) ? sessionId[0] : sessionId;
+    const { session, initialized } = useAuthStore();
+    const userId = session?.user.id;
 
     return useQuery({
-        queryKey: ['session', id],
+        queryKey: ['session', id, userId],
         queryFn: () => {
             if (!id) return null;
             return sessionService.getSessionById(id);
         },
-        enabled: !!id,
+        enabled: !!id && !!userId && initialized,
     });
 };
 

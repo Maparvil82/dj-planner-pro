@@ -12,7 +12,8 @@ import { useTagsQuery } from '../src/hooks/useTagsQuery';
 import { useVenuesQuery, useCreateVenueMutation } from '../src/hooks/useVenuesQuery';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../src/i18n/calendarLocales';
-import { supabase } from '../src/lib/supabase';
+import { confirmAction } from '../src/utils/confirmAction';
+import { localDateString } from '../src/utils/sessionPlanning';
 import * as ImagePicker from 'expo-image-picker';
 import { sessionService } from '../src/services/sessions';
 
@@ -25,13 +26,12 @@ export default function AddSessionScreen() {
     const { session } = useAuthStore();
     const createVenueMutation = useCreateVenueMutation();
 
-    if (!session) {
-        return <Redirect href="/(auth)/login" />;
-    }
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
     const isDark = themeCtx?.activeTheme === 'dark';
     const createSessionMutation = useCreateSessionMutation();
 
+    const [isChecking, setIsChecking] = useState(false);
+    const saving = useRef(false);
     const [title, setTitle] = useState('');
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
@@ -44,7 +44,7 @@ export default function AddSessionScreen() {
 
     const [sessionDate, setSessionDate] = useState(() => {
         const d = date ? new Date(date) : new Date();
-        return d.toISOString().split('T')[0];
+        return localDateString(d);
     });
     const [showCalendar, setShowCalendar] = useState(false);
 
@@ -168,86 +168,46 @@ export default function AddSessionScreen() {
     };
 
     const handleSave = async () => {
+        if (saving.current || !session) return;
         if (!title.trim() || !venue.trim()) {
             Alert.alert(t('error'), t('missing_fields'));
             return;
         }
-
-        let finalDjs = [...selectedDjs];
-        if (isCollective && djInput.trim().length > 0 && !finalDjs.includes(djInput.trim())) {
-            finalDjs.push(djInput.trim());
+        const amount = earningType === 'free' ? 0 : Number(earningAmount.replace(',', '.'));
+        if (!Number.isFinite(amount) || amount < 0 || (earningType !== 'free' && !earningAmount.trim())) {
+            Alert.alert(t('error'), t('invalid_earning_amount'));
+            return;
         }
-
-        const executeSave = async () => {
-            try {
-                await createSessionMutation.mutateAsync({
-                    date: sessionDate,
-                    title: title.trim(),
-                    venue: venue.trim(),
-                    venue_id: venueId || undefined,
-                    start_time: startTime.trim(),
-                    end_time: endTime.trim(),
-                    is_collective: isCollective,
-                    djs: finalDjs,
-                    earning_type: earningType,
-                    earning_amount: parseFloat(earningAmount) || 0,
-                    currency: currency,
-                    recurrence_type: recurrenceType,
-                    recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
-                    color: selectedColor || undefined,
-                    status: 'confirmed',
-                    poster_url: posterUrl
-                });
-                Alert.alert(t('success'), t('session_added_success'), [
-                    { text: 'OK', onPress: () => router.back() }
-                ]);
-            } catch (error) {
-                Alert.alert(t('error'), t('error_saving_session'));
-            }
+        const finalDjs = [...selectedDjs];
+        if (isCollective && djInput.trim() && !finalDjs.includes(djInput.trim())) finalDjs.push(djInput.trim());
+        const input = {
+            date: sessionDate, title: title.trim(), venue: venue.trim(), venue_id: venueId || undefined,
+            start_time: startTime.trim(), end_time: endTime.trim(), is_collective: isCollective, djs: finalDjs,
+            earning_type: earningType, earning_amount: amount, currency, recurrence_type: recurrenceType,
+            recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
+            color: selectedColor || undefined, status: 'confirmed' as const, poster_url: posterUrl
         };
-
+        saving.current = true;
+        setIsChecking(true);
         try {
-            const { data: duplicateData } = await supabase
-                .from('sessions')
-                .select('id')
-                .eq('user_id', session?.user?.id)
-                .eq('date', sessionDate)
-                .limit(1);
-
-            const hasDuplicate = !!(duplicateData && duplicateData.length > 0);
-            const todayStr = new Date().toISOString().split('T')[0];
-            const isPastDate = sessionDate < todayStr;
-
-            const promptChecks = (checkDuplicate: boolean, checkPast: boolean) => {
-                if (checkDuplicate) {
-                    Alert.alert(
-                        t('duplicate_session_title') || 'Sesión existente',
-                        t('duplicate_session_message') || 'Ya tienes una o más sesiones registradas en este día. ¿Estás seguro de que quieres añadir otra más?',
-                        [
-                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                            { text: t('continue') || 'Continuar', onPress: () => promptChecks(false, checkPast) }
-                        ]
-                    );
-                    return;
-                }
-                if (checkPast) {
-                    Alert.alert(
-                        t('past_date_warning_title') || 'Fecha pasada',
-                        t('past_date_warning_message') || 'Estás a punto de registrar una sesión en una fecha que ya ha pasado. ¿Deseas continuar?',
-                        [
-                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                            { text: t('continue') || 'Continuar', onPress: executeSave }
-                        ]
-                    );
-                    return;
-                }
-                executeSave();
-            };
-            promptChecks(hasDuplicate, isPastDate);
+            const conflicts = await sessionService.getCreationConflicts(input, session.user.id);
+            if (conflicts.length && !(await confirmAction(t('session_conflict_title'), t('session_conflict_message', {
+                count: conflicts.length,
+                sessions: conflicts.slice(0, 3).map(item => `${item.title} · ${item.date} · ${item.start_time}–${item.end_time}`).join('\n')
+            }), t('cancel'), t('continue')))) return;
+            if (sessionDate < localDateString() && !(await confirmAction(t('past_date_warning_title'), t('past_date_warning_message'), t('cancel'), t('continue')))) return;
+            const created = await createSessionMutation.mutateAsync(input);
+            router.replace(`/session/${created.id}`);
         } catch (error) {
-            executeSave();
+            const key = error instanceof Error ? error.message : '';
+            Alert.alert(t('error'), ['invalid_recurrence', 'recurrence_limit'].includes(key) ? t(key) : t('error_saving_session'));
+        } finally {
+            saving.current = false;
+            setIsChecking(false);
         }
     };
+
+    if (!session) return <Redirect href="/(auth)/login" />;
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom', 'left', 'right']}>
@@ -625,8 +585,8 @@ export default function AddSessionScreen() {
                 </ScrollView>
 
                 <View className="absolute bottom-0 left-0 right-0 bg-gray-50/95 dark:bg-gray-950/95 px-5 py-4 pb-8 border-t border-gray-200 dark:border-gray-800">
-                    <TouchableOpacity activeOpacity={0.8} className={`py-4 rounded-2xl items-center ${createSessionMutation.isPending || !title.trim() || !venue.trim() ? 'bg-blue-300' : 'bg-blue-600'}`} onPress={handleSave} disabled={createSessionMutation.isPending || !title.trim() || !venue.trim()}>
-                        {createSessionMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">{t('save_session')}</Text>}
+                    <TouchableOpacity activeOpacity={0.8} className={`py-4 rounded-2xl items-center ${isChecking || isUploadingPoster || createSessionMutation.isPending || !title.trim() || !venue.trim() ? 'bg-blue-300' : 'bg-blue-600'}`} onPress={handleSave} disabled={isChecking || isUploadingPoster || createSessionMutation.isPending || !title.trim() || !venue.trim()}>
+                        {isChecking || createSessionMutation.isPending ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">{t('save_session')}</Text>}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
