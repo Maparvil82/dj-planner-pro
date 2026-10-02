@@ -11,6 +11,8 @@ npm start
 
 La conexión usa `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Estas variables son públicas en la aplicación; nunca deben contener una clave `service_role`.
 
+El proyecto usa Expo SDK 57. Para probar en un móvil con Expo Go compatible, ejecutar `npx expo start --go --lan` y escanear el QR desde la misma Wi-Fi. Las compras reales requieren una compilación de desarrollo o de tienda; Expo Go utiliza el modo de previsualización de RevenueCat. Las compilaciones de desarrollo anteriores a esta actualización deben regenerarse.
+
 ```sh
 npm run typecheck
 npm test
