@@ -23,6 +23,7 @@ export function UpcomingSessionCard({
     const { activeTheme } = useTheme();
     const { t, currentLanguage } = useTranslation();
     const { fontScale } = useWindowDimensions();
+    const cardHeight = Math.round(168 * Math.max(1, fontScale));
     const dark = activeTheme === 'dark';
     const fg = dark ? '#f3f4f8' : '#202538';
     const muted = dark ? '#a8b2c6' : '#6d7588';
@@ -37,7 +38,7 @@ export function UpcomingSessionCard({
             onLongPress={onLongPress}
             activeOpacity={0.8}
             style={{
-                height: Math.round(168 * Math.max(1, fontScale)),
+                height: cardHeight,
                 padding: 14,
                 borderRadius: 24,
                 borderWidth: 1,
@@ -48,7 +49,12 @@ export function UpcomingSessionCard({
                 gap: 14,
             }}
         >
-            <PosterThumbnail uri={session.poster_url} color={session.color} />
+            <PosterThumbnail
+                uri={session.poster_url}
+                color={session.color}
+                width={103.5}
+                height={cardHeight - 30}
+            />
             <View
                 style={{
                     flex: 1,
@@ -61,10 +67,12 @@ export function UpcomingSessionCard({
                     <Text
                         numberOfLines={1}
                         style={{
-                            color: muted,
-                            fontSize: 11,
-                            lineHeight: 14,
-                            fontWeight: '600',
+                            color: dark ? '#bdb0f5' : '#6554df',
+                            fontSize: 13,
+                            lineHeight: 16,
+                            fontWeight: '800',
+                            letterSpacing: 0.2,
+                            textTransform: 'uppercase',
                         }}
                     >
                         {date.toLocaleDateString(currentLanguage, {

@@ -632,7 +632,7 @@
         "session_update": "{{name}} hat „{{title}}“ aktualisiert"
     },
     "posterFrame": {
-        "fullPreview": "Das vollständige Plakat erscheint in einem festen 3:4-Bereich, mit den Sessiondetails rechts.",
+        "fullPreview": "Vorschau des Plakats, wie es auf den Startseitenkarten erscheint.",
         "title": "Kartenausschnitt",
         "dragHint": "Ziehe das Plakat, um den sichtbaren Ausschnitt auszuwählen.",
         "center": "Bild zentrieren",

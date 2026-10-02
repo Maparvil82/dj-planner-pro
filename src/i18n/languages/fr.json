@@ -630,7 +630,7 @@
         "session_update": "{{name}} a modifié « {{title}} »"
     },
     "posterFrame": {
-        "fullPreview": "L’affiche complète s’affiche dans un espace fixe de proportion 3:4, avec les détails à droite.",
+        "fullPreview": "Aperçu de l’affiche telle qu’elle apparaît dans les cartes d’accueil.",
         "title": "Cadrage de la carte",
         "dragHint": "Faites glisser l’affiche pour choisir la partie visible dans les cartes.",
         "center": "Centrer l’image",

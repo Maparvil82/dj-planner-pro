@@ -632,7 +632,7 @@
         "session_update": "{{name}} ha actualizado «{{title}}»"
     },
     "posterFrame": {
-        "fullPreview": "El cartel se verá completo en un espacio fijo de proporción 3:4, con los datos de la sesión a su derecha.",
+        "fullPreview": "Vista previa del cartel tal como se mostrará en las tarjetas de Inicio.",
         "title": "Encuadre de la tarjeta",
         "dragHint": "Arrastra el cartel para elegir qué parte se verá en las tarjetas.",
         "center": "Centrar imagen",
