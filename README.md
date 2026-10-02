@@ -109,3 +109,20 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 - El límite se comprueba en la base de datos, tanto para series como para inserciones directas, con un bloqueo por propietario que serializa creaciones simultáneas. Las sesiones existentes no se borran al superar el límite.
 - La compra real requiere la versión nativa de iOS/TestFlight; Expo Go y web sirven para probar la interfaz. Android aún no tiene productos de compra configurados.
 - `tests/sessionLimit.test.cjs` verifica el servicio y errores de cuota/conexión. `tests/session-limit-database.sql` prueba el límite, series, permisos, PRO y vencimiento con fixtures dentro de una transacción que termina en `ROLLBACK`.
+
+## Bienvenida, acceso y registro
+
+- Una sola pantalla de bienvenida sustituye los tres pasos del onboarding. «Siguiente» lleva al inicio de sesión, que incluye el enlace para crear una cuenta gratis. El antiguo enlace `/onboarding` redirige a `/welcome`.
+- Una sesión ya iniciada entra directamente en Inicio. El indicador histórico `hasSeenOnboarding` ya no condiciona el acceso de usuarios autenticados.
+- Bienvenida, acceso, registro, errores y confirmación están traducidos a los siete idiomas disponibles. Se usa el idioma del dispositivo con inglés como respaldo.
+- Los formularios comparten diseño, etiquetas accesibles, navegación por teclado y opción de mostrar/ocultar contraseña. Se adaptan a móvil, escritorio y tema claro/oscuro. El login admite contraseñas antiguas sin imponer la validación de creación de cuentas.
+- Si el registro exige confirmar el correo, muestra instrucciones y no intenta escribir el perfil sin una sesión autenticada. Si devuelve sesión, entra en Inicio con el plan gratuito.
+- La fotografía nueva de cabina y su prompt están documentados en `assets/auth/README.md`.
+
+### Recuperación de contraseña
+
+- Acceso → «¿Has olvidado tu contraseña?» → correo → enlace → nueva contraseña y confirmación → volver a iniciar sesión.
+- El enlace se valida con Supabase antes de permitir guardar una nueva contraseña. Las credenciales se retiran de la URL del navegador y los enlaces caducados permiten pedir otro.
+- El retorno se genera con `Linking.createURL('reset-password')`. La app instalada utiliza `djplannerpro://reset-password`; en Expo Go se utiliza la dirección concreta del servidor de desarrollo. Cuando cambie esa dirección, debe añadirse el nuevo retorno exacto en Supabase Auth → URL Configuration. No se permiten comodines de destinos externos.
+- Revisado el 2 de octubre de 2026: este proyecto todavía usa el envío básico de Supabase. Debe conectarse un proveedor SMTP para enviar recuperación y confirmación de registro a todos los usuarios en producción. La plantilla actual utiliza `{{ .ConfirmationURL }}`.
+- Verificación: escenarios de recuperación y acceso en navegador con respuestas simuladas (sin crear cuentas ni enviar correos reales), pantallas de 320 y 390 px, modo claro/oscuro y los siete idiomas de la app.

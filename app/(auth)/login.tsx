@@ -1,129 +1,160 @@
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from '../../src/i18n/useTranslation';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { useRef, useState } from 'react';
+import { useTranslation } from '../../src/i18n/useTranslation';
 import { supabase } from '../../src/lib/supabase';
-import { cn } from '../../src/theme/tw';
-
+import { useAuthStore } from '../../src/store/useAuthStore';
+import {
+    AuthShell,
+    AuthField,
+    AuthMessage,
+} from '../../src/components/auth/AuthUI';
+import {
+    CommunityButton,
+    useCommunityColors,
+} from '../../src/components/community/CommunityUI';
+import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function LoginScreen() {
     const { t } = useTranslation();
     const router = useRouter();
-
+    const c = useCommunityColors();
+    const passwordRef = useRef<TextInput>(null);
+    const submitting = useRef(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-
-    const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-    const canSubmit = isValidEmail(email) && password.length >= 8 && !loading;
-
+    const [error, setError] = useState('');
+    const [emailTouched, setEmailTouched] = useState(false);
+    const canSubmit = validAuthEmail(email) && password.length > 0 && !loading;
     const handleLogin = async () => {
-        if (!canSubmit) return;
-
+        if (!canSubmit || submitting.current) return;
+        submitting.current = true;
         setLoading(true);
-        setErrorMsg('');
-
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        if (error) {
-            setErrorMsg(error.message); // Real apps can map error.message to translation keys
-            setLoading(false);
-        } else {
+        setError('');
+        try {
+            const { data, error: failure } =
+                await supabase.auth.signInWithPassword({
+                    email: email.trim().toLowerCase(),
+                    password,
+                });
+            if (failure) {
+                setError(t(authErrorKey(failure)));
+                return;
+            }
+            if (!data.session) {
+                setError(t('authExperience.connectionError'));
+                return;
+            }
+            useAuthStore.getState().setSession(data.session);
             router.replace('/(tabs)/home');
+        } catch {
+            setError(t('authExperience.connectionError'));
+        } finally {
+            submitting.current = false;
+            setLoading(false);
         }
     };
-
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-950">
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1 px-8 justify-center"
-            >
-                <View className="mb-10">
-                    <Text className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-3">
-                        {t('login')}
-                    </Text>
-                    <Text className="text-lg text-gray-500 dark:text-gray-400 font-medium">
-                        {t('login_subtitle')}
-                    </Text>
-                </View>
-
-                {!!errorMsg && (
-                    <View className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl mb-6">
-                        <Text className="text-red-600 dark:text-red-400 font-medium">{errorMsg}</Text>
-                    </View>
-                )}
-
-                <View className="space-y-5 gap-y-4">
-                    <View>
-                        <TextInput
-                            placeholder={t('email_placeholder')}
-                            placeholderTextColor="#9CA3AF"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            onChangeText={(val) => {
-                                setEmail(val.trim());
-                                setErrorMsg('');
+        <AuthShell
+            title={t('authExperience.loginTitle')}
+            subtitle={t('authExperience.loginHint')}
+            onBack={() => router.replace('/(auth)/welcome')}
+        >
+            {!!error && <AuthMessage>{error}</AuthMessage>}
+            <View style={{ gap: 18 }}>
+                <AuthField
+                    label={t('email_placeholder')}
+                    placeholder="you@example.com"
+                    value={email}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    textContentType="emailAddress"
+                    returnKeyType="next"
+                    editable={!loading}
+                    onChangeText={(value) => {
+                        setEmail(value);
+                        setError('');
+                    }}
+                    onBlur={() => setEmailTouched(true)}
+                    error={
+                        emailTouched &&
+                        email.length > 0 &&
+                        !validAuthEmail(email)
+                            ? t('invalid_email')
+                            : undefined
+                    }
+                    onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+                <AuthField
+                    ref={passwordRef}
+                    label={t('password_placeholder')}
+                    placeholder={t('authExperience.passwordPlaceholder')}
+                    password
+                    value={password}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="current-password"
+                    textContentType="password"
+                    returnKeyType="go"
+                    editable={!loading}
+                    onChangeText={(value) => {
+                        setPassword(value);
+                        setError('');
+                    }}
+                    onSubmitEditing={() => void handleLogin()}
+                />
+                <Link href="/(auth)/forgot-password" asChild>
+                    <TouchableOpacity
+                        accessibilityRole="link"
+                        disabled={loading}
+                        style={{
+                            alignSelf: 'flex-end',
+                            minHeight: 40,
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.accent,
+                                fontSize: 13,
+                                fontWeight: '700',
                             }}
-                            value={email}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-500 dark:text-white rounded-2xl px-5 py-4 text-base"
-                        />
-                        {email.length > 0 && !isValidEmail(email) && (
-                            <Text className="text-red-500 text-sm mt-2 ml-1">{t('invalid_email')}</Text>
-                        )}
-                    </View>
-
-                    <View>
-                        <TextInput
-                            placeholder={t('password_placeholder')}
-                            placeholderTextColor="#9CA3AF"
-                            secureTextEntry
-                            autoCapitalize="none"
-                            onChangeText={(val) => {
-                                setPassword(val);
-                                setErrorMsg('');
-                            }}
-                            value={password}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:border-blue-500 dark:focus:border-blue-500 dark:text-white rounded-2xl px-5 py-4 text-base"
-                        />
-                        {password.length > 0 && password.length < 8 && (
-                            <Text className="text-red-500 text-sm mt-2 ml-1">{t('password_too_short')}</Text>
-                        )}
-                    </View>
-                </View>
-
-                <TouchableOpacity
-                    className={cn(
-                        "w-full rounded-2xl py-4 mt-8 items-center justify-center shadow-sm shadow-blue-500/20",
-                        canSubmit ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-800"
-                    )}
-                    onPress={handleLogin}
-                    disabled={!canSubmit}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text className={cn(
-                            "font-bold text-lg select-none",
-                            canSubmit ? "text-white" : "text-gray-500 dark:text-gray-500"
-                        )}>
-                            {t('login')}
+                        >
+                            {t('authExperience.forgotPassword')}
                         </Text>
-                    )}
-                </TouchableOpacity>
-
-                <View className="flex-row justify-center mt-10">
-                    <Text className="text-gray-500 dark:text-gray-400 font-medium">{t('no_account')}</Text>
-                    <Link href="/(auth)/register" className="text-blue-600 dark:text-blue-400 font-bold ml-1">
-                        {t('register')}
-                    </Link>
-                </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                    </TouchableOpacity>
+                </Link>
+            </View>
+            <CommunityButton
+                label={t('login')}
+                onPress={() => void handleLogin()}
+                disabled={!canSubmit}
+                busy={loading}
+            />
+            <View style={{ gap: 8, alignItems: 'center', paddingVertical: 8 }}>
+                <Text style={{ color: c.muted, fontSize: 14 }}>
+                    {t('no_account')}
+                </Text>
+                <Link href="/(auth)/register" asChild>
+                    <TouchableOpacity
+                        accessibilityRole="link"
+                        disabled={loading}
+                        style={{ minHeight: 44, justifyContent: 'center' }}
+                    >
+                        <Text
+                            style={{
+                                color: c.accent,
+                                fontSize: 15,
+                                fontWeight: '800',
+                            }}
+                        >
+                            {t('authExperience.createAccount')}
+                        </Text>
+                    </TouchableOpacity>
+                </Link>
+            </View>
+        </AuthShell>
     );
 }

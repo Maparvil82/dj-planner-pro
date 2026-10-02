@@ -25,7 +25,7 @@ function TabLayoutContent() {
     const unread = useUnreadNotifications();
     const unreadCount = unread.data || 0;
     const { width } = useWindowDimensions();
-    const { session, profile, initialized, hasSeenOnboarding } = useAuthStore();
+    const { session, profile, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -46,10 +46,6 @@ function TabLayoutContent() {
 
     if (!session) {
         return <Redirect href="/(auth)/login" />;
-    }
-
-    if (!hasSeenOnboarding) {
-        return <Redirect href="/(auth)/onboarding" />;
     }
 
     return (
