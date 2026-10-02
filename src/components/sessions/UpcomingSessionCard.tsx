@@ -23,7 +23,7 @@ export function UpcomingSessionCard({
     const { activeTheme } = useTheme();
     const { t, currentLanguage } = useTranslation();
     const { fontScale } = useWindowDimensions();
-    const cardHeight = Math.round(168 * Math.max(1, fontScale));
+    const cardHeight = Math.round(128 * Math.max(1, fontScale));
     const dark = activeTheme === 'dark';
     const fg = dark ? '#f3f4f8' : '#202538';
     const muted = dark ? '#a8b2c6' : '#6d7588';
@@ -39,37 +39,46 @@ export function UpcomingSessionCard({
             activeOpacity={0.8}
             style={{
                 height: cardHeight,
-                padding: 14,
-                borderRadius: 24,
+                padding: 12,
+                borderRadius: 20,
                 borderWidth: 1,
                 borderColor: dark ? '#252d40' : '#e9ecf3',
                 backgroundColor: dark ? '#171d2c' : '#fff',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 14,
+                gap: 12,
             }}
         >
             <PosterThumbnail
                 uri={session.poster_url}
                 color={session.color}
-                width={103.5}
-                height={cardHeight - 30}
+                width={76.5}
+                height={cardHeight - 26}
             />
             <View
                 style={{
                     flex: 1,
                     minWidth: 0,
                     height: '100%',
-                    justifyContent: 'space-between',
+                    justifyContent: 'center',
+                    gap: 5,
                 }}
             >
-                <View style={{ gap: 4 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 6,
+                    }}
+                >
                     <Text
                         numberOfLines={1}
                         style={{
+                            flexShrink: 1,
                             color: dark ? '#bdb0f5' : '#6554df',
-                            fontSize: 13,
-                            lineHeight: 16,
+                            fontSize: 11,
+                            lineHeight: 14,
                             fontWeight: '800',
                             letterSpacing: 0.2,
                             textTransform: 'uppercase',
@@ -81,6 +90,9 @@ export function UpcomingSessionCard({
                             month: 'short',
                         })}
                     </Text>
+                    <SessionStatusBadge session={session} compact />
+                </View>
+                <View style={{ gap: 2 }}>
                     <Text
                         numberOfLines={2}
                         style={{
@@ -99,12 +111,23 @@ export function UpcomingSessionCard({
                     >
                         {session.venue}
                     </Text>
-                    <SessionStatusBadge session={session} />
                 </View>
-                <View style={{ gap: 3 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                    }}
+                >
                     <Text
                         numberOfLines={1}
-                        style={{ color: muted, fontSize: 11, lineHeight: 14 }}
+                        style={{
+                            color: muted,
+                            fontSize: 10,
+                            lineHeight: 14,
+                            flexShrink: 0,
+                        }}
                     >
                         {session.start_time.slice(0, 5)} –{' '}
                         {session.end_time.slice(0, 5)}
@@ -114,8 +137,9 @@ export function UpcomingSessionCard({
                             numberOfLines={1}
                             style={{
                                 color: muted,
-                                fontSize: 11,
-                                lineHeight: 16,
+                                fontSize: 10,
+                                lineHeight: 14,
+                                flexShrink: 1,
                             }}
                         >
                             {t('collaboration.guestSession')}
@@ -130,6 +154,7 @@ export function UpcomingSessionCard({
                                 fontSize: 14,
                                 lineHeight: 17,
                                 fontWeight: '700',
+                                flexShrink: 1,
                             }}
                         >
                             {new Intl.NumberFormat(currentLanguage, {

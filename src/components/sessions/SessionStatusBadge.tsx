@@ -4,7 +4,13 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { sessionPhase } from '../../utils/sessionWorkflow';
 import type { Session } from '../../types/session';
-export function SessionStatusBadge({ session }: { session: Session }) {
+export function SessionStatusBadge({
+    session,
+    compact = false,
+}: {
+    session: Session;
+    compact?: boolean;
+}) {
     const { t } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
@@ -42,11 +48,20 @@ export function SessionStatusBadge({ session }: { session: Session }) {
                 alignSelf: 'flex-start',
                 backgroundColor: `${color}15`,
                 borderRadius: 9,
-                paddingHorizontal: 9,
-                paddingVertical: 5,
+                paddingHorizontal: compact ? 6 : 9,
+                paddingVertical: compact ? 4 : 5,
+                flexShrink: compact ? 1 : 0,
             }}
         >
-            <Text style={{ color, fontSize: 11, fontWeight: '700' }}>
+            <Text
+                numberOfLines={compact ? 1 : undefined}
+                style={{
+                    color,
+                    fontSize: compact ? 10 : 11,
+                    lineHeight: compact ? 12 : undefined,
+                    fontWeight: '700',
+                }}
+            >
                 {t(`workflow.${phase}`)}
             </Text>
         </View>
