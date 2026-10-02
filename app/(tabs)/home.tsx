@@ -3,7 +3,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
-import { PaymentOverview } from '../../src/components/sessions/PaymentOverview';
 import { CurrencyTotals } from '../../src/components/sessions/CurrencyTotals';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
@@ -244,7 +243,6 @@ export default function HomeScreen() {
                         />
                     </View>
 
-                    {allSessions && <PaymentOverview sessions={allSessions} />}
 
                     {/* MONTHLY EARNINGS CARD */}
                     <View className="mb-10">

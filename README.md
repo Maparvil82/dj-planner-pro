@@ -21,8 +21,8 @@ npm run web
 
 ## Gestión de sesiones y cobros
 
-- Cada sesión remunerada permite registrar el total recibido, incluidos anticipos, y marcar el importe completo como cobrado. Los cobros anteriores requieren registro manual: una sesión pasada no implica que esté pagada.
-- Inicio muestra cobros recibidos, saldo pendiente y las primeras sesiones terminadas por cobrar. Las monedas se muestran por separado, sin conversión automática.
+- El soporte de anticipos y cobros está preparado en la base de datos. Sus nuevas secciones están ocultas en Inicio y en el detalle de sesión por decisión de producto. Una sesión pasada no implica que esté pagada.
+- Los totales de Inicio se muestran por moneda, sin conversión automática.
 - Al crear o editar sesiones se comprueban los horarios cruzados, incluidas madrugadas, sesiones del día anterior y repeticiones. El DJ puede continuar después de revisar el aviso. Es una comprobación previa al guardado, no un bloqueo de concurrencia en la base de datos.
 - Las repeticiones mensuales conservan el día original o el último día disponible del mes. Las series se guardan en una única transacción, hasta 500 sesiones por operación.
 - Cada sesión puede exportarse como `.ics`, con un aviso dos horas antes. La aplicación de calendario debe importar el archivo y respetar sus avisos. Se conserva el horario local introducido; todavía no hay zona horaria específica por local ni sincronización automática de cambios posteriores.

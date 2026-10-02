@@ -41,7 +41,6 @@ import {
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
-import { SessionPayments } from '../../src/components/sessions/SessionPayments';
 import { exportSessionCalendar } from '../../src/services/calendarExport';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 
@@ -239,7 +238,6 @@ export default function SessionDetailScreen() {
                     </View>
                     {isExporting && <ActivityIndicator />}
                 </TouchableOpacity>
-                <SessionPayments session={session} />
 
                 {/* Poster Display */}
                 {session.poster_url && (
