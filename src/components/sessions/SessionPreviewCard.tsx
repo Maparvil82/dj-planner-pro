@@ -57,6 +57,17 @@ export function SessionPreviewCard({
                 backgroundColor: dark ? '#171d2c' : '#fff',
             }}
         >
+            <View
+                pointerEvents="none"
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 5,
+                    backgroundColor: session.color || '#262626',
+                }}
+            />
             <View style={{ padding: 18, gap: 16 }}>
                 <View
                     style={{
@@ -113,14 +124,6 @@ export function SessionPreviewCard({
                                 gap: 7,
                             }}
                         >
-                            <View
-                                style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: 3,
-                                    backgroundColor: session.color || '#8270e4',
-                                }}
-                            />
                             <Text
                                 numberOfLines={2}
                                 style={{

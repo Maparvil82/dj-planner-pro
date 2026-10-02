@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Text,
     TouchableOpacity,
@@ -20,6 +21,9 @@ export function UpcomingSessionCard({
     onPress: () => void;
     onLongPress?: () => void;
 }) {
+    const [failedPosterUri, setFailedPosterUri] = useState<string | null>(null);
+    const showPoster =
+        !!session.poster_url && session.poster_url !== failedPosterUri;
     const { activeTheme } = useTheme();
     const { t, currentLanguage } = useTranslation();
     const { fontScale } = useWindowDimensions();
@@ -39,6 +43,7 @@ export function UpcomingSessionCard({
             activeOpacity={0.8}
             style={{
                 height: cardHeight,
+                overflow: 'hidden',
                 padding: 12,
                 borderRadius: 20,
                 borderWidth: 1,
@@ -49,12 +54,28 @@ export function UpcomingSessionCard({
                 gap: 12,
             }}
         >
-            <PosterThumbnail
-                uri={session.poster_url}
-                color={session.color}
-                width={76.5}
-                height={cardHeight - 26}
+            <View
+                pointerEvents="none"
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 5,
+                    backgroundColor: session.color || '#262626',
+                }}
             />
+            {showPoster && (
+                <PosterThumbnail
+                    uri={session.poster_url}
+                    color={session.color}
+                    width={76.5}
+                    height={cardHeight - 26}
+                    onError={() =>
+                        setFailedPosterUri(session.poster_url || null)
+                    }
+                />
+            )}
             <View
                 style={{
                     flex: 1,

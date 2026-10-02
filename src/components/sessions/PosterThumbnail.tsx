@@ -7,11 +7,13 @@ export function PosterThumbnail({
     color,
     width = 96,
     height = (width * 4) / 3,
+    onError,
 }: {
     uri?: string | null;
     color?: string;
     width?: number;
     height?: number;
+    onError?: () => void;
 }) {
     const [failedUri, setFailedUri] = useState<string | null>(null);
     return (
@@ -31,7 +33,10 @@ export function PosterThumbnail({
                 <Image
                     source={{ uri }}
                     resizeMode="cover"
-                    onError={() => setFailedUri(uri)}
+                    onError={() => {
+                        setFailedUri(uri);
+                        onError?.();
+                    }}
                     accessible={false}
                     style={{ width: '100%', height: '100%' }}
                 />
