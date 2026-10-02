@@ -1,3 +1,5 @@
+import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
+import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -7,7 +9,7 @@ import { CurrencyTotals } from '../../src/components/sessions/CurrencyTotals';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
+import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
 import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -34,7 +36,8 @@ export default function HomeScreen() {
     const { data: allSessions } = useAllSessionsQuery();
     const deleteSessionMutation = useDeleteSessionMutation();
 
-    const now = startOfToday();
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer); }, []);
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
     const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
@@ -61,15 +64,17 @@ export default function HomeScreen() {
         const earnedSessionsList: any[] = [];
         const pendingSessionsList: any[] = [];
 
-        const now = new Date();
 
         monthSessions.forEach((session: any) => {
-            const amount = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
+            if (session.status === 'cancelled') return;
+            const amount = calculateSessionEarnings(session);
             const color = session.color || '#3B82F6';
 
-            projected += amount;
-            projectedMap[color] = (projectedMap[color] || 0) + amount;
-            pCount++;
+            if (session.status !== 'pending') {
+                projected += amount;
+                projectedMap[color] = (projectedMap[color] || 0) + amount;
+                pCount++;
+            }
 
             const isEarned = session.status !== 'pending' && sessionRange(session).end <= now;
 
@@ -81,7 +86,7 @@ export default function HomeScreen() {
                     earnedSessionsList.push({ ...session, calculatedEarned: amount });
                 }
             } else {
-                if (amount > 0) {
+                if (amount > 0 && session.status !== 'pending') {
                     pendingSessionsList.push({ ...session, calculatedEarned: amount });
                 }
             }
@@ -93,8 +98,8 @@ export default function HomeScreen() {
         earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         pendingSessionsList.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
-    }, [monthSessions]);
+        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions.filter(s => s.status !== 'pending' && s.status !== 'cancelled')), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
+    }, [monthSessions, now]);
 
     const filteredUpcomingSessions = useMemo(() => {
         if (!upcomingSessions) return [];
@@ -182,7 +187,7 @@ export default function HomeScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
             {/* HEADER */}
             <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
+                <View className="flex-row items-center justify-between min-h-[46px]">
                     {/* Left Actions - Empty for balance */}
                     <View className="w-8" />
 
@@ -201,12 +206,7 @@ export default function HomeScreen() {
                         >
                             <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => router.push('/add-session')}
-                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
-                        >
-                            <Plus size={20} color="#FFFFFF" />
-                        </TouchableOpacity>
+                        <AddSessionButton />
                     </View>
                 </View>
             </View>
@@ -255,7 +255,7 @@ export default function HomeScreen() {
                             >
                                 <View className="flex-row items-center justify-between mb-1">
                                     <Text className="text-xs font-semibold text-neutral-800 dark:text-gray-400 uppercase tracking-wider">
-                                        {t('earned_so_far') || 'Llevas ganado'}
+                                        {t('workflow.completedFees')}
                                     </Text>
                                     <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
                                 </View>
@@ -274,7 +274,7 @@ export default function HomeScreen() {
                             >
                                 <View className="flex-row items-center justify-between mb-1">
                                     <Text className="text-xs font-semibold text-neutral-400 dark:text-green-400 uppercase tracking-wider">
-                                        {t('projected_total') || 'Prevees ganar'}
+                                        {t('insights.revenue')}
                                     </Text>
                                     <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
                                 </View>
@@ -393,6 +393,7 @@ export default function HomeScreen() {
                                                                         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
                                                                         <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
                                                                         <View className="flex-row items-center flex-wrap gap-2">
+                                                                            <SessionStatusBadge session={session} />
                                                                             <Text className="text-xs font-semibold px-2 py-0.5 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
 
                                                                             {session.is_collective && (
@@ -452,7 +453,7 @@ export default function HomeScreen() {
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
                         <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
                             <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                {t('earned_history') || 'Historial de ingresos'} - {capitalizedMonthName}
+                                {t('workflow.completedFees')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsEarningsModalVisible(false)}
@@ -530,7 +531,7 @@ export default function HomeScreen() {
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
                         <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
                             <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                {t('projected_total') || 'Previsión de ingresos'} - {capitalizedMonthName}
+                                {t('insights.revenue')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsProjectedModalVisible(false)}
@@ -545,7 +546,7 @@ export default function HomeScreen() {
                             {/* PENDING SESSIONS */}
                             <View className="mb-6">
                                 <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
-                                    Pendientes ({pendingSessionsList.length})
+                                    {t('workflow.confirmedUpcoming')} ({pendingSessionsList.length})
                                 </Text>
                                 {pendingSessionsList.length > 0 ? (
                                     pendingSessionsList.map((session, index) => {
@@ -604,7 +605,7 @@ export default function HomeScreen() {
                             {/* EARNED SESSIONS */}
                             <View>
                                 <Text className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-4">
-                                    Ya completadas ({earnedSessionsList.length})
+                                    {t('workflow.finished')} ({earnedSessionsList.length})
                                 </Text>
                                 {earnedSessionsList.length > 0 ? (
                                     earnedSessionsList.map((session, index) => {

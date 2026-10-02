@@ -1,3 +1,7 @@
+import { showError } from '../src/utils/showError';
+import { SessionStatusControl } from '../src/components/sessions/SessionStatusControl';
+import { SessionScheduleSummary } from '../src/components/sessions/SessionScheduleSummary';
+import { parseSessionAmount, validateSessionInput, type BookingStatus } from '../src/utils/sessionWorkflow';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch, Keyboard, KeyboardAvoidingView, Platform, Modal, Pressable, Image } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState, useRef, useContext, useEffect } from 'react';
@@ -33,6 +37,7 @@ export default function AddSessionScreen() {
     const [isChecking, setIsChecking] = useState(false);
     const saving = useRef(false);
     const [title, setTitle] = useState('');
+    const [status, setStatus] = useState<BookingStatus>('pending');
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
@@ -138,7 +143,7 @@ export default function AddSessionScreen() {
     const handlePickPoster = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert(t('error'), 'Permission to access media library is required');
+            showError(t('error'), 'Permission to access media library is required');
             return;
         }
 
@@ -156,11 +161,11 @@ export default function AddSessionScreen() {
                 if (url) {
                     setPosterUrl(url);
                 } else {
-                    Alert.alert(t('error'), t('error_uploading'));
+                    showError(t('error'), t('error_uploading'));
                 }
             } catch (error) {
                 console.error('Error picking poster:', error);
-                Alert.alert(t('error'), t('error_uploading'));
+                showError(t('error'), t('error_uploading'));
             } finally {
                 setIsUploadingPoster(false);
             }
@@ -170,23 +175,24 @@ export default function AddSessionScreen() {
     const handleSave = async () => {
         if (saving.current || !session) return;
         if (!title.trim() || !venue.trim()) {
-            Alert.alert(t('error'), t('missing_fields'));
+            showError(t('error'), t('missing_fields'));
             return;
         }
-        const amount = earningType === 'free' ? 0 : Number(earningAmount.replace(',', '.'));
-        if (!Number.isFinite(amount) || amount < 0 || (earningType !== 'free' && !earningAmount.trim())) {
-            Alert.alert(t('error'), t('invalid_earning_amount'));
+        let amount: number;
+        try { amount = parseSessionAmount(earningAmount, earningType); } catch {
+            showError(t('error'), t('invalid_earning_amount'));
             return;
         }
         const finalDjs = [...selectedDjs];
         if (isCollective && djInput.trim() && !finalDjs.includes(djInput.trim())) finalDjs.push(djInput.trim());
         const input = {
             date: sessionDate, title: title.trim(), venue: venue.trim(), venue_id: venueId || undefined,
-            start_time: startTime.trim(), end_time: endTime.trim(), is_collective: isCollective, djs: finalDjs,
+            start_time: startTime.trim(), end_time: endTime.trim(), is_collective: isCollective, djs: isCollective ? finalDjs : [],
             earning_type: earningType, earning_amount: amount, currency, recurrence_type: recurrenceType,
             recurrence_end_date: recurrenceType !== 'none' ? recurrenceEndDate : undefined,
-            color: selectedColor || undefined, status: 'confirmed' as const, poster_url: posterUrl
+            color: selectedColor || undefined, status, poster_url: posterUrl
         };
+        try { Object.assign(input, validateSessionInput(input)); } catch (error) { showError(t('error'), t(error instanceof Error ? error.message : 'error_saving_session')); return; }
         saving.current = true;
         setIsChecking(true);
         try {
@@ -195,12 +201,12 @@ export default function AddSessionScreen() {
                 count: conflicts.length,
                 sessions: conflicts.slice(0, 3).map(item => `${item.title} · ${item.date} · ${item.start_time}–${item.end_time}`).join('\n')
             }), t('cancel'), t('continue')))) return;
-            if (sessionDate < localDateString() && !(await confirmAction(t('past_date_warning_title'), t('past_date_warning_message'), t('cancel'), t('continue')))) return;
+            if (new Date(`${sessionDate}T${startTime}:00`) < new Date() && !(await confirmAction(t('past_date_warning_title'), t('past_date_warning_message'), t('cancel'), t('continue')))) return;
             const created = await createSessionMutation.mutateAsync(input);
             router.replace(`/session/${created.id}`);
         } catch (error) {
             const key = error instanceof Error ? error.message : '';
-            Alert.alert(t('error'), ['invalid_recurrence', 'recurrence_limit'].includes(key) ? t(key) : t('error_saving_session'));
+            showError(t('error'), ['invalid_recurrence', 'recurrence_limit', 'invalid_earning_amount'].includes(key) || key.startsWith('workflow.') ? t(key) : t('error_saving_session'));
         } finally {
             saving.current = false;
             setIsChecking(false);
@@ -376,6 +382,7 @@ export default function AddSessionScreen() {
                         <View className="flex-row space-x-4 mb-4">
                             <View className="flex-1 mr-2">
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('start_time')}</Text>
+                                {Platform.OS === 'web' ? <TextInput accessibilityLabel={t('start_time')} value={startTime} onChangeText={setStartTime} placeholder="HH:MM" maxLength={5} className="bg-white dark:bg-gray-900 rounded-2xl px-4 py-4 text-gray-900 dark:text-white border border-gray-100 dark:border-gray-900" /> : (
                                 <TouchableOpacity 
                                     onPress={() => setShowStartTimePicker(true)}
                                     className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900 py-4"
@@ -383,7 +390,8 @@ export default function AddSessionScreen() {
                                     <Clock size={20} color="#9CA3AF" />
                                     <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">{startTime}</Text>
                                 </TouchableOpacity>
-                                {showStartTimePicker && (
+                                )}
+                                {showStartTimePicker && Platform.OS !== 'web' && (
                                     Platform.OS === 'ios' ? (
                                         <Modal transparent animationType="fade" visible={showStartTimePicker}>
                                             <TouchableOpacity 
@@ -420,6 +428,7 @@ export default function AddSessionScreen() {
                             </View>
                             <View className="flex-1 ml-2">
                                 <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 uppercase tracking-wide">{t('end_time')}</Text>
+                                {Platform.OS === 'web' ? <TextInput accessibilityLabel={t('end_time')} value={endTime} onChangeText={setEndTime} placeholder="HH:MM" maxLength={5} className="bg-white dark:bg-gray-900 rounded-2xl px-4 py-4 text-gray-900 dark:text-white border border-gray-100 dark:border-gray-900" /> : (
                                 <TouchableOpacity 
                                     onPress={() => setShowEndTimePicker(true)}
                                     className="bg-white dark:bg-gray-900 rounded-2xl flex-row items-center pl-4 border border-gray-100 dark:border-gray-900 py-4"
@@ -427,7 +436,8 @@ export default function AddSessionScreen() {
                                     <Clock size={20} color="#9CA3AF" />
                                     <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">{endTime}</Text>
                                 </TouchableOpacity>
-                                {showEndTimePicker && (
+                                )}
+                                {showEndTimePicker && Platform.OS !== 'web' && (
                                     Platform.OS === 'ios' ? (
                                         <Modal transparent animationType="fade" visible={showEndTimePicker}>
                                             <TouchableOpacity 
@@ -488,7 +498,7 @@ export default function AddSessionScreen() {
                             </View>
                             <View style={{ display: earningType !== 'free' ? 'flex' : 'none', backgroundColor: isDark ? '#111827' : '#FFFFFF', borderRadius: 16, flexDirection: 'row', alignItems: 'center', paddingLeft: 20, borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', marginBottom: 20 }}>
                                 <Text style={{ fontSize: 20, color: '#9CA3AF' }}>{currency}</Text>
-                                <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="numeric" value={earningAmount} onChangeText={setEarningAmount} />
+                                <TextInput style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 16, color: isDark ? '#FFFFFF' : '#111827', fontSize: 16, fontWeight: '500' }} keyboardType="decimal-pad" value={earningAmount} onChangeText={setEarningAmount} />
                             </View>
                         </View>
 
@@ -528,15 +538,8 @@ export default function AddSessionScreen() {
                             </View>
                         )}
 
-                        <View className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30 mb-6">
-                            <View className="flex-row items-center mb-1">
-                                <Check size={16} color="#3B82F6" />
-                                <Text className="ml-2 text-blue-700 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">{t('status_confirmed')}</Text>
-                            </View>
-                            <Text className="text-gray-600 dark:text-gray-400 text-sm leading-5">
-                                {t('add_session_status_info')}
-                            </Text>
-                        </View>
+                        <SessionScheduleSummary start={startTime} end={endTime} type={earningType} amount={earningAmount} currency={currency} />
+                        <SessionStatusControl value={status} onChange={setStatus} />
 
                         {/* Event Poster Section */}
                         <View className="mt-4 mb-6">
@@ -553,7 +556,7 @@ export default function AddSessionScreen() {
                                     />
                                     <TouchableOpacity
                                         onPress={() => {
-                                            sessionService.deleteSessionPoster(posterUrl);
+                                            // Keep the saved file until the session changes have been committed.
                                             setPosterUrl(null);
                                         }}
                                         className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full items-center justify-center backdrop-blur-md"
@@ -641,7 +644,7 @@ export default function AddSessionScreen() {
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View className="mb-6">
                                 <View className="flex-row items-center bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 pr-3">
-                                    <TextInput className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold" value={venue} onChangeText={setVenue} onFocus={() => { setVenueId(null); handleFocus('venue'); }} onBlur={handleBlur} autoCapitalize="words" />
+                                    <TextInput className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold" value={venue} onChangeText={(value) => { setVenue(value); setVenueId(null); }} onFocus={() => handleFocus('venue')} onBlur={handleBlur} autoCapitalize="words" />
                                     {venue.length > 0 && (<TouchableOpacity onPress={() => { setVenue(''); setVenueId(null); }}><X size={18} color="#9CA3AF" /></TouchableOpacity>)}
                                 </View>
                                 {filteredVenueTags.length > 0 && (
@@ -658,7 +661,7 @@ export default function AddSessionScreen() {
                                         try {
                                             const newV = await createVenueMutation.mutateAsync({ name: venue.trim() });
                                             setVenue(newV.name); setVenueId(newV.id); setIsVenueModalVisible(false);
-                                        } catch (e) { Alert.alert(t('error'), t('error_saving_session')); }
+                                        } catch (e) { showError(t('error'), t('error_saving_session')); }
                                     }} className="mt-3 flex-row items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
                                         <Plus size={16} color="#3B82F6" />
                                         <Text className="ml-2 text-blue-600 font-bold">{t('add_as_new_venue', { name: venue.trim() })}</Text>

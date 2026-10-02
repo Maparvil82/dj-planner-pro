@@ -336,7 +336,7 @@
     "session_conflict_message": "Cette session ou sa répétition chevauche {{count}} sessions :\n\n{{sessions}}\n\nEnregistrer quand même ?",
     "invalid_recurrence": "Choisissez une date de fin de répétition égale ou postérieure au début.",
     "recurrence_limit": "Vous pouvez créer jusqu’à 500 sessions à la fois. Réduisez la période de répétition.",
-    "invalid_earning_amount": "Saisissez un montant valide supérieur ou égal à zéro.",
+    "invalid_earning_amount": "Saisissez un montant supérieur à zéro, avec au maximum deux décimales.",
     "apply_series_web": "Appliquer les modifications à toutes les sessions liées ? OK : toutes. Annuler : celle-ci uniquement.",
     "save_payment": "Enregistrer",
     "insights": {
@@ -402,5 +402,31 @@
         "missingCity_other": "{{count}} sessions sans ville",
         "completeVenues": "Compléter les lieux",
         "noCities": "Ajoutez des sessions et les villes de leurs lieux."
-    }
+    },
+    "workflow": {
+        "bookingState": "État de la réservation",
+        "pending": "À confirmer",
+        "confirmed": "Confirmée",
+        "cancelled": "Annulée",
+        "pendingHint": "Proposition ou réservation en attente d’accord.",
+        "confirmedHint": "Prestation convenue avec le lieu ou l’organisateur.",
+        "cancelledHint": "N’aura pas lieu. Conservée dans l’historique.",
+        "phaseHint": "L’horaire indique le début et la fin d’une session confirmée.",
+        "ongoing": "En cours",
+        "finished": "Terminée",
+        "invalidDate": "Choisissez une date valide.",
+        "invalidTime": "Utilisez une heure valide (HH:MM).",
+        "equalTimes": "Les heures de début et de fin doivent être différentes.",
+        "invalidStatus": "Choisissez un état valide.",
+        "missingDjs": "Ajoutez au moins un DJ pour une session collective.",
+        "nextDay": "Se termine le lendemain.",
+        "totalFee": "Cachet total",
+        "seriesTitle": "Modifier la série",
+        "seriesChoice": "Enregistrer cette session uniquement ou aussi les suivantes de sa série ?",
+        "following": "Cette session et les suivantes",
+        "seriesHint": "Changer la date affecte uniquement cette session. Les autres changements peuvent concerner les suivantes.",
+        "completedFees": "Cachets des sessions terminées",
+        "confirmedUpcoming": "Confirmées à venir"
+    },
+    "edit_session": "Modifier la session"
 }

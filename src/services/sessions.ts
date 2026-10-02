@@ -3,6 +3,8 @@ import { CreateSessionInput, Session } from '../types/session';
 import { TagOption } from '../types/tag';
 import { recurrenceDates, findSessionConflicts, localDateString, sessionRange } from '../utils/sessionPlanning';
 
+import { relatedSessionTargets, validateSessionInput } from '../utils/sessionWorkflow';
+
 const TAG_COLORS: string[] = [];
 
 export const getColorForString = (str: string) => {
@@ -12,6 +14,7 @@ export const getColorForString = (str: string) => {
 
 export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
+        input = validateSessionInput(input);
         const dates = recurrenceDates(input);
         const { data, error } = await supabase.rpc('create_session_series', {
             input: { ...input, color: input.color || getColorForString(input.title) },
@@ -32,11 +35,7 @@ export const sessionService = {
         const sessions = await this.getAllSessions(userId);
         const current = sessions.find(session => session.id === sessionId);
         if (!current) throw new Error('error_loading_session');
-        const root = current.parent_session_id || current.id;
-        const hasSeries = !!current.parent_session_id || sessions.some(session => session.parent_session_id === root);
-        const targets = sessions.filter(session => updateAll
-            ? (hasSeries ? session.id === root || session.parent_session_id === root : session.title === current.title)
-            : session.id === sessionId);
+        const targets = relatedSessionTargets(sessions, current, updateAll);
         const candidates = targets.map(session => ({ ...session, ...input, date: updateAll ? session.date : input.date || session.date }))
             .filter(session => session.status !== 'cancelled');
         const targetIds = new Set(targets.map(session => session.id));
@@ -202,120 +201,30 @@ export const sessionService = {
         }
     },
 
-    async updateSessionColor(sessionId: string, color: string, updateAll: boolean = false): Promise<void> {
-        if (!updateAll) {
-            const { error } = await supabase
-                .from('sessions')
-                .update({ color })
-                .eq('id', sessionId);
-            if (error) throw new Error(error.message);
-            return;
-        }
-
-        // Broad update logic
-        const { data: session } = await supabase
-            .from('sessions')
-            .select('title, parent_session_id, user_id')
-            .eq('id', sessionId)
-            .single();
-
-        if (!session) throw new Error('Session not found');
-
-        let query = supabase.from('sessions').update({ color }).eq('user_id', session.user_id);
-
-        if (session.parent_session_id) {
-            // It's a child in a series
-            query = query.or(`id.eq.${session.parent_session_id},parent_session_id.eq.${session.parent_session_id}`);
-        } else {
-            // Check if it's a parent
-            const { data: children } = await supabase
-                .from('sessions')
-                .select('id')
-                .eq('parent_session_id', sessionId)
-                .limit(1);
-
-            if (children && children.length > 0) {
-                // It's a parent
-                query = query.or(`id.eq.${sessionId},parent_session_id.eq.${sessionId}`);
-            } else {
-                // Not a series, update by title as requested ("todas las de [Nombre]")
-                query = query.eq('title', session.title);
-            }
-        }
-
-        const { error } = await query;
-        if (error) {
-            console.error('Error updating multiple session colors:', error);
-            throw new Error(error.message);
-        }
+    async updateSessionColor(sessionId: string, color: string, updateAll = false): Promise<void> {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) throw new Error('error_loading_session');
+        await this.updateSession(sessionId, { color }, user.id, updateAll);
     },
-    async updateSession(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll: boolean = false): Promise<void> {
-        if (!updateAll) {
-            const { error } = await supabase
-                .from('sessions')
-                .update({
-                    ...input,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', sessionId);
-
-            if (error) {
-                console.error('Error updating session:', error);
-                throw new Error(error.message);
-            }
-            
-            // Sync tags in background
-            this.syncTags(input, userId).catch(e => console.warn('Tag sync error:', e));
-            
-            return;
-        }
-
-        // Broad update logic
-        const { data: session } = await supabase
-            .from('sessions')
-            .select('title, parent_session_id, user_id')
-            .eq('id', sessionId)
-            .single();
-
-        if (!session) throw new Error('Session not found');
-
-        // SAFEGUARD: If updating all, we MUST NOT update the date or unique IDs
-        // to avoid overwriting the specific dates of recurring events.
-        const { date, id, user_id, parent_session_id, amount_paid, ...syncableInput } = input as any;
-
-        let query = supabase.from('sessions').update({
-            ...syncableInput,
-            updated_at: new Date().toISOString()
-        }).eq('user_id', session.user_id);
-
-        if (session.parent_session_id) {
-            // It's a child in a series
-            query = query.or(`id.eq.${session.parent_session_id},parent_session_id.eq.${session.parent_session_id}`);
-        } else {
-            // Check if it's a parent
-            const { data: children } = await supabase
-                .from('sessions')
-                .select('id')
-                .eq('parent_session_id', sessionId)
-                .limit(1);
-
-            if (children && children.length > 0) {
-                // It's a parent
-                query = query.or(`id.eq.${sessionId},parent_session_id.eq.${sessionId}`);
-            } else {
-                // Not a series, update by title as requested ("todas las de [Nombre]")
-                query = query.eq('title', session.title);
+    async updateSession(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll = false): Promise<void> {
+        const sessions = await this.getAllSessions(userId);
+        const current = sessions.find(session => session.id === sessionId);
+        if (!current) throw new Error('error_loading_session');
+        const targets = relatedSessionTargets(sessions, current, updateAll);
+        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', ...(updateAll ? [] : ['date'])];
+        const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => allowed.includes(key) && value !== undefined));
+        if (!Object.keys(changes).length) return;
+        if (Object.keys(changes).some(key => key !== 'color')) {
+            for (const target of targets) {
+                validateSessionInput({ ...target, start_time: target.start_time.slice(0, 5), end_time: target.end_time.slice(0, 5), ...changes, recurrence_type: 'none' });
             }
         }
-
-        const { error } = await query;
-        if (error) {
-            console.error('Error updating multiple sessions:', error);
-            throw new Error(error.message);
-        }
-
-        // Sync tags in background
-        this.syncTags(input, userId).catch(e => console.warn('Tag sync error:', e));
+        const { data, error } = await supabase.from('sessions')
+            .update({ ...changes, updated_at: new Date().toISOString() })
+            .eq('user_id', userId).in('id', targets.map(target => target.id)).select('id');
+        if (error) throw new Error(error.message);
+        if (!data?.length) throw new Error('error_saving_session');
+        this.syncTags(changes, userId).catch(error => console.warn('Tag synchronization failed', error));
     },
 
     async uploadSessionPoster(userId: string, imageUri: string): Promise<string | null> {

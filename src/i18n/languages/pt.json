@@ -336,7 +336,7 @@
     "session_conflict_message": "Esta sessão ou a sua repetição sobrepõe-se a {{count}} sessões:\n\n{{sessions}}\n\nGuardar mesmo assim?",
     "invalid_recurrence": "Escolha uma data de fim de repetição igual ou posterior ao início.",
     "recurrence_limit": "Pode criar até 500 sessões de cada vez. Reduza o período de repetição.",
-    "invalid_earning_amount": "Introduza um valor válido igual ou superior a zero.",
+    "invalid_earning_amount": "Introduza um valor superior a zero, com até duas casas decimais.",
     "apply_series_web": "Aplicar alterações a todas as sessões relacionadas? OK: todas. Cancelar: apenas esta.",
     "save_payment": "Guardar",
     "insights": {
@@ -402,5 +402,31 @@
         "missingCity_other": "{{count}} sessões sem cidade",
         "completeVenues": "Completar locais",
         "noCities": "Adiciona sessões e as cidades dos seus locais."
-    }
+    },
+    "workflow": {
+        "bookingState": "Estado da reserva",
+        "pending": "Por confirmar",
+        "confirmed": "Confirmada",
+        "cancelled": "Cancelada",
+        "pendingHint": "Proposta ou reserva ainda por acordar.",
+        "confirmedHint": "Atuação acordada com o local ou organizador.",
+        "cancelledHint": "Não se realizará. Mantida no histórico.",
+        "phaseHint": "O horário indica o início e o fim de uma sessão confirmada.",
+        "ongoing": "Em curso",
+        "finished": "Terminada",
+        "invalidDate": "Escolha uma data válida.",
+        "invalidTime": "Use uma hora válida (HH:MM).",
+        "equalTimes": "As horas de início e fim devem ser diferentes.",
+        "invalidStatus": "Escolha um estado válido.",
+        "missingDjs": "Adicione pelo menos um DJ à sessão coletiva.",
+        "nextDay": "Termina no dia seguinte.",
+        "totalFee": "Cachê total",
+        "seriesTitle": "Editar série",
+        "seriesChoice": "Guardar apenas esta sessão ou também as seguintes da sua série?",
+        "following": "Esta e seguintes",
+        "seriesHint": "Alterar a data afeta apenas esta sessão. As outras alterações podem aplicar-se às seguintes.",
+        "completedFees": "Cachê realizado",
+        "confirmedUpcoming": "Confirmadas por realizar"
+    },
+    "edit_session": "Editar sessão"
 }

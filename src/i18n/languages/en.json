@@ -342,7 +342,7 @@
     "session_conflict_message": "This session or its recurrence overlaps {{count}} sessions:\n\n{{sessions}}\n\nSave anyway?",
     "invalid_recurrence": "Choose a recurrence end date on or after the start date.",
     "recurrence_limit": "You can create up to 500 sessions at once. Shorten the recurrence period.",
-    "invalid_earning_amount": "Enter a valid amount of zero or more.",
+    "invalid_earning_amount": "Enter an amount greater than zero, with up to two decimal places.",
     "apply_series_web": "Apply changes to all related sessions? OK: all. Cancel: only this one.",
     "save_payment": "Save",
     "insights": {
@@ -408,5 +408,31 @@
         "missingCity_other": "{{count}} sessions without a city",
         "completeVenues": "Complete venues",
         "noCities": "Add sessions and their venue cities to see this summary."
-    }
+    },
+    "workflow": {
+        "bookingState": "Booking status",
+        "pending": "Pending confirmation",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled",
+        "pendingHint": "Proposal or booking still awaiting agreement.",
+        "confirmedHint": "Performance agreed with the venue or organiser.",
+        "cancelledHint": "Will not take place. Kept in your history.",
+        "phaseHint": "The schedule indicates when a confirmed session starts and ends.",
+        "ongoing": "In progress",
+        "finished": "Finished",
+        "invalidDate": "Choose a valid date.",
+        "invalidTime": "Use a valid time (HH:MM).",
+        "equalTimes": "Start and end times must be different.",
+        "invalidStatus": "Choose a valid status.",
+        "missingDjs": "Add at least one DJ for a collective session.",
+        "nextDay": "Ends the following day.",
+        "totalFee": "Total fee",
+        "seriesTitle": "Edit series",
+        "seriesChoice": "Save only this session, or this and the following sessions in its series?",
+        "following": "This and following",
+        "seriesHint": "Changing the date affects only this session. Other changes can apply to this and following sessions.",
+        "completedFees": "Completed session fees",
+        "confirmedUpcoming": "Upcoming confirmed"
+    },
+    "edit_session": "Edit session"
 }

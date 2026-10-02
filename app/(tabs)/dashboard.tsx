@@ -1,3 +1,4 @@
+import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     View,
@@ -17,7 +18,6 @@ import {
     ArrowUpRight,
     ChevronLeft,
     ChevronRight,
-    Plus,
     CalendarDays,
     Clock3,
     MapPin,
@@ -329,14 +329,7 @@ export default function DashboardScreen() {
                         {label('intro')}
                     </Text>
                 </View>
-                <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel={label('add')}
-                    onPress={() => router.push('/add-session')}
-                    style={styles.add}
-                >
-                    <Plus size={24} color="#fff" />
-                </TouchableOpacity>
+                <AddSessionButton />
             </View>
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -1679,14 +1672,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: { fontSize: 29, fontWeight: '800', letterSpacing: -0.9 },
-    add: {
-        height: 46,
-        width: 46,
-        borderRadius: 16,
-        backgroundColor: '#6554df',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     controls: { borderRadius: 22, padding: 8, borderWidth: 1 },
     segment: { flexDirection: 'row', borderRadius: 14, padding: 4 },
     segmentButton: {

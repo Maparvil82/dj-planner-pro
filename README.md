@@ -64,3 +64,11 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 3. Respaldo/exportación de datos y un entorno de pruebas reproducible con migración inicial.
 4. Finanzas del dashboard por moneda y gastos vinculados a cada sesión.
 5. Revisión de documentos privados, rendimiento de políticas e índices y protección frente a contraseñas filtradas en Supabase Auth.
+
+## Estados y formularios de sesiones
+
+- La reserva se marca como pendiente de confirmar, confirmada o cancelada. Las sesiones nuevas empiezan pendientes y el DJ puede confirmarlas al crear; las existentes conservan su estado.
+- «En curso» y «Finalizada» se calculan a partir del horario local para sesiones confirmadas. No certifican que la actuación se haya realizado ni que se haya cobrado. Inicio y Dashboard excluyen cancelaciones y separan honorarios confirmados de propuestas.
+- Crear y editar comparten validación de fechas, horarios, importes positivos con hasta dos decimales y participantes de sesiones colectivas. La duración y el caché total se muestran antes de guardar; las madrugadas terminan al día siguiente.
+- Editar permite guardar solo esta sesión o esta y las siguientes de su serie real. Cambiar la fecha solo afecta a la sesión elegida. El título no determina qué sesiones se modifican. Solo se guardan los campos cambiados y cada actualización se filtra por propietario.
+- Editar no reinicia el formulario cuando llegan datos actualizados. Abrir el local conserva su vínculo; modificar su texto lo desvincula. Quitar un cartel no borra anticipadamente el archivo compartido por otras sesiones. Los archivos sin referencias quedan pendientes de una futura limpieza de almacenamiento.

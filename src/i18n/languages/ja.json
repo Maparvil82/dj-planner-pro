@@ -337,7 +337,7 @@
     "session_conflict_message": "このセッションまたは繰り返しが{{count}}件のセッションと重複しています：\n\n{{sessions}}\n\n保存しますか？",
     "invalid_recurrence": "開始日以降の繰り返し終了日を選択してください。",
     "recurrence_limit": "一度に作成できるのは500件までです。繰り返し期間を短くしてください。",
-    "invalid_earning_amount": "0以上の有効な金額を入力してください。",
+    "invalid_earning_amount": "0より大きい金額を小数点以下2桁までで入力してください。",
     "apply_series_web": "関連するすべてのセッションに変更を適用しますか？ OK：すべて。キャンセル：このセッションのみ。",
     "save_payment": "保存",
     "insights": {
@@ -403,5 +403,31 @@
         "missingCity_other": "都市未登録のセッション：{{count}}件",
         "completeVenues": "会場情報を補完",
         "noCities": "セッションと会場の都市を追加すると表示されます。"
-    }
+    },
+    "workflow": {
+        "bookingState": "予約状況",
+        "pending": "確認待ち",
+        "confirmed": "確定",
+        "cancelled": "キャンセル",
+        "pendingHint": "提案または予約の合意を待っています。",
+        "confirmedHint": "会場または主催者と合意した公演です。",
+        "cancelledHint": "開催されません。履歴に保存されます。",
+        "phaseHint": "確定したセッションの開始と終了は予定時刻から表示されます。",
+        "ongoing": "進行中",
+        "finished": "終了",
+        "invalidDate": "有効な日付を選択してください。",
+        "invalidTime": "有効な時刻を入力してください（HH:MM）。",
+        "equalTimes": "開始と終了の時刻は異なる必要があります。",
+        "invalidStatus": "有効な状態を選択してください。",
+        "missingDjs": "共同セッションにはDJを1人以上追加してください。",
+        "nextDay": "翌日に終了します。",
+        "totalFee": "報酬合計",
+        "seriesTitle": "シリーズを編集",
+        "seriesChoice": "このセッションのみ、またはシリーズのこれ以降も保存しますか？",
+        "following": "これ以降すべて",
+        "seriesHint": "日付変更はこのセッションのみに適用されます。他の変更はこれ以降にも適用できます。",
+        "completedFees": "終了したセッションの報酬",
+        "confirmedUpcoming": "今後の確定セッション"
+    },
+    "edit_session": "セッションを編集"
 }

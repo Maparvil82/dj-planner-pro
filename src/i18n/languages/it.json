@@ -338,7 +338,7 @@
     "session_conflict_message": "Questa sessione o la sua ripetizione si sovrappone a {{count}} sessioni:\n\n{{sessions}}\n\nSalvare comunque?",
     "invalid_recurrence": "Scegli una data di fine ripetizione uguale o successiva all’inizio.",
     "recurrence_limit": "Puoi creare fino a 500 sessioni alla volta. Riduci il periodo di ripetizione.",
-    "invalid_earning_amount": "Inserisci un importo valido pari o superiore a zero.",
+    "invalid_earning_amount": "Inserisci un importo maggiore di zero, con al massimo due decimali.",
     "apply_series_web": "Applicare le modifiche a tutte le sessioni correlate? OK: tutte. Annulla: solo questa.",
     "save_payment": "Salva",
     "insights": {
@@ -404,5 +404,31 @@
         "missingCity_other": "{{count}} sessioni senza città",
         "completeVenues": "Completa i locali",
         "noCities": "Aggiungi sessioni e le città dei loro locali."
-    }
+    },
+    "workflow": {
+        "bookingState": "Stato della prenotazione",
+        "pending": "Da confermare",
+        "confirmed": "Confermata",
+        "cancelled": "Annullata",
+        "pendingHint": "Proposta o prenotazione ancora da concordare.",
+        "confirmedHint": "Esibizione concordata con il locale o organizzatore.",
+        "cancelledHint": "Non si svolgerà. Conservata nello storico.",
+        "phaseHint": "L’orario indica inizio e fine di una sessione confermata.",
+        "ongoing": "In corso",
+        "finished": "Terminata",
+        "invalidDate": "Scegli una data valida.",
+        "invalidTime": "Usa un orario valido (HH:MM).",
+        "equalTimes": "Inizio e fine devono essere diversi.",
+        "invalidStatus": "Scegli uno stato valido.",
+        "missingDjs": "Aggiungi almeno un DJ per una sessione collettiva.",
+        "nextDay": "Termina il giorno successivo.",
+        "totalFee": "Compenso totale",
+        "seriesTitle": "Modifica serie",
+        "seriesChoice": "Salvare solo questa sessione o anche le successive della sua serie?",
+        "following": "Questa e successive",
+        "seriesHint": "Cambiare la data riguarda solo questa sessione. Le altre modifiche possono applicarsi alle successive.",
+        "completedFees": "Compensi maturati",
+        "confirmedUpcoming": "Confermate in programma"
+    },
+    "edit_session": "Modifica sessione"
 }

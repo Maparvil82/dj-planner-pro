@@ -1,3 +1,5 @@
+import { sessionDuration, sessionEarnings } from '../../src/utils/sessionPlanning';
+import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
 import { FEATURES } from '../../src/config/features';
 import React, { useContext, useState } from 'react';
 import {
@@ -137,25 +139,8 @@ export default function SessionDetailScreen() {
     });
     const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
-    const calculateSessionDuration = () => {
-        const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-        const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-        let startMins = startH * 60 + startM;
-        let endMins = endH * 60 + endM;
-        if (endMins <= startMins) endMins += 24 * 60;
-        return (endMins - startMins) / 60;
-    };
-
-    const calculateSessionEarnings = () => {
-        if (session.earning_type === 'fixed') return session.earning_amount || 0;
-        if (session.earning_type === 'hourly') {
-            return (session.earning_amount || 0) * calculateSessionDuration();
-        }
-        return 0;
-    };
-
-    const duration = calculateSessionDuration();
-    const earnings = calculateSessionEarnings();
+    const duration = sessionDuration(session);
+    const earnings = sessionEarnings(session);
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-gray-950" edges={['top', 'bottom']}>
@@ -212,19 +197,7 @@ export default function SessionDetailScreen() {
                         <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                             {t('session_summary_label') || 'Resumen de la sesión'}
                         </Text>
-                        {session.status && (
-                            <View className={`px-3 py-1 rounded-full ${session.status === 'confirmed' ? 'bg-blue-100 dark:bg-blue-900/40' :
-                                session.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/40' :
-                                    'bg-red-100 dark:bg-red-900/40'
-                                }`}>
-                                <Text className={`text-xs font-bold ${session.status === 'confirmed' ? 'text-blue-700 dark:text-blue-400' :
-                                    session.status === 'pending' ? 'text-orange-700 dark:text-orange-400' :
-                                        'text-red-700 dark:text-red-400'
-                                    }`}>
-                                    {t(`status_${session.status}`) || session.status.toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
+                        <SessionStatusBadge session={session} />
                     </View>
                     <Text className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         {session.title}
@@ -263,7 +236,7 @@ export default function SessionDetailScreen() {
                                     {t('estimated_total_label') || 'Total estimado'}
                                 </Text>
                                 <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                    {session.status === 'cancelled' ? '-' : ''}{earnings.toFixed(2)} {session.currency || '€'}
+                                    {(session.status === 'cancelled' ? 0 : earnings).toFixed(2)} {session.currency || '€'}
                                 </Text>
                             </View>
                             <View className="items-end">
@@ -480,9 +453,14 @@ export default function SessionDetailScreen() {
                                             key={item.color}
                                             activeOpacity={0.7}
                                             onPress={() => {
+                                                if (!session.parent_session_id && (!session.recurrence_type || session.recurrence_type === 'none')) {
+                                                    updateColorMutation.mutate({ sessionId: id as string, color: item.color, updateAll: false });
+                                                    setIsColorModalVisible(false);
+                                                    return;
+                                                }
                                                 Alert.alert(
-                                                    t('apply_color_to_all_title') || '¿Actualizar sesiones?',
-                                                    t('apply_color_to_all_message', { title: session.title }),
+                                                    t('workflow.seriesTitle'),
+                                                    t('workflow.seriesChoice'),
                                                     [
                                                         { text: t('cancel'), style: 'cancel' },
                                                         {
@@ -493,7 +471,7 @@ export default function SessionDetailScreen() {
                                                             }
                                                         },
                                                         {
-                                                            text: t('apply_all_related', { title: session.title }),
+                                                            text: t('workflow.following'),
                                                             onPress: () => {
                                                                 updateColorMutation.mutate({ sessionId: id as string, color: item.color, updateAll: true });
                                                                 setIsColorModalVisible(false);

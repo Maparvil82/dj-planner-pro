@@ -77,7 +77,7 @@ export function dashboardMetrics(
         const key = s.venue_id || s.venue.trim().toLocaleLowerCase();
         const item = rankings.get(key) || {
             name: s.venue,
-            id: s.venue_id,
+            id: s.venue_id || undefined,
             count: 0,
             amount: 0,
         };
@@ -262,7 +262,7 @@ export function dashboardInsights(
             const key = venueKey(s),
                 item = venueRates.get(key) || {
                     name: resolveVenue(s)?.name || s.venue,
-                    id: resolveVenue(s)?.id || s.venue_id,
+                    id: resolveVenue(s)?.id || s.venue_id || undefined,
                     earnings: 0,
                     hours: 0,
                 };
