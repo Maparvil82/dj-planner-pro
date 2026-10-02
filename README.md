@@ -72,3 +72,9 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 - Crear y editar comparten validación de fechas, horarios, importes positivos con hasta dos decimales y participantes de sesiones colectivas. La duración y el caché total se muestran antes de guardar; las madrugadas terminan al día siguiente.
 - Editar permite guardar solo esta sesión o esta y las siguientes de su serie real. Cambiar la fecha solo afecta a la sesión elegida. El título no determina qué sesiones se modifican. Solo se guardan los campos cambiados y cada actualización se filtra por propietario.
 - Editar no reinicia el formulario cuando llegan datos actualizados. Abrir el local conserva su vínculo; modificar su texto lo desvincula. Quitar un cartel no borra anticipadamente el archivo compartido por otras sesiones. Los archivos sin referencias quedan pendientes de una futura limpieza de almacenamiento.
+
+## Detalle de lugares
+
+- El alta y la edición de lugares siguen siendo manuales, sin integración con Google Places. El detalle utiliza las tarjetas y cabecera compartidas con los formularios de sesiones: datos, ubicación, cabina/aforo, valoraciones, notas y fotos.
+- Los cambios válidos se guardan automáticamente después de un segundo. Solo se envían campos modificados; las respuestas y recargas de datos no sustituyen los cambios posteriores del usuario. Si falla el guardado se ofrece reintentar. El cierre desde la cabecera espera a guardar los cambios válidos.
+- Aforo vacío y valoraciones desmarcadas se guardan como `null`. Aforo y cantidades de equipo se validan como enteros; las cantidades deben ser mayores que cero. Quitar fotos elimina su referencia al guardar, sin borrar archivos anticipadamente. Los archivos sin referencias quedan pendientes de limpieza futura.

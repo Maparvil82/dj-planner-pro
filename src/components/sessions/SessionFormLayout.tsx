@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import {
     MapPin,
+    Speaker,
+    Star,
+    NotebookPen,
     CalendarDays,
     Disc3,
     Wallet,
@@ -90,6 +93,9 @@ const icons = {
     booking: CheckCheck,
     participants: Users,
     poster: Camera,
+    equipment: Speaker,
+    rating: Star,
+    notes: NotebookPen,
 };
 export function SessionFormSection({
     title,
