@@ -140,3 +140,86 @@ test('empty periods have no invented averages or venue rankings', () => {
     assert.equal(m.revenue, 0);
     assert.equal(m.venueCount, 0);
 });
+
+const { dashboardInsights } = load('dashboardMetrics');
+test('city grouping normalizes accents and whitespace, and does not guess ambiguous venues', () => {
+    const venues = [
+        { id: 'club', name: 'Club', city: ' Madrid ' },
+        { id: 'other', name: 'Other', city: 'MÁDRID' },
+        { id: 'a', name: 'Duplicate', city: 'Barcelona' },
+        { id: 'b', name: 'Duplicate', city: 'Valencia' },
+    ];
+    const data = [
+        session({}),
+        session({ id: 'other-gig', venue_id: 'other', venue: 'Old name' }),
+        session({ id: 'ambiguous', venue_id: undefined, venue: 'Duplicate' }),
+        session({ id: 'missing', venue_id: 'deleted' }),
+    ];
+    const m = dashboardInsights(
+        data,
+        venues,
+        anchor,
+        'month',
+        'EUR',
+        new Date(2026, 9, 1),
+    );
+    assert.equal(m.cities.length, 1);
+    assert.equal(m.cities[0].count, 2);
+    assert.equal(m.cities[0].hours, 12);
+    assert.equal(m.cities[0].revenue, 600);
+    assert.equal(m.unknownCity, 2);
+});
+test('repeat work requires an earlier completed confirmed appearance, excluding tentative and future history', () => {
+    const now = new Date(2026, 9, 1, 12);
+    const data = [
+        session({ id: 'past', date: '2026-09-10' }),
+        session({ id: 'new', date: '2026-10-10' }),
+        session({
+            id: 'fresh',
+            date: '2026-10-11',
+            venue: 'New',
+            venue_id: 'new',
+        }),
+    ];
+    const m = dashboardInsights(data, [], anchor, 'month', 'EUR', now);
+    assert.equal(m.repeatSessions, 1);
+    assert.equal(m.repeatRate, 50);
+    data[0].status = 'pending';
+    assert.equal(
+        dashboardInsights(data, [], anchor, 'month', 'EUR', now).repeatSessions,
+        0,
+    );
+});
+test('next 30 days uses actual start times and separates tentative income and other currencies', () => {
+    const now = new Date(2026, 9, 1, 12);
+    const data = [
+        session({ date: '2026-10-01', start_time: '10:00', end_time: '15:00' }),
+        session({ date: '2026-10-10' }),
+        session({ date: '2026-10-11', status: 'pending' }),
+        session({ date: '2026-10-12', currency: 'USD' }),
+        session({ date: '2026-10-13', status: 'cancelled' }),
+        session({ date: '2026-10-31', start_time: '12:00' }),
+    ];
+    const m = dashboardInsights(data, [], anchor, 'month', 'EUR', now);
+    assert.equal(m.nextSessions, 2);
+    assert.equal(m.nextPending, 1);
+    assert.equal(m.nextRevenue, 300);
+    assert.equal(m.nextHours, 12);
+});
+test('free and unset fees stay distinct, cancellation denominator includes all bookings, hourly ranking excludes tentative and free gigs', () => {
+    const data = [
+        session({}),
+        session({ id: 'free', earning_type: 'free' }),
+        session({ id: 'unset', earning_amount: 0 }),
+        session({ id: 'pending', status: 'pending', earning_amount: 900 }),
+        session({ id: 'cancel', status: 'cancelled' }),
+    ];
+    const m = dashboardInsights(data, [], anchor, 'month', 'EUR');
+    assert.equal(m.free, 1);
+    assert.equal(m.unpriced, 1);
+    assert.equal(m.paid, 2);
+    assert.equal(m.cancellationRate, 20);
+    assert.equal(m.averageDuration, 6);
+    assert.equal(m.bestRate.rate, 50);
+    assert.equal(m.weekdays[5].count, 4);
+});

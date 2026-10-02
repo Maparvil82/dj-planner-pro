@@ -382,6 +382,27 @@
         "noVenues": "Tus locales aparecerán cuando añadas sesiones.",
         "nextGig": "Próxima sesión",
         "nextGigHint": "En toda tu agenda, sin filtro de periodo.",
-        "noUpcoming": "No tienes próximas sesiones."
+        "noUpcoming": "No tienes próximas sesiones.",
+        "next30": "Próximos 30 días",
+        "next30Hint": "Desde ahora · solo sesiones confirmadas. Importes en la moneda elegida.",
+        "patterns": "Tu forma de trabajar",
+        "selectedPeriod": "Datos del periodo seleccionado",
+        "averageDuration": "Duración media",
+        "repeatVenues": "Locales habituales",
+        "repeatHint": "Sesiones en locales donde ya habías actuado.",
+        "cancellationRate": "Cancelaciones",
+        "paidSessions": "Remuneradas",
+        "paid": "remuneradas",
+        "free": "gratuitas",
+        "unpriced": "sin tarifa",
+        "busyDays": "Tus días más activos",
+        "bestRate": "Mejor tarifa media por hora",
+        "cities": "Tu actividad por ciudades",
+        "citiesHint": "Ciudad del local · ingresos de sesiones confirmadas.",
+        "citiesActive": "ciudades con actividad",
+        "missingCity_one": "{{count}} sesión sin ciudad",
+        "missingCity_other": "{{count}} sesiones sin ciudad",
+        "completeVenues": "Completar locales",
+        "noCities": "Añade sesiones y la ciudad de sus locales para ver este resumen."
     }
 }

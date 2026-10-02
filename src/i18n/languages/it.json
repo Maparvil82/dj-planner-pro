@@ -382,6 +382,27 @@
         "noVenues": "I tuoi locali appariranno quando aggiungi sessioni.",
         "nextGig": "Prossima sessione",
         "nextGigHint": "In tutta l’agenda, indipendentemente dal periodo.",
-        "noUpcoming": "Nessuna sessione in programma."
+        "noUpcoming": "Nessuna sessione in programma.",
+        "next30": "Prossimi 30 giorni",
+        "next30Hint": "Da ora · solo sessioni confermate. Importi nella valuta scelta.",
+        "patterns": "Come lavori",
+        "selectedPeriod": "Dati del periodo selezionato",
+        "averageDuration": "Durata media",
+        "repeatVenues": "Locali abituali",
+        "repeatHint": "Sessioni in locali dove avevi già suonato.",
+        "cancellationRate": "Annullamenti",
+        "paidSessions": "Sessioni retribuite",
+        "paid": "retribuite",
+        "free": "gratuite",
+        "unpriced": "senza tariffa",
+        "busyDays": "I tuoi giorni più attivi",
+        "bestRate": "Miglior compenso orario medio",
+        "cities": "La tua attività per città",
+        "citiesHint": "Città del locale · entrate delle sessioni confermate.",
+        "citiesActive": "città attive",
+        "missingCity_one": "{{count}} sessione senza città",
+        "missingCity_other": "{{count}} sessioni senza città",
+        "completeVenues": "Completa i locali",
+        "noCities": "Aggiungi sessioni e le città dei loro locali."
     }
 }

@@ -33,6 +33,9 @@ npm run web
 - Los ingresos corresponden a honorarios acordados de sesiones confirmadas, no a cobros. Los pendientes se muestran aparte y las cancelaciones se excluyen de ingresos y horas.
 - Incluye horas programadas y realizadas, media de sesiones remuneradas, media por hora, estado de agenda, locales frecuentes y acceso a pendientes y próxima sesión.
 - El balance es una previsión: honorarios confirmados menos gastos del periodo. Los gastos históricos no tienen moneda y se tratan como EUR, igual que en la interfaz anterior; en otras monedas no se calcula balance.
+- Los próximos 30 días cuentan sesiones que empiezan desde ahora, separando confirmadas y pendientes. Los patrones del periodo incluyen duración media, días activos, cancelaciones, remuneradas/gratuitas y mejor tarifa media por hora.
+- Los locales habituales se calculan usando una actuación confirmada que ya hubiera terminado antes de la sesión analizada. Las tarifas sin importe se distinguen de las sesiones gratuitas.
+- Ciudades agrupa la ciudad actual de cada local asociado (ID o nombre único), normalizando espacios, mayúsculas y tildes. Los nombres ambiguos o las ciudades ausentes no se adivinan; se indica qué sesiones requieren completar el local. Cada ciudad permite desplegar sus sesiones.
 - La comparación utiliza el periodo anterior completo. El gráfico muestra seis meses hasta el mes elegido, o los doce meses del año seleccionado.
 - Documentos permanece conservado bajo `FEATURES.documents = false`: se ocultan su pestaña y los bloques de sesiones/locales, sus rutas redirigen a Inicio y no se consultan carpetas. No se borran datos ni archivos.
 

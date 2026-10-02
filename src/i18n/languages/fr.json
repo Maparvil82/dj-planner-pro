@@ -380,6 +380,27 @@
         "noVenues": "Vos lieux apparaîtront après l’ajout de sessions.",
         "nextGig": "Prochaine session",
         "nextGigHint": "Dans tout votre agenda, quelle que soit la période.",
-        "noUpcoming": "Aucune session à venir."
+        "noUpcoming": "Aucune session à venir.",
+        "next30": "30 prochains jours",
+        "next30Hint": "À partir de maintenant · sessions confirmées uniquement. Montants dans la devise choisie.",
+        "patterns": "Votre façon de travailler",
+        "selectedPeriod": "Données de la période choisie",
+        "averageDuration": "Durée moyenne",
+        "repeatVenues": "Lieux habituels",
+        "repeatHint": "Sessions dans des lieux où vous aviez déjà joué.",
+        "cancellationRate": "Annulations",
+        "paidSessions": "Sessions rémunérées",
+        "paid": "rémunérées",
+        "free": "gratuites",
+        "unpriced": "sans tarif",
+        "busyDays": "Vos jours les plus actifs",
+        "bestRate": "Meilleur cachet horaire moyen",
+        "cities": "Votre activité par ville",
+        "citiesHint": "Ville du lieu · revenus des sessions confirmées.",
+        "citiesActive": "villes actives",
+        "missingCity_one": "{{count}} session sans ville",
+        "missingCity_other": "{{count}} sessions sans ville",
+        "completeVenues": "Compléter les lieux",
+        "noCities": "Ajoutez des sessions et les villes de leurs lieux."
     }
 }

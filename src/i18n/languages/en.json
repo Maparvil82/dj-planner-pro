@@ -386,6 +386,27 @@
         "noVenues": "Your venues will appear when you add sessions.",
         "nextGig": "Next session",
         "nextGigHint": "Across your schedule, regardless of period.",
-        "noUpcoming": "No upcoming sessions."
+        "noUpcoming": "No upcoming sessions.",
+        "next30": "Next 30 days",
+        "next30Hint": "From now · confirmed sessions only. Amounts in the selected currency.",
+        "patterns": "How you work",
+        "selectedPeriod": "Selected period data",
+        "averageDuration": "Average duration",
+        "repeatVenues": "Regular venues",
+        "repeatHint": "Sessions at venues where you had already performed.",
+        "cancellationRate": "Cancellations",
+        "paidSessions": "Paid sessions",
+        "paid": "paid",
+        "free": "free",
+        "unpriced": "no fee set",
+        "busyDays": "Your busiest days",
+        "bestRate": "Best average hourly fee",
+        "cities": "Your activity by city",
+        "citiesHint": "Venue city · confirmed session income.",
+        "citiesActive": "active cities",
+        "missingCity_one": "{{count}} session without a city",
+        "missingCity_other": "{{count}} sessions without a city",
+        "completeVenues": "Complete venues",
+        "noCities": "Add sessions and their venue cities to see this summary."
     }
 }

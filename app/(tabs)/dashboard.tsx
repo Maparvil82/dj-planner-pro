@@ -29,8 +29,10 @@ import {
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
 import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
 import {
+    dashboardInsights,
     dashboardMetrics,
     dashboardChart,
     currencyCode,
@@ -120,6 +122,8 @@ export default function DashboardScreen() {
     }, []);
     const sessionsQuery = useAllSessionsQuery();
     const expensesQuery = useAllExpensesQuery();
+    const venuesQuery = useVenuesQuery();
+    const [expandedCity, setExpandedCity] = useState<string | null>(null);
     const sessions = sessionsQuery.data;
     const expenses = expensesQuery.data;
     const text = dark ? '#f6f7fb' : '#182039';
@@ -156,6 +160,18 @@ export default function DashboardScreen() {
                 now,
             ),
         [sessions, expenses, anchor, period, currency, now],
+    );
+    const insights = useMemo(
+        () =>
+            dashboardInsights(
+                sessions || [],
+                venuesQuery.data || [],
+                anchor,
+                period,
+                currency,
+                now,
+            ),
+        [sessions, venuesQuery.data, anchor, period, currency, now],
     );
     const previous = useMemo(
         () =>
@@ -197,12 +213,13 @@ export default function DashboardScreen() {
         new Intl.NumberFormat(i18n.language, {
             maximumFractionDigits: digits,
         }).format(n);
-    const money = (n: number) => {
+    const money = (n: number, decimals = 0) => {
         try {
             return new Intl.NumberFormat(i18n.language, {
                 style: 'currency',
                 currency,
-                maximumFractionDigits: 0,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: decimals,
             }).format(n);
         } catch {
             return `${number(n)} ${currency}`;
@@ -235,6 +252,7 @@ export default function DashboardScreen() {
             await Promise.all([
                 sessionsQuery.refetch(),
                 expensesQuery.refetch(),
+                venuesQuery.refetch(),
             ]);
         } finally {
             setRefreshing(false);
@@ -557,6 +575,69 @@ export default function DashboardScreen() {
                                 </Text>
                             ) : null}
                         </LinearGradient>
+                        <View style={cardStyle}>
+                            {heading(label('next30'), label('next30Hint'))}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    gap: 15,
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                {[
+                                    {
+                                        name: label('sessions'),
+                                        value: number(insights.nextSessions),
+                                    },
+                                    {
+                                        name: label('hours'),
+                                        value: `${number(insights.nextHours, 1)} h`,
+                                    },
+                                    {
+                                        name: label('revenue'),
+                                        value: money(insights.nextRevenue),
+                                    },
+                                ].map((item) => (
+                                    <View
+                                        key={item.name}
+                                        style={{
+                                            flex: 1,
+                                            minWidth: 80,
+                                            gap: 7,
+                                        }}
+                                    >
+                                        <Text
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit
+                                            style={{
+                                                color: text,
+                                                fontSize: 24,
+                                                fontWeight: '800',
+                                            }}
+                                        >
+                                            {item.value}
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontSize: 11,
+                                            }}
+                                        >
+                                            {item.name}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                            <Text
+                                style={[
+                                    styles.hint,
+                                    { color: muted, marginTop: 16 },
+                                ]}
+                            >
+                                {insights.nextPending}{' '}
+                                {label('pending').toLowerCase()}
+                            </Text>
+                        </View>
                         <View style={styles.grid}>
                             <MetricCard
                                 label={label('sessions')}
@@ -900,10 +981,460 @@ export default function DashboardScreen() {
                                     >
                                         {metrics.hourlyFee === null
                                             ? '—'
-                                            : money(metrics.hourlyFee)}
+                                            : money(metrics.hourlyFee, 2)}
                                     </Text>
                                 </Text>
                             </View>
+                        </View>
+                        <View style={cardStyle}>
+                            {heading(
+                                label('patterns'),
+                                label('selectedPeriod'),
+                            )}
+                            <View style={styles.grid}>
+                                <MetricCard
+                                    label={label('averageDuration')}
+                                    value={
+                                        insights.averageDuration === null
+                                            ? '—'
+                                            : `${number(insights.averageDuration, 1)} h`
+                                    }
+                                    icon={Clock3}
+                                    accent="#099a91"
+                                    dark={dark}
+                                />
+                                <MetricCard
+                                    label={label('repeatVenues')}
+                                    value={
+                                        insights.repeatRate === null
+                                            ? '—'
+                                            : `${number(insights.repeatRate)}%`
+                                    }
+                                    hint={label('repeatHint')}
+                                    icon={MapPin}
+                                    accent="#7666df"
+                                    dark={dark}
+                                />
+                                <MetricCard
+                                    label={label('cancellationRate')}
+                                    value={
+                                        insights.cancellationRate === null
+                                            ? '—'
+                                            : `${number(insights.cancellationRate)}%`
+                                    }
+                                    hint={`${metrics.cancelled} / ${metrics.selected.length} ${label('sessions').toLowerCase()}`}
+                                    icon={AlertCircle}
+                                    accent="#c46599"
+                                    dark={dark}
+                                />
+                                <MetricCard
+                                    label={label('paidSessions')}
+                                    value={
+                                        metrics.active.length
+                                            ? `${number((insights.paid / metrics.active.length) * 100)}%`
+                                            : '—'
+                                    }
+                                    hint={`${insights.paid} ${label('paid').toLowerCase()} · ${insights.free} ${label('free').toLowerCase()}${insights.unpriced ? ` · ${insights.unpriced} ${label('unpriced')}` : ''}`}
+                                    icon={Wallet}
+                                    accent="#b58b37"
+                                    dark={dark}
+                                />
+                            </View>
+                            <Text
+                                style={[
+                                    styles.sectionTitle,
+                                    {
+                                        color: text,
+                                        marginTop: 24,
+                                        fontSize: 15,
+                                    },
+                                ]}
+                            >
+                                {label('busyDays')}
+                            </Text>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    gap: 8,
+                                    marginTop: 18,
+                                }}
+                            >
+                                {[1, 2, 3, 4, 5, 6, 0].map((day) => {
+                                    const value = insights.weekdays[day].count;
+                                    const max = Math.max(
+                                        1,
+                                        ...insights.weekdays.map(
+                                            (d) => d.count,
+                                        ),
+                                    );
+                                    return (
+                                        <View
+                                            key={day}
+                                            style={{
+                                                flex: 1,
+                                                alignItems: 'center',
+                                            }}
+                                            accessible
+                                            accessibilityLabel={`${new Intl.DateTimeFormat(i18n.language, { weekday: 'long' }).format(new Date(2024, 0, 7 + day))}: ${value}`}
+                                        >
+                                            <View
+                                                style={{
+                                                    height: 58,
+                                                    width: '100%',
+                                                    justifyContent: 'flex-end',
+                                                }}
+                                            >
+                                                <View
+                                                    style={{
+                                                        height: value
+                                                            ? Math.max(
+                                                                  4,
+                                                                  (value /
+                                                                      max) *
+                                                                      58,
+                                                              )
+                                                            : 3,
+                                                        backgroundColor:
+                                                            value === max
+                                                                ? '#8b78e6'
+                                                                : dark
+                                                                  ? '#343955'
+                                                                  : '#dcd9f1',
+                                                        borderRadius: 6,
+                                                    }}
+                                                />
+                                            </View>
+                                            <Text
+                                                style={{
+                                                    color: muted,
+                                                    fontSize: 10,
+                                                    marginTop: 9,
+                                                }}
+                                            >
+                                                {new Intl.DateTimeFormat(
+                                                    i18n.language,
+                                                    { weekday: 'short' },
+                                                )
+                                                    .format(
+                                                        new Date(
+                                                            2024,
+                                                            0,
+                                                            7 + day,
+                                                        ),
+                                                    )
+                                                    .replace('.', '')}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    color: text,
+                                                    fontSize: 12,
+                                                    fontWeight: '700',
+                                                    marginTop: 4,
+                                                }}
+                                            >
+                                                {value}
+                                            </Text>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                            {insights.bestRate ? (
+                                <TouchableOpacity
+                                    accessibilityRole="button"
+                                    onPress={() =>
+                                        router.push(
+                                            insights.bestRate!.id
+                                                ? `/venue/${insights.bestRate!.id}`
+                                                : '/venues',
+                                        )
+                                    }
+                                    style={[
+                                        styles.facts,
+                                        { borderColor: line },
+                                    ]}
+                                >
+                                    <View style={{ flex: 1, gap: 5 }}>
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontSize: 11,
+                                            }}
+                                        >
+                                            {label('bestRate')}
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                color: text,
+                                                fontWeight: '700',
+                                            }}
+                                        >
+                                            {insights.bestRate.name}
+                                        </Text>
+                                    </View>
+                                    <Text
+                                        style={{
+                                            color: '#8b78e6',
+                                            fontWeight: '800',
+                                            fontSize: 18,
+                                        }}
+                                    >
+                                        {money(insights.bestRate.rate, 2)}/h
+                                    </Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+                        <View style={cardStyle}>
+                            {heading(label('cities'), label('citiesHint'))}
+                            {venuesQuery.isLoading ? (
+                                <ActivityIndicator color="#8b78e6" />
+                            ) : venuesQuery.isError ? (
+                                <>
+                                    <Text style={{ color: muted }}>
+                                        {label('loadingError')}
+                                    </Text>
+                                    <TouchableOpacity
+                                        accessibilityRole="button"
+                                        onPress={() => venuesQuery.refetch()}
+                                        style={styles.retry}
+                                    >
+                                        <Text
+                                            style={{
+                                                color: '#8b78e6',
+                                                fontWeight: '700',
+                                            }}
+                                        >
+                                            {label('retry')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <>
+                                    <Text
+                                        style={{
+                                            color: text,
+                                            fontSize: 29,
+                                            fontWeight: '800',
+                                            marginBottom: 12,
+                                        }}
+                                    >
+                                        {insights.cities.length}{' '}
+                                        <Text
+                                            style={{
+                                                fontSize: 13,
+                                                color: muted,
+                                                fontWeight: '500',
+                                            }}
+                                        >
+                                            {label('citiesActive')}
+                                        </Text>
+                                    </Text>
+                                    {insights.cities.map((city) => (
+                                        <View key={city.name}>
+                                            <TouchableOpacity
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                    expanded:
+                                                        expandedCity ===
+                                                        city.name,
+                                                }}
+                                                onPress={() =>
+                                                    setExpandedCity(
+                                                        expandedCity ===
+                                                            city.name
+                                                            ? null
+                                                            : city.name,
+                                                    )
+                                                }
+                                                style={[
+                                                    styles.listRow,
+                                                    { borderColor: line },
+                                                ]}
+                                            >
+                                                <View
+                                                    style={[
+                                                        styles.rank,
+                                                        {
+                                                            backgroundColor:
+                                                                dark
+                                                                    ? '#282744'
+                                                                    : '#f0edfb',
+                                                        },
+                                                    ]}
+                                                >
+                                                    <MapPin
+                                                        size={18}
+                                                        color="#8b78e6"
+                                                    />
+                                                </View>
+                                                <View
+                                                    style={{ flex: 1, gap: 5 }}
+                                                >
+                                                    <Text
+                                                        numberOfLines={1}
+                                                        style={{
+                                                            color: text,
+                                                            fontWeight: '700',
+                                                            fontSize: 15,
+                                                        }}
+                                                    >
+                                                        {city.name}
+                                                    </Text>
+                                                    <Text
+                                                        style={{
+                                                            color: muted,
+                                                            fontSize: 11,
+                                                        }}
+                                                    >
+                                                        {city.count}{' '}
+                                                        {label(
+                                                            'sessions',
+                                                        ).toLowerCase()}{' '}
+                                                        ·{' '}
+                                                        {number(city.hours, 1)}{' '}
+                                                        h
+                                                    </Text>
+                                                </View>
+                                                <Text
+                                                    style={{
+                                                        color: text,
+                                                        fontSize: 13,
+                                                        fontWeight: '700',
+                                                    }}
+                                                >
+                                                    {money(city.revenue)}
+                                                </Text>
+                                                <ChevronRight
+                                                    color={muted}
+                                                    size={15}
+                                                    style={{
+                                                        transform: [
+                                                            {
+                                                                rotate:
+                                                                    expandedCity ===
+                                                                    city.name
+                                                                        ? '90deg'
+                                                                        : '0deg',
+                                                            },
+                                                        ],
+                                                    }}
+                                                />
+                                            </TouchableOpacity>
+                                            {expandedCity === city.name
+                                                ? [...city.sessions]
+                                                      .sort((a, b) =>
+                                                          a.date.localeCompare(
+                                                              b.date,
+                                                          ),
+                                                      )
+                                                      .map((s) => (
+                                                          <TouchableOpacity
+                                                              key={s.id}
+                                                              accessibilityRole="button"
+                                                              onPress={() =>
+                                                                  router.push(
+                                                                      `/session/${s.id}`,
+                                                                  )
+                                                              }
+                                                              style={{
+                                                                  paddingVertical: 13,
+                                                                  paddingLeft: 12,
+                                                                  flexDirection:
+                                                                      'row',
+                                                                  gap: 10,
+                                                                  alignItems:
+                                                                      'center',
+                                                              }}
+                                                          >
+                                                              <View
+                                                                  style={{
+                                                                      flex: 1,
+                                                                      gap: 4,
+                                                                  }}
+                                                              >
+                                                                  <Text
+                                                                      style={{
+                                                                          color: text,
+                                                                          fontSize: 13,
+                                                                          fontWeight:
+                                                                              '600',
+                                                                      }}
+                                                                  >
+                                                                      {s.title}
+                                                                  </Text>
+                                                                  <Text
+                                                                      style={{
+                                                                          color: muted,
+                                                                          fontSize: 11,
+                                                                      }}
+                                                                  >
+                                                                      {new Intl.DateTimeFormat(
+                                                                          i18n.language,
+                                                                          {
+                                                                              day: 'numeric',
+                                                                              month: 'short',
+                                                                          },
+                                                                      ).format(
+                                                                          new Date(
+                                                                              `${s.date.slice(0, 10)}T12:00:00`,
+                                                                          ),
+                                                                      )}{' '}
+                                                                      ·{' '}
+                                                                      {s.venue}
+                                                                  </Text>
+                                                              </View>
+                                                              <ArrowUpRight
+                                                                  color="#8b78e6"
+                                                                  size={17}
+                                                              />
+                                                          </TouchableOpacity>
+                                                      ))
+                                                : null}
+                                        </View>
+                                    ))}
+                                    {insights.unknownCity ? (
+                                        <TouchableOpacity
+                                            accessibilityRole="button"
+                                            onPress={() =>
+                                                router.push('/venues')
+                                            }
+                                            style={{
+                                                marginTop: 18,
+                                                padding: 14,
+                                                borderRadius: 14,
+                                                backgroundColor: dark
+                                                    ? '#282744'
+                                                    : '#f0edfb',
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: dark
+                                                        ? '#bdb3ec'
+                                                        : '#6554b1',
+                                                    fontSize: 12,
+                                                    lineHeight: 19,
+                                                }}
+                                            >
+                                                {t('insights.missingCity', {
+                                                    count: insights.unknownCity,
+                                                })}{' '}
+                                                · {label('completeVenues')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ) : null}
+                                    {!insights.cities.length &&
+                                    !insights.unknownCity ? (
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontSize: 13,
+                                            }}
+                                        >
+                                            {label('noCities')}
+                                        </Text>
+                                    ) : null}
+                                </>
+                            )}
                         </View>
                         <View style={cardStyle}>
                             {heading(label('pendingTitle'))}

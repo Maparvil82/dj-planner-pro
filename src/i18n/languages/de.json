@@ -382,6 +382,27 @@
         "noVenues": "Locations erscheinen nach dem Hinzufügen von Sessions.",
         "nextGig": "Nächste Session",
         "nextGigHint": "Im gesamten Kalender, unabhängig vom Zeitraum.",
-        "noUpcoming": "Keine kommenden Sessions."
+        "noUpcoming": "Keine kommenden Sessions.",
+        "next30": "Nächste 30 Tage",
+        "next30Hint": "Ab jetzt · nur bestätigte Sessions. Beträge in der gewählten Währung.",
+        "patterns": "Deine Arbeitsweise",
+        "selectedPeriod": "Daten des gewählten Zeitraums",
+        "averageDuration": "Durchschnittliche Dauer",
+        "repeatVenues": "Stammlocations",
+        "repeatHint": "Sessions an Orten, an denen du schon aufgetreten bist.",
+        "cancellationRate": "Absagen",
+        "paidSessions": "Bezahlte Sessions",
+        "paid": "bezahlt",
+        "free": "kostenlos",
+        "unpriced": "ohne Gage",
+        "busyDays": "Deine aktivsten Tage",
+        "bestRate": "Beste durchschnittliche Gage pro Stunde",
+        "cities": "Deine Aktivität nach Stadt",
+        "citiesHint": "Stadt der Location · Einnahmen bestätigter Sessions.",
+        "citiesActive": "aktive Städte",
+        "missingCity_one": "{{count}} Session ohne Stadt",
+        "missingCity_other": "{{count}} Sessions ohne Stadt",
+        "completeVenues": "Locations vervollständigen",
+        "noCities": "Füge Sessions und die Städte ihrer Locations hinzu."
     }
 }

@@ -381,6 +381,27 @@
         "noVenues": "セッションを追加すると会場が表示されます。",
         "nextGig": "次のセッション",
         "nextGigHint": "期間に関係なく全予定から表示。",
-        "noUpcoming": "今後のセッションはありません。"
+        "noUpcoming": "今後のセッションはありません。",
+        "next30": "今後30日間",
+        "next30Hint": "現在からの確定セッションのみ。金額は選択通貨です。",
+        "patterns": "活動の傾向",
+        "selectedPeriod": "選択期間のデータ",
+        "averageDuration": "平均時間",
+        "repeatVenues": "リピート会場",
+        "repeatHint": "以前に出演した会場でのセッション。",
+        "cancellationRate": "キャンセル率",
+        "paidSessions": "報酬あり",
+        "paid": "報酬あり",
+        "free": "無料",
+        "unpriced": "料金未設定",
+        "busyDays": "活動が多い曜日",
+        "bestRate": "平均時給が最も高い会場",
+        "cities": "都市ごとの活動",
+        "citiesHint": "会場の都市・確定セッションの収入。",
+        "citiesActive": "活動した都市",
+        "missingCity_one": "都市未登録のセッション：{{count}}件",
+        "missingCity_other": "都市未登録のセッション：{{count}}件",
+        "completeVenues": "会場情報を補完",
+        "noCities": "セッションと会場の都市を追加すると表示されます。"
     }
 }
