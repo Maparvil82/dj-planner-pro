@@ -544,5 +544,20 @@
         "accountHint": "Votre e-mail et mot de passe sont privés. Le mot de passe change uniquement si vous en saisissez un nouveau.",
         "emailSent": "Un lien de confirmation a été envoyé à votre nouvel e-mail.",
         "previewTitle": "Aperçu dans la Communauté"
+    },
+    "djPage": {
+        "about": "À propos",
+        "connect": "Musique et réseaux",
+        "publishedSessions": "Sessions publiées",
+        "customize": "Votre page DJ",
+        "coverHint": "Choisissez une photo horizontale de votre cabine, d’une prestation ou de votre univers visuel. Elle sera enregistrée avec vos modifications.",
+        "changeCover": "Choisir une couverture",
+        "removeCover": "Retirer la couverture",
+        "linksHint": "Ajoutez les liens complets de vos profils. Seuls les liens renseignés seront affichés.",
+        "invalidLink": "Saisissez un lien HTTPS valide pour {{platform}}.",
+        "openLink": "Ouvrir {{platform}}",
+        "linkError": "Impossible d’ouvrir le lien. Réessayez.",
+        "cover": "Photo de couverture",
+        "back": "Retour à la communauté"
     }
 }

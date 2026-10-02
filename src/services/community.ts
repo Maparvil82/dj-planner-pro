@@ -7,12 +7,25 @@ export interface CommunityProfile {
     bio: string;
     genres: string;
     avatar_url: string | null;
+    cover_url: string | null;
+    mixcloud_url: string;
+    soundcloud_url: string;
+    instagram_url: string;
     is_visible: boolean;
     created_at: string;
 }
 export type CommunityProfileInput = Pick<
     CommunityProfile,
-    'artist_name' | 'city' | 'bio' | 'genres' | 'avatar_url' | 'is_visible'
+    | 'artist_name'
+    | 'city'
+    | 'bio'
+    | 'genres'
+    | 'avatar_url'
+    | 'is_visible'
+    | 'cover_url'
+    | 'mixcloud_url'
+    | 'soundcloud_url'
+    | 'instagram_url'
 >;
 export interface CommunitySession {
     session_id: string;

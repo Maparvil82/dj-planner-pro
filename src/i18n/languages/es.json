@@ -546,5 +546,20 @@
         "accountHint": "Tu correo y contraseña son privados. La contraseña solo cambia si introduces una nueva.",
         "emailSent": "Te hemos enviado un enlace para confirmar tu nuevo correo.",
         "previewTitle": "Vista en Comunidad"
+    },
+    "djPage": {
+        "about": "Sobre mí",
+        "connect": "Música y redes",
+        "publishedSessions": "Sesiones publicadas",
+        "customize": "Tu página de DJ",
+        "coverHint": "Usa una foto horizontal de tu cabina, una actuación o tu identidad visual. Se guardará al confirmar los cambios.",
+        "changeCover": "Elegir foto de cabecera",
+        "removeCover": "Quitar cabecera",
+        "linksHint": "Añade el enlace completo a tus perfiles. Solo aparecerán los que completes.",
+        "invalidLink": "Introduce un enlace HTTPS válido de {{platform}}.",
+        "openLink": "Abrir {{platform}}",
+        "linkError": "No se ha podido abrir el enlace. Inténtalo de nuevo.",
+        "cover": "Foto de cabecera",
+        "back": "Volver a Comunidad"
     }
 }

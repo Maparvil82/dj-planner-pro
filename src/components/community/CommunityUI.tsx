@@ -227,7 +227,13 @@ export function CommunityProfileCard({
         </View>
     );
 }
-export function CommunitySessionCard({ item }: { item: CommunitySession }) {
+export function CommunitySessionCard({
+    item,
+    showAuthor = true,
+}: {
+    item: CommunitySession;
+    showAuthor?: boolean;
+}) {
     const c = useCommunityColors();
     const { t, currentLanguage } = useTranslation();
     const router = useRouter();
@@ -249,32 +255,42 @@ export function CommunitySessionCard({ item }: { item: CommunitySession }) {
                 overflow: 'hidden',
             }}
         >
-            <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel={`${t('community.viewProfile')}: ${item.artist_name}`}
-                onPress={() => router.push(`/community/${item.author_id}`)}
-                style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: 18,
-                }}
-            >
-                <Avatar name={item.artist_name} url={item.avatar_url} />
-                <View style={{ flex: 1 }}>
-                    <Text
-                        style={{ color: c.fg, fontWeight: '700', fontSize: 14 }}
-                    >
-                        {item.artist_name}
-                    </Text>
-                    <Text
-                        style={{ color: c.muted, fontSize: 11, marginTop: 3 }}
-                    >
-                        {t('community.sharedSession')}
-                    </Text>
-                </View>
-                <ChevronRight size={17} color={c.muted} />
-            </TouchableOpacity>
+            {showAuthor && (
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('community.viewProfile')}: ${item.artist_name}`}
+                    onPress={() => router.push(`/community/${item.author_id}`)}
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: 18,
+                    }}
+                >
+                    <Avatar name={item.artist_name} url={item.avatar_url} />
+                    <View style={{ flex: 1 }}>
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontWeight: '700',
+                                fontSize: 14,
+                            }}
+                        >
+                            {item.artist_name}
+                        </Text>
+                        <Text
+                            style={{
+                                color: c.muted,
+                                fontSize: 11,
+                                marginTop: 3,
+                            }}
+                        >
+                            {t('community.sharedSession')}
+                        </Text>
+                    </View>
+                    <ChevronRight size={17} color={c.muted} />
+                </TouchableOpacity>
+            )}
             {!!item.poster_url && (
                 <Image
                     source={{ uri: item.poster_url }}
@@ -290,7 +306,7 @@ export function CommunitySessionCard({ item }: { item: CommunitySession }) {
             <View
                 style={{
                     padding: 18,
-                    paddingTop: item.poster_url ? 18 : 0,
+                    paddingTop: item.poster_url || !showAuthor ? 18 : 0,
                     gap: 12,
                 }}
             >

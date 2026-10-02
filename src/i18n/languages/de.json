@@ -546,5 +546,20 @@
         "accountHint": "E-Mail und Passwort bleiben privat. Das Passwort ändert sich nur, wenn du ein neues eingibst.",
         "emailSent": "Ein Bestätigungslink wurde an deine neue E-Mail gesendet.",
         "previewTitle": "Community-Vorschau"
+    },
+    "djPage": {
+        "about": "Über mich",
+        "connect": "Musik & soziale Medien",
+        "publishedSessions": "Veröffentlichte Sessions",
+        "customize": "Deine DJ-Seite",
+        "coverHint": "Wähle ein Querformatfoto deines DJ-Pults, eines Auftritts oder deiner visuellen Identität. Es wird beim Bestätigen gespeichert.",
+        "changeCover": "Titelbild auswählen",
+        "removeCover": "Titelbild entfernen",
+        "linksHint": "Füge vollständige Links zu deinen Profilen hinzu. Nur ausgefüllte Links werden angezeigt.",
+        "invalidLink": "Gib einen gültigen HTTPS-Link für {{platform}} ein.",
+        "openLink": "{{platform}} öffnen",
+        "linkError": "Der Link konnte nicht geöffnet werden. Versuche es erneut.",
+        "cover": "Titelbild",
+        "back": "Zurück zur Community"
     }
 }

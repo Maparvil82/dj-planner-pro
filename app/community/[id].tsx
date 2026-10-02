@@ -1,5 +1,11 @@
 import { useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import {
+    View,
+    Text,
+    ScrollView,
+    RefreshControl,
+    TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Redirect,
@@ -9,8 +15,8 @@ import {
 } from 'expo-router';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
-import { Avatar } from '../../src/components/ui/Avatar';
-import { SessionFormHeader } from '../../src/components/sessions/SessionFormLayout';
+import { ArrowLeft } from 'lucide-react-native';
+import { DJProfileHero } from '../../src/components/community/DJProfileHero';
 import {
     CommunityButton,
     CommunityMessage,
@@ -57,11 +63,49 @@ export default function CommunityProfileScreen() {
             edges={['top', 'bottom']}
             style={{ flex: 1, backgroundColor: c.bg }}
         >
-            <SessionFormHeader
-                title={t(own ? 'unifiedProfile.previewTitle' : 'community.djProfile')}
-                subtitle={person?.artist_name || t('community.title')}
-                onClose={() => router.back()}
-            />
+            <View
+                style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                }}
+            >
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={t('djPage.back')}
+                    onPress={() =>
+                        router.canGoBack()
+                            ? router.back()
+                            : router.replace('/(tabs)/community')
+                    }
+                    style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 15,
+                        backgroundColor: c.card,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <ArrowLeft size={21} color={c.fg} />
+                </TouchableOpacity>
+                <Text
+                    style={{
+                        color: c.fg,
+                        fontSize: 15,
+                        fontWeight: '700',
+                        flex: 1,
+                    }}
+                >
+                    {t(
+                        own
+                            ? 'unifiedProfile.previewTitle'
+                            : 'community.djProfile',
+                    )}
+                </Text>
+            </View>
             <ScrollView
                 refreshControl={
                     <RefreshControl
@@ -100,115 +144,62 @@ export default function CommunityProfileScreen() {
                         />
                     ) : (
                         <>
-                            <View
-                                style={{
-                                    padding: 22,
-                                    borderRadius: 24,
-                                    backgroundColor: c.card,
-                                    borderColor: c.border,
-                                    borderWidth: 1,
-                                    gap: 15,
-                                }}
-                            >
-                                <Avatar
-                                    name={person.artist_name}
-                                    url={person.avatar_url}
-                                    size="lg"
-                                />
-                                <Text
-                                    style={{
-                                        color: c.fg,
-                                        fontSize: 27,
-                                        fontWeight: '800',
-                                        letterSpacing: -0.6,
-                                    }}
-                                >
-                                    {person.artist_name}
-                                </Text>
-                                {!!person.city && (
-                                    <Text
-                                        style={{ color: c.muted, fontSize: 14 }}
-                                    >
-                                        {person.city}
-                                    </Text>
-                                )}
-                                {!!person.genres && (
-                                    <Text
-                                        style={{
-                                            color: c.accent,
-                                            fontSize: 13,
-                                        }}
-                                    >
-                                        {person.genres}
-                                    </Text>
-                                )}
-                                {!!person.bio && (
-                                    <Text
-                                        style={{
-                                            color: c.muted,
-                                            fontSize: 14,
-                                            lineHeight: 22,
-                                        }}
-                                    >
-                                        {person.bio}
-                                    </Text>
-                                )}
-                                {own ? (
-                                    <CommunityButton
-                                        label={t('community.editProfile')}
-                                        onPress={() =>
-                                            router.push(
-                                                '/(tabs)/profile?edit=1',
-                                            )
-                                        }
-                                        secondary
-                                    />
-                                ) : (
-                                    <CommunityButton
-                                        label={t(
-                                            isFollowing
-                                                ? 'community.unfollow'
-                                                : 'community.follow',
-                                        )}
-                                        busy={
-                                            mutation.isPending ||
-                                            following.isPending
-                                        }
-                                        disabled={
-                                            following.isError ||
-                                            viewer.isError ||
-                                            viewer.isPending
-                                        }
-                                        secondary={isFollowing}
-                                        onPress={() => {
-                                            if (
-                                                !isFollowing &&
-                                                !viewer.data?.is_visible
-                                            )
+                            <DJProfileHero
+                                person={person}
+                                action={
+                                    own ? (
+                                        <CommunityButton
+                                            label={t('community.editProfile')}
+                                            onPress={() =>
                                                 router.push(
                                                     '/(tabs)/profile?edit=1',
-                                                );
-                                            else
-                                                mutation.mutate({
-                                                    kind: 'follow',
-                                                    target: id,
-                                                    enabled: !isFollowing,
-                                                });
-                                        }}
-                                    />
-                                )}
-                                {own && !person.is_visible && (
-                                    <Text
-                                        style={{
-                                            color: c.muted,
-                                            fontSize: 12,
-                                            lineHeight: 19,
-                                        }}
-                                    >
-                                        {t('community.hiddenHint')}
-                                    </Text>
-                                )}
-                            </View>
+                                                )
+                                            }
+                                            secondary
+                                        />
+                                    ) : (
+                                        <CommunityButton
+                                            label={t(
+                                                isFollowing
+                                                    ? 'community.unfollow'
+                                                    : 'community.follow',
+                                            )}
+                                            busy={
+                                                mutation.isPending ||
+                                                following.isPending
+                                            }
+                                            disabled={
+                                                profile.isRefetching ||
+                                                following.isError ||
+                                                viewer.isError ||
+                                                viewer.isPending
+                                            }
+                                            secondary={isFollowing}
+                                            onPress={() => {
+                                                if (
+                                                    !isFollowing &&
+                                                    !viewer.data?.is_visible
+                                                )
+                                                    router.push(
+                                                        '/(tabs)/profile?edit=1',
+                                                    );
+                                                else
+                                                    mutation.mutate({
+                                                        kind: 'follow',
+                                                        target: id,
+                                                        enabled: !isFollowing,
+                                                    });
+                                            }}
+                                        />
+                                    )
+                                }
+                            />
+                            {own && !person.is_visible && (
+                                <CommunityMessage
+                                    title={t('unifiedProfile.private')}
+                                    hint={t('community.hiddenHint')}
+                                />
+                            )}
                             {(mutation.isError ||
                                 following.isError ||
                                 viewer.isError) && (
@@ -228,7 +219,7 @@ export default function CommunityProfileScreen() {
                                     paddingHorizontal: 4,
                                 }}
                             >
-                                {t('community.sessions')}
+                                {t('djPage.publishedSessions')}
                             </Text>
                             {feed.isPending ? (
                                 <CommunityMessage
@@ -249,6 +240,7 @@ export default function CommunityProfileScreen() {
                                         <CommunitySessionCard
                                             key={item.session_id}
                                             item={item}
+                                            showAuthor={false}
                                         />
                                     ))
                             ) : (

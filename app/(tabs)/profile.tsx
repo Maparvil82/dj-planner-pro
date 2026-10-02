@@ -10,6 +10,7 @@ import {
     Switch,
     Platform,
     KeyboardAvoidingView,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -52,6 +53,7 @@ import {
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { profileService } from '../../src/services/profile';
+import { DJ_PLATFORMS, normalizeDJLink } from '../../src/utils/communityLinks';
 import { supabase } from '../../src/lib/supabase';
 
 function SettingItem({
@@ -143,6 +145,12 @@ export default function ProfileScreen() {
     const [city, setCity] = useState('');
     const [genres, setGenres] = useState('');
     const [bio, setBio] = useState('');
+    const [cover, setCover] = useState<string | null>(null);
+    const [links, setLinks] = useState({
+        mixcloud: '',
+        soundcloud: '',
+        instagram: '',
+    });
     const [visible, setVisible] = useState(false);
     const [email, setEmail] = useState(session?.user.email || '');
     const [password, setPassword] = useState('');
@@ -162,6 +170,12 @@ export default function ProfileScreen() {
         setCity(social.data?.city || '');
         setGenres(social.data?.genres || '');
         setBio(social.data?.bio || '');
+        setCover(social.data?.cover_url || null);
+        setLinks({
+            mixcloud: social.data?.mixcloud_url || '',
+            soundcloud: social.data?.soundcloud_url || '',
+            instagram: social.data?.instagram_url || '',
+        });
         setVisible(social.data?.is_visible || false);
         setEmail(session?.user.email || '');
         setPassword('');
@@ -190,6 +204,31 @@ export default function ProfileScreen() {
         setSaveError('');
         setNotice('');
         try {
+            const normalized = { ...links };
+            for (const platform of DJ_PLATFORMS) {
+                try {
+                    normalized[platform] = normalizeDJLink(
+                        links[platform],
+                        platform,
+                    );
+                } catch {
+                    throw new Error(
+                        t('djPage.invalidLink', {
+                            platform:
+                                platform === 'mixcloud'
+                                    ? 'Mixcloud'
+                                    : platform === 'soundcloud'
+                                      ? 'SoundCloud'
+                                      : 'Instagram',
+                        }),
+                    );
+                }
+            }
+            const savedCover =
+                cover && !cover.startsWith('https://')
+                    ? await profileService.uploadCover(userId, cover)
+                    : cover;
+            setCover(savedCover);
             await mutation.mutateAsync({
                 kind: 'profile',
                 input: {
@@ -199,6 +238,10 @@ export default function ProfileScreen() {
                     genres: genres.trim(),
                     bio: bio.trim(),
                     is_visible: visible,
+                    cover_url: savedCover,
+                    mixcloud_url: normalized.mixcloud,
+                    soundcloud_url: normalized.soundcloud,
+                    instagram_url: normalized.instagram,
                 },
             });
             const authUpdates: { email?: string; password?: string } = {};
@@ -220,6 +263,27 @@ export default function ProfileScreen() {
             );
         } finally {
             setSaving(false);
+        }
+    };
+    const handlePickCover = async () => {
+        if (busy) return;
+        const permission =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert(t('settings_title'), t('permissions_required'));
+            return;
+        }
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [16, 9],
+                quality: 1,
+            });
+            if (!result.canceled && result.assets[0])
+                setCover(result.assets[0].uri);
+        } catch {
+            setSaveError(t('error_uploading'));
         }
     };
     const handlePickAvatar = async () => {
@@ -325,6 +389,7 @@ export default function ProfileScreen() {
         onChange: (value: string) => void,
         max: number,
         multiline = false,
+        url = false,
     ) => (
         <View style={{ gap: 8 }}>
             <Text style={{ color: c.muted, fontSize: 12, fontWeight: '600' }}>
@@ -335,6 +400,10 @@ export default function ProfileScreen() {
                 value={value}
                 onChangeText={onChange}
                 maxLength={max}
+                editable={!busy}
+                autoCapitalize={url ? 'none' : 'sentences'}
+                autoCorrect={!url}
+                keyboardType={url ? 'url' : 'default'}
                 multiline={multiline}
                 textAlignVertical={multiline ? 'top' : 'center'}
                 style={{
@@ -565,6 +634,88 @@ export default function ProfileScreen() {
                                 </>
                             )}
                         </SessionFormSection>
+                        {editing && (
+                            <SessionFormSection
+                                title={t('djPage.customize')}
+                                kind="participants"
+                            >
+                                <Text
+                                    style={{
+                                        color: c.muted,
+                                        fontSize: 13,
+                                        lineHeight: 20,
+                                    }}
+                                >
+                                    {t('djPage.coverHint')}
+                                </Text>
+                                <View
+                                    style={{
+                                        height: 150,
+                                        borderRadius: 18,
+                                        overflow: 'hidden',
+                                        backgroundColor: c.tint,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    {cover ? (
+                                        <Image
+                                            source={{ uri: cover }}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                            }}
+                                            resizeMode="cover"
+                                        />
+                                    ) : (
+                                        <Camera size={32} color={c.accent} />
+                                    )}
+                                </View>
+                                <CommunityButton
+                                    label={t('djPage.changeCover')}
+                                    secondary
+                                    disabled={busy}
+                                    onPress={handlePickCover}
+                                />
+                                {!!cover && (
+                                    <CommunityButton
+                                        label={t('djPage.removeCover')}
+                                        secondary
+                                        disabled={busy}
+                                        onPress={() => setCover(null)}
+                                    />
+                                )}
+                                <Text
+                                    style={{
+                                        color: c.muted,
+                                        fontSize: 13,
+                                        lineHeight: 20,
+                                    }}
+                                >
+                                    {t('djPage.linksHint')}
+                                </Text>
+                                {DJ_PLATFORMS.map((platform) => (
+                                    <View key={platform}>
+                                        {field(
+                                            platform === 'mixcloud'
+                                                ? 'Mixcloud'
+                                                : platform === 'soundcloud'
+                                                  ? 'SoundCloud'
+                                                  : 'Instagram',
+                                            links[platform],
+                                            (value) =>
+                                                setLinks((current) => ({
+                                                    ...current,
+                                                    [platform]: value,
+                                                })),
+                                            500,
+                                            false,
+                                            true,
+                                        )}
+                                    </View>
+                                ))}
+                            </SessionFormSection>
+                        )}
                         <SessionFormSection
                             title={t('community.title')}
                             kind="participants"
@@ -720,7 +871,11 @@ export default function ProfileScreen() {
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}
-                                hint={saveError === t('community.saveError') ? undefined : saveError}
+                                hint={
+                                    saveError === t('community.saveError')
+                                        ? undefined
+                                        : saveError
+                                }
                             />
                         )}
                         {!!notice && <CommunityMessage title={notice} />}

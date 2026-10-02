@@ -546,5 +546,20 @@
         "accountHint": "E-mail e password sono privati. La password cambia solo se ne inserisci una nuova.",
         "emailSent": "Un link di conferma è stato inviato alla nuova e-mail.",
         "previewTitle": "Anteprima nella Comunità"
+    },
+    "djPage": {
+        "about": "Chi sono",
+        "connect": "Musica e social",
+        "publishedSessions": "Sessioni pubblicate",
+        "customize": "La tua pagina DJ",
+        "coverHint": "Scegli una foto orizzontale della tua consolle, di una serata o della tua identità visiva. Sarà salvata alla conferma.",
+        "changeCover": "Scegli copertina",
+        "removeCover": "Rimuovi copertina",
+        "linksHint": "Aggiungi i link completi dei tuoi profili. Appariranno solo quelli compilati.",
+        "invalidLink": "Inserisci un link HTTPS valido per {{platform}}.",
+        "openLink": "Apri {{platform}}",
+        "linkError": "Impossibile aprire il link. Riprova.",
+        "cover": "Foto di copertina",
+        "back": "Torna alla community"
     }
 }

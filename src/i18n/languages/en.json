@@ -550,5 +550,20 @@
         "accountHint": "Your email and password are private. Your password only changes if you enter a new one.",
         "emailSent": "A confirmation link has been sent to your new email.",
         "previewTitle": "Community preview"
+    },
+    "djPage": {
+        "about": "About me",
+        "connect": "Music & socials",
+        "publishedSessions": "Published sessions",
+        "customize": "Your DJ page",
+        "coverHint": "Choose a landscape photo of your booth, a performance or your visual identity. It will be saved when you confirm changes.",
+        "changeCover": "Choose cover photo",
+        "removeCover": "Remove cover",
+        "linksHint": "Add the full links to your profiles. Only completed links will appear.",
+        "invalidLink": "Enter a valid HTTPS link for {{platform}}.",
+        "openLink": "Open {{platform}}",
+        "linkError": "Could not open the link. Please try again.",
+        "cover": "Cover photo",
+        "back": "Back to Community"
     }
 }

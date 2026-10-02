@@ -38,6 +38,24 @@ export const profileService = {
         return data;
     },
 
+    async uploadCover(userId: string, imageUri: string): Promise<string> {
+        const image = await ImageManipulator.manipulateAsync(
+            imageUri,
+            [{ resize: { width: 1600 } }],
+            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        if (!image.base64) throw new Error('Image unavailable');
+        const path = `${userId}/cover-${Date.now()}.jpg`;
+        const { error } = await supabase.storage
+            .from('avatars')
+            .upload(path, decode(image.base64), {
+                contentType: 'image/jpeg',
+                upsert: false,
+            });
+        if (error) throw error;
+        return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    },
+
     async uploadAvatar(userId: string, imageUri: string): Promise<string | null> {
         try {
             // 1. Compress & format image

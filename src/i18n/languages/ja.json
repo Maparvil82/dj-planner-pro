@@ -545,5 +545,20 @@
         "accountHint": "メールとパスワードは非公開です。新しいパスワードを入力した場合のみ変更されます。",
         "emailSent": "新しいメールアドレスに確認リンクを送信しました。",
         "previewTitle": "コミュニティでの表示"
+    },
+    "djPage": {
+        "about": "自己紹介",
+        "connect": "音楽・SNS",
+        "publishedSessions": "公開セッション",
+        "customize": "DJページ",
+        "coverHint": "DJブースや出演時の横長写真を選びましょう。変更を確定すると保存されます。",
+        "changeCover": "カバー写真を選択",
+        "removeCover": "カバーを削除",
+        "linksHint": "プロフィールの完全なリンクを追加してください。入力したリンクだけが表示されます。",
+        "invalidLink": "{{platform}}の有効なHTTPSリンクを入力してください。",
+        "openLink": "{{platform}}を開く",
+        "linkError": "リンクを開けませんでした。再試行してください。",
+        "cover": "カバー写真",
+        "back": "コミュニティに戻る"
     }
 }
