@@ -1,931 +1,1287 @@
-import React, { useContext, useMemo } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from '../../src/i18n/useTranslation';
-import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { useAllSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
-import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    View,
+    Text,
+    ScrollView,
+    TouchableOpacity,
+    ActivityIndicator,
+    AppState,
+    RefreshControl,
+    StyleSheet,
+    useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../src/store/useAuthStore';
-import { Avatar } from '../../src/components/ui/Avatar';
-import { Calendar, Plus, ChevronRight } from 'lucide-react-native';
-import { format, parseISO, isThisMonth, isWithinInterval, startOfMonth, subMonths, endOfMonth, addDays } from 'date-fns';
-import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+    ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
+    Plus,
+    CalendarDays,
+    Clock3,
+    MapPin,
+    TrendingUp,
+    Wallet,
+    Music2,
+    AlertCircle,
+} from 'lucide-react-native';
+import { useTranslation } from '../../src/i18n/useTranslation';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
+import {
+    dashboardMetrics,
+    dashboardChart,
+    currencyCode,
+    DashboardPeriod,
+} from '../../src/utils/dashboardMetrics';
+import { sessionRange } from '../../src/utils/sessionPlanning';
 
-const { width } = Dimensions.get('window');
-
-const calculateSessionEarnings = (session: any): number => {
-    const amount = Number(session.earning_amount) || 0;
-    if (session.earning_type === 'fixed') return amount;
-    if (session.earning_type === 'hourly') {
-        const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-        const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-        let startMins = startH * 60 + startM;
-        let endMins = endH * 60 + endM;
-        if (endMins <= startMins) endMins += 24 * 60;
-        return amount * ((endMins - startMins) / 60);
-    }
-    return 0;
-};
-
+type Icon = typeof Clock3;
+function MetricCard({
+    label,
+    value,
+    hint,
+    icon: IconComponent,
+    accent,
+    dark,
+}: {
+    label: string;
+    value: string;
+    hint?: string;
+    icon: Icon;
+    accent: string;
+    dark: boolean;
+}) {
+    return (
+        <View
+            style={[
+                styles.metric,
+                {
+                    backgroundColor: dark ? '#171d2c' : '#fff',
+                    borderColor: dark ? '#252d40' : '#e9ecf3',
+                },
+            ]}
+        >
+            <View style={[styles.iconBox, { backgroundColor: `${accent}15` }]}>
+                <IconComponent size={19} color={accent} />
+            </View>
+            <Text
+                style={[styles.label, { color: dark ? '#a8b2c6' : '#6d7588' }]}
+            >
+                {label}
+            </Text>
+            <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.65}
+                style={[
+                    styles.metricValue,
+                    { color: dark ? '#f6f7fb' : '#182039' },
+                ]}
+            >
+                {value}
+            </Text>
+            {hint ? (
+                <Text
+                    style={[
+                        styles.hint,
+                        { color: dark ? '#9aa6bd' : '#778095' },
+                    ]}
+                >
+                    {hint}
+                </Text>
+            ) : null}
+        </View>
+    );
+}
 export default function DashboardScreen() {
     const { t, i18n } = useTranslation();
-    const [chartView, setChartView] = React.useState<'sessions' | 'finances'>('sessions');
-    const [upcomingFilter, setUpcomingFilter] = React.useState<'month' | 'future' | 'past' | 'all'>('month');
+    const { activeTheme } = useTheme();
+    const dark = activeTheme === 'dark';
     const router = useRouter();
-    const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
-    const { profile, user } = useAuthStore();
-    const insets = useSafeAreaInsets();
-    const isDark = themeCtx?.activeTheme === 'dark';
-
-    const { data: sessions = [], isLoading: isLoadingAll } = useAllSessionsQuery();
-    const { data: upcomingSessions = [], isLoading: isLoadingUpcoming } = useUpcomingSessionsQuery();
-    const { data: expenses = [], isLoading: isLoadingExpenses } = useAllExpensesQuery();
-    const { data: venues = [] } = useVenuesQuery();
-
-    const locale = useMemo(() => {
-        switch (i18n.language) {
-            case 'es': return es;
-            case 'de': return de;
-            case 'fr': return fr;
-            case 'it': return it;
-            case 'pt': return ptBR;
-            case 'ja': return ja;
-            default: return enUS;
-        }
-    }, [i18n.language]);
-
-    // Financial calculations
-    const {
-        thisMonthEarnings,
-        lastMonthEarnings,
-        totalSessionsThisMonth,
-        lastMonthSessions,
-        topVenues,
-        topVisitedVenues,
-        topCollaborators,
-        bestSoundVenues,
-        bestExpVenues
-    } = useMemo(() => {
-        let thisMonth = 0;
-        let lastMonth = 0;
-        let sessionsThisMonth = 0;
-        let prevMonthSessions = 0;
-
-        const now = new Date();
-        const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
-        const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
-
-        let currentYearVenues: Record<string, number> = {};
-        let currentYearVenueCounts: Record<string, number> = {};
-        let collaboratorCounts: Record<string, number> = {};
-        const currentYear = now.getFullYear();
-
-        sessions.forEach(session => {
-            const earnings = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
-
-            if (session.date) {
-                const sessionDate = parseISO(session.date);
-                if (sessionDate.getFullYear() === currentYear && session.venue) {
-                    currentYearVenues[session.venue] = (currentYearVenues[session.venue] || 0) + earnings;
-                    currentYearVenueCounts[session.venue] = (currentYearVenueCounts[session.venue] || 0) + 1;
-                }
-
-                // Top Collaborator Logic: Current year only, non-cancelled
-                if (sessionDate.getFullYear() === currentYear && session.status !== 'cancelled' && session.is_collective && session.djs) {
-                    session.djs.forEach((djName: string) => {
-                        if (djName) {
-                            collaboratorCounts[djName] = (collaboratorCounts[djName] || 0) + 1;
-                        }
-                    });
-                }
-
-                if (isThisMonth(sessionDate)) {
-                    thisMonth += earnings;
-                    sessionsThisMonth++;
-                } else if (isWithinInterval(sessionDate, { start: startOfPreviousMonth, end: endOfPreviousMonth })) {
-                    lastMonth += earnings;
-                    prevMonthSessions++;
-                }
-            }
+    const { width } = useWindowDimensions();
+    const [period, setPeriod] = useState<DashboardPeriod>('month');
+    const [anchor, setAnchor] = useState(() => new Date());
+    const [chosenCurrency, setCurrency] = useState('EUR');
+    const [chartMode, setChartMode] = useState<'count' | 'revenue'>('count');
+    const [refreshing, setRefreshing] = useState(false);
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60_000);
+        const listener = AppState.addEventListener('change', (state) => {
+            if (state === 'active') setNow(new Date());
         });
-
-        // Top 3 Rentable Venues
-        const topVenues = Object.entries(currentYearVenues)
-            .map(([name, amount]) => ({ name, amount }))
-            .sort((a, b) => b.amount - a.amount)
-            .slice(0, 3);
-
-        // Top 3 Visited Venues
-        const topVisitedVenues = Object.entries(currentYearVenueCounts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 3);
-
-        // Top 3 Collaborators
-        const topCollaborators = Object.entries(collaboratorCounts)
-            .map(([name, count]) => ({
-                name: name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '),
-                count
-            }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 3);
-
-        // Best Ratings (Sound & Experience)
-        const bestSoundVenues = [...venues]
-            .filter(v => (v.sound_quality || 0) > 0)
-            .sort((a, b) => (b.sound_quality || 0) - (a.sound_quality || 0))
-            .slice(0, 3);
-
-        const bestExpVenues = [...venues]
-            .filter(v => (v.experience_rating || 0) > 0)
-            .sort((a, b) => (b.experience_rating || 0) - (a.experience_rating || 0))
-            .slice(0, 3);
-
-        return {
-            thisMonthEarnings: thisMonth,
-            lastMonthEarnings: lastMonth,
-            totalSessionsThisMonth: sessionsThisMonth,
-            lastMonthSessions: prevMonthSessions,
-            topVenues,
-            topVisitedVenues,
-            topCollaborators,
-            bestSoundVenues,
-            bestExpVenues
+        return () => {
+            clearInterval(timer);
+            listener.remove();
         };
-    }, [sessions, venues]);
-
-    const { thisMonthExpenses, lastMonthExpenses } = useMemo(() => {
-        let thisMonthExp = 0;
-        let lastMonthExp = 0;
-
-        const now = new Date();
-        const startOfCurrentMonth = startOfMonth(now);
-        const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
-        const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
-
-        expenses.forEach(expense => {
-            if (expense.date) {
-                const expenseDate = parseISO(expense.date);
-                if (isThisMonth(expenseDate)) {
-                    thisMonthExp += Number(expense.amount) || 0;
-                } else if (isWithinInterval(expenseDate, { start: startOfPreviousMonth, end: endOfPreviousMonth })) {
-                    lastMonthExp += Number(expense.amount) || 0;
-                }
-            }
-        });
-
-        return { thisMonthExpenses: thisMonthExp, lastMonthExpenses: lastMonthExp };
-    }, [expenses]);
-
-    const differencePercentage = lastMonthEarnings === 0
-        ? null
-        : Math.round(((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100);
-
-    const isPositiveGrowth = differencePercentage !== null && differencePercentage >= 0;
-
-    const netProfit = thisMonthEarnings - thisMonthExpenses;
-    const avgPerSession = totalSessionsThisMonth > 0 ? (thisMonthEarnings / totalSessionsThisMonth) : 0;
-
-    const monthlyChartData = useMemo(() => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-
-        // Build 12 buckets for Jan-Dec of the current year
-        const buckets = Array.from({ length: 12 }, (_, i) => ({
-            monthIndex: i,
-            month: format(new Date(currentYear, i, 1), 'MMM', { locale }),
-            earnings: 0,
-            lostEarnings: 0,
-            confirmed: 0,
-            pending: 0,
-            cancelled: 0,
-            isCurrentMonth: i === currentMonth
-        }));
-
-        // Fill buckets from sessions
-        sessions.forEach(session => {
-            if (!session.date) return;
-            // Parse YYYY-MM-DD safely
-            const parts = session.date.split('T')[0].split('-');
-            if (parts.length < 3) return;
-            const year = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1; // 0-indexed
-            if (year !== currentYear || month < 0 || month > 11) return;
-
-            const earnings = calculateSessionEarnings(session);
-            const bucket = buckets[month];
-
-            if (session.status === 'cancelled') {
-                bucket.lostEarnings += earnings;
-                bucket.cancelled++;
-            } else if (session.status === 'pending') {
-                bucket.earnings += earnings;
-                bucket.pending++;
-            } else {
-                // confirmed or undefined (legacy)
-                bucket.earnings += earnings;
-                bucket.confirmed++;
-            }
-        });
-
-        // Calculate max values for scaling
-        const maxEarnings = Math.max(...buckets.map(b => Math.max(b.earnings, b.lostEarnings)), 1);
-        const maxSessions = Math.max(...buckets.map(b => b.confirmed + b.pending + b.cancelled), 1);
-        const BAR_HEIGHT = 80; // px
-
-        return buckets.map(b => ({
-            ...b,
-            sessionCount: b.confirmed + b.pending + b.cancelled,
-            earningsPx: Math.max(Math.round((b.earnings / maxEarnings) * BAR_HEIGHT), b.earnings > 0 ? 4 : 0),
-            lostPx: Math.max(Math.round((b.lostEarnings / maxEarnings) * BAR_HEIGHT), b.lostEarnings > 0 ? 4 : 0),
-            activePx: Math.max(Math.round(((b.confirmed + b.pending) / maxSessions) * BAR_HEIGHT), b.confirmed + b.pending > 0 ? 4 : 0),
-            cancelledPx: Math.max(Math.round((b.cancelled / maxSessions) * BAR_HEIGHT), b.cancelled > 0 ? 4 : 0),
-            sessionsPx: Math.max(Math.round(((b.confirmed + b.pending + b.cancelled) / maxSessions) * BAR_HEIGHT), b.confirmed + b.pending + b.cancelled > 0 ? 4 : 0)
-        }));
-    }, [sessions, locale]);
-
-    // Derived values for progress bars (visual only, max 100%)
-    const sessionGoal = lastMonthSessions > 0 ? Math.max(lastMonthSessions, 10) : 10;
-    const sessionPercentage = Math.min(Math.round((totalSessionsThisMonth / sessionGoal) * 100), 100);
-
-    const earningsGoal = lastMonthEarnings > 0 ? Math.max(lastMonthEarnings, 1000) : 1000;
-    const earningsPercentage = Math.min(Math.round((thisMonthEarnings / earningsGoal) * 100), 100);
-
-    const upcomingCount = upcomingSessions.length;
-    const confirmedUpcoming = upcomingSessions.filter(s => s.status === 'confirmed' || !s.status).length;
-    const pendingUpcoming = upcomingSessions.filter(s => s.status === 'pending').length;
-
-    // Total upcoming is used to calculate the visual ratio. Let's base it out of 10.
-    const upcomingRatio = Math.min(Math.round((upcomingCount > 0 ? (confirmedUpcoming / upcomingCount) : 0) * 100), 100);
-
-    const filteredUpcoming = useMemo(() => {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = now.getMonth(); // 0-indexed
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const today = `${y}-${pad(m + 1)}-${pad(now.getDate())}`;
-        const startOfCurrentMonth = `${y}-${pad(m + 1)}-01`;
-        const lastDay = new Date(y, m + 1, 0).getDate();
-        const endOfCurrentMonth = `${y}-${pad(m + 1)}-${pad(lastDay)}`;
-
-        // Helper: extract YYYY-MM-DD from a session date (handles ISO timestamp too)
-        const getDateStr = (d: string) => d ? d.split('T')[0] : '';
-
-        if (upcomingFilter === 'month') {
-            return sessions.filter(s => {
-                const d = getDateStr(s.date);
-                return d >= startOfCurrentMonth && d <= endOfCurrentMonth;
-            });
+    }, []);
+    const sessionsQuery = useAllSessionsQuery();
+    const expensesQuery = useAllExpensesQuery();
+    const sessions = sessionsQuery.data;
+    const expenses = expensesQuery.data;
+    const text = dark ? '#f6f7fb' : '#182039';
+    const muted = dark ? '#a8b2c6' : '#6d7588';
+    const surface = dark ? '#171d2c' : '#fff';
+    const line = dark ? '#252d40' : '#e9ecf3';
+    const label = (key: string) => t(`insights.${key}`);
+    const currencies = useMemo(() => {
+        const values = [
+            ...new Set([
+                ...(sessions || [])
+                    .filter(
+                        (s) =>
+                            s.status !== 'cancelled' &&
+                            s.earning_type !== 'free',
+                    )
+                    .map((s) => currencyCode(s.currency)),
+                ...(expenses?.length ? ['EUR'] : []),
+            ]),
+        ].sort();
+        return values.length ? values : ['EUR'];
+    }, [sessions, expenses]);
+    const currency = currencies.includes(chosenCurrency)
+        ? chosenCurrency
+        : currencies[0];
+    const metrics = useMemo(
+        () =>
+            dashboardMetrics(
+                sessions || [],
+                expenses || [],
+                anchor,
+                period,
+                currency,
+                now,
+            ),
+        [sessions, expenses, anchor, period, currency, now],
+    );
+    const previous = useMemo(
+        () =>
+            dashboardMetrics(
+                sessions || [],
+                expenses || [],
+                period === 'month'
+                    ? new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1)
+                    : new Date(anchor.getFullYear() - 1, 0, 1),
+                period,
+                currency,
+                now,
+            ),
+        [sessions, expenses, anchor, period, currency, now],
+    );
+    const chart = useMemo(
+        () => dashboardChart(sessions || [], anchor, period, currency),
+        [sessions, anchor, period, currency],
+    );
+    const nextSession = useMemo(
+        () =>
+            (sessions || [])
+                .filter(
+                    (s) =>
+                        s.status !== 'cancelled' && sessionRange(s).end > now,
+                )
+                .sort(
+                    (a, b) =>
+                        sessionRange(a).start.getTime() -
+                        sessionRange(b).start.getTime(),
+                )[0],
+        [sessions, now],
+    );
+    const pending = useMemo(
+        () => [...metrics.pending].sort((a, b) => a.date.localeCompare(b.date)),
+        [metrics.pending],
+    );
+    const number = (n: number, digits = 0) =>
+        new Intl.NumberFormat(i18n.language, {
+            maximumFractionDigits: digits,
+        }).format(n);
+    const money = (n: number) => {
+        try {
+            return new Intl.NumberFormat(i18n.language, {
+                style: 'currency',
+                currency,
+                maximumFractionDigits: 0,
+            }).format(n);
+        } catch {
+            return `${number(n)} ${currency}`;
         }
-        if (upcomingFilter === 'future') {
-            return upcomingSessions;
-        }
-        if (upcomingFilter === 'past') {
-            const startOfYear = `${y}-01-01`;
-            return sessions.filter(s => {
-                const d = getDateStr(s.date);
-                return d >= startOfYear && d < today;
-            });
-        }
-        // 'all'
-        return sessions;
-    }, [upcomingFilter, sessions, upcomingSessions]);
-
-    const filteredConfirmed = filteredUpcoming.filter(s => s.status === 'confirmed' || !s.status).length;
-    const filteredPending = filteredUpcoming.filter(s => s.status === 'pending').length;
-    const filteredCancelled = filteredUpcoming.filter(s => s.status === 'cancelled').length;
-    const filteredTotal = filteredUpcoming.length;
-    const filteredRatio = filteredTotal > 0 ? Math.min(Math.round((filteredConfirmed / filteredTotal) * 100), 100) : 0;
-
-    const dormantVenue = useMemo(() => {
-        if (sessions.length === 0) return null;
-
-        const venueLastVisit: Record<string, Date> = {};
-        const venueSessionCount: Record<string, number> = {};
-
-        sessions.forEach(s => {
-            if (!s.venue || s.status === 'cancelled' || !s.date) return;
-            // Use same date parsing as monthlyChartData for consistency
-            const dateStr = s.date.split('T')[0];
-            const d = parseISO(dateStr);
-            if (!venueLastVisit[s.venue] || d > venueLastVisit[s.venue]) {
-                venueLastVisit[s.venue] = d;
-            }
-            venueSessionCount[s.venue] = (venueSessionCount[s.venue] || 0) + 1;
-        });
-
-        // "Dormant" threshold: 30 days is enough to be pro-active
-        const dormantThreshold = addDays(new Date(), -30);
-
-        const candidates = Object.keys(venueLastVisit).filter(v => {
-            const lastVisit = venueLastVisit[v];
-            // Only count as "upcoming" if it's NOT cancelled
-            const hasFutureActiveSession = upcomingSessions.some(us => us.venue === v && us.status !== 'cancelled');
-            return lastVisit < dormantThreshold && !hasFutureActiveSession;
-        });
-
-        if (candidates.length === 0) {
-            // Fallback: any venue where they've played that doesn't have an upcoming active session
-            const allPastVenues = Object.keys(venueLastVisit).filter(v => {
-                const hasFutureActiveSession = upcomingSessions.some(us => us.venue === v && us.status !== 'cancelled');
-                return !hasFutureActiveSession;
-            });
-            return allPastVenues.length > 0 ? allPastVenues[0] : null;
-        }
-
-        candidates.sort((a, b) => venueSessionCount[b] - venueSessionCount[a]);
-        return candidates[0];
-    }, [sessions, upcomingSessions]);
-
-    const hasCancelledThisMonth = useMemo(() => {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = now.getMonth();
-        const startOfMonthStr = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-        const endOfMonthDate = endOfMonth(now);
-        const endOfMonthStr = format(endOfMonthDate, 'yyyy-MM-dd');
-
-        return sessions.some(s => {
-            if (s.status !== 'cancelled' || !s.date) return false;
-            const d = s.date.split('T')[0];
-            return d >= startOfMonthStr && d <= endOfMonthStr;
-        });
-    }, [sessions]);
-
-    const isLoading = isLoadingAll || isLoadingUpcoming || isLoadingExpenses;
-
-    if (isLoading) {
-        return (
-            <View className="flex-1 bg-white dark:bg-gray-950 items-center justify-center">
-                <ActivityIndicator size="large" color="#2563EB" />
-            </View>
+    };
+    const dateLabel = new Intl.DateTimeFormat(i18n.language, {
+        ...(period === 'month' ? { month: 'long' as const } : {}),
+        year: 'numeric',
+    }).format(anchor);
+    const growth =
+        previous.revenue > 0
+            ? Math.round(
+                  ((metrics.revenue - previous.revenue) / previous.revenue) *
+                      100,
+              )
+            : null;
+    const maxChart = Math.max(1, ...chart.map((b) => b[chartMode]));
+    const shift = (direction: number) =>
+        setAnchor(
+            new Date(
+                anchor.getFullYear() + (period === 'year' ? direction : 0),
+                anchor.getMonth() + (period === 'month' ? direction : 0),
+                1,
+            ),
         );
-    }
-
-    const fullName = user?.user_metadata?.full_name || t('dj') || 'DJ';
-    const nameParts = fullName.split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
-            {/* HEADER */}
-            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
-                    <View className="w-8" />
-                    <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            Dashboard
-                        </Text>
+    const refresh = async () => {
+        setNow(new Date());
+        setRefreshing(true);
+        try {
+            await Promise.all([
+                sessionsQuery.refetch(),
+                expensesQuery.refetch(),
+            ]);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+    const cardStyle = [
+        styles.card,
+        { backgroundColor: surface, borderColor: line },
+    ];
+    const heading = (title: string, hint?: string) => (
+        <View style={{ marginBottom: 20 }}>
+            <Text style={[styles.sectionTitle, { color: text }]}>{title}</Text>
+            {hint ? (
+                <Text style={[styles.hint, { color: muted, marginTop: 5 }]}>
+                    {hint}
+                </Text>
+            ) : null}
+        </View>
+    );
+    const errorBanner = (
+        <View style={[cardStyle, { gap: 12 }]}>
+            <AlertCircle color="#f59e0b" size={22} />
+            <Text style={{ color: text }}>{label('loadingError')}</Text>
+            <TouchableOpacity
+                accessibilityRole="button"
+                onPress={refresh}
+                style={styles.retry}
+            >
+                <Text style={{ color: '#6366f1', fontWeight: '700' }}>
+                    {label('retry')}
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+    if (sessionsQuery.isLoading)
+        return (
+            <SafeAreaView
+                style={[
+                    styles.screen,
+                    { backgroundColor: dark ? '#0d1220' : '#f5f6fa' },
+                ]}
+            >
+                <View style={{ padding: 24, gap: 18 }}>
+                    <Text style={[styles.title, { color: text }]}>
+                        {t('dashboard')}
+                    </Text>
+                    <View
+                        style={{
+                            height: 190,
+                            borderRadius: 28,
+                            backgroundColor: dark ? '#20273b' : '#e4e7f0',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <ActivityIndicator color="#7773ff" />
                     </View>
-                    <View className="flex-row items-center gap-3 ml-auto">
+                </View>
+            </SafeAreaView>
+        );
+    return (
+        <SafeAreaView
+            style={[
+                styles.screen,
+                { backgroundColor: dark ? '#0d1220' : '#f5f6fa' },
+            ]}
+            edges={['top']}
+        >
+            <View style={styles.header}>
+                <View>
+                    <Text style={[styles.title, { color: text }]}>
+                        {t('dashboard')}
+                    </Text>
+                    <Text style={[styles.hint, { color: muted, marginTop: 4 }]}>
+                        {label('intro')}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={label('add')}
+                    onPress={() => router.push('/add-session')}
+                    style={styles.add}
+                >
+                    <Plus size={24} color="#fff" />
+                </TouchableOpacity>
+            </View>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={refresh}
+                        tintColor="#7773ff"
+                    />
+                }
+                contentContainerStyle={{
+                    paddingHorizontal: width > 700 ? 32 : 20,
+                    paddingBottom: 115,
+                    width: '100%',
+                    maxWidth: 900,
+                    alignSelf: 'center',
+                    gap: 18,
+                }}
+            >
+                <View
+                    style={[
+                        styles.controls,
+                        { backgroundColor: surface, borderColor: line },
+                    ]}
+                >
+                    <View
+                        style={[
+                            styles.segment,
+                            { backgroundColor: dark ? '#0d1220' : '#f0f2f7' },
+                        ]}
+                    >
+                        {(['month', 'year'] as const).map((p) => (
+                            <TouchableOpacity
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: period === p }}
+                                key={p}
+                                onPress={() => setPeriod(p)}
+                                style={[
+                                    styles.segmentButton,
+                                    period === p && {
+                                        backgroundColor: dark
+                                            ? '#34304f'
+                                            : '#fff',
+                                    },
+                                ]}
+                            >
+                                <Text
+                                    style={{
+                                        color:
+                                            period === p
+                                                ? dark
+                                                    ? '#c0b7ff'
+                                                    : '#6354d9'
+                                                : muted,
+                                        fontWeight: '700',
+                                        fontSize: 13,
+                                    }}
+                                >
+                                    {label(p)}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                    <View style={styles.periodRow}>
                         <TouchableOpacity
-                            onPress={() => router.push('/history')}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                            accessibilityRole="button"
+                            accessibilityLabel={label('previous')}
+                            onPress={() => shift(-1)}
+                            style={styles.arrow}
                         >
-                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
+                            <ChevronLeft size={20} color={muted} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            onPress={() => router.push('/add-session')}
-                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                            accessibilityRole="button"
+                            accessibilityLabel={label('current')}
+                            onPress={() => setAnchor(new Date())}
+                            style={{ flex: 1, alignItems: 'center' }}
                         >
-                            <Plus size={20} color="#FFFFFF" />
+                            <Text
+                                style={{
+                                    color: text,
+                                    fontSize: 16,
+                                    fontWeight: '700',
+                                    textTransform: 'capitalize',
+                                }}
+                            >
+                                {dateLabel}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityLabel={label('next')}
+                            onPress={() => shift(1)}
+                            style={styles.arrow}
+                        >
+                            <ChevronRight size={20} color={muted} />
                         </TouchableOpacity>
                     </View>
                 </View>
-            </View>
-
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                <View className="max-w-5xl w-full mx-auto px-5 pt-4">
-
-                    {/* WELCOME SECTION */}
-                    <View className="mb-8 mt-6 px-2">
-                        <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
-                            {(() => {
-                                if (profile?.artist_name) {
-                                    return `${t('hello')} ${profile.artist_name} 👋`;
-                                }
-                                const email = user?.email || '';
-                                const prefix = email.split('@')[0];
-                                const displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-                                return `${t('hello')} ${displayName} 👋`;
-                            })()}
-                        </Text>
-                        <Text className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                            {(() => {
-                                let dateStr = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-                                dateStr = dateStr.replace(',', '');
-                                return dateStr.split(' ').map(word =>
-                                    word.toLowerCase() === 'de' ? 'de' : word.charAt(0).toUpperCase() + word.slice(1)
-                                ).join(' ');
-                            })()}
-                        </Text>
-                    </View>
-
-                    {/* Month-over-month earnings KPI — shown first */}
-                    {(() => {
-                        const diff = thisMonthEarnings - lastMonthEarnings;
-                        const pct = lastMonthEarnings > 0
-                            ? Math.round((diff / lastMonthEarnings) * 100)
-                            : thisMonthEarnings > 0 ? 100 : 0;
-                        const isUp = pct > 0;
-                        const isFlat = pct === 0 && lastMonthEarnings === 0 && thisMonthEarnings === 0;
-                        const arrow = isFlat ? '→' : isUp ? '↑' : '↓';
-                        const color = isFlat ? (isDark ? '#9CA3AF' : '#6B7280') : isUp ? '#22C55E' : '#EF4444';
-                        const bgColor = isFlat
-                            ? (isDark ? '#1F1F1F' : '#F3F4F6')
-                            : isUp ? (isDark ? '#14532D' : '#F0FDF4')
-                                : (isDark ? '#450A0A' : '#FEF2F2');
-                        const label = isFlat
-                            ? t('earnings_vs_last_flat')
-                            : t(isUp ? 'earnings_vs_last_up' : 'earnings_vs_last_down', { pct });
-
-                        const showSuggestion = pct < 0 || hasCancelledThisMonth;
-
-                        let suggestionText = '';
-                        if (showSuggestion) {
-                            if (hasCancelledThisMonth) {
-                                suggestionText = dormantVenue
-                                    ? t('recovery_suggestion', { name: dormantVenue })
-                                    : t('recovery_no_venue'); // Fallback if no venue found
-                            } else if (pct < 0 && dormantVenue) {
-                                suggestionText = t('venue_suggestion', { name: dormantVenue });
-                            } else {
-                                // If pct < 0 but no dormant venue, show nothing or a generic one
-                                // For now let's just use dormantVenue check inside here too
-                            }
-                        }
-
-                        if (showSuggestion && !suggestionText) return (
-                            <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                                <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
-                                <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
-                            </View>
-                        );
-
-                        return (
-                            <View style={{ backgroundColor: bgColor, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, flexDirection: 'column', gap: showSuggestion ? 8 : 0 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                                    <Text style={{ fontSize: 18, color, fontWeight: '900' }}>{arrow}</Text>
-                                    <Text style={{ fontSize: 13, fontWeight: '700', color, flex: 1 }}>{label}</Text>
-                                </View>
-                                {showSuggestion && (
-                                    <TouchableOpacity
-                                        onPress={() => router.push('/venues')}
-                                        activeOpacity={0.7}
+                {currencies.length > 1 ? (
+                    <View style={{ gap: 8 }}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={{ gap: 8 }}
+                        >
+                            {currencies.map((c) => (
+                                <TouchableOpacity
+                                    key={c}
+                                    accessibilityRole="button"
+                                    accessibilityState={{
+                                        selected: c === currency,
+                                    }}
+                                    onPress={() => setCurrency(c)}
+                                    style={[
+                                        styles.currency,
+                                        {
+                                            backgroundColor:
+                                                c === currency
+                                                    ? '#6554df'
+                                                    : surface,
+                                            borderColor:
+                                                c === currency
+                                                    ? '#6554df'
+                                                    : line,
+                                        },
+                                    ]}
+                                >
+                                    <Text
                                         style={{
-                                            marginTop: 4,
-                                            paddingTop: 6,
-                                            borderTopWidth: 1,
-                                            borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between'
+                                            color:
+                                                c === currency ? '#fff' : muted,
+                                            fontWeight: '700',
+                                            fontSize: 12,
                                         }}
                                     >
-                                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#D1D5DB' : '#4B5563', flex: 1 }}>
-                                            {suggestionText}
-                                        </Text>
-                                        <ChevronRight size={14} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                    </TouchableOpacity>
-                                )}
+                                        {c}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                        <Text style={[styles.hint, { color: muted }]}>
+                            {label('totalsHint')}
+                        </Text>
+                    </View>
+                ) : null}
+                {sessionsQuery.isError ? (
+                    errorBanner
+                ) : (
+                    <>
+                        {expensesQuery.isError ? errorBanner : null}
+                        <LinearGradient
+                            colors={['#202044', '#35316e', '#6250bb']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.hero}
+                        >
+                            <View style={styles.heroOrb} pointerEvents="none" />
+                            <View style={styles.heroTop}>
+                                <View
+                                    style={{
+                                        flexDirection: 'row',
+                                        gap: 8,
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <TrendingUp color="#c4baff" size={19} />
+                                    <Text
+                                        style={{
+                                            color: '#e1dcff',
+                                            fontWeight: '600',
+                                            fontSize: 14,
+                                        }}
+                                    >
+                                        {label('revenue')}
+                                    </Text>
+                                </View>
+                                <Text style={styles.heroCurrency}>
+                                    {currency}
+                                </Text>
                             </View>
-                        );
-                    })()}
-
-                    {/* Annual Comparison Chart */}
-                    <View style={{ backgroundColor: isDark ? '#121212' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 12, padding: 24, marginBottom: 16 }}>
-                        <View className="flex-row justify-between items-center mb-6">
-                            <TouchableOpacity
-                                onPress={() => router.push('/history')}
-                                activeOpacity={0.7}
-                                className="flex-row items-center space-x-1"
+                            <Text
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.6}
+                                style={styles.heroValue}
                             >
-                                <Text className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('annual_comparison')}</Text>
-                                <ChevronRight size={12} color={isDark ? '#9CA3AF' : '#6B7280'} style={{ marginLeft: 4 }} />
-                            </TouchableOpacity>
-                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderRadius: 8, padding: 4 }}>
-                                <TouchableOpacity
-                                    onPress={() => setChartView('sessions')}
+                                {money(metrics.revenue)}
+                            </Text>
+                            <Text
+                                style={{
+                                    color: '#c7c1e7',
+                                    fontSize: 12,
+                                    lineHeight: 18,
+                                }}
+                            >
+                                {label('revenueHint')}
+                            </Text>
+                            <View style={styles.heroBottom}>
+                                <View style={styles.growth}>
+                                    <Text
+                                        style={{
+                                            color:
+                                                growth !== null && growth < 0
+                                                    ? '#ffd4e2'
+                                                    : '#c6f7e4',
+                                            fontSize: 12,
+                                            fontWeight: '700',
+                                        }}
+                                    >
+                                        {growth === null
+                                            ? label('noComparison')
+                                            : `${growth > 0 ? '+' : ''}${growth}%`}
+                                    </Text>
+                                </View>
+                                <Text
                                     style={{
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 6,
-                                        borderRadius: 6,
-                                        backgroundColor: chartView === 'sessions' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 1 },
-                                        shadowOpacity: chartView === 'sessions' ? 0.1 : 0,
-                                        shadowRadius: 1,
-                                        elevation: chartView === 'sessions' ? 1 : 0
+                                        color: '#cec9ea',
+                                        fontSize: 11,
+                                        flex: 1,
                                     }}
                                 >
-                                    <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'sessions' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_sessions')}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => setChartView('finances')}
-                                    style={{
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 6,
-                                        borderRadius: 6,
-                                        backgroundColor: chartView === 'finances' ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 1 },
-                                        shadowOpacity: chartView === 'finances' ? 0.1 : 0,
-                                        shadowRadius: 1,
-                                        elevation: chartView === 'finances' ? 1 : 0
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 10, fontWeight: '700', color: chartView === 'finances' ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>{t('chart_finances')}</Text>
-                                </TouchableOpacity>
+                                    {label('previousPeriod')}
+                                </Text>
                             </View>
+                            {metrics.tentativeRevenue > 0 ? (
+                                <Text
+                                    style={{
+                                        color: '#d9d2f5',
+                                        fontSize: 12,
+                                        marginTop: 13,
+                                    }}
+                                >
+                                    {label('potential')}:{' '}
+                                    {money(metrics.tentativeRevenue)}
+                                </Text>
+                            ) : null}
+                        </LinearGradient>
+                        <View style={styles.grid}>
+                            <MetricCard
+                                label={label('sessions')}
+                                value={number(metrics.active.length)}
+                                hint={`${metrics.confirmed.length} ${label('confirmed').toLowerCase()} · ${metrics.pending.length} ${label('pending').toLowerCase()}`}
+                                icon={CalendarDays}
+                                accent="#7666df"
+                                dark={dark}
+                            />
+                            <MetricCard
+                                label={label('hours')}
+                                value={`${number(metrics.hours, 1)} h`}
+                                hint={`${number(metrics.playedHours, 1)} h ${label('played').toLowerCase()}`}
+                                icon={Clock3}
+                                accent="#099a91"
+                                dark={dark}
+                            />
+                            <MetricCard
+                                label={label('average')}
+                                value={
+                                    metrics.averageFee === null
+                                        ? '—'
+                                        : money(metrics.averageFee)
+                                }
+                                hint={label('averageHint')}
+                                icon={Music2}
+                                accent="#c46599"
+                                dark={dark}
+                            />
+                            <MetricCard
+                                label={label('balance')}
+                                value={
+                                    expensesQuery.isLoading ||
+                                    expensesQuery.isError ||
+                                    metrics.balance === null
+                                        ? '—'
+                                        : money(metrics.balance)
+                                }
+                                hint={
+                                    currency === 'EUR'
+                                        ? label('balanceHint')
+                                        : label('eurosOnly')
+                                }
+                                icon={Wallet}
+                                accent="#b58b37"
+                                dark={dark}
+                            />
                         </View>
-
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 160, gap: 8 }}>
-                                {monthlyChartData.map((data, index) => (
-                                    <View key={index} style={{ alignItems: 'center', justifyContent: 'flex-end', minWidth: 44 }}>
-
-                                        {/* BAR AREA — 96px tall container */}
-                                        <View style={{ height: 96, justifyContent: 'flex-end', alignItems: 'center', marginBottom: 4 }}>
-                                            {chartView === 'sessions' ? (
-                                                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                                                    {/* Active (confirmed + pending) bar */}
-                                                    <View
-                                                        style={{
-                                                            width: 14,
-                                                            borderTopLeftRadius: 4,
-                                                            borderTopRightRadius: 4,
-                                                            backgroundColor: data.isCurrentMonth ? '#2563EB' : '#3B82F6',
-                                                            marginRight: 2,
-                                                            height: data.activePx
-                                                        }}
-                                                    />
-                                                    {/* Cancelled bar (only shows if there are cancelled sessions) */}
-                                                    {data.cancelled > 0 && (
-                                                        <View
-                                                            style={{
-                                                                width: 14,
-                                                                borderTopLeftRadius: 4,
-                                                                borderTopRightRadius: 4,
-                                                                backgroundColor: '#F87171',
-                                                                height: data.cancelledPx
-                                                            }}
-                                                        />
-                                                    )}
-                                                </View>
-                                            ) : (
-                                                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                                                    <View
-                                                        style={{
-                                                            width: 14,
-                                                            borderTopLeftRadius: 4,
-                                                            borderTopRightRadius: 4,
-                                                            backgroundColor: '#3B82F6',
-                                                            marginRight: 2,
-                                                            height: data.earningsPx
-                                                        }}
-                                                    />
-                                                    <View
-                                                        style={{
-                                                            width: 14,
-                                                            borderTopLeftRadius: 4,
-                                                            borderTopRightRadius: 4,
-                                                            backgroundColor: '#F87171',
-                                                            height: data.lostPx
-                                                        }}
-                                                    />
-                                                </View>
-                                            )}
-                                        </View>
-
-                                        {/* LABEL AREA */}
-                                        {chartView === 'sessions' ? (
-                                            <View style={{ height: 20, flexDirection: 'row', alignItems: 'center', gap: 2, marginBottom: 4 }}>
-                                                {data.confirmed > 0 && (
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#3B82F6', marginRight: 1 }} />
-                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.confirmed}</Text>
-                                                    </View>
-                                                )}
-                                                {data.pending > 0 && (
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#FB923C', marginRight: 1 }} />
-                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.pending}</Text>
-                                                    </View>
-                                                )}
-                                                {data.cancelled > 0 && (
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#F87171', marginRight: 1 }} />
-                                                        <Text style={{ fontSize: 8, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '700' }}>{data.cancelled}</Text>
-                                                    </View>
-                                                )}
-                                            </View>
-                                        ) : (
-                                            <View style={{ height: 28, marginBottom: 4, alignItems: 'center', justifyContent: 'flex-end' }}>
-                                                {data.earnings > 0 && (
-                                                    <Text style={{ fontSize: 8, fontWeight: '800', color: isDark ? '#60A5FA' : '#2563EB' }}>
-                                                        {data.earnings >= 1000 ? `${Math.round(data.earnings / 1000)}k` : `${Math.round(data.earnings)}`}€
-                                                    </Text>
-                                                )}
-                                                {data.lostEarnings > 0 && (
-                                                    <Text style={{ fontSize: 7, fontWeight: '700', color: '#F87171' }}>
-                                                        -{data.lostEarnings >= 1000 ? `${Math.round(data.lostEarnings / 1000)}k` : `${Math.round(data.lostEarnings)}`}€
-                                                    </Text>
-                                                )}
-                                            </View>
-                                        )}
-
-                                        {/* MONTH LABEL */}
+                        <View style={cardStyle}>
+                            {heading(
+                                label('activity'),
+                                period === 'year'
+                                    ? String(anchor.getFullYear())
+                                    : label('sixMonths'),
+                            )}
+                            <View
+                                style={[
+                                    styles.segment,
+                                    {
+                                        backgroundColor: dark
+                                            ? '#0d1220'
+                                            : '#f0f2f7',
+                                        marginBottom: 22,
+                                    },
+                                ]}
+                            >
+                                {(['count', 'revenue'] as const).map((mode) => (
+                                    <TouchableOpacity
+                                        key={mode}
+                                        accessibilityRole="button"
+                                        accessibilityState={{
+                                            selected: chartMode === mode,
+                                        }}
+                                        onPress={() => setChartMode(mode)}
+                                        style={[
+                                            styles.segmentButton,
+                                            mode === chartMode && {
+                                                backgroundColor: dark
+                                                    ? '#34304f'
+                                                    : '#fff',
+                                            },
+                                        ]}
+                                    >
                                         <Text
                                             style={{
-                                                fontSize: 10,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: 0.5,
-                                                fontWeight: data.isCurrentMonth ? '800' : '500',
-                                                color: data.isCurrentMonth ? '#2563EB' : (isDark ? '#9CA3AF' : '#6B7280')
+                                                color:
+                                                    mode === chartMode
+                                                        ? dark
+                                                            ? '#c0b7ff'
+                                                            : '#6354d9'
+                                                        : muted,
+                                                fontWeight: '700',
+                                                fontSize: 12,
                                             }}
                                         >
-                                            {data.month}
+                                            {mode === 'count'
+                                                ? label('sessions')
+                                                : label('revenue')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ flexGrow: 1, gap: 10 }}
+                            >
+                                {chart.map((bucket, index) => {
+                                    const selected =
+                                        bucket.date.getMonth() ===
+                                        anchor.getMonth();
+                                    const value = bucket[chartMode];
+                                    return (
+                                        <View
+                                            key={bucket.date.toISOString()}
+                                            accessible
+                                            accessibilityLabel={`${new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(bucket.date)}: ${chartMode === 'count' ? number(value) : money(value)}`}
+                                            style={{
+                                                flex: 1,
+                                                minWidth:
+                                                    period === 'year' ? 42 : 32,
+                                                alignItems: 'center',
+                                            }}
+                                        >
+                                            <View
+                                                style={{
+                                                    height: 112,
+                                                    width: '100%',
+                                                    maxWidth: 40,
+                                                    justifyContent: 'flex-end',
+                                                }}
+                                            >
+                                                <View
+                                                    style={{
+                                                        height: value
+                                                            ? Math.max(
+                                                                  5,
+                                                                  (value /
+                                                                      maxChart) *
+                                                                      104,
+                                                              )
+                                                            : 3,
+                                                        borderRadius: 8,
+                                                        backgroundColor:
+                                                            selected
+                                                                ? '#7462e3'
+                                                                : dark
+                                                                  ? '#343955'
+                                                                  : '#dcd9f1',
+                                                    }}
+                                                />
+                                            </View>
+                                            <Text
+                                                style={{
+                                                    color: selected
+                                                        ? '#8b78f0'
+                                                        : muted,
+                                                    marginTop: 10,
+                                                    fontSize: 11,
+                                                    fontWeight: selected
+                                                        ? '800'
+                                                        : '500',
+                                                }}
+                                            >
+                                                {new Intl.DateTimeFormat(
+                                                    i18n.language,
+                                                    { month: 'short' },
+                                                )
+                                                    .format(bucket.date)
+                                                    .replace('.', '')}
+                                            </Text>
+                                            <Text
+                                                numberOfLines={1}
+                                                adjustsFontSizeToFit
+                                                style={{
+                                                    color: text,
+                                                    fontSize: 10,
+                                                    marginTop: 5,
+                                                }}
+                                            >
+                                                {chartMode === 'count'
+                                                    ? number(value)
+                                                    : money(value)}
+                                            </Text>
+                                        </View>
+                                    );
+                                })}
+                            </ScrollView>
+                            <Text
+                                style={[
+                                    styles.hint,
+                                    { color: muted, marginTop: 18 },
+                                ]}
+                            >
+                                {label('chartHint')}
+                            </Text>
+                        </View>
+                        {metrics.selected.length === 0 ? (
+                            <View
+                                style={[
+                                    cardStyle,
+                                    { alignItems: 'center', gap: 12 },
+                                ]}
+                            >
+                                <CalendarDays size={32} color="#8d7ce3" />
+                                <Text
+                                    style={[
+                                        styles.sectionTitle,
+                                        { color: text },
+                                    ]}
+                                >
+                                    {label('emptyTitle')}
+                                </Text>
+                                <Text
+                                    style={[
+                                        styles.hint,
+                                        { color: muted, textAlign: 'center' },
+                                    ]}
+                                >
+                                    {label('emptyBody')}
+                                </Text>
+                                <TouchableOpacity
+                                    accessibilityRole="button"
+                                    onPress={() => router.push('/add-session')}
+                                    style={styles.primaryButton}
+                                >
+                                    <Text
+                                        style={{
+                                            color: '#fff',
+                                            fontWeight: '700',
+                                        }}
+                                    >
+                                        {label('add')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : null}
+                        <View style={cardStyle}>
+                            {heading(label('statusTitle'))}
+                            <View
+                                style={{
+                                    height: 8,
+                                    borderRadius: 5,
+                                    overflow: 'hidden',
+                                    flexDirection: 'row',
+                                    backgroundColor: line,
+                                }}
+                            >
+                                {metrics.selected.length
+                                    ? [
+                                          {
+                                              count: metrics.confirmed.length,
+                                              color: '#8b78e6',
+                                          },
+                                          {
+                                              count: metrics.pending.length,
+                                              color: '#e9ad50',
+                                          },
+                                          {
+                                              count: metrics.cancelled,
+                                              color: '#dca0b8',
+                                          },
+                                      ].map((s, index) =>
+                                          s.count ? (
+                                              <View
+                                                  key={index}
+                                                  style={{
+                                                      flex: s.count,
+                                                      backgroundColor: s.color,
+                                                  }}
+                                              />
+                                          ) : null,
+                                      )
+                                    : null}
+                            </View>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    gap: 10,
+                                    marginTop: 18,
+                                }}
+                            >
+                                {[
+                                    {
+                                        key: 'confirmed',
+                                        count: metrics.confirmed.length,
+                                        color: '#8b78e6',
+                                    },
+                                    {
+                                        key: 'pending',
+                                        count: metrics.pending.length,
+                                        color: '#e9ad50',
+                                    },
+                                    {
+                                        key: 'cancelled',
+                                        count: metrics.cancelled,
+                                        color: '#dca0b8',
+                                    },
+                                ].map((s) => (
+                                    <View key={s.key} style={{ flex: 1 }}>
+                                        <Text
+                                            style={{
+                                                fontSize: 23,
+                                                color: text,
+                                                fontWeight: '800',
+                                            }}
+                                        >
+                                            {s.count}
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                fontSize: 11,
+                                                color: muted,
+                                                marginTop: 5,
+                                            }}
+                                        >
+                                            {label(s.key)}
                                         </Text>
                                     </View>
                                 ))}
                             </View>
-                        </ScrollView>
-                    </View>
-
-                    {/* Upcoming Sessions Card with filter toggle */}
-                    <View
-                        style={{
-                            backgroundColor: isDark ? '#1F2937' : '#F9FAFB',
-                            borderRadius: 12,
-                            padding: 20,
-                            marginBottom: 16
-                        }}
-                    >
-                        {/* Header row */}
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827' }}>
-                                {t('upcoming_sessions')}
-                            </Text>
-                            {/* Filter toggle */}
-                            <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#2A2A2A' : '#E5E7EB', borderRadius: 8, padding: 3 }}>
-                                {(['month', 'future', 'past', 'all'] as const).map(filter => {
-                                    const labels: Record<string, string> = {
-                                        month: t('filter_month'),
-                                        future: t('filter_upcoming'),
-                                        past: t('filter_past'),
-                                        all: t('dash_filter_all')
-                                    };
-                                    const isActive = upcomingFilter === filter;
-                                    return (
-                                        <TouchableOpacity
-                                            key={filter}
-                                            onPress={() => setUpcomingFilter(filter)}
+                            <View style={[styles.facts, { borderColor: line }]}>
+                                <Text style={{ color: muted, fontSize: 12 }}>
+                                    {label('venues')}:{' '}
+                                    <Text
+                                        style={{
+                                            color: text,
+                                            fontWeight: '700',
+                                        }}
+                                    >
+                                        {metrics.venueCount}
+                                    </Text>
+                                </Text>
+                                <Text style={{ color: muted, fontSize: 12 }}>
+                                    {label('perHour')}:{' '}
+                                    <Text
+                                        style={{
+                                            color: text,
+                                            fontWeight: '700',
+                                        }}
+                                    >
+                                        {metrics.hourlyFee === null
+                                            ? '—'
+                                            : money(metrics.hourlyFee)}
+                                    </Text>
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={cardStyle}>
+                            {heading(label('pendingTitle'))}
+                            {pending.length ? (
+                                pending.slice(0, 3).map((s) => (
+                                    <TouchableOpacity
+                                        key={s.id}
+                                        accessibilityRole="button"
+                                        onPress={() =>
+                                            router.push(`/session/${s.id}`)
+                                        }
+                                        style={[
+                                            styles.listRow,
+                                            { borderColor: line },
+                                        ]}
+                                    >
+                                        <View style={{ flex: 1, gap: 5 }}>
+                                            <Text
+                                                numberOfLines={1}
+                                                style={{
+                                                    color: text,
+                                                    fontWeight: '700',
+                                                    fontSize: 14,
+                                                }}
+                                            >
+                                                {s.title}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    color: muted,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                {new Intl.DateTimeFormat(
+                                                    i18n.language,
+                                                    {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                    },
+                                                ).format(
+                                                    new Date(
+                                                        `${s.date.slice(0, 10)}T12:00:00`,
+                                                    ),
+                                                )}{' '}
+                                                · {s.venue}
+                                            </Text>
+                                        </View>
+                                        <ArrowUpRight
+                                            color="#e9ad50"
+                                            size={21}
+                                        />
+                                    </TouchableOpacity>
+                                ))
+                            ) : (
+                                <Text style={{ color: muted, fontSize: 13 }}>
+                                    {label('noPending')}
+                                </Text>
+                            )}
+                        </View>
+                        <View style={cardStyle}>
+                            {heading(label('venueTitle'))}
+                            {metrics.venues.length ? (
+                                metrics.venues.slice(0, 3).map((v, index) => (
+                                    <TouchableOpacity
+                                        key={v.id || v.name}
+                                        accessibilityRole="button"
+                                        onPress={() =>
+                                            router.push(
+                                                v.id
+                                                    ? `/venue/${v.id}`
+                                                    : '/venues',
+                                            )
+                                        }
+                                        style={[
+                                            styles.listRow,
+                                            { borderColor: line },
+                                        ]}
+                                    >
+                                        <View
+                                            style={[
+                                                styles.rank,
+                                                {
+                                                    backgroundColor: dark
+                                                        ? '#282744'
+                                                        : '#f0edfb',
+                                                },
+                                            ]}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: '#8b78e6',
+                                                    fontWeight: '800',
+                                                }}
+                                            >
+                                                {String(index + 1).padStart(
+                                                    2,
+                                                    '0',
+                                                )}
+                                            </Text>
+                                        </View>
+                                        <View style={{ flex: 1, gap: 5 }}>
+                                            <Text
+                                                numberOfLines={1}
+                                                style={{
+                                                    color: text,
+                                                    fontWeight: '700',
+                                                    fontSize: 14,
+                                                }}
+                                            >
+                                                {v.name}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    color: muted,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                {v.count}{' '}
+                                                {label(
+                                                    'sessions',
+                                                ).toLowerCase()}{' '}
+                                                · {money(v.amount)}
+                                            </Text>
+                                        </View>
+                                        <ChevronRight color={muted} size={17} />
+                                    </TouchableOpacity>
+                                ))
+                            ) : (
+                                <Text style={{ color: muted, fontSize: 13 }}>
+                                    {label('noVenues')}
+                                </Text>
+                            )}
+                        </View>
+                        <View style={cardStyle}>
+                            {heading(label('nextGig'), label('nextGigHint'))}
+                            {nextSession ? (
+                                <TouchableOpacity
+                                    accessibilityRole="button"
+                                    onPress={() =>
+                                        router.push(
+                                            `/session/${nextSession.id}`,
+                                        )
+                                    }
+                                    style={{ gap: 10 }}
+                                >
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <Text
                                             style={{
-                                                paddingHorizontal: 10,
-                                                paddingVertical: 8,
-                                                borderRadius: 6,
-                                                backgroundColor: isActive ? (isDark ? '#374151' : '#FFFFFF') : 'transparent',
-                                                shadowColor: '#000',
-                                                shadowOffset: { width: 0, height: 1 },
-                                                shadowOpacity: isActive ? 0.1 : 0,
-                                                shadowRadius: 1,
-                                                elevation: isActive ? 1 : 0
+                                                color: text,
+                                                fontSize: 19,
+                                                fontWeight: '800',
+                                                flex: 1,
                                             }}
                                         >
-                                            <Text style={{ fontSize: 9, fontWeight: '700', color: isActive ? (isDark ? '#60A5FA' : '#2563EB') : '#9CA3AF' }}>
-                                                {labels[filter]}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        </View>
-
-                        {/* Progress bar */}
-                        <View style={{ height: 6, backgroundColor: isDark ? '#333333' : '#D1D5DB', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
-                            <View
-                                style={{
-                                    height: '100%',
-                                    marginBottom: 2,
-                                    width: `${Math.max(filteredRatio, 4)}%`,
-                                    backgroundColor: '#2563EB',
-                                    borderRadius: 4
-                                }}
-                            />
-                        </View>
-
-                        {/* Stats: number + labels stacked */}
-                        <View style={{ flexDirection: 'column' }}>
-                            <Text style={{ fontSize: 52, fontWeight: '900', color: isDark ? '#FFFFFF' : '#111827', lineHeight: 52, marginBottom: 8 }}>
-                                {filteredTotal}
-                            </Text>
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                                {filteredConfirmed > 0 && (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563EB', marginRight: 4 }} />
-                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                            {t('confirmed')} ({filteredConfirmed})
+                                            {nextSession.title}
                                         </Text>
+                                        <ArrowUpRight
+                                            color="#8b78e6"
+                                            size={22}
+                                        />
                                     </View>
-                                )}
-                                {filteredPending > 0 && (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F97316', marginRight: 4 }} />
-                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                            {t('pending')} ({filteredPending})
-                                        </Text>
-                                    </View>
-                                )}
-                                {filteredCancelled > 0 && (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', marginRight: 4 }} />
-                                        <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
-                                            {t('cancelled_label')} ({filteredCancelled})
-                                        </Text>
-                                    </View>
-                                )}
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* KPI row: avg price/session + avg sessions/month */}
-                    {(() => {
-                        const now = new Date();
-                        const currentYear = now.getFullYear();
-                        const monthsElapsed = now.getMonth() + 1; // 1-12
-
-                        // Use yearly sessions data (non-cancelled, current year)
-                        const yearlySessions = sessions.filter(s => {
-                            if (!s.date) return false;
-                            return parseInt(s.date.split('T')[0].split('-')[0], 10) === currentYear
-                                && s.status !== 'cancelled';
-                        });
-                        const yearlyEarnings = yearlySessions.reduce((sum, s) => sum + calculateSessionEarnings(s), 0);
-                        const paidSessions = yearlySessions.filter(s => calculateSessionEarnings(s) > 0);
-
-                        const avgPrice = paidSessions.length > 0 ? Math.round(yearlyEarnings / paidSessions.length) : 0;
-                        const avgSessionsPerMonth = Math.round((yearlySessions.length / monthsElapsed) * 10) / 10;
-
-                        return (
-                            <>
-                                <View className="flex-row flex-wrap gap-3 mb-3">
-                                    <View className="flex-1 min-w-[150px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800/50 rounded-xl p-4">
-                                        <Text className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
-                                            {t('avg_price_session')}
-                                        </Text>
-                                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                            {avgPrice > 0 ? `${avgPrice.toLocaleString()}€` : '—'}
-                                        </Text>
-                                    </View>
-                                    <View className="flex-1 min-w-[150px] bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800/50 rounded-xl p-4">
-                                        <Text className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
-                                            {t('avg_sessions_month')}
-                                        </Text>
-                                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                            {avgSessionsPerMonth > 0 ? avgSessionsPerMonth.toLocaleString() : '—'}
-                                        </Text>
-                                    </View>
-                                </View>
-
-                                <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 16, marginBottom: 12 }}>
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                        {t('top_collaborator')} (TOP 3)
+                                    <Text
+                                        style={{ color: muted, fontSize: 13 }}
+                                    >
+                                        {new Intl.DateTimeFormat(
+                                            i18n.language,
+                                            {
+                                                weekday: 'short',
+                                                day: 'numeric',
+                                                month: 'short',
+                                            },
+                                        ).format(
+                                            new Date(
+                                                `${nextSession.date.slice(0, 10)}T12:00:00`,
+                                            ),
+                                        )}{' '}
+                                        · {nextSession.start_time.slice(0, 5)}–
+                                        {nextSession.end_time.slice(0, 5)}
                                     </Text>
-                                    <View style={{ gap: 10 }}>
-                                        {topCollaborators.length > 0 ? topCollaborators.map((c, i) => (
-                                            <View key={c.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                        <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                                    </View>
-                                                    <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                        {c.name}
-                                                    </Text>
-                                                </View>
-                                                <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#10B981' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                                    {c.count} {c.count === 1 ? t('session_singular') : t('sessions_plural')}
-                                                </Text>
-                                            </View>
-                                        )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                                    </View>
-                                </View>
-                            </>
-                        );
-                    })()}
-
-                    {/* Ranking Lists: Rentable & Visited */}
-                    <View style={{ gap: 12, marginBottom: 12 }}>
-                        {/* Most profitable list */}
-                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                {t('top_venue_year')} (TOP 3)
-                            </Text>
-                            <View style={{ gap: 10 }}>
-                                {topVenues.length > 0 ? topVenues.map((v, i) => (
-                                    <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                            </View>
-                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                {v.name}
-                                            </Text>
-                                        </View>
-                                        <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                            {v.amount.toLocaleString()}€
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            gap: 6,
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <MapPin color={muted} size={14} />
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontSize: 13,
+                                                flex: 1,
+                                            }}
+                                        >
+                                            {nextSession.venue}
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                color:
+                                                    nextSession.status ===
+                                                    'pending'
+                                                        ? '#c48a32'
+                                                        : '#8b78e6',
+                                                fontSize: 11,
+                                                fontWeight: '700',
+                                            }}
+                                        >
+                                            {label(
+                                                nextSession.status === 'pending'
+                                                    ? 'pending'
+                                                    : 'confirmed',
+                                            )}
                                         </Text>
                                     </View>
-                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                            </View>
+                                </TouchableOpacity>
+                            ) : (
+                                <Text style={{ color: muted, fontSize: 13 }}>
+                                    {label('noUpcoming')}
+                                </Text>
+                            )}
                         </View>
-
-                        {/* Most visited list */}
-                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                {t('top_venue_visits')} (TOP 3)
-                            </Text>
-                            <View style={{ gap: 10 }}>
-                                {topVisitedVenues.length > 0 ? topVisitedVenues.map((v, i) => (
-                                    <View key={v.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                            </View>
-                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                {v.name}
-                                            </Text>
-                                        </View>
-                                        <Text style={{ fontSize: 13, fontWeight: '700', color: i === 0 ? '#F9A8D4' : (isDark ? '#9CA3AF' : '#6B7280') }}>
-                                            {v.count} {v.count === 1 ? t('session_singular') : t('sessions_plural')}
-                                        </Text>
-                                    </View>
-                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Ranking Lists: Sound & Experience */}
-                    <View style={{ gap: 12, marginBottom: 16 }}>
-                        {/* Best sound quality list */}
-                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                {t('best_sound_venue')} (TOP 3)
-                            </Text>
-                            <View style={{ gap: 10 }}>
-                                {bestSoundVenues.length > 0 ? bestSoundVenues.map((v, i) => (
-                                    <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#FACC15' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                            </View>
-                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                {v.name}
-                                            </Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row' }}>
-                                            {'★'.repeat(v.sound_quality || 0).split('').map((s, si) => (
-                                                <Text key={si} style={{ fontSize: 12, color: '#FACC15' }}>{s}</Text>
-                                            ))}
-                                        </View>
-                                    </View>
-                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                            </View>
-                        </View>
-
-                        {/* Best experience list */}
-                        <View style={{ backgroundColor: isDark ? '#1F2937' : '#F9FAFB', borderWidth: 1, borderColor: isDark ? '#374151' : '#F3F4F6', borderRadius: 12, padding: 20 }}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                                {t('best_exp_venue')} (TOP 3)
-                            </Text>
-                            <View style={{ gap: 10 }}>
-                                {bestExpVenues.length > 0 ? bestExpVenues.map((v, i) => (
-                                    <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: isDark ? '#1F2937' : '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                                <Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#3B82F6' : (isDark ? '#9CA3AF' : '#6B7280') }}>{i + 1}</Text>
-                                            </View>
-                                            <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#FFFFFF' : '#111827', flex: 1 }} numberOfLines={1}>
-                                                {v.name}
-                                            </Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row' }}>
-                                            {'★'.repeat(v.experience_rating || 0).split('').map((s, si) => (
-                                                <Text key={si} style={{ fontSize: 12, color: '#3B82F6' }}>{s}</Text>
-                                            ))}
-                                        </View>
-                                    </View>
-                                )) : <Text style={{ color: '#9CA3AF' }}>—</Text>}
-                            </View>
-                        </View>
-                    </View>
-
-                    <View className="h-28" />
-                </View>
+                    </>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
 }
+const styles = StyleSheet.create({
+    screen: { flex: 1 },
+    header: {
+        paddingHorizontal: 24,
+        paddingTop: 18,
+        paddingBottom: 24,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    title: { fontSize: 29, fontWeight: '800', letterSpacing: -0.9 },
+    add: {
+        height: 46,
+        width: 46,
+        borderRadius: 16,
+        backgroundColor: '#6554df',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    controls: { borderRadius: 22, padding: 8, borderWidth: 1 },
+    segment: { flexDirection: 'row', borderRadius: 14, padding: 4 },
+    segmentButton: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderRadius: 11,
+        minHeight: 42,
+    },
+    periodRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
+    arrow: {
+        width: 44,
+        height: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    currency: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 22,
+        borderWidth: 1,
+    },
+    hero: { borderRadius: 28, padding: 25, overflow: 'hidden' },
+    heroOrb: {
+        position: 'absolute',
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        borderWidth: 30,
+        borderColor: '#ffffff08',
+        right: -40,
+        bottom: -70,
+    },
+    heroTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+    },
+    heroCurrency: {
+        color: '#dfd8ff',
+        fontSize: 11,
+        fontWeight: '800',
+        backgroundColor: '#ffffff14',
+        borderRadius: 10,
+        paddingHorizontal: 9,
+        paddingVertical: 6,
+    },
+    heroValue: {
+        fontSize: 46,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -1.5,
+        marginTop: 17,
+        marginBottom: 7,
+    },
+    heroBottom: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginTop: 22,
+    },
+    growth: {
+        paddingVertical: 6,
+        paddingHorizontal: 9,
+        backgroundColor: '#ffffff13',
+        borderRadius: 9,
+    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    metric: {
+        width: '48%',
+        flexGrow: 1,
+        flexBasis: '45%',
+        padding: 18,
+        borderRadius: 24,
+        borderWidth: 1,
+        minHeight: 165,
+    },
+    iconBox: {
+        width: 37,
+        height: 37,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 15,
+    },
+    label: { fontSize: 12, fontWeight: '600', marginBottom: 7 },
+    metricValue: {
+        fontSize: 28,
+        fontWeight: '800',
+        letterSpacing: -0.7,
+        marginBottom: 6,
+    },
+    hint: { fontSize: 11, lineHeight: 17 },
+    card: { borderRadius: 26, borderWidth: 1, padding: 22 },
+    sectionTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
+    facts: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        borderTopWidth: 1,
+        marginTop: 22,
+        paddingTop: 17,
+    },
+    listRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        minHeight: 65,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        paddingVertical: 13,
+    },
+    rank: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    primaryButton: {
+        paddingVertical: 14,
+        paddingHorizontal: 22,
+        backgroundColor: '#6554df',
+        borderRadius: 15,
+        marginTop: 4,
+    },
+    retry: { minHeight: 44, justifyContent: 'center' },
+});

@@ -27,6 +27,15 @@ npm run web
 - Las repeticiones mensuales conservan el día original o el último día disponible del mes. Las series se guardan en una única transacción, hasta 500 sesiones por operación.
 - Cada sesión puede exportarse como `.ics`, con un aviso dos horas antes. La aplicación de calendario debe importar el archivo y respetar sus avisos. Se conserva el horario local introducido; todavía no hay zona horaria específica por local ni sincronización automática de cambios posteriores.
 
+## Dashboard y documentos
+
+- Dashboard permite navegar por mes o año y elegir moneda para los importes. La actividad incluye todas las monedas, sin sumarlas financieramente.
+- Los ingresos corresponden a honorarios acordados de sesiones confirmadas, no a cobros. Los pendientes se muestran aparte y las cancelaciones se excluyen de ingresos y horas.
+- Incluye horas programadas y realizadas, media de sesiones remuneradas, media por hora, estado de agenda, locales frecuentes y acceso a pendientes y próxima sesión.
+- El balance es una previsión: honorarios confirmados menos gastos del periodo. Los gastos históricos no tienen moneda y se tratan como EUR, igual que en la interfaz anterior; en otras monedas no se calcula balance.
+- La comparación utiliza el periodo anterior completo. El gráfico muestra seis meses hasta el mes elegido, o los doce meses del año seleccionado.
+- Documentos permanece conservado bajo `FEATURES.documents = false`: se ocultan su pestaña y los bloques de sesiones/locales, sus rutas redirigen a Inicio y no se consultan carpetas. No se borran datos ni archivos.
+
 ## Supabase
 
 Proyecto: `voyurnwckmateohuzbab`.

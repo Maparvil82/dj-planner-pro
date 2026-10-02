@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import React, { useState, useEffect, useContext } from 'react';
 import {
     View,
@@ -520,6 +521,8 @@ export default function VenueDetailScreen() {
                         </View>
 
                         {/* VAULT / DOCUMENTS SECTION */}
+                        {FEATURES.documents && (<>
+
                         <View className="mt-10 mb-4 px-1">
                             <View className="flex-row items-center justify-between mb-4">
                                 <View className="flex-row items-center">
@@ -610,6 +613,7 @@ export default function VenueDetailScreen() {
                             )}
                         </View>
 
+                        </>)}
                         <View className="mt-6">
                             <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                 {t('venue_notes')}

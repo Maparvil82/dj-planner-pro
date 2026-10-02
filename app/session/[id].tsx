@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import React, { useContext, useState } from 'react';
 import {
     View,
@@ -342,6 +343,8 @@ export default function SessionDetailScreen() {
                 </View>
 
                 {/* VAULT SECTION (MOVED TO BOTTOM) */}
+                {FEATURES.documents && (<>
+
                 <View className="mt-8 px-2">
                     <View className="flex-row items-center justify-between mb-4">
                         <View className="flex-row items-center">
@@ -431,6 +434,7 @@ export default function SessionDetailScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
+                </>)}
             </ScrollView>
 
             {/* Color Modal */}

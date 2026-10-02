@@ -6,6 +6,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
+import { FEATURES } from '../../src/config/features';
 import { Avatar } from '../../src/components/ui/Avatar';
 
 export default function TabLayout() {
@@ -71,6 +72,7 @@ export default function TabLayout() {
             <ExpoTabs.Screen
                 name="vault"
                 options={{
+                    href: FEATURES.documents ? undefined : null,
                     title: t('vault_title') || t('vault') || 'Documentos',
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => {

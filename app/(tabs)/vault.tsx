@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import React, { useState, useContext } from 'react';
 import {
     View,
@@ -30,11 +31,15 @@ import {
     X,
     FolderPlus
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Redirect } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function VaultScreen() {
+    return FEATURES.documents ? <VaultScreenContent /> : <Redirect href="/(tabs)/home" />;
+}
+
+function VaultScreenContent() {
     const { t } = useTranslation();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);

@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import React, { useState, useContext } from 'react';
 import {
     View,
@@ -41,6 +42,10 @@ import { decode } from 'base64-arraybuffer';
 const { width } = Dimensions.get('window');
 
 export default function FolderDetailScreen() {
+    return FEATURES.documents ? <FolderDetailScreenContent /> : <Redirect href="/(tabs)/home" />;
+}
+
+function FolderDetailScreenContent() {
     const { id, name } = useLocalSearchParams<{ id: string, name: string }>();
     const { t } = useTranslation();
     const router = useRouter();
