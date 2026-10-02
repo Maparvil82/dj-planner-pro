@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Text, View, AppState } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useTheme } from '../../contexts/ThemeContext';
 import { sessionPhase } from '../../utils/sessionWorkflow';
 import type { Session } from '../../types/session';
 export function SessionStatusBadge({ session }: { session: Session }) {
     const { t } = useTranslation();
+    const { activeTheme } = useTheme();
+    const dark = activeTheme === 'dark';
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
@@ -19,12 +22,20 @@ export function SessionStatusBadge({ session }: { session: Session }) {
     const phase = sessionPhase(session, now);
     const color =
         phase === 'pending'
-            ? '#ae7619'
+            ? dark
+                ? '#e6b85c'
+                : '#956414'
             : phase === 'cancelled'
-              ? '#c35671'
+              ? dark
+                  ? '#f19ab1'
+                  : '#c35671'
               : phase === 'ongoing'
-                ? '#088b79'
-                : '#8270d5';
+                ? dark
+                    ? '#66d4c0'
+                    : '#088b79'
+                : dark
+                  ? '#b5a8f7'
+                  : '#7666cf';
     return (
         <View
             style={{

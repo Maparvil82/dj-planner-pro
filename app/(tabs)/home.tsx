@@ -1,11 +1,11 @@
 import { PageHeader } from '../../src/components/ui/PageHeader';
-import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
+import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
+import { HomeSessionCard } from '../../src/components/home/HomeSessionCard';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
-import { CurrencyTotals } from '../../src/components/sessions/CurrencyTotals';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
@@ -158,12 +158,12 @@ export default function HomeScreen() {
                                 router.push(`/session/${day.sessions[0].id}` as any);
                             }
                         }}
-                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700' : 'bg-transparent'}`}
+                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-[#292743] border border-[#dcd6f8] dark:border-[#4a4178]' : 'bg-transparent'}`}
                     >
-                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
                             {day.dayName}
                         </Text>
-                        <Text className={`text-md font-normal ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-800'}`}>
+                        <Text className={`text-md font-normal ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
                             {day.dayNumber}
                         </Text>
                         {day.sessions.length > 0 && (
@@ -191,7 +191,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
             </PageHeader>
 
-            <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="max-w-5xl w-full mx-auto px-4">
 
 
@@ -224,81 +224,43 @@ export default function HomeScreen() {
                     </View>
 
 
-                    {/* MONTHLY EARNINGS CARD */}
-                    <View className="mb-10">
-                        <View className="flex-row gap-4 px-2">
-                            {/* Earned So Far Card */}
-                            <TouchableOpacity
-                                className="flex-1 bg-neutral-200 dark:bg-gray-900 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/40"
-                                activeOpacity={0.7}
-                                onPress={() => setIsEarningsModalVisible(true)}
-                            >
-                                <View className="flex-row items-center justify-between mb-1">
-                                    <Text className="text-xs font-semibold text-neutral-800 dark:text-gray-400 uppercase tracking-wider">
-                                        {t('workflow.completedFees')}
-                                    </Text>
-                                    <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                </View>
-
-                                <CurrencyTotals totals={earnedTotals} />
-                                <Text className="text-sm font-medium neutral-800  dark:text-gray-500 mt-2 flex-wrap">
-                                    {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
-                                </Text>
-                            </TouchableOpacity>
-
-                            {/* Projected Total Card */}
-                            <TouchableOpacity
-                                className="flex-1 bg-neutral-800 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-neutral-200 dark:border-emerald-800/40"
-                                activeOpacity={0.7}
-                                onPress={() => setIsProjectedModalVisible(true)}
-                            >
-                                <View className="flex-row items-center justify-between mb-1">
-                                    <Text className="text-xs font-semibold text-neutral-400 dark:text-green-400 uppercase tracking-wider">
-                                        {t('insights.revenue')}
-                                    </Text>
-                                    <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                </View>
-
-                                <CurrencyTotals totals={projectedTotals} projected />
-                                <Text className="text-sm font-medium text-neutral-400 dark:text-emerald-500/60 mt-2 flex-wrap">
-                                    {capitalizedMonthName} • {projectedCount} {projectedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, paddingHorizontal: 4 }}>
+                        <HomeSummaryCard title={t('workflow.completedFees')} totals={earnedTotals} caption={`${capitalizedMonthName} · ${earnedCount} ${t(earnedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} onPress={() => setIsEarningsModalVisible(true)} />
+                        <HomeSummaryCard title={t('insights.revenue')} totals={projectedTotals} caption={`${capitalizedMonthName} · ${projectedCount} ${t(projectedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} highlighted onPress={() => setIsProjectedModalVisible(true)} />
                     </View>
 
                     {/* UPCOMING SESSIONS */}
-                    <View className="px-2">
-                        <View className="flex-row items-center justify-between mb-4">
+                    <View style={{ paddingHorizontal: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
                             <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                                 {t('upcoming_sessions')}
                             </Text>
 
-                            <View className="flex-row bg-gray-200 dark:bg-gray-800 rounded-full p-1 border border-gray-300/50 dark:border-gray-700/50">
+                            <View className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('all')}
-                                    className="px-3 py-1.5 rounded-full"
+                                    className="px-3 py-1.5 rounded-xl"
                                     style={{
-                                        backgroundColor: sessionFilter === 'all' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                        backgroundColor: sessionFilter === 'all' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
                                     }}
                                 >
                                     <Text className="text-xs font-bold"
                                         style={{
-                                            color: sessionFilter === 'all' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                            color: sessionFilter === 'all' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
                                         }}>
                                         {t('filter_all') || 'Todas'}
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('month')}
-                                    className="px-3 py-1.5 rounded-full"
+                                    className="px-3 py-1.5 rounded-xl"
                                     style={{
-                                        backgroundColor: sessionFilter === 'month' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                        backgroundColor: sessionFilter === 'month' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
                                     }}
                                 >
                                     <Text className="text-xs font-bold"
                                         style={{
-                                            color: sessionFilter === 'month' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                            color: sessionFilter === 'month' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
                                         }}>
                                         {t('filter_this_month') || 'Este Mes'}
                                     </Text>
@@ -329,76 +291,16 @@ export default function HomeScreen() {
                                             </Text>
                                             <View className="flex-row flex-wrap gap-4">
                                                 {groups[monthLabel].map((session: any) => {
-                                                    const [y, m, d] = session.date.split('-');
-                                                    const sessionDateObj = new Date(Number(y), Number(m) - 1, Number(d));
-                                                    const monthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'short' });
-                                                    const weekdayName = sessionDateObj.toLocaleDateString(currentLanguage, { weekday: 'short' });
-
                                                     return (
                                                         <View key={session.id} className="w-full md:w-[48.5%] lg:w-[32%]">
-                                                            <TouchableOpacity
-                                                                activeOpacity={0.7}
+                                                            <HomeSessionCard
+                                                                session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
-                                                                onLongPress={() => {
-                                                                    Alert.alert(
-                                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                                        [
-                                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                                            {
-                                                                                text: t('delete') || 'Eliminar',
-                                                                                style: 'destructive',
-                                                                                onPress: () => {
-                                                                                    deleteSessionMutation.mutate(session.id);
-                                                                                }
-                                                                            }
-                                                                        ]
-                                                                    );
-                                                                }}
-                                                                className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch"
-                                                            >
-                                                                <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
-                                                                    <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                                        {weekdayName}
-                                                                    </Text>
-                                                                    <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
-                                                                        {d}
-                                                                    </Text>
-                                                                    <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                                        {monthName}
-                                                                    </Text>
-                                                                </View>
-                                                                <View className="flex-1 flex-row items-center p-4">
-                                                                    <View className="flex-1 mr-2">
-                                                                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
-                                                                        <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
-                                                                        <View className="flex-row items-center flex-wrap gap-2">
-                                                                            <SessionStatusBadge session={session} />
-                                                                            <Text className="text-xs font-semibold px-2 py-0.5 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
-
-                                                                            {session.is_collective && (
-                                                                                <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                                                            )}
-                                                                        </View>
-                                                                    </View>
-
-                                                                    {session.earning_type && session.earning_type !== 'free' && (
-                                                                        <View className="items-end justify-center mr-2">
-                                                                            {session.status === 'cancelled' && (
-                                                                                <Text className="text-[9px] font-bold text-red-500 uppercase mb-0.5">{t('status_cancelled')}</Text>
-                                                                            )}
-                                                                            <View className={`px-2 py-1 rounded-lg border ${session.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'}`}>
-                                                                                <Text className={`text-[10px] font-bold ${session.status === 'cancelled' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
-                                                                                    {session.status === 'cancelled' ? '-' : ''}{calculateSessionEarnings(session).toFixed(0)} {session.currency || '€'}
-                                                                                </Text>
-                                                                            </View>
-                                                                        </View>
-                                                                    )}
-                                                                    <View className="justify-center items-center">
-                                                                        <ChevronRight size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                                                    </View>
-                                                                </View>
-                                                            </TouchableOpacity>
+                                                                onLongPress={() => Alert.alert(t('delete_session_title'), t('delete_session_message'), [
+                                                                    { text: t('cancel'), style: 'cancel' },
+                                                                    { text: t('delete'), style: 'destructive', onPress: () => deleteSessionMutation.mutate(session.id) }
+                                                                ])}
+                                                            />
                                                         </View>
                                                     );
                                                 })}
