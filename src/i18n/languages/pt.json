@@ -630,6 +630,7 @@
         "session_update": "{{name}} atualizou «{{title}}»"
     },
     "posterFrame": {
+        "fullPreview": "O cartaz completo aparece num espaço fixo 3:4, com os dados da sessão à direita.",
         "title": "Enquadramento do cartão",
         "dragHint": "Arrasta o cartaz para escolher a parte visível nos cartões.",
         "center": "Centrar imagem",

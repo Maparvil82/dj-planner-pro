@@ -1,4 +1,4 @@
-import { PosterFrameEditor } from '../../src/components/sessions/PosterFrameEditor';
+import { SessionPosterPreview } from '../../src/components/sessions/SessionPosterPreview';
 import type { PosterPosition } from '../../src/utils/posterFrame';
 import { useSessionCollaborators } from '../../src/hooks/useCollaborations';
 import { SessionDJPicker } from '../../src/components/sessions/SessionDJPicker';
@@ -108,7 +108,6 @@ export default function EditSessionScreen() {
         x: 0.5,
         y: 0.5,
     });
-    const [framingPoster, setFramingPoster] = useState(false);
     const [posterUrl, setPosterUrl] = useState<string | null>(null);
     const [isUploadingPoster, setIsUploadingPoster] = useState(false);
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
@@ -618,7 +617,6 @@ export default function EditSessionScreen() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView
-                    scrollEnabled={!framingPoster}
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -1442,11 +1440,9 @@ export default function EditSessionScreen() {
                     >
                         <View className="">
                             {posterUrl ? (
-                                <PosterFrameEditor
+                                <SessionPosterPreview
                                     uri={posterUrl}
-                                    position={posterPosition}
-                                    onChange={setPosterPosition}
-                                    onDragChange={setFramingPoster}
+                                    color={selectedColor}
                                     onRemove={() => {
                                         setPosterUrl(null);
                                         setPosterPosition({ x: 0.5, y: 0.5 });

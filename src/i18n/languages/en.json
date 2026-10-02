@@ -636,6 +636,7 @@
         "session_update": "{{name}} updated “{{title}}”"
     },
     "posterFrame": {
+        "fullPreview": "The full poster appears in a fixed 3:4 area, with session details on its right.",
         "title": "Card framing",
         "dragHint": "Drag the poster to choose which part appears in cards.",
         "center": "Center image",

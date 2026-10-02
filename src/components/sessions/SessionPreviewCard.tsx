@@ -1,4 +1,4 @@
-import { SessionArtwork } from './SessionArtwork';
+import { UpcomingSessionCard } from './UpcomingSessionCard';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -34,6 +34,14 @@ export function SessionPreviewCard({
         month: 'short',
     });
     const fee = session.status === 'cancelled' ? 0 : sessionEarnings(session);
+    if (showPoster)
+        return (
+            <UpcomingSessionCard
+                session={session}
+                onPress={onPress}
+                onLongPress={onLongPress}
+            />
+        );
     return (
         <TouchableOpacity
             accessibilityRole="button"
@@ -49,7 +57,6 @@ export function SessionPreviewCard({
                 backgroundColor: dark ? '#171d2c' : '#fff',
             }}
         >
-            {showPoster && <SessionArtwork session={session} />}
             <View style={{ padding: 18, gap: 16 }}>
                 <View
                     style={{

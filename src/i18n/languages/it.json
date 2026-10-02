@@ -632,6 +632,7 @@
         "session_update": "{{name}} ha aggiornato «{{title}}»"
     },
     "posterFrame": {
+        "fullPreview": "La locandina completa appare in uno spazio fisso 3:4, con i dettagli della sessione a destra.",
         "title": "Inquadratura della scheda",
         "dragHint": "Trascina la locandina per scegliere la parte visibile nelle schede.",
         "center": "Centra immagine",
