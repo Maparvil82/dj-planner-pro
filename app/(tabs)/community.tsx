@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, useFocusEffect, useRouter } from 'expo-router';
-import { Users, UserRound } from 'lucide-react-native';
+import { Users } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { PageHeader } from '../../src/components/ui/PageHeader';
@@ -86,23 +86,7 @@ export default function CommunityScreen() {
             <PageHeader
                 title={t('community.title')}
                 subtitle={t('community.intro')}
-                action={
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel={t('community.myProfile')}
-                        onPress={() => router.push('/(tabs)/profile')}
-                        style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: 16,
-                            backgroundColor: c.tint,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <UserRound size={22} color={c.accent} />
-                    </TouchableOpacity>
-                }
+                action={null}
             />
             <ScrollView
                 keyboardShouldPersistTaps="handled"

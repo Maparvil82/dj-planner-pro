@@ -7,7 +7,7 @@ import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
 import { FEATURES } from '../../src/config/features';
-import { Avatar } from '../../src/components/ui/Avatar';
+import { TabProfileIcon } from '../../src/components/ui/TabProfileIcon';
 
 export default function TabLayout() {
     const { t } = useTranslation();
@@ -108,16 +108,14 @@ export default function TabLayout() {
                 name="profile"
                 options={{
                     title: t('tab_you'),
-                    // @ts-ignore
-                    tabBarIcon: ({ color, size }) => (
-                        <View className={`p-0.5 rounded-full border-2 ${color === (isDark ? '#bdb0f5' : '#6554df') ? 'border-violet-500' : 'border-transparent'}`}>
-                            <Avatar
-                                url={profile?.avatar_url}
-                                name={profile?.artist_name || session?.user?.email}
-                                size="sm"
-                                className="w-6 h-6"
-                            />
-                        </View>
+                    tabBarIcon: ({ color, size, focused }) => (
+                        <TabProfileIcon
+                            url={profile?.avatar_url}
+                            name={profile?.artist_name || session?.user?.email}
+                            size={size}
+                            color={color}
+                            focused={focused}
+                        />
                     ),
                 }}
             />

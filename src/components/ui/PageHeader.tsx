@@ -61,7 +61,7 @@ export function PageHeader({
                     </Text>
                 </View>
                 {children}
-                {action ?? <AddSessionButton />}
+                {action === undefined ? <AddSessionButton /> : action}
             </View>
         </View>
     );
