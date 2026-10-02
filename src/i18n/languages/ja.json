@@ -428,7 +428,9 @@
         "seriesHint": "日付変更はこのセッションのみに適用されます。他の変更はこれ以降にも適用できます。",
         "completedFees": "終了したセッションの報酬",
         "confirmedUpcoming": "今後の確定セッション",
-        "homeIntro": "次のセッションに向けたスケジュール。"
+        "homeIntro": "次のセッションに向けたスケジュール。",
+        "historyIntro": "すべてのセッションを一か所に。"
     },
-    "edit_session": "セッションを編集"
+    "edit_session": "セッションを編集",
+    "back": "戻る"
 }

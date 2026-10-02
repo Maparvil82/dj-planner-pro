@@ -1,6 +1,6 @@
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
-import { HomeSessionCard } from '../../src/components/home/HomeSessionCard';
+import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -293,7 +293,7 @@ export default function HomeScreen() {
                                                 {groups[monthLabel].map((session: any) => {
                                                     return (
                                                         <View key={session.id} className="w-full md:w-[48.5%] lg:w-[32%]">
-                                                            <HomeSessionCard
+                                                            <SessionPreviewCard
                                                                 session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
                                                                 onLongPress={() => Alert.alert(t('delete_session_title'), t('delete_session_message'), [

@@ -429,7 +429,9 @@
         "seriesHint": "Ein Datumswechsel betrifft nur diese Session. Andere Änderungen können auch folgende Sessions betreffen.",
         "completedFees": "Honorare beendeter Sessions",
         "confirmedUpcoming": "Anstehende bestätigte",
-        "homeIntro": "Dein Plan für die nächste Session."
+        "homeIntro": "Dein Plan für die nächste Session.",
+        "historyIntro": "Alle deine Sessions an einem Ort."
     },
-    "edit_session": "Session bearbeiten"
+    "edit_session": "Session bearbeiten",
+    "back": "Zurück"
 }

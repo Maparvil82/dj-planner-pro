@@ -433,7 +433,9 @@
         "seriesHint": "Changing the date affects only this session. Other changes can apply to this and following sessions.",
         "completedFees": "Completed session fees",
         "confirmedUpcoming": "Upcoming confirmed",
-        "homeIntro": "Your schedule, ready for the next session."
+        "homeIntro": "Your schedule, ready for the next session.",
+        "historyIntro": "All your sessions, in one place."
     },
-    "edit_session": "Edit session"
+    "edit_session": "Edit session",
+    "back": "Back"
 }

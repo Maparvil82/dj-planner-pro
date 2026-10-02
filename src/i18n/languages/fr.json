@@ -427,7 +427,9 @@
         "seriesHint": "Changer la date affecte uniquement cette session. Les autres changements peuvent concerner les suivantes.",
         "completedFees": "Cachets des sessions terminées",
         "confirmedUpcoming": "Confirmées à venir",
-        "homeIntro": "Votre agenda, prêt pour la prochaine session."
+        "homeIntro": "Votre agenda, prêt pour la prochaine session.",
+        "historyIntro": "Toutes vos sessions, au même endroit."
     },
-    "edit_session": "Modifier la session"
+    "edit_session": "Modifier la session",
+    "back": "Retour"
 }

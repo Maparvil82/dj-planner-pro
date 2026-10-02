@@ -429,7 +429,9 @@
         "seriesHint": "Cambiar la fecha afecta solo a esta sesión. Los demás cambios pueden aplicarse a esta y las siguientes.",
         "completedFees": "Caché realizado",
         "confirmedUpcoming": "Confirmadas por realizar",
-        "homeIntro": "Tu agenda, lista para la próxima sesión."
+        "homeIntro": "Tu agenda, lista para la próxima sesión.",
+        "historyIntro": "Todas tus sesiones, en un mismo lugar."
     },
-    "edit_session": "Editar sesión"
+    "edit_session": "Editar sesión",
+    "back": "Volver"
 }

@@ -4,16 +4,18 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { Session } from '../../types/session';
 import { sessionEarnings } from '../../utils/sessionPlanning';
-import { SessionStatusBadge } from '../sessions/SessionStatusBadge';
+import { SessionStatusBadge } from './SessionStatusBadge';
 
-export function HomeSessionCard({
+export function SessionPreviewCard({
     session,
     onPress,
     onLongPress,
+    showDjs = false,
 }: {
     session: Session;
     onPress: () => void;
-    onLongPress: () => void;
+    onLongPress?: () => void;
+    showDjs?: boolean;
 }) {
     const { activeTheme } = useTheme();
     const { currentLanguage } = useTranslation();
@@ -28,7 +30,7 @@ export function HomeSessionCard({
     const monthName = date.toLocaleDateString(currentLanguage, {
         month: 'short',
     });
-    const fee = sessionEarnings(session);
+    const fee = session.status === 'cancelled' ? 0 : sessionEarnings(session);
     return (
         <TouchableOpacity
             accessibilityRole="button"
@@ -133,6 +135,18 @@ export function HomeSessionCard({
                         </Text>
                     </View>
                     <SessionStatusBadge session={session} />
+                    {showDjs && session.is_collective && session.djs?.length ? (
+                        <Text
+                            numberOfLines={2}
+                            style={{
+                                color: muted,
+                                fontSize: 11,
+                                lineHeight: 15,
+                            }}
+                        >
+                            {session.djs.join(', ')}
+                        </Text>
+                    ) : null}
                 </View>
                 <ChevronRight size={17} color={dark ? '#657089' : '#afb5c5'} />
             </View>

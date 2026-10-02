@@ -427,7 +427,9 @@
         "seriesHint": "Alterar a data afeta apenas esta sessão. As outras alterações podem aplicar-se às seguintes.",
         "completedFees": "Cachê realizado",
         "confirmedUpcoming": "Confirmadas por realizar",
-        "homeIntro": "A tua agenda, pronta para a próxima sessão."
+        "homeIntro": "A tua agenda, pronta para a próxima sessão.",
+        "historyIntro": "Todas as tuas sessões, num só lugar."
     },
-    "edit_session": "Editar sessão"
+    "edit_session": "Editar sessão",
+    "back": "Voltar"
 }
