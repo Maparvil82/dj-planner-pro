@@ -7,10 +7,13 @@ import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
 import { FEATURES } from '../../src/config/features';
+import { useUnreadNotifications } from '../../src/hooks/useNotifications';
 import { TabProfileIcon } from '../../src/components/ui/TabProfileIcon';
 
 export default function TabLayout() {
     const { t } = useTranslation();
+    const unread = useUnreadNotifications();
+    const unreadCount = unread.data || 0;
     const { width } = useWindowDimensions();
     const { session, profile, initialized, hasSeenOnboarding } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
@@ -18,7 +21,14 @@ export default function TabLayout() {
 
     if (!initialized) {
         return (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#111827' : '#FFFFFF' }}>
+            <View
+                style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isDark ? '#111827' : '#FFFFFF',
+                }}
+            >
                 <ActivityIndicator size="large" color="#2563EB" />
             </View>
         );
@@ -58,7 +68,9 @@ export default function TabLayout() {
                 options={{
                     title: t('home'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <Home color={color} size={size} />
+                    ),
                 }}
             />
             <ExpoTabs.Screen
@@ -66,7 +78,9 @@ export default function TabLayout() {
                 options={{
                     title: t('dashboard'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <LayoutDashboard color={color} size={size} />
+                    ),
                 }}
             />
 
@@ -94,20 +108,27 @@ export default function TabLayout() {
                 options={{
                     title: t('venues_title'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <MapPin color={color} size={size} />
+                    ),
                 }}
             />
             <ExpoTabs.Screen
                 name="community"
                 options={{
                     title: t('community.title'),
-                    tabBarIcon: ({ color, size }) => <Users color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <Users color={color} size={size} />
+                    ),
                 }}
             />
             <ExpoTabs.Screen
                 name="profile"
                 options={{
                     title: t('tab_you'),
+                    tabBarAccessibilityLabel: unreadCount
+                        ? `${t('tab_you')}, ${t('notifications.openUnread', { count: unreadCount })}`
+                        : t('tab_you'),
                     tabBarIcon: ({ color, size, focused }) => (
                         <TabProfileIcon
                             url={profile?.avatar_url}
@@ -115,6 +136,7 @@ export default function TabLayout() {
                             size={size}
                             color={color}
                             focused={focused}
+                            hasUnread={unreadCount > 0}
                         />
                     ),
                 }}

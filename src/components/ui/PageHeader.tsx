@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { NotificationButton } from './NotificationButton';
 import { AddSessionButton } from './AddSessionButton';
 
 export function PageHeader({
@@ -9,13 +8,11 @@ export function PageHeader({
     subtitle,
     children,
     action,
-    notifications = true,
 }: {
     title: string;
     subtitle: string;
     children?: ReactNode;
     action?: ReactNode;
-    notifications?: boolean;
 }) {
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
@@ -64,7 +61,6 @@ export function PageHeader({
                     </Text>
                 </View>
                 {children}
-                {notifications && <NotificationButton />}
                 {action === undefined ? <AddSessionButton /> : action}
             </View>
         </View>

@@ -25,6 +25,7 @@ import * as Linking from 'expo-linking';
 import { Pencil, Camera, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { Avatar } from '../../src/components/ui/Avatar';
+import { NotificationButton } from '../../src/components/ui/NotificationButton';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { SessionFormSection } from '../../src/components/sessions/SessionFormLayout';
 import {
@@ -385,7 +386,6 @@ export default function ProfileScreen() {
             style={{ flex: 1, backgroundColor: c.bg }}
         >
             <PageHeader
-                notifications={!editing}
                 title={t(editing ? 'edit_profile' : 'unifiedProfile.title')}
                 subtitle={t(
                     editing ? 'profileUX.editIntro' : 'unifiedProfile.intro',
@@ -449,6 +449,7 @@ export default function ProfileScreen() {
                                 loading
                             />
                         )}
+                        {!editing && <NotificationButton />}
                         <SessionFormSection
                             title={t('unifiedProfile.identity')}
                             kind="participants"

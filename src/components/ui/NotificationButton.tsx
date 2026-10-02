@@ -1,9 +1,10 @@
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Bell } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useUnreadNotifications } from '../../hooks/useNotifications';
+
 export function NotificationButton() {
     const router = useRouter();
     const { t } = useTranslation();
@@ -20,25 +21,43 @@ export function NotificationButton() {
             )}
             onPress={() => router.push('/notifications')}
             style={{
-                width: 46,
-                height: 46,
-                borderRadius: 16,
-                backgroundColor: dark ? '#20273b' : '#e9eaf3',
-                justifyContent: 'center',
+                padding: 18,
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: dark ? '#263247' : '#e6e9f2',
+                backgroundColor: dark ? '#151e2e' : '#fff',
+                flexDirection: 'row',
+                gap: 12,
                 alignItems: 'center',
             }}
         >
-            <Bell size={21} color={dark ? '#f3f4f8' : '#202538'} />
-            {!!count && (
+            <View style={{ flex: 1, gap: 5 }}>
+                <Text
+                    style={{
+                        color: dark ? '#f3f4f8' : '#202538',
+                        fontSize: 15,
+                        fontWeight: '700',
+                    }}
+                >
+                    {t('notifications.title')}
+                </Text>
+                <Text
+                    style={{
+                        color: dark ? '#a8b2c6' : '#6d7588',
+                        fontSize: 12,
+                        lineHeight: 18,
+                    }}
+                >
+                    {t('notifications.intro')}
+                </Text>
+            </View>
+            {count > 0 && (
                 <View
                     style={{
-                        position: 'absolute',
-                        top: -4,
-                        right: -3,
-                        minWidth: 18,
-                        height: 18,
-                        paddingHorizontal: 4,
-                        borderRadius: 9,
+                        minWidth: 24,
+                        height: 24,
+                        paddingHorizontal: 6,
+                        borderRadius: 12,
                         backgroundColor: '#6554df',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -47,7 +66,7 @@ export function NotificationButton() {
                     <Text
                         style={{
                             color: '#fff',
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: '700',
                         }}
                     >
@@ -55,6 +74,7 @@ export function NotificationButton() {
                     </Text>
                 </View>
             )}
+            <ChevronRight size={17} color={dark ? '#a8b2c6' : '#6d7588'} />
         </TouchableOpacity>
     );
 }
