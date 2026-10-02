@@ -7,7 +7,6 @@ import {
     SessionFormFooter,
 } from '../src/components/sessions/SessionFormLayout';
 import { showError } from '../src/utils/showError';
-import { SessionStatusControl } from '../src/components/sessions/SessionStatusControl';
 import { SessionScheduleSummary } from '../src/components/sessions/SessionScheduleSummary';
 import {
     parseSessionAmount,
@@ -66,7 +65,7 @@ export default function AddSessionScreen() {
     const [isChecking, setIsChecking] = useState(false);
     const saving = useRef(false);
     const [title, setTitle] = useState('');
-    const [status, setStatus] = useState<BookingStatus>('pending');
+    const status: BookingStatus = 'confirmed';
     const [venue, setVenue] = useState('');
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
@@ -1036,17 +1035,6 @@ export default function AddSessionScreen() {
                             type={earningType}
                             amount={earningAmount}
                             currency={currency}
-                        />
-                    </SessionFormSection>
-
-                    <SessionFormSection
-                        kind="booking"
-                        title={t('workflow.bookingState')}
-                    >
-                        <SessionStatusControl
-                            value={status}
-                            onChange={setStatus}
-                            showHeading={false}
                         />
                     </SessionFormSection>
 

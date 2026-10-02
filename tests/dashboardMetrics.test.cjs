@@ -223,3 +223,20 @@ test('free and unset fees stay distinct, cancellation denominator includes all b
     assert.equal(m.bestRate.rate, 50);
     assert.equal(m.weekdays[5].count, 4);
 });
+
+test('payment summary counts receipts independently from fees, guests and cancellations', () => {
+    const summary = dashboardMetrics([
+        session({ id:'unpaid', amount_paid:0 }),
+        session({ id:'partial', amount_paid:100 }),
+        session({ id:'paid', amount_paid:300 }),
+        session({ id:'free', earning_type:'free', earning_amount:0 }),
+        session({ id:'guest', is_guest:true }),
+        session({ id:'other-currency', currency:'$', amount_paid:0 }),
+        session({ id:'cancelled', status:'cancelled', amount_paid:100 }),
+    ], [], anchor, 'month', 'EUR');
+    assert.equal(summary.paymentPending.length,3);
+    assert.equal(summary.settled.length,3);
+    assert.equal(summary.cancelled,1);
+    assert.equal(summary.pendingBalance,500);
+    assert.equal(summary.paymentPending.length + summary.settled.length + summary.cancelled,summary.selected.length);
+});

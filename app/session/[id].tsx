@@ -1,9 +1,7 @@
+import { SessionPayments } from '../../src/components/sessions/SessionPayments';
 import { SessionCollaborationDetails } from '../../src/components/sessions/SessionCollaborationDetails';
 import { SessionCommunitySharing } from '../../src/components/community/SessionCommunitySharing';
-import {
-    sessionDuration,
-    sessionEarnings,
-} from '../../src/utils/sessionPlanning';
+import { sessionDuration } from '../../src/utils/sessionPlanning';
 import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
 import { FEATURES } from '../../src/config/features';
 import React, { useContext, useState } from 'react';
@@ -158,7 +156,6 @@ export default function SessionDetailScreen() {
         formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
     const duration = sessionDuration(session);
-    const earnings = sessionEarnings(session);
 
     return (
         <SafeAreaView
@@ -282,48 +279,7 @@ export default function SessionDetailScreen() {
                     </View>
                 )}
 
-                {/* Earnings Section */}
-                {!session.is_guest && (
-                    <>
-                        <View className="bg-gray-50 dark:bg-gray-900 rounded-3xl p-6 flex-row items-center mb-6">
-                            <View className="flex-1">
-                                <View className="flex-row justify-between items-start">
-                                    <View>
-                                        <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">
-                                            {t('estimated_total_label') ||
-                                                'Total estimado'}
-                                        </Text>
-                                        <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                            {(session.status === 'cancelled'
-                                                ? 0
-                                                : earnings
-                                            ).toFixed(2)}{' '}
-                                            {session.currency || '€'}
-                                        </Text>
-                                    </View>
-                                    <View className="items-end">
-                                        <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">
-                                            {t('payment_method') || 'Cálculo'}
-                                        </Text>
-                                        <Text className="text-xs font-bold text-gray-600 dark:text-gray-400">
-                                            {session.earning_type ===
-                                                'hourly' &&
-                                                t('calc_hourly', {
-                                                    amount: session.earning_amount,
-                                                    currency: session.currency,
-                                                    hours: duration.toFixed(1),
-                                                })}
-                                            {session.earning_type === 'fixed' &&
-                                                t('calc_fixed')}
-                                            {session.earning_type === 'free' &&
-                                                t('calc_free')}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                    </>
-                )}
+                {!session.is_guest && <SessionPayments session={session} />}
                 {/* Venue Section */}
                 <TouchableOpacity
                     onPress={() => {

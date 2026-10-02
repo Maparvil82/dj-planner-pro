@@ -3,7 +3,6 @@ import { localDateString, sessionRange } from './sessionPlanning';
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled';
 export function sessionPhase(session: Session, now = new Date()) {
     if (session.status === 'cancelled') return 'cancelled';
-    if (session.status === 'pending') return 'pending';
     const { start, end } = sessionRange(session);
     return now < start ? 'confirmed' : now < end ? 'ongoing' : 'finished';
 }
@@ -73,7 +72,7 @@ export function validateSessionInput(
             (input.earning_type || 'free') === 'free'
                 ? 0
                 : Number(input.earning_amount),
-        status: input.status || 'pending',
+        status: input.status === 'cancelled' ? 'cancelled' : 'confirmed',
     };
 }
 export function relatedSessionTargets(

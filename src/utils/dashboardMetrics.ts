@@ -5,6 +5,7 @@ import {
     sessionDuration,
     sessionEarnings,
     sessionRange,
+    sessionBalance,
 } from './sessionPlanning';
 
 export type DashboardPeriod = 'month' | 'year';
@@ -97,6 +98,13 @@ export function dashboardMetrics(
         pending,
         revenue,
         tentativeRevenue,
+        paymentPending: active.filter(
+            (s) => !s.is_guest && sessionBalance(s) > 0,
+        ),
+        settled: active.filter((s) => s.is_guest || sessionBalance(s) === 0),
+        pendingBalance: active
+            .filter((s) => !s.is_guest && currencyCode(s.currency) === currency)
+            .reduce((sum, s) => sum + sessionBalance(s), 0),
         costs,
         euroExpenses,
         balance: costs === null ? null : revenue - costs,
@@ -288,7 +296,9 @@ export function dashboardInsights(
             ? (summary.cancelled / summary.selected.length) * 100
             : null,
         paid,
-        free: summary.active.filter((s) => !s.is_guest && s.earning_type === 'free').length,
+        free: summary.active.filter(
+            (s) => !s.is_guest && s.earning_type === 'free',
+        ).length,
         unpriced: summary.active.filter(
             (s) => s.earning_type !== 'free' && sessionEarnings(s) <= 0,
         ).length,
@@ -299,6 +309,9 @@ export function dashboardInsights(
         unknownCity,
         nextSessions: nextConfirmed.length,
         nextPending: upcoming.length - nextConfirmed.length,
+        nextPaymentPending: upcoming.filter(
+            (s) => !s.is_guest && sessionBalance(s) > 0,
+        ).length,
         nextHours: nextConfirmed.reduce(
             (sum, s) => sum + sessionDuration(s),
             0,

@@ -1,3 +1,4 @@
+import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -196,8 +197,11 @@ export default function DashboardScreen() {
         [sessions, now],
     );
     const pending = useMemo(
-        () => [...metrics.pending].sort((a, b) => a.date.localeCompare(b.date)),
-        [metrics.pending],
+        () =>
+            [...metrics.paymentPending].sort((a, b) =>
+                a.date.localeCompare(b.date),
+            ),
+        [metrics.paymentPending],
     );
     const number = (n: number, digits = 0) =>
         new Intl.NumberFormat(i18n.language, {
@@ -535,7 +539,7 @@ export default function DashboardScreen() {
                                     {label('previousPeriod')}
                                 </Text>
                             </View>
-                            {metrics.tentativeRevenue > 0 ? (
+                            {metrics.pendingBalance > 0 ? (
                                 <Text
                                     style={{
                                         color: '#d9d2f5',
@@ -544,7 +548,7 @@ export default function DashboardScreen() {
                                     }}
                                 >
                                     {label('potential')}:{' '}
-                                    {money(metrics.tentativeRevenue)}
+                                    {money(metrics.pendingBalance)}
                                 </Text>
                             ) : null}
                         </LinearGradient>
@@ -607,7 +611,7 @@ export default function DashboardScreen() {
                                     { color: muted, marginTop: 16 },
                                 ]}
                             >
-                                {insights.nextPending}{' '}
+                                {insights.nextPaymentPending}{' '}
                                 {label('pending').toLowerCase()}
                             </Text>
                         </View>
@@ -615,7 +619,7 @@ export default function DashboardScreen() {
                             <MetricCard
                                 label={label('sessions')}
                                 value={number(metrics.active.length)}
-                                hint={`${metrics.confirmed.length} ${label('confirmed').toLowerCase()} · ${metrics.pending.length} ${label('pending').toLowerCase()}`}
+                                hint={`${metrics.settled.length} ${label('confirmed').toLowerCase()} · ${metrics.paymentPending.length} ${label('pending').toLowerCase()}`}
 
                                 accent="#7666df"
                                 dark={dark}
@@ -861,11 +865,12 @@ export default function DashboardScreen() {
                                 {metrics.selected.length
                                     ? [
                                           {
-                                              count: metrics.confirmed.length,
+                                              count: metrics.settled.length,
                                               color: '#8b78e6',
                                           },
                                           {
-                                              count: metrics.pending.length,
+                                              count: metrics.paymentPending
+                                                  .length,
                                               color: '#e9ad50',
                                           },
                                           {
@@ -895,12 +900,12 @@ export default function DashboardScreen() {
                                 {[
                                     {
                                         key: 'confirmed',
-                                        count: metrics.confirmed.length,
+                                        count: metrics.settled.length,
                                         color: '#8b78e6',
                                     },
                                     {
                                         key: 'pending',
-                                        count: metrics.pending.length,
+                                        count: metrics.paymentPending.length,
                                         color: '#e9ad50',
                                     },
                                     {
@@ -1592,23 +1597,10 @@ export default function DashboardScreen() {
                                         >
                                             {nextSession.venue}
                                         </Text>
-                                        <Text
-                                            style={{
-                                                color:
-                                                    nextSession.status ===
-                                                    'pending'
-                                                        ? '#c48a32'
-                                                        : '#8b78e6',
-                                                fontSize: 11,
-                                                fontWeight: '700',
-                                            }}
-                                        >
-                                            {label(
-                                                nextSession.status === 'pending'
-                                                    ? 'pending'
-                                                    : 'confirmed',
-                                            )}
-                                        </Text>
+                                        <SessionStatusBadge
+                                            session={nextSession}
+                                            compact
+                                        />
                                     </View>
                                 </TouchableOpacity>
                             ) : (

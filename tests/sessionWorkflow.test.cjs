@@ -15,8 +15,9 @@ test('confirmed booking phase follows overnight start and end boundaries', () =>
     assert.equal(sessionPhase(session(), new Date(2026,9,3,3,59)), 'ongoing');
     assert.equal(sessionPhase(session(), new Date(2026,9,3,4)), 'finished');
 });
-test('pending and cancelled bookings do not become finished automatically', () => {
-    for(const status of ['pending','cancelled']) assert.equal(sessionPhase(session({status}), new Date(2026,10,1)),status);
+test('legacy pending sessions follow time while cancellation remains explicit', () => {
+    assert.equal(sessionPhase(session({status:'pending'}),new Date(2026,10,1)),'finished');
+    assert.equal(sessionPhase(session({status:'cancelled'}),new Date(2026,10,1)),'cancelled');
 });
 test('date validation rejects impossible dates and accepts leap days', () => {
     assert.equal(validSessionDate('2024-02-29'),true);
@@ -27,9 +28,9 @@ test('paid fees accept decimal commas and reject ambiguous or nonpositive amount
     assert.equal(parseSessionAmount('garbage','free'),0);
     for(const amount of ['0','-1','1e3','0xff','12.345','Infinity','1,200.00','1000000000']) assert.throws(()=>parseSessionAmount(amount,'fixed'));
 });
-test('create validation trims names, defaults pending, clears inactive DJ selections and free fees', () => {
+test('create validation trims names, defaults active, clears inactive DJ selections and free fees', () => {
     const result=validateSessionInput(session({title:' Night ',venue:' Club ',status:undefined,is_collective:false,djs:['Old DJ'],earning_type:'free',earning_amount:50}));
-    assert.equal(result.status,'pending');assert.equal(result.title,'Night');assert.deepEqual(result.djs,[]);assert.equal(result.earning_amount,0);
+    assert.equal(result.status,'confirmed');assert.equal(result.title,'Night');assert.deepEqual(result.djs,[]);assert.equal(result.earning_amount,0);
 });
 test('invalid schedules and empty collective sessions are rejected before saving', () => {
     assert.throws(()=>validateSessionInput(session({end_time:'22:00'})),/equalTimes/);

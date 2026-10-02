@@ -14,7 +14,7 @@ function loadUtility(name) {
     loaded._compile(compiled.outputText, filename);
     return loaded.exports;
 }
-const { recurrenceDates, findSessionConflicts, sessionRange, sessionDuration, sessionEarnings, sessionBalance, localDateString, earningsByCurrency } = loadUtility('sessionPlanning');
+const { recurrenceDates, findSessionConflicts, sessionRange, sessionDuration, sessionEarnings, sessionBalance, sessionPaymentState, localDateString, earningsByCurrency } = loadUtility('sessionPlanning');
 const { buildSessionCalendar } = loadUtility('sessionCalendar');
 const session = (overrides = {}) => ({ id: 'test-session', user_id: 'test-owner', title: 'Club night', venue: 'Venue', date: '2026-10-02', start_time: '22:00', end_time: '04:00', earning_type: 'hourly', earning_amount: 50, currency: '€', status: 'confirmed', ...overrides });
 
@@ -105,3 +105,16 @@ test('invited sessions never contribute another DJs fee or currency to own incom
     assert.equal(sessionEarnings(guest), 0);
     assert.deepEqual(earningsByCurrency([guest]), {});
 });
+
+ test('payment badges use amounts independently of the date or cancellation', () => {
+    assert.equal(sessionPaymentState(session()), 'unpaid');
+    assert.equal(sessionPaymentState(session({amount_paid:100})), 'partial');
+    assert.equal(sessionPaymentState(session({amount_paid:300})), 'paid');
+    assert.equal(sessionPaymentState(session({amount_paid:300,date:'2099-01-01'})), 'paid');
+    assert.equal(sessionPaymentState(session({amount_paid:0,date:'2000-01-01'})), 'unpaid');
+    assert.equal(sessionPaymentState(session({status:'cancelled',amount_paid:100})), 'cancelled');
+    assert.equal(sessionPaymentState(session({earning_type:'free'})), 'free');
+    assert.equal(sessionPaymentState(session({earning_type:'free',amount_paid:100})), 'received');
+    assert.equal(sessionPaymentState(session({is_guest:true,amount_paid:300})), 'guest');
+    assert.equal(sessionPaymentState(session({earning_type:'fixed',earning_amount:100.10,amount_paid:100.1})), 'paid');
+ });

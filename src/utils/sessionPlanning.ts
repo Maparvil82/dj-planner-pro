@@ -78,3 +78,13 @@ export function findSessionConflicts(candidates: SessionTiming[], existing: Sess
         return ranges.some(candidate => candidate.start < range.end && range.start < candidate.end);
     });
 }
+
+// Money and cancellation are independent; guests never inherit the organiser's fee.
+export function sessionPaymentState(session: Session) {
+    if (session.status === 'cancelled') return 'cancelled';
+    if (session.is_guest) return 'guest';
+    const total = Math.round(sessionEarnings(session) * 100);
+    const received = Math.round(Number(session.amount_paid || 0) * 100);
+    if (total <= 0) return received > 0 ? 'received' : 'free';
+    return received >= total ? 'paid' : received > 0 ? 'partial' : 'unpaid';
+}

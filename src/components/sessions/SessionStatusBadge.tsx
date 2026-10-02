@@ -3,6 +3,7 @@ import { Text, View, AppState } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { sessionPhase } from '../../utils/sessionWorkflow';
+import { sessionPaymentState } from '../../utils/sessionPlanning';
 import type { Session } from '../../types/session';
 export function SessionStatusBadge({
     session,
@@ -16,6 +17,7 @@ export function SessionStatusBadge({
     const dark = activeTheme === 'dark';
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
+        if (!session.is_guest) return;
         const timer = setInterval(() => setNow(new Date()), 60000);
         const listener = AppState.addEventListener('change', (state) => {
             if (state === 'active') setNow(new Date());
@@ -24,10 +26,11 @@ export function SessionStatusBadge({
             clearInterval(timer);
             listener.remove();
         };
-    }, []);
-    const phase = sessionPhase(session, now);
+    }, [session.is_guest]);
+    const payment = sessionPaymentState(session);
+    const phase = payment === 'guest' ? sessionPhase(session, now) : payment;
     const color =
-        phase === 'pending'
+        phase === 'unpaid' || phase === 'partial'
             ? dark
                 ? '#e6b85c'
                 : '#956414'
@@ -35,7 +38,7 @@ export function SessionStatusBadge({
               ? dark
                   ? '#f19ab1'
                   : '#c35671'
-              : phase === 'ongoing'
+              : phase === 'paid' || phase === 'received' || phase === 'ongoing'
                 ? dark
                     ? '#66d4c0'
                     : '#088b79'
@@ -62,7 +65,11 @@ export function SessionStatusBadge({
                     fontWeight: '700',
                 }}
             >
-                {t(`workflow.${phase}`)}
+                {t(
+                    payment === 'guest'
+                        ? `workflow.${phase}`
+                        : `paymentState.${phase}`,
+                )}
             </Text>
         </View>
     );

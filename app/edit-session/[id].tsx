@@ -145,7 +145,11 @@ export default function EditSessionScreen() {
             setStartTime(remoteSession.start_time?.slice(0, 5) || '22:00');
             setEndTime(remoteSession.end_time?.slice(0, 5) || '04:00');
             setVenueId(remoteSession.venue_id || null);
-            setStatus(remoteSession.status || 'confirmed');
+            setStatus(
+                remoteSession.status === 'cancelled'
+                    ? 'cancelled'
+                    : 'confirmed',
+            );
             setEarningType(remoteSession.earning_type || 'free');
             setEarningAmount(remoteSession.earning_amount?.toString() || '');
             setCurrency(remoteSession.currency || '€');

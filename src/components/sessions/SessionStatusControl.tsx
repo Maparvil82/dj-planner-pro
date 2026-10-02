@@ -17,8 +17,8 @@ export function SessionStatusControl({
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
     const states: BookingStatus[] = allowCancelled
-        ? ['pending', 'confirmed', 'cancelled']
-        : ['pending', 'confirmed'];
+        ? ['confirmed', 'cancelled']
+        : ['confirmed'];
     return (
         <View style={{}}>
             {showHeading ? (
@@ -82,7 +82,11 @@ export function SessionStatusControl({
                                     fontSize: 13,
                                 }}
                             >
-                                {t(`workflow.${status}`)}
+                                {t(
+                                    status === 'cancelled'
+                                        ? 'workflow.cancelled'
+                                        : 'paymentState.active',
+                                )}
                             </Text>
                             <Text
                                 style={{
@@ -92,7 +96,11 @@ export function SessionStatusControl({
                                     marginTop: 3,
                                 }}
                             >
-                                {t(`workflow.${status}Hint`)}
+                                {t(
+                                    status === 'cancelled'
+                                        ? 'paymentState.cancelHint'
+                                        : 'paymentState.activeHint',
+                                )}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -106,7 +114,7 @@ export function SessionStatusControl({
                     marginTop: 10,
                 }}
             >
-                {t('workflow.phaseHint')}
+                {t('paymentState.independent')}
             </Text>
         </View>
     );

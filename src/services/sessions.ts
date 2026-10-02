@@ -212,11 +212,13 @@ export const sessionService = {
         await this.updateSession(sessionId, { color }, user.id, updateAll);
     },
     async updateSession(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll = false): Promise<void> {
+        if (updateAll && input.amount_paid !== undefined) throw new Error('payment_single_session');
+        if (input.amount_paid !== undefined && (!Number.isFinite(input.amount_paid) || input.amount_paid < 0)) throw new Error('payment_invalid_amount');
         const sessions = await this.getAllSessions(userId);
         const current = sessions.find(session => session.id === sessionId);
         if (!current || current.is_guest) throw new Error('error_loading_session');
         const targets = relatedSessionTargets(sessions, current, updateAll);
-        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'dj_profile_ids', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', 'poster_focus_x', 'poster_focus_y', ...(updateAll ? [] : ['date'])];
+        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'dj_profile_ids', 'earning_type', 'earning_amount', 'currency', 'amount_paid', 'color', 'status', 'poster_url', 'poster_focus_x', 'poster_focus_y', ...(updateAll ? [] : ['date'])];
         const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => allowed.includes(key) && value !== undefined));
         if (!Object.keys(changes).length) return;
         if (Object.keys(changes).some(key => key !== 'color')) {
