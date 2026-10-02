@@ -47,6 +47,7 @@ import { setupCalendarLocales } from '../src/i18n/calendarLocales';
 import { confirmAction } from '../src/utils/confirmAction';
 import { localDateString } from '../src/utils/sessionPlanning';
 import { pickSessionPoster } from '../src/services/sessionPoster';
+import { SessionLimitError } from '../src/utils/sessionLimit';
 import { sessionService } from '../src/services/sessions';
 
 setupCalendarLocales();
@@ -350,6 +351,17 @@ export default function AddSessionScreen() {
             const created = await createSessionMutation.mutateAsync(input);
             router.replace(`/session/${created.id}`);
         } catch (error) {
+            if (error instanceof SessionLimitError) {
+                router.push({
+                    pathname: '/paywall',
+                    params: {
+                        reason: 'session-limit',
+                        count: error.usage.count,
+                        requested: error.requested,
+                    },
+                });
+                return;
+            }
             const key = error instanceof Error ? error.message : '';
             showError(
                 t('error'),
@@ -357,7 +369,9 @@ export default function AddSessionScreen() {
                     'invalid_recurrence',
                     'recurrence_limit',
                     'invalid_earning_amount',
-                ].includes(key) || key.startsWith('workflow.')
+                ].includes(key) ||
+                key.startsWith('workflow.') ||
+                key.startsWith('billing.')
                     ? t(key)
                     : t('error_saving_session'),
             );

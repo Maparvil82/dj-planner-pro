@@ -17,15 +17,21 @@ const PRO_ENTITLEMENT_ID = 'DJ Planner Pro';
 
 class RevenueCatService {
     private isConfigured = false;
+    private configurationQueue: Promise<boolean> = Promise.resolve(false);
 
     /**
      * Configures the RevenueCat SDK.
      * @param appUserID - Optional Supabase user.id to sync purchases to the user.
      */
-    async configureRevenueCat(appUserID?: string): Promise<void> {
+    configureRevenueCat(appUserID?: string): Promise<boolean> {
+        // Serialize account changes so a slower previous login cannot win.
+        this.configurationQueue = this.configurationQueue.catch(() => false).then(() => this.configureIdentity(appUserID));
+        return this.configurationQueue;
+    }
+    private async configureIdentity(appUserID?: string): Promise<boolean> {
         if (!API_KEY) {
             console.warn('RevenueCat is not supported on this platform yet or missing API key.');
-            return;
+            return false;
         }
 
         try {
@@ -48,12 +54,14 @@ class RevenueCatService {
                     await Purchases.logIn(appUserID);
                     console.log('[RevenueCat] Logged in with User ID:', appUserID);
                 } else {
-                    await Purchases.logOut();
+                    if (!(await Purchases.isAnonymous())) await Purchases.logOut();
                     console.log('[RevenueCat] Logged out (anonymous)');
                 }
             }
+            return true;
         } catch (error) {
             console.error('[RevenueCat] Failed to configure or switch user:', error);
+            return false;
         }
     }
 
@@ -145,6 +153,7 @@ class RevenueCatService {
      * Fetches the latest customer info state from RevenueCat.
      */
     async getCustomerInfo(): Promise<CustomerInfo | null> {
+        if (!this.isConfigured) return null;
         try {
             return await Purchases.getCustomerInfo();
         } catch (error) {

@@ -95,3 +95,17 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 - `save_unified_profile` guarda la identidad y los datos de DJ en una transacción; una validación fallida no deja cambios parciales. Las modificaciones de correo/contraseña utilizan después el flujo de Auth y muestran los errores sin descartar el formulario. Estos cambios de Auth no forman parte de la transacción de perfil.
 - La vista para otros DJs muestra únicamente los datos autorizados y las sesiones compartidas. El correo, contraseña y ajustes solo aparecen en «Tú». No cambia la visibilidad de sesiones privadas ni se pierden seguimientos o publicaciones.
 - `tests/unified-profile-database.sql` comprueba identidad única, sincronización de foto, guardado atómico, participación voluntaria, aislamiento y conservación de seguimientos/publicaciones. Todas sus escrituras terminan en `ROLLBACK`.
+
+
+## Plan Gratis y PRO
+
+- Gratis incluye todas las funciones actuales y hasta 30 sesiones propias guardadas en total. Cuentan historial, cancelaciones y cada fecha de una serie. Las sesiones recibidas como invitado no cuentan. Eliminar una sesión libera espacio.
+- PRO permite sesiones ilimitadas. Las funciones avanzadas futuras se definirán antes de anunciarlas; la pantalla de pago solo ofrece funciones disponibles.
+- El registro entra directamente en la app. Al guardar una sesión o serie que exceda el límite, se abre `/paywall` sobre el formulario; cerrar conserva el borrador. Tras comprar/restaurar y verificar PRO, el usuario vuelve y pulsa Guardar para finalizar. No se guardan series a medias.
+- El perfil muestra «Mi plan», uso del límite y acceso a PRO o a la gestión de la suscripción de Apple. Una suscripción vencida conserva todas las sesiones existentes y permite consultarlas, editarlas y eliminarlas.
+- Los precios vienen de RevenueCat; no se inventan precios si la tienda no carga. Apple confirma la elegibilidad de las pruebas gratuitas antes de comprar. La restauración solo se considera válida si existe el acceso PRO activo.
+- `subscription-access` valida al usuario con Supabase Auth y consulta RevenueCat v1 usando su ID de cuenta. Nunca acepta una bandera PRO del cliente. La clave pública de iOS permite leer Customer Info; opcionalmente puede usarse `REVENUECAT_API_KEY` como secreto del servidor. La función exige JWT y no devuelve detalles de la compra.
+- El acceso verificado se guarda en `billing_private.subscription_access`, inaccesible para los clientes, durante un máximo de cinco minutos. Cada creación que exceda la cuota gratuita vuelve a consultar RevenueCat. Si no se puede verificar, se pide reintentar y no se guarda ni se redirige como si el usuario hubiese perdido PRO.
+- El límite se comprueba en la base de datos, tanto para series como para inserciones directas, con un bloqueo por propietario que serializa creaciones simultáneas. Las sesiones existentes no se borran al superar el límite.
+- La compra real requiere la versión nativa de iOS/TestFlight; Expo Go y web sirven para probar la interfaz. Android aún no tiene productos de compra configurados.
+- `tests/sessionLimit.test.cjs` verifica el servicio y errores de cuota/conexión. `tests/session-limit-database.sql` prueba el límite, series, permisos, PRO y vencimiento con fixtures dentro de una transacción que termina en `ROLLBACK`.

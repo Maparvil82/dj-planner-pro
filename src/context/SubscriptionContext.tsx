@@ -1,9 +1,19 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
-import Purchases from 'react-native-purchases';
+import React, {
+    createContext,
+    useEffect,
+    useState,
+    ReactNode,
+    useRef,
+} from 'react';
+import Purchases, {
+    CustomerInfo,
+    PurchasesOffering,
+    PurchasesPackage,
+} from 'react-native-purchases';
+import { AppState, Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { rcService } from '../services/revenuecat';
 import { useAuthStore } from '../store/useAuthStore';
-import { Platform } from 'react-native';
 
 interface SubscriptionContextType {
     isPro: boolean;
@@ -18,145 +28,127 @@ interface SubscriptionContextType {
     purchaseAnnual: () => Promise<boolean>;
     restorePurchases: () => Promise<boolean>;
 }
-
-export const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
-
-interface SubscriptionProviderProps {
-    children: ReactNode;
-}
-
-export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children }) => {
-    // Auth context to bind appUserID (Supabase user.id) to RevenueCat
-    const { user } = useAuthStore();
-
-    const [isPro, setIsPro] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [currentOffering, setCurrentOffering] = useState<PurchasesOffering | null>(null);
+export const SubscriptionContext = createContext<
+    SubscriptionContextType | undefined
+>(undefined);
+export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
+    const userId = useAuthStore((state) => state.user?.id);
+    const [isPro, setIsPro] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentOffering, setCurrentOffering] =
+        useState<PurchasesOffering | null>(null);
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-
-    const configuredRef = useRef(false);
-
-    useEffect(() => {
-        // Skip for unsupported platforms right now to avoid errors on web
-        if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
-            setIsLoading(false);
-            return;
-        }
-
-        const initializeRevenueCat = async () => {
-            setIsLoading(true);
-
-            // Configure RC. Using useAuthStore meaning when user changes, this will re-run
-            await rcService.configureRevenueCat(user?.id);
-            configuredRef.current = true;
-
-            await loadData();
-
-            setIsLoading(false);
-        };
-
-        initializeRevenueCat();
-    }, [user?.id]);
-
-    useEffect(() => {
-        if (!configuredRef.current) return;
-
-        // Add a listener to handle customer info updates outside our direct actions (e.g. renewals)
-        // This is recommended by RevenueCat docs to keep state fresh
-        const updateListener = (info: CustomerInfo) => {
-            updateStateWithCustomerInfo(info);
-        };
-
-        Purchases.addCustomerInfoUpdateListener(updateListener);
-        return () => {
-            Purchases.removeCustomerInfoUpdateListener(updateListener);
-        };
-    }, []);
-
-    const loadData = async () => {
-        try {
-            const [info, offering] = await Promise.all([
-                rcService.getCustomerInfo(),
-                rcService.getCurrentOffering(),
-            ]);
-
-            if (info) {
-                updateStateWithCustomerInfo(info);
-            }
-            if (offering) {
-                setCurrentOffering(offering);
-            }
-        } catch (error) {
-            console.error('[SubscriptionProvider] Error loading data:', error);
-        }
-    };
-
-    const updateStateWithCustomerInfo = (info: CustomerInfo) => {
+    const generation = useRef(0);
+    const ready = useRef(false);
+    const apply = (info: CustomerInfo) => {
         setCustomerInfo(info);
         setIsPro(rcService.hasProAccess(info));
     };
-
+    useEffect(() => {
+        const version = ++generation.current;
+        let cancelled = false;
+        let listener: ((info: CustomerInfo) => void) | undefined;
+        ready.current = false;
+        setIsPro(false);
+        setCustomerInfo(null);
+        setCurrentOffering(null);
+        setIsLoading(true);
+        const initialize = async () => {
+            try {
+                if (
+                    Platform.OS !== 'ios' ||
+                    Constants.executionEnvironment ===
+                        ExecutionEnvironment.StoreClient ||
+                    !userId
+                )
+                    return;
+                if (!(await rcService.configureRevenueCat(userId)) || cancelled)
+                    return;
+                // Attach only after configuration; remove on every account switch.
+                listener = (info) => {
+                    if (!cancelled) apply(info);
+                };
+                Purchases.addCustomerInfoUpdateListener(listener);
+                const [info, offering] = await Promise.all([
+                    rcService.getCustomerInfo(),
+                    rcService.getCurrentOffering(),
+                ]);
+                if (cancelled) return;
+                if (info) apply(info);
+                setCurrentOffering(offering);
+                ready.current = true;
+            } finally {
+                if (!cancelled && generation.current === version)
+                    setIsLoading(false);
+            }
+        };
+        void initialize();
+        return () => {
+            cancelled = true;
+            if (listener) Purchases.removeCustomerInfoUpdateListener(listener);
+        };
+    }, [userId]);
     const refreshSubscriptionStatus = async () => {
-        setIsLoading(true);
+        if (!ready.current) return;
+        const version = generation.current;
         const info = await rcService.getCustomerInfo();
-        if (info) {
-            updateStateWithCustomerInfo(info);
-        }
-        setIsLoading(false);
+        if (info && generation.current === version) apply(info);
     };
-
-    const purchaseMonthly = async (): Promise<boolean> => {
-        if (!currentOffering?.monthly) return false;
-
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') void refreshSubscriptionStatus();
+        });
+        return () => subscription.remove();
+    }, [userId]);
+    const purchase = async (pkg: PurchasesPackage | null): Promise<boolean> => {
+        if (!ready.current || !pkg || isLoading) return false;
+        const version = generation.current;
         setIsLoading(true);
-        const result = await rcService.purchasePackage(currentOffering.monthly);
-
-        if (result.success && result.customerInfo) {
-            updateStateWithCustomerInfo(result.customerInfo);
+        try {
+            const result = await rcService.purchasePackage(pkg);
+            if (generation.current !== version) return false;
+            if (result.customerInfo) apply(result.customerInfo);
+            if (result.userCancelled) return false;
+            if (!result.success) throw new Error('billing.purchaseError');
+            return (
+                !!result.customerInfo &&
+                rcService.hasProAccess(result.customerInfo)
+            );
+        } finally {
+            if (generation.current === version) setIsLoading(false);
         }
-        setIsLoading(false);
-        return result.success;
     };
-
-    const purchaseAnnual = async (): Promise<boolean> => {
-        if (!currentOffering?.annual) return false;
-
-        setIsLoading(true);
-        const result = await rcService.purchasePackage(currentOffering.annual);
-
-        if (result.success && result.customerInfo) {
-            updateStateWithCustomerInfo(result.customerInfo);
-        }
-        setIsLoading(false);
-        return result.success;
-    };
-
     const restorePurchases = async (): Promise<boolean> => {
+        if (!ready.current || isLoading) return false;
+        const version = generation.current;
         setIsLoading(true);
-        const result = await rcService.restoreUserPurchases();
-
-        if (result.success && result.customerInfo) {
-            updateStateWithCustomerInfo(result.customerInfo);
+        try {
+            const result = await rcService.restoreUserPurchases();
+            if (generation.current !== version) return false;
+            if (!result.success) throw new Error('billing.restoreError');
+            if (result.customerInfo) apply(result.customerInfo);
+            return (
+                !!result.customerInfo &&
+                rcService.hasProAccess(result.customerInfo)
+            );
+        } finally {
+            if (generation.current === version) setIsLoading(false);
         }
-        setIsLoading(false);
-        return result.success;
     };
-
-    const packages = currentOffering ? rcService.getPackagesFromOffering(currentOffering) : { monthly: null, annual: null };
-
     return (
         <SubscriptionContext.Provider
             value={{
                 isPro,
                 isLoading,
-                offerings: currentOffering, // Backwards compat or generic
+                offerings: currentOffering,
                 currentOffering,
-                monthlyPackage: packages.monthly,
-                annualPackage: packages.annual,
+                monthlyPackage: currentOffering?.monthly || null,
+                annualPackage: currentOffering?.annual || null,
                 customerInfo,
                 refreshSubscriptionStatus,
-                purchaseMonthly,
-                purchaseAnnual,
+                purchaseMonthly: () =>
+                    purchase(currentOffering?.monthly || null),
+                purchaseAnnual: () => purchase(currentOffering?.annual || null),
                 restorePurchases,
             }}
         >

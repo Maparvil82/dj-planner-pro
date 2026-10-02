@@ -1,3 +1,5 @@
+import { exceedsSessionLimit, SessionLimitError } from '../utils/sessionLimit';
+import { getSessionUsage, syncSubscriptionAccess } from './subscriptionAccess';
 import { Platform } from 'react-native';
 import { collaborationService } from './collaborations';
 import { supabase } from '../lib/supabase';
@@ -18,10 +20,16 @@ export const sessionService = {
     async createSession(input: CreateSessionInput, userId: string): Promise<Session> {
         input = validateSessionInput(input);
         const dates = recurrenceDates(input);
+        let usage = await getSessionUsage();
+        // Verify paid access whenever the free allocation would be exceeded,
+        // including renewals, restores and users opening the app on another device.
+        if (usage.count + dates.length > usage.limit) usage = await syncSubscriptionAccess();
+        if (exceedsSessionLimit(usage, dates.length)) throw new SessionLimitError(usage, dates.length);
         const { data, error } = await supabase.rpc('create_session_series', {
             input: { ...input, color: input.color || getColorForString(input.title) },
             session_dates: dates,
         }).single();
+        if (error?.message === 'session_limit_reached') throw new SessionLimitError(await getSessionUsage(), dates.length);
         if (error) throw new Error(error.message);
         if (!data) throw new Error('error_saving_session');
         this.syncTags(input, userId).catch(err => console.warn('Tag synchronization failed', err));

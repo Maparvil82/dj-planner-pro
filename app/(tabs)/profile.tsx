@@ -42,6 +42,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { profileService } from '../../src/services/profile';
 import { DJ_PLATFORMS, normalizeDJLink } from '../../src/utils/communityLinks';
+import { SubscriptionPlan } from '../../src/components/profile/SubscriptionPlan';
 import { AccountEditor } from '../../src/components/profile/AccountEditor';
 import { MusicGenrePicker } from '../../src/components/profile/MusicGenrePicker';
 import {
@@ -810,6 +811,7 @@ export default function ProfileScreen() {
                                 />
                             </SessionFormSection>
                         )}
+                        {!editing && <SubscriptionPlan />}
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}
