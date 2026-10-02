@@ -442,5 +442,17 @@
         "posterHint": "JPG ou PNG · Formato vertical 3:4 recomendado",
         "hourlyAmount": "Valor por hora",
         "fixedAmount": "Valor por sessão"
+    },
+    "places": {
+        "intro": "Os espaços onde toca a tua música.",
+        "search": "Procurar local, cidade ou endereço...",
+        "addIntro": "Guarda um espaço para as tuas sessões.",
+        "details": "Dados do local",
+        "nameHint": "O nome é obrigatório. Podes completar os restantes detalhes mais tarde.",
+        "location": "Localização",
+        "cityPlaceholder": "Ex.: Lisboa",
+        "addressPlaceholder": "Rua e número",
+        "locationHint": "Cidade e endereço são opcionais. A cidade é usada nas tuas métricas.",
+        "saveError": "Não foi possível guardar o local. Tenta novamente."
     }
 }

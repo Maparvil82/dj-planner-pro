@@ -7,10 +7,12 @@ export function PageHeader({
     title,
     subtitle,
     children,
+    action,
 }: {
     title: string;
     subtitle: string;
     children?: ReactNode;
+    action?: ReactNode;
 }) {
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
@@ -59,7 +61,7 @@ export function PageHeader({
                     </Text>
                 </View>
                 {children}
-                <AddSessionButton />
+                {action ?? <AddSessionButton />}
             </View>
         </View>
     );

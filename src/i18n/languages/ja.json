@@ -443,5 +443,17 @@
         "posterHint": "JPGまたはPNG · 縦長3:4を推奨",
         "hourlyAmount": "1時間あたりの金額",
         "fixedAmount": "セッションの金額"
+    },
+    "places": {
+        "intro": "あなたの音楽が流れる場所。",
+        "search": "会場、都市、住所を検索...",
+        "addIntro": "セッションの会場を保存しましょう。",
+        "details": "会場の詳細",
+        "nameHint": "名前は必須です。その他の詳細は後で追加できます。",
+        "location": "場所",
+        "cityPlaceholder": "例：東京",
+        "addressPlaceholder": "通りと番地",
+        "locationHint": "都市と住所は任意です。都市は統計に使用されます。",
+        "saveError": "会場を保存できませんでした。もう一度お試しください。"
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useContext } from 'react';
 import {
     View,
     Text,
@@ -8,334 +8,529 @@ import {
     RefreshControl,
     TextInput,
     Modal,
-    Pressable,
-    Alert,
     KeyboardAvoidingView,
     Platform,
-    Image
 } from 'react-native';
-import { profileService } from '../../src/services/profile';
-import { cn } from '../../src/theme/tw';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-    MapPin,
-    Plus,
-    ChevronRight,
-    Search,
-    X,
-    MapPinned,
-    Phone,
-    FileText,
-    ArrowRight,
-    ArrowLeft,
-    Calendar,
-    Image as ImageIcon,
-    Camera,
-    Loader
-} from 'lucide-react-native';
-import { venueService } from '../../src/services/venues';
-import { useTranslation } from '../../src/i18n/useTranslation';
-import { useAuthStore } from '../../src/store/useAuthStore';
-import { useVenuesQuery, useCreateVenueMutation } from '../../src/hooks/useVenuesQuery';
-import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { Avatar } from '../../src/components/ui/Avatar';
-import { useContext } from 'react';
+import { MapPin, Plus, Search, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '../../src/i18n/useTranslation';
+import {
+    useVenuesQuery,
+    useCreateVenueMutation,
+} from '../../src/hooks/useVenuesQuery';
+import { ThemeContext } from '../../src/contexts/ThemeContext';
+import { PageHeader } from '../../src/components/ui/PageHeader';
+import {
+    SessionFormHeader,
+    SessionFormSection,
+    SessionFormFooter,
+} from '../../src/components/sessions/SessionFormLayout';
+import { VenueListCard } from '../../src/components/venues/VenueListCard';
+import { confirmAction } from '../../src/utils/confirmAction';
+import { showError } from '../../src/utils/showError';
+
+const normalized = (value: string) =>
+    value
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase();
 
 export default function VenuesScreen() {
     const { t } = useTranslation();
-    const { session, profile } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
-
-    const { data: venues, isLoading, refetch, isRefetching } = useVenuesQuery();
+    const {
+        data: venues = [],
+        isLoading,
+        isError,
+        refetch,
+        isRefetching,
+    } = useVenuesQuery();
     const createVenueMutation = useCreateVenueMutation();
-
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-
-    // New Venue State
+    const [focusedField, setFocusedField] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
+    const [newCity, setNewCity] = useState('');
+    const [newAddress, setNewAddress] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-
+    const saving = useRef(false);
+    const text = isDark ? '#f3f4f8' : '#202538',
+        muted = isDark ? '#a8b2c6' : '#6d7588',
+        surface = isDark ? '#171d2c' : '#fff',
+        border = isDark ? '#252d40' : '#e9ecf3',
+        background = isDark ? '#0d1220' : '#f5f6fa';
+    const filtered = useMemo(
+        () =>
+            [...venues]
+                .filter((venue) =>
+                    [venue.name, venue.city, venue.address].some((value) =>
+                        normalized(value || '').includes(
+                            normalized(searchQuery),
+                        ),
+                    ),
+                )
+                .sort((a, b) => a.name.localeCompare(b.name)),
+        [venues, searchQuery],
+    );
     const groupedVenues = useMemo(() => {
-        if (!venues) return [];
-        let filtered = venues;
-
-        if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase();
-            filtered = venues.filter(v =>
-                v.name.toLowerCase().includes(lowerQuery) ||
-                v.address?.toLowerCase().includes(lowerQuery)
-            );
+        const groups = new Map<string, typeof venues>();
+        for (const venue of filtered) {
+            const first = venue.name.charAt(0).toUpperCase(),
+                letter = /[\p{L}\p{N}]/u.test(first) ? first : '#';
+            groups.set(letter, [...(groups.get(letter) || []), venue]);
         }
-
-        // Sort alphabetically
-        filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-
-        const groups: { letter: string; data: typeof venues }[] = [];
-        filtered.forEach(venue => {
-            const letter = venue.name ? venue.name.charAt(0).toUpperCase() : '?';
-            // Group non-letters in '#'
-            const indexLetter = /[A-Z0-9ÄÖÜÑ]/.test(letter) ? letter : '#';
-
-            let group = groups.find(g => g.letter === indexLetter);
-            if (!group) {
-                group = { letter: indexLetter, data: [] };
-                groups.push(group);
-            }
-            group.data.push(venue);
-        });
-
-        // Ensure '#' is at the end if exists, otherwise normal sort
-        groups.sort((a, b) => {
-            if (a.letter === '#') return 1;
-            if (b.letter === '#') return -1;
-            return a.letter.localeCompare(b.letter);
-        });
-
-        return groups;
-    }, [venues, searchQuery]);
-
+        return [...groups.entries()].sort(([a], [b]) =>
+            a === '#' ? 1 : b === '#' ? -1 : a.localeCompare(b),
+        );
+    }, [filtered]);
     const handleCreateVenue = async () => {
-        const normalizedName = newName.trim();
-        if (!normalizedName) {
-            Alert.alert(t('error'), t('missing_fields'));
-            return;
-        }
-
-        const duplicateVenue = venues?.find(v => v.name.toLowerCase() === normalizedName.toLowerCase());
-        if (duplicateVenue) {
-            Alert.alert(
-                t('duplicate_venue_title'),
-                t('duplicate_venue_message'),
-                [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                        text: t('go_to_venue'),
-                        onPress: () => {
-                            setIsAddModalVisible(false);
-                            router.push(`/venue/${duplicateVenue.id}`);
-                        }
-                    }
-                ]
-            );
-            return;
-        }
-
+        if (saving.current || !newName.trim()) return;
+        saving.current = true;
+        setIsSaving(true);
         try {
-            setIsSaving(true);
-            
+            const duplicate = venues.find(
+                (venue) => normalized(venue.name) === normalized(newName),
+            );
+            if (duplicate) {
+                if (
+                    await confirmAction(
+                        t('duplicate_venue_title'),
+                        t('duplicate_venue_message'),
+                        t('cancel'),
+                        t('go_to_venue'),
+                    )
+                ) {
+                    setIsAddModalVisible(false);
+                    router.push(`/venue/${duplicate.id}`);
+                }
+                return;
+            }
             await createVenueMutation.mutateAsync({
-                name: normalizedName
+                name: newName.trim(),
+                ...(newCity.trim() ? { city: newCity.trim() } : {}),
+                ...(newAddress.trim() ? { address: newAddress.trim() } : {}),
             });
-
             setIsAddModalVisible(false);
             setNewName('');
-
-        } catch (error) {
-            Alert.alert(t('error'), t('error_saving_session'));
+            setNewCity('');
+            setNewAddress('');
+        } catch {
+            showError(t('error'), t('places.saveError'));
         } finally {
+            saving.current = false;
             setIsSaving(false);
         }
     };
-
-
-
-    if (isLoading && !isRefetching) {
-        return (
-            <SafeAreaView className="flex-1 bg-white dark:bg-gray-950 items-center justify-center">
-                <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#2563EB'} />
-            </SafeAreaView>
-        );
-    }
-
+    const inputStyle = {
+        borderWidth: 1,
+        borderColor: border,
+        backgroundColor: isDark ? '#111625' : '#f8f9fd',
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        color: text,
+        fontSize: 16,
+    };
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'left', 'right']}>
-            {/* Header */}
-            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
-                    {/* Left Actions - Empty for balance */}
-                    <View className="w-8" />
-
-                    {/* Centered Title */}
-                    <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            {t('venues_title')}
-                        </Text>
-                    </View>
-
-                    {/* Right Actions */}
-                    <View className="flex-row items-center gap-3 ml-auto">
+        <SafeAreaView
+            style={{ flex: 1, backgroundColor: background }}
+            edges={['top', 'left', 'right']}
+        >
+            <PageHeader
+                title={t('venues_title')}
+                subtitle={t('places.intro')}
+                action={
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t('add_venue')}
+                        onPress={() => setIsAddModalVisible(true)}
+                        style={{
+                            width: 46,
+                            height: 46,
+                            borderRadius: 16,
+                            backgroundColor: '#6554df',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Plus size={24} color="#fff" />
+                    </TouchableOpacity>
+                }
+            />
+            <View
+                style={{
+                    flex: 1,
+                    width: '100%',
+                    maxWidth: 900,
+                    alignSelf: 'center',
+                }}
+            >
+                <View
+                    style={{
+                        marginHorizontal: 20,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        borderRadius: 18,
+                        backgroundColor: surface,
+                        borderWidth: 1,
+                        borderColor: border,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                    }}
+                >
+                    <Search size={19} color={muted} />
+                    <TextInput
+                        accessibilityLabel={t('places.search')}
+                        placeholder={t('places.search')}
+                        placeholderTextColor={muted}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            color: text,
+                            fontSize: 14,
+                        }}
+                    />
+                    {searchQuery ? (
                         <TouchableOpacity
-                            onPress={() => setIsAddModalVisible(true)}
-                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
+                            accessibilityRole="button"
+                            accessibilityLabel={t('filter_reset')}
+                            onPress={() => setSearchQuery('')}
                         >
-                            <Plus size={20} color="#FFFFFF" />
+                            <X size={18} color={muted} />
                         </TouchableOpacity>
-                    </View>
+                    ) : null}
                 </View>
-            </View>
-
-            {/* Search Bar & Main Content Container */}
-            <View className="max-w-5xl w-full mx-auto flex-1">
-                <View className="px-6 mt-4">
-                    <View className="flex-row items-center bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800">
-                        <Search size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                        <TextInput
-                            className="flex-1 ml-3 text-gray-900 dark:text-white font-medium"
-                            placeholder={t('search_placeholder')}
-                            placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                        {searchQuery !== '' && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')}>
-                                <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </View>
-
                 <ScrollView
-                    className="flex-1 px-6 mt-4"
-                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{
+                        paddingHorizontal: 20,
+                        paddingTop: 20,
+                        paddingBottom: 110,
+                        gap: 18,
+                    }}
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefetching}
                             onRefresh={refetch}
-                            tintColor={isDark ? '#FFFFFF' : '#000000'}
+                            tintColor="#8270e4"
                         />
                     }
+                    showsVerticalScrollIndicator={false}
                 >
-                    {groupedVenues.length === 0 ? (
-                        <View className="py-20 items-center justify-center">
-                            <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
-                                <MapPin size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                            </View>
-                            <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
-                                {searchQuery ? t('no_results_filtered') : t('no_venues_yet')}
+                    {isLoading ? (
+                        <ActivityIndicator
+                            color="#8270e4"
+                            size="large"
+                            style={{ marginTop: 32 }}
+                        />
+                    ) : isError ? (
+                        <View
+                            style={{
+                                padding: 24,
+                                gap: 16,
+                                backgroundColor: surface,
+                                borderRadius: 24,
+                            }}
+                        >
+                            <Text style={{ color: muted }}>
+                                {t('insights.loadingError')}
                             </Text>
+                            <TouchableOpacity
+                                accessibilityRole="button"
+                                onPress={() => refetch()}
+                            >
+                                <Text
+                                    style={{
+                                        color: '#8270e4',
+                                        fontWeight: '700',
+                                    }}
+                                >
+                                    {t('insights.retry')}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : !filtered.length ? (
+                        <View
+                            style={{
+                                backgroundColor: surface,
+                                borderWidth: 1,
+                                borderColor: border,
+                                borderRadius: 24,
+                                padding: 30,
+                                alignItems: 'center',
+                                gap: 16,
+                            }}
+                        >
+                            <View
+                                style={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: 20,
+                                    backgroundColor: isDark
+                                        ? '#292743'
+                                        : '#f0edfc',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <MapPin size={27} color="#8270e4" />
+                            </View>
+                            <Text
+                                style={{
+                                    color: text,
+                                    fontSize: 16,
+                                    fontWeight: '700',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                {t(
+                                    searchQuery
+                                        ? 'no_results_filtered'
+                                        : 'no_venues_yet',
+                                )}
+                            </Text>
+                            <TouchableOpacity
+                                accessibilityRole="button"
+                                onPress={() =>
+                                    searchQuery
+                                        ? setSearchQuery('')
+                                        : setIsAddModalVisible(true)
+                                }
+                            >
+                                <Text
+                                    style={{
+                                        color: '#8270e4',
+                                        fontWeight: '700',
+                                    }}
+                                >
+                                    {t(
+                                        searchQuery
+                                            ? 'filter_reset'
+                                            : 'add_venue',
+                                    )}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     ) : (
-                        groupedVenues.map((group) => (
-                            <View key={group.letter} className="mb-2">
-                                <Text className="text-sm font-bold text-gray-400 dark:text-gray-500 mb-3 ml-2 mt-2 uppercase tracking-widest">
-                                    {group.letter}
+                        groupedVenues.map(([letter, items]) => (
+                            <View key={letter} style={{ gap: 12 }}>
+                                <Text
+                                    style={{
+                                        color: muted,
+                                        fontSize: 12,
+                                        fontWeight: '700',
+                                        marginLeft: 4,
+                                    }}
+                                >
+                                    {letter}
                                 </Text>
-                                <View className="flex-row flex-wrap gap-4 mb-4">
-                                    {group.data.map((venue) => (
-                                        <TouchableOpacity
+                                <View className="flex-row flex-wrap gap-4">
+                                    {items.map((venue) => (
+                                        <View
                                             key={venue.id}
-                                            activeOpacity={0.7}
-                                            onPress={() => router.push(`/venue/${venue.id}`)}
-                                            className="w-full md:w-[48.5%] lg:w-[32.3%] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 flex-row items-center"
+                                            className="w-full md:w-[48.5%]"
                                         >
-                                            {venue.images && venue.images.length > 0 ? (
-                                                <Image
-                                                    source={{ uri: venue.images[0] }}
-                                                    className="w-12 h-12 rounded-xl mr-3"
-                                                    resizeMode="cover"
-                                                />
-                                            ) : (
-                                                <View className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-xl items-center justify-center mr-3 border border-gray-100 dark:border-gray-700">
-                                                    <ImageIcon size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                                </View>
-                                            )}
-                                            <View className="flex-1">
-                                                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
-                                                    {venue.name}
-                                                </Text>
-                                                {venue.address ? (
-                                                    <Text className="text-gray-500 dark:text-gray-400 text-xs" numberOfLines={1}>
-                                                        {venue.address}
-                                                    </Text>
-                                                ) : (
-                                                    <Text className="text-gray-400 dark:text-gray-600 text-xs italic">
-                                                        {t('venue_address')}...
-                                                    </Text>
-                                                )}
-                                            </View>
-                                            <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                        </TouchableOpacity>
+                                            <VenueListCard
+                                                venue={venue}
+                                                onPress={() =>
+                                                    router.push(
+                                                        `/venue/${venue.id}`,
+                                                    )
+                                                }
+                                            />
+                                        </View>
                                     ))}
                                 </View>
                             </View>
                         ))
                     )}
-                    <View className="h-20" />
                 </ScrollView>
             </View>
-
             <Modal
                 visible={isAddModalVisible}
-                animationType="fade"
-                transparent={true}
-                onRequestClose={() => setIsAddModalVisible(false)}
+                animationType="slide"
+                onRequestClose={() => {
+                    if (!isSaving) setIsAddModalVisible(false);
+                }}
             >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    className="flex-1 bg-black/60 items-center justify-center p-4"
+                <SafeAreaView
+                    style={{ flex: 1, backgroundColor: background }}
+                    edges={['top', 'bottom', 'left', 'right']}
                 >
-                    <Pressable
-                        className="absolute inset-0"
-                        onPress={() => setIsAddModalVisible(false)}
+                    <SessionFormHeader
+                        title={t('add_venue')}
+                        subtitle={t('places.addIntro')}
+                        onClose={() => {
+                            if (!isSaving) setIsAddModalVisible(false);
+                        }}
                     />
-                    
-                    <View className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative">
-                        {/* Header */}
-                        <View className="flex-row items-center justify-between mb-6">
-                            <Text className="text-xl font-black text-gray-900 dark:text-white">
-                                {t('add_venue')}
-                            </Text>
-                            <TouchableOpacity
-                                onPress={() => setIsAddModalVisible(false)}
-                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
-                            >
-                                <X size={20} color={isDark ? '#FFFFFF' : '#000000'} />
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Input */}
-                        <Text className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 ml-1">
-                            {t('venue_name')}
-                        </Text>
-                        <TextInput
-                            className="bg-gray-50 dark:bg-gray-950 rounded-2xl px-5 py-4 text-gray-900 dark:text-white font-bold border border-gray-100 dark:border-gray-800 mb-6"
-                            placeholder={t('venue_placeholder')}
-                            placeholderTextColor="#9CA3AF"
-                            value={newName}
-                            onChangeText={setNewName}
-                            autoCapitalize="words"
-                            autoFocus
-                        />
-
-                        {/* Save Button */}
-                        <TouchableOpacity
-                            onPress={handleCreateVenue}
-                            disabled={!newName.trim() || createVenueMutation.isPending}
-                            className={cn(
-                                "bg-blue-600 py-4 rounded-2xl items-center justify-center flex-row",
-                                (!newName.trim() || createVenueMutation.isPending) && "opacity-50"
-                            )}
+                    <KeyboardAvoidingView
+                        style={{ flex: 1 }}
+                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                    >
+                        <ScrollView
+                            keyboardShouldPersistTaps="handled"
+                            keyboardDismissMode="on-drag"
+                            contentContainerStyle={{
+                                paddingHorizontal: 20,
+                                paddingBottom: 130,
+                                width: '100%',
+                                maxWidth: 900,
+                                alignSelf: 'center',
+                                gap: 16,
+                            }}
                         >
-                            {createVenueMutation.isPending ? (
-                                <ActivityIndicator color="#FFFFFF" />
-                            ) : (
-                                <>
-                                    <Text className="text-white font-bold text-lg mr-2">
-                                        {t('save_venue')}
+                            <SessionFormSection
+                                kind="event"
+                                title={t('places.details')}
+                            >
+                                <View style={{ gap: 8 }}>
+                                    <Text
+                                        style={{
+                                            color: muted,
+                                            fontWeight: '600',
+                                            fontSize: 13,
+                                        }}
+                                    >
+                                        {t('venue_name')} *
                                     </Text>
-                                    {newName.trim().length > 0 && (
-                                        <ArrowRight size={20} color="#FFFFFF" />
-                                    )}
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </KeyboardAvoidingView>
+                                    <TextInput
+                                        accessibilityLabel={t('venue_name')}
+                                        placeholder={t('venue_placeholder')}
+                                        placeholderTextColor={muted}
+                                        className="focus:outline-none"
+                                        selectionColor="#8270e4"
+                                        onFocus={() => setFocusedField('name')}
+                                        onBlur={() => setFocusedField(null)}
+                                        value={newName}
+                                        onChangeText={setNewName}
+                                        autoCapitalize="words"
+                                        autoFocus
+                                        editable={!isSaving}
+                                        style={[
+                                            inputStyle,
+                                            {
+                                                borderColor:
+                                                    focusedField === 'name'
+                                                        ? '#8270e4'
+                                                        : border,
+                                            },
+                                        ]}
+                                    />
+                                </View>
+                                <Text
+                                    style={{
+                                        color: muted,
+                                        fontSize: 12,
+                                        lineHeight: 18,
+                                    }}
+                                >
+                                    {t('places.nameHint')}
+                                </Text>
+                            </SessionFormSection>
+                            <SessionFormSection
+                                kind="location"
+                                title={t('places.location')}
+                            >
+                                <View style={{ gap: 8 }}>
+                                    <Text
+                                        style={{
+                                            color: muted,
+                                            fontWeight: '600',
+                                            fontSize: 13,
+                                        }}
+                                    >
+                                        {t('venue_city')}
+                                    </Text>
+                                    <TextInput
+                                        accessibilityLabel={t('venue_city')}
+                                        placeholder={t(
+                                            'places.cityPlaceholder',
+                                        )}
+                                        placeholderTextColor={muted}
+                                        className="focus:outline-none"
+                                        selectionColor="#8270e4"
+                                        onFocus={() => setFocusedField('city')}
+                                        onBlur={() => setFocusedField(null)}
+                                        value={newCity}
+                                        onChangeText={setNewCity}
+                                        autoCapitalize="words"
+                                        editable={!isSaving}
+                                        style={[
+                                            inputStyle,
+                                            {
+                                                borderColor:
+                                                    focusedField === 'city'
+                                                        ? '#8270e4'
+                                                        : border,
+                                            },
+                                        ]}
+                                    />
+                                </View>
+                                <View style={{ gap: 8 }}>
+                                    <Text
+                                        style={{
+                                            color: muted,
+                                            fontWeight: '600',
+                                            fontSize: 13,
+                                        }}
+                                    >
+                                        {t('venue_address')}
+                                    </Text>
+                                    <TextInput
+                                        accessibilityLabel={t('venue_address')}
+                                        placeholder={t(
+                                            'places.addressPlaceholder',
+                                        )}
+                                        placeholderTextColor={muted}
+                                        className="focus:outline-none"
+                                        selectionColor="#8270e4"
+                                        onFocus={() =>
+                                            setFocusedField('address')
+                                        }
+                                        onBlur={() => setFocusedField(null)}
+                                        value={newAddress}
+                                        onChangeText={setNewAddress}
+                                        autoCapitalize="words"
+                                        editable={!isSaving}
+                                        style={[
+                                            inputStyle,
+                                            {
+                                                borderColor:
+                                                    focusedField === 'address'
+                                                        ? '#8270e4'
+                                                        : border,
+                                            },
+                                        ]}
+                                    />
+                                </View>
+                                <Text
+                                    style={{
+                                        color: muted,
+                                        fontSize: 12,
+                                        lineHeight: 18,
+                                    }}
+                                >
+                                    {t('places.locationHint')}
+                                </Text>
+                            </SessionFormSection>
+                        </ScrollView>
+                        <SessionFormFooter
+                            label={t('save_venue')}
+                            disabled={!newName.trim() || isSaving}
+                            busy={isSaving}
+                            onSave={handleCreateVenue}
+                        />
+                    </KeyboardAvoidingView>
+                </SafeAreaView>
             </Modal>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }

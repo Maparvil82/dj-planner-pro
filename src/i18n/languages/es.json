@@ -444,5 +444,17 @@
         "posterHint": "JPG o PNG · Formato vertical 3:4 recomendado",
         "hourlyAmount": "Importe por hora",
         "fixedAmount": "Importe por sesión"
+    },
+    "places": {
+        "intro": "Los espacios donde suena tu música.",
+        "search": "Buscar lugar, ciudad o dirección...",
+        "addIntro": "Guarda un espacio para tus sesiones.",
+        "details": "Datos del lugar",
+        "nameHint": "El nombre es obligatorio. Podrás completar el resto de detalles más adelante.",
+        "location": "Ubicación",
+        "cityPlaceholder": "Ej: Madrid",
+        "addressPlaceholder": "Calle y número",
+        "locationHint": "Ciudad y dirección son opcionales. La ciudad se utiliza en tus métricas.",
+        "saveError": "No se ha podido guardar el lugar. Inténtalo de nuevo."
     }
 }

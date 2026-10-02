@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import {
+    MapPin,
     CalendarDays,
     Disc3,
     Wallet,
@@ -83,6 +84,7 @@ export function SessionFormHeader({
 }
 const icons = {
     event: Disc3,
+    location: MapPin,
     schedule: CalendarDays,
     fee: Wallet,
     booking: CheckCheck,
@@ -146,10 +148,12 @@ export function SessionFormFooter({
     disabled,
     busy,
     onSave,
+    label,
 }: {
     disabled: boolean;
     busy: boolean;
     onSave: () => void;
+    label?: string;
 }) {
     const { activeTheme } = useTheme();
     const { t } = useTranslation();
@@ -204,7 +208,7 @@ export function SessionFormFooter({
                                 fontSize: 16,
                             }}
                         >
-                            {t('save_session')}
+                            {label ?? t('save_session')}
                         </Text>
                         <ArrowRight size={18} color="#fff" />
                     </>

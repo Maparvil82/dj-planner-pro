@@ -442,5 +442,17 @@
         "posterHint": "JPG ou PNG · Format vertical 3:4 recommandé",
         "hourlyAmount": "Montant par heure",
         "fixedAmount": "Montant par session"
+    },
+    "places": {
+        "intro": "Les lieux où résonne votre musique.",
+        "search": "Rechercher lieu, ville ou adresse...",
+        "addIntro": "Enregistrez un lieu pour vos sessions.",
+        "details": "Détails du lieu",
+        "nameHint": "Le nom est obligatoire. Vous pourrez compléter les autres détails plus tard.",
+        "location": "Emplacement",
+        "cityPlaceholder": "Ex. Paris",
+        "addressPlaceholder": "Rue et numéro",
+        "locationHint": "Ville et adresse facultatives. La ville est utilisée dans vos statistiques.",
+        "saveError": "Impossible d’enregistrer le lieu. Réessayez."
     }
 }

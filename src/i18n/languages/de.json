@@ -444,5 +444,17 @@
         "posterHint": "JPG oder PNG · Hochformat 3:4 empfohlen",
         "hourlyAmount": "Betrag pro Stunde",
         "fixedAmount": "Betrag pro Session"
+    },
+    "places": {
+        "intro": "Die Orte, an denen deine Musik spielt.",
+        "search": "Ort, Stadt oder Adresse suchen...",
+        "addIntro": "Speichere einen Ort für deine Sessions.",
+        "details": "Ortsdetails",
+        "nameHint": "Ein Name ist erforderlich. Weitere Details kannst du später ergänzen.",
+        "location": "Standort",
+        "cityPlaceholder": "z. B. Berlin",
+        "addressPlaceholder": "Straße und Hausnummer",
+        "locationHint": "Stadt und Adresse sind optional. Die Stadt wird für deine Statistiken verwendet.",
+        "saveError": "Der Ort konnte nicht gespeichert werden. Versuche es erneut."
     }
 }

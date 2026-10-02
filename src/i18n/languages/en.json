@@ -448,5 +448,17 @@
         "posterHint": "JPG or PNG · Vertical 3:4 format recommended",
         "hourlyAmount": "Hourly amount",
         "fixedAmount": "Session amount"
+    },
+    "places": {
+        "intro": "The spaces where your music plays.",
+        "search": "Search venue, city or address...",
+        "addIntro": "Save a space for your sessions.",
+        "details": "Venue details",
+        "nameHint": "A name is required. You can complete the other details later.",
+        "location": "Location",
+        "cityPlaceholder": "e.g. London",
+        "addressPlaceholder": "Street and number",
+        "locationHint": "City and address are optional. The city is used in your metrics.",
+        "saveError": "Could not save the venue. Please try again."
     }
 }
