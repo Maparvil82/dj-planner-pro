@@ -18,12 +18,6 @@ import {
     ArrowUpRight,
     ChevronLeft,
     ChevronRight,
-    CalendarDays,
-    Clock3,
-    MapPin,
-    TrendingUp,
-    Wallet,
-    Music2,
     AlertCircle,
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -40,19 +34,16 @@ import {
 } from '../../src/utils/dashboardMetrics';
 import { sessionRange } from '../../src/utils/sessionPlanning';
 
-type Icon = typeof Clock3;
 function MetricCard({
     label,
     value,
     hint,
-    icon: IconComponent,
     accent,
     dark,
 }: {
     label: string;
     value: string;
     hint?: string;
-    icon: Icon;
     accent: string;
     dark: boolean;
 }) {
@@ -66,9 +57,6 @@ function MetricCard({
                 },
             ]}
         >
-            <View style={[styles.iconBox, { backgroundColor: `${accent}15` }]}>
-                <IconComponent size={19} color={accent} />
-            </View>
             <Text
                 style={[styles.label, { color: dark ? '#a8b2c6' : '#6d7588' }]}
             >
@@ -485,7 +473,6 @@ export default function DashboardScreen() {
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <TrendingUp color="#c4baff" size={19} />
                                     <Text
                                         style={{
                                             color: '#e1dcff',
@@ -625,7 +612,7 @@ export default function DashboardScreen() {
                                 label={label('sessions')}
                                 value={number(metrics.active.length)}
                                 hint={`${metrics.confirmed.length} ${label('confirmed').toLowerCase()} · ${metrics.pending.length} ${label('pending').toLowerCase()}`}
-                                icon={CalendarDays}
+
                                 accent="#7666df"
                                 dark={dark}
                             />
@@ -633,7 +620,7 @@ export default function DashboardScreen() {
                                 label={label('hours')}
                                 value={`${number(metrics.hours, 1)} h`}
                                 hint={`${number(metrics.playedHours, 1)} h ${label('played').toLowerCase()}`}
-                                icon={Clock3}
+
                                 accent="#099a91"
                                 dark={dark}
                             />
@@ -645,7 +632,7 @@ export default function DashboardScreen() {
                                         : money(metrics.averageFee)
                                 }
                                 hint={label('averageHint')}
-                                icon={Music2}
+
                                 accent="#c46599"
                                 dark={dark}
                             />
@@ -663,7 +650,7 @@ export default function DashboardScreen() {
                                         ? label('balanceHint')
                                         : label('eurosOnly')
                                 }
-                                icon={Wallet}
+
                                 accent="#b58b37"
                                 dark={dark}
                             />
@@ -824,7 +811,6 @@ export default function DashboardScreen() {
                                     { alignItems: 'center', gap: 12 },
                                 ]}
                             >
-                                <CalendarDays size={32} color="#8d7ce3" />
                                 <Text
                                     style={[
                                         styles.sectionTitle,
@@ -981,7 +967,7 @@ export default function DashboardScreen() {
                                             ? '—'
                                             : `${number(insights.averageDuration, 1)} h`
                                     }
-                                    icon={Clock3}
+
                                     accent="#099a91"
                                     dark={dark}
                                 />
@@ -993,7 +979,7 @@ export default function DashboardScreen() {
                                             : `${number(insights.repeatRate)}%`
                                     }
                                     hint={label('repeatHint')}
-                                    icon={MapPin}
+
                                     accent="#7666df"
                                     dark={dark}
                                 />
@@ -1005,7 +991,7 @@ export default function DashboardScreen() {
                                             : `${number(insights.cancellationRate)}%`
                                     }
                                     hint={`${metrics.cancelled} / ${metrics.selected.length} ${label('sessions').toLowerCase()}`}
-                                    icon={AlertCircle}
+
                                     accent="#c46599"
                                     dark={dark}
                                 />
@@ -1017,7 +1003,7 @@ export default function DashboardScreen() {
                                             : '—'
                                     }
                                     hint={`${insights.paid} ${label('paid').toLowerCase()} · ${insights.free} ${label('free').toLowerCase()}${insights.unpriced ? ` · ${insights.unpriced} ${label('unpriced')}` : ''}`}
-                                    icon={Wallet}
+
                                     accent="#b58b37"
                                     dark={dark}
                                 />
@@ -1232,22 +1218,6 @@ export default function DashboardScreen() {
                                                     { borderColor: line },
                                                 ]}
                                             >
-                                                <View
-                                                    style={[
-                                                        styles.rank,
-                                                        {
-                                                            backgroundColor:
-                                                                dark
-                                                                    ? '#282744'
-                                                                    : '#f0edfb',
-                                                        },
-                                                    ]}
-                                                >
-                                                    <MapPin
-                                                        size={18}
-                                                        color="#8b78e6"
-                                                    />
-                                                </View>
                                                 <View
                                                     style={{ flex: 1, gap: 5 }}
                                                 >
@@ -1609,7 +1579,6 @@ export default function DashboardScreen() {
                                             alignItems: 'center',
                                         }}
                                     >
-                                        <MapPin color={muted} size={14} />
                                         <Text
                                             style={{
                                                 color: muted,
@@ -1728,7 +1697,7 @@ const styles = StyleSheet.create({
         padding: 18,
         borderRadius: 24,
         borderWidth: 1,
-        minHeight: 165,
+        minHeight: 130,
     },
     iconBox: {
         width: 37,

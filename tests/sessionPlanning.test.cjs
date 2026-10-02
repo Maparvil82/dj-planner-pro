@@ -99,3 +99,9 @@ test('money totals keep different currencies separate and ignore cancelled gigs'
         session({ earning_type: 'fixed', earning_amount: 1000, status: 'cancelled' })
     ]), { '€': 250, '$': 400 });
 });
+
+test('invited sessions never contribute another DJs fee or currency to own income', () => {
+    const guest = session({ is_guest: true, earning_type: 'fixed', earning_amount: 9999, currency: '$' });
+    assert.equal(sessionEarnings(guest), 0);
+    assert.deepEqual(earningsByCurrency([guest]), {});
+});

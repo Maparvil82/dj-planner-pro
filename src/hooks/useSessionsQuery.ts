@@ -47,6 +47,7 @@ export const useCreateSessionMutation = () => {
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
             // Invalidate the tags to reflect newly saved venues/titles in the autocomplete
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
@@ -64,6 +65,7 @@ export const useDeleteSessionMutation = () => {
             // Refetch calendar and upcoming sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
         },
     });
 };
@@ -101,6 +103,7 @@ export const useUpdateSessionColorMutation = () => {
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
         },
     });
 };
@@ -123,6 +126,7 @@ export const useUpdateSessionMutation = () => {
             }
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });

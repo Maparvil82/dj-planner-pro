@@ -20,17 +20,7 @@ import {
     useDeleteFolderMutation
 } from '../../src/hooks/useVaultQuery';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import {
-    Folder,
-    Plus,
-    MoreVertical,
-    ChevronRight,
-    FileText,
-    Shield,
-    Search,
-    X,
-    FolderPlus
-} from 'lucide-react-native';
+import { Folder, Plus, ChevronRight, Shield, Search, X, FolderPlus } from 'lucide-react-native';
 import { useRouter, Redirect } from 'expo-router';
 
 const { width } = Dimensions.get('window');

@@ -38,6 +38,15 @@ export const profileService = {
         return data;
     },
 
+    async uploadProfilePhoto(userId: string, imageUri: string): Promise<string> {
+        const image = await ImageManipulator.manipulateAsync(imageUri, [{ resize: { width: 400 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+        if (!image.base64) throw new Error('Image unavailable');
+        const path = `${userId}/avatar-${Date.now()}.jpg`;
+        const { error } = await supabase.storage.from('avatars').upload(path, decode(image.base64), { contentType: 'image/jpeg', upsert: false });
+        if (error) throw error;
+        return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    },
+
     async uploadCover(userId: string, imageUri: string): Promise<string> {
         const image = await ImageManipulator.manipulateAsync(
             imageUri,

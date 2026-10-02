@@ -68,6 +68,7 @@ export function validateSessionInput(
         title: input.title.trim(),
         venue: input.venue.trim(),
         djs,
+        dj_profile_ids: input.is_collective ? [...new Set(input.dj_profile_ids || [])] : [],
         earning_amount:
             (input.earning_type || 'free') === 'free'
                 ? 0

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    MapPin,
     Headphones,
     Instagram,
     Cloud,
@@ -56,22 +55,7 @@ export function DJProfileHero({
                             resizeMode="cover"
                             style={{ width: '100%', height: '100%' }}
                         />
-                    ) : (
-                        <View
-                            style={{
-                                flex: 1,
-                                alignItems: 'flex-end',
-                                justifyContent: 'center',
-                                padding: 28,
-                            }}
-                        >
-                            <Headphones
-                                size={110}
-                                strokeWidth={1}
-                                color="rgba(255,255,255,0.20)"
-                            />
-                        </View>
-                    )}
+                    ) : null}
                     <LinearGradient
                         colors={['transparent', 'rgba(13,18,32,0.55)']}
                         style={{ position: 'absolute', inset: 0 }}
@@ -158,7 +142,6 @@ export function DJProfileHero({
                                     alignItems: 'center',
                                 }}
                             >
-                                <MapPin size={15} color={c.muted} />
                                 <Text
                                     style={{
                                         color: c.muted,

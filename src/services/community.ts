@@ -40,6 +40,7 @@ export interface CommunitySession {
     end_time: string | null;
     poster_url: string | null;
     shared_at: string;
+    collaborators?: { user_id: string; artist_name: string; avatar_url: string | null }[];
 }
 const PAGE_SIZE = 20;
 export const communityService = {

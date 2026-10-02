@@ -24,7 +24,8 @@ export function sessionDuration(session: Pick<SessionTiming, 'start_time' | 'end
     return duration / 60;
 }
 
-export function sessionEarnings(session: Pick<Session, 'earning_type' | 'earning_amount' | 'start_time' | 'end_time'>): number {
+export function sessionEarnings(session: Pick<Session, 'earning_type' | 'earning_amount' | 'start_time' | 'end_time'> & Partial<Pick<Session, 'is_guest'>>): number {
+    if (session.is_guest) return 0;
     const amount = Number(session.earning_amount) || 0;
     return session.earning_type === 'fixed' ? amount : session.earning_type === 'hourly' ? amount * sessionDuration(session) : 0;
 }
@@ -36,7 +37,7 @@ export function sessionBalance(session: Session): number {
 export function earningsByCurrency(sessions: Session[]): Record<string, number> {
     const totals: Record<string, number> = {};
     sessions.forEach(session => {
-        if (session.status === 'cancelled') return;
+        if (session.status === 'cancelled' || session.is_guest) return;
         const currency = session.currency || '€';
         totals[currency] = (totals[currency] || 0) + sessionEarnings(session);
     });

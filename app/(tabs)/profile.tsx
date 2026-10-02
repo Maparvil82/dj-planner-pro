@@ -22,21 +22,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
-import {
-    Pencil,
-    Camera,
-    Eye,
-    LogOut,
-    ChevronRight,
-    Moon,
-    Sun,
-    ShieldCheck,
-    Star,
-    Trash2,
-    Info,
-    Monitor,
-} from 'lucide-react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import { Pencil, Camera, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { PageHeader } from '../../src/components/ui/PageHeader';
@@ -54,16 +40,19 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { profileService } from '../../src/services/profile';
 import { DJ_PLATFORMS, normalizeDJLink } from '../../src/utils/communityLinks';
-import { supabase } from '../../src/lib/supabase';
+import { AccountEditor } from '../../src/components/profile/AccountEditor';
+import { MusicGenrePicker } from '../../src/components/profile/MusicGenrePicker';
+import {
+    serializeMusicGenres,
+    parseMusicGenres,
+} from '../../src/utils/musicGenres';
 
 function SettingItem({
-    icon: Icon,
     label,
     value,
     onPress,
     destructive = false,
 }: {
-    icon: LucideIcon;
     label: string;
     value?: string;
     onPress: () => void;
@@ -82,18 +71,6 @@ function SettingItem({
                 paddingVertical: 12,
             }}
         >
-            <View
-                style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 12,
-                    backgroundColor: c.field,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
-                <Icon size={19} color={destructive ? '#d76f7d' : c.accent} />
-            </View>
             <View style={{ flex: 1 }}>
                 <Text
                     style={{
@@ -152,8 +129,10 @@ export default function ProfileScreen() {
         instagram: '',
     });
     const [visible, setVisible] = useState(false);
-    const [email, setEmail] = useState(session?.user.email || '');
-    const [password, setPassword] = useState('');
+    const [accountEditing, setAccountEditing] = useState(false);
+    const [avatar, setAvatar] = useState<string | null>(
+        profile?.avatar_url || null,
+    );
     const busy = saving || uploading;
     const ready =
         !account.isPending &&
@@ -168,7 +147,9 @@ export default function ProfileScreen() {
                 '',
         );
         setCity(social.data?.city || '');
-        setGenres(social.data?.genres || '');
+        setGenres(
+            serializeMusicGenres(parseMusicGenres(social.data?.genres || '')),
+        );
         setBio(social.data?.bio || '');
         setCover(social.data?.cover_url || null);
         setLinks({
@@ -177,8 +158,7 @@ export default function ProfileScreen() {
             instagram: social.data?.instagram_url || '',
         });
         setVisible(social.data?.is_visible || false);
-        setEmail(session?.user.email || '');
-        setPassword('');
+        setAvatar(account.data?.avatar_url || profile?.avatar_url || null);
     }, [account.data, profile?.artist_name, social.data, session?.user.email]);
     useEffect(() => {
         if (account.data) setProfile(account.data);
@@ -224,6 +204,11 @@ export default function ProfileScreen() {
                     );
                 }
             }
+            const savedAvatar =
+                avatar && !avatar.startsWith('https://')
+                    ? await profileService.uploadProfilePhoto(userId, avatar)
+                    : avatar;
+            setAvatar(savedAvatar);
             const savedCover =
                 cover && !cover.startsWith('https://')
                     ? await profileService.uploadCover(userId, cover)
@@ -233,7 +218,7 @@ export default function ProfileScreen() {
                 kind: 'profile',
                 input: {
                     artist_name: artistName.trim(),
-                    avatar_url: profile?.avatar_url || null,
+                    avatar_url: savedAvatar,
                     city: city.trim(),
                     genres: genres.trim(),
                     bio: bio.trim(),
@@ -244,17 +229,7 @@ export default function ProfileScreen() {
                     instagram_url: normalized.instagram,
                 },
             });
-            const authUpdates: { email?: string; password?: string } = {};
-            if (email.trim() && email.trim() !== session?.user.email)
-                authUpdates.email = email.trim();
-            if (password) authUpdates.password = password;
-            if (Object.keys(authUpdates).length) {
-                const { error } = await supabase.auth.updateUser(authUpdates);
-                if (error) throw error;
-                if (authUpdates.email) setNotice(t('unifiedProfile.emailSent'));
-            }
             setEditing(false);
-            setPassword('');
         } catch (error) {
             setSaveError(
                 error instanceof Error
@@ -288,6 +263,7 @@ export default function ProfileScreen() {
     };
     const handlePickAvatar = async () => {
         if (!userId || busy) return;
+        setEditing(true);
         const permission =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
@@ -300,33 +276,16 @@ export default function ProfileScreen() {
             ]);
             return;
         }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,
-        });
-        if (result.canceled || !result.assets[0]) return;
         setUploading(true);
-        setSaveError('');
         try {
-            const avatar = await profileService.uploadAvatar(
-                userId,
-                result.assets[0].uri,
-            );
-            if (!avatar) throw new Error(t('error_uploading'));
-            setProfile({
-                id: userId,
-                artist_name: profile?.artist_name || null,
-                avatar_url: avatar,
-                updated_at: new Date().toISOString(),
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
             });
-            await Promise.all([
-                client.invalidateQueries({
-                    queryKey: ['account-profile', userId],
-                }),
-                client.invalidateQueries({ queryKey: ['community'] }),
-            ]);
+            if (!result.canceled && result.assets[0])
+                setAvatar(result.assets[0].uri);
         } catch {
             setSaveError(t('error_uploading'));
         } finally {
@@ -426,29 +385,34 @@ export default function ProfileScreen() {
             style={{ flex: 1, backgroundColor: c.bg }}
         >
             <PageHeader
-                title={t('unifiedProfile.title')}
-                subtitle={t('unifiedProfile.intro')}
+                notifications={!editing}
+                title={t(editing ? 'edit_profile' : 'unifiedProfile.title')}
+                subtitle={t(
+                    editing ? 'profileUX.editIntro' : 'unifiedProfile.intro',
+                )}
                 action={
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel={t('edit_profile')}
-                        disabled={!ready || busy || editing}
-                        onPress={() => {
-                            setEditing(true);
-                            setSaveError('');
-                        }}
-                        style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: 16,
-                            backgroundColor: c.tint,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: !ready || busy || editing ? 0.5 : 1,
-                        }}
-                    >
-                        <Pencil size={21} color={c.accent} />
-                    </TouchableOpacity>
+                    editing ? null : (
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityLabel={t('edit_profile')}
+                            disabled={!ready || busy || editing}
+                            onPress={() => {
+                                setEditing(true);
+                                setSaveError('');
+                            }}
+                            style={{
+                                width: 46,
+                                height: 46,
+                                borderRadius: 16,
+                                backgroundColor: c.tint,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: !ready || busy || editing ? 0.5 : 1,
+                            }}
+                        >
+                            <Pencil size={21} color={c.accent} />
+                        </TouchableOpacity>
+                    )
                 }
             />
             <KeyboardAvoidingView
@@ -498,7 +462,11 @@ export default function ProfileScreen() {
                             >
                                 <View>
                                     <Avatar
-                                        url={profile?.avatar_url}
+                                        url={
+                                            editing
+                                                ? avatar
+                                                : profile?.avatar_url
+                                        }
                                         name={
                                             editing
                                                 ? artistName
@@ -585,12 +553,11 @@ export default function ProfileScreen() {
                                         80,
                                     )}
                                     {field(t('venue_city'), city, setCity, 100)}
-                                    {field(
-                                        t('community.genres'),
-                                        genres,
-                                        setGenres,
-                                        120,
-                                    )}
+                                    <MusicGenrePicker
+                                        value={genres}
+                                        onChange={setGenres}
+                                        disabled={busy}
+                                    />
                                     {field(
                                         t('community.bio'),
                                         bio,
@@ -668,7 +635,14 @@ export default function ProfileScreen() {
                                             resizeMode="cover"
                                         />
                                     ) : (
-                                        <Camera size={32} color={c.accent} />
+                                        <Text
+                                            style={{
+                                                color: c.muted,
+                                                fontSize: 13,
+                                            }}
+                                        >
+                                            {t('djPage.cover')}
+                                        </Text>
                                     )}
                                 </View>
                                 <CommunityButton
@@ -803,71 +777,33 @@ export default function ProfileScreen() {
                                 />
                             )}
                         </SessionFormSection>
-                        <SessionFormSection
-                            title={t('settings_account_section')}
-                            kind="account"
-                        >
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 12,
-                                    lineHeight: 19,
-                                }}
+                        {!editing && (
+                            <SessionFormSection
+                                title={t('settings_account_section')}
+                                kind="account"
                             >
-                                {t('unifiedProfile.accountHint')}
-                            </Text>
-                            {editing ? (
-                                <>
-                                    <View style={{ gap: 8 }}>
-                                        <Text
-                                            style={{
-                                                color: c.muted,
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            {t('email_placeholder')}
-                                        </Text>
-                                        <TextInput
-                                            accessibilityLabel={t(
-                                                'email_placeholder',
-                                            )}
-                                            value={email}
-                                            onChangeText={setEmail}
-                                            keyboardType="email-address"
-                                            autoCapitalize="none"
-                                            style={{
-                                                padding: 14,
-                                                borderRadius: 14,
-                                                backgroundColor: c.field,
-                                                color: c.fg,
-                                                minHeight: 48,
-                                            }}
-                                        />
-                                    </View>
-                                    <TextInput
-                                        accessibilityLabel={t(
-                                            'password_placeholder',
-                                        )}
-                                        placeholder={t('password_placeholder')}
-                                        placeholderTextColor={c.muted}
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        secureTextEntry
-                                        style={{
-                                            padding: 14,
-                                            borderRadius: 14,
-                                            backgroundColor: c.field,
-                                            color: c.fg,
-                                            minHeight: 48,
-                                        }}
-                                    />
-                                </>
-                            ) : (
+                                <Text
+                                    style={{
+                                        color: c.muted,
+                                        fontSize: 12,
+                                        lineHeight: 19,
+                                    }}
+                                >
+                                    {t('unifiedProfile.accountHint')}
+                                </Text>
                                 <Text style={{ color: c.fg, fontSize: 14 }}>
                                     {session.user.email}
                                 </Text>
-                            )}
-                        </SessionFormSection>
+                                <CommunityButton
+                                    label={t('profileUX.manageAccount')}
+                                    secondary
+                                    onPress={() => {
+                                        setNotice('');
+                                        setAccountEditing(true);
+                                    }}
+                                />
+                            </SessionFormSection>
+                        )}
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}
@@ -879,115 +815,154 @@ export default function ProfileScreen() {
                             />
                         )}
                         {!!notice && <CommunityMessage title={notice} />}
-                        {editing && (
-                            <View style={{ gap: 10 }}>
-                                <CommunityButton
-                                    label={t('save_changes')}
-                                    onPress={() => {
-                                        void handleUpdateProfile();
-                                    }}
-                                    busy={saving}
-                                    disabled={
-                                        !ready ||
-                                        uploading ||
-                                        !artistName.trim()
-                                    }
-                                />
-                                <CommunityButton
-                                    label={t('cancel')}
-                                    secondary
-                                    disabled={busy}
-                                    onPress={() => {
-                                        setEditing(false);
-                                        setSaveError('');
-                                    }}
-                                />
-                            </View>
+                        {!editing && (
+                            <>
+                                <SessionFormSection
+                                    title={t('settings_app_section')}
+                                    kind="settings"
+                                >
+                                    <SettingItem
+                                        label={t('appearance')}
+                                        value={t(`theme_${theme}`)}
+                                        onPress={() => {
+                                            Alert.alert(
+                                                t('appearance'),
+                                                t('appearance'),
+                                                [
+                                                    {
+                                                        text: t('theme_light'),
+                                                        onPress: () =>
+                                                            setTheme('light'),
+                                                    },
+                                                    {
+                                                        text: t('theme_dark'),
+                                                        onPress: () =>
+                                                            setTheme('dark'),
+                                                    },
+                                                    {
+                                                        text: t('theme_system'),
+                                                        onPress: () =>
+                                                            setTheme('system'),
+                                                    },
+                                                    {
+                                                        text: t('cancel'),
+                                                        style: 'cancel',
+                                                    },
+                                                ],
+                                            );
+                                        }}
+                                    />
+                                    <SettingItem
+                                        label={t('rate_app')}
+                                        onPress={handleRateApp}
+                                    />
+                                </SessionFormSection>
+                                <SessionFormSection
+                                    title={t('settings_legal_section')}
+                                    kind="account"
+                                >
+                                    <SettingItem
+                                        label={t('privacy_policy')}
+                                        onPress={() =>
+                                            Linking.openURL(
+                                                t('privacy_policy_url'),
+                                            )
+                                        }
+                                    />
+                                    <SettingItem
+                                        label={t('terms_of_use')}
+                                        onPress={() =>
+                                            Linking.openURL(
+                                                t('terms_of_use_url'),
+                                            )
+                                        }
+                                    />
+                                </SessionFormSection>
+                                <View style={{ paddingHorizontal: 18 }}>
+                                    <SettingItem
+                                        label={t('log_out')}
+                                        onPress={() => {
+                                            void signOut();
+                                        }}
+                                    />
+                                    <SettingItem
+                                        label={t('delete_account')}
+                                        onPress={handleDeleteAccount}
+                                        destructive
+                                    />
+                                </View>
+                            </>
                         )}
-                        <SessionFormSection
-                            title={t('settings_app_section')}
-                            kind="settings"
-                        >
-                            <SettingItem
-                                icon={
-                                    theme === 'dark'
-                                        ? Moon
-                                        : theme === 'light'
-                                          ? Sun
-                                          : Monitor
-                                }
-                                label={t('appearance')}
-                                value={t(`theme_${theme}`)}
-                                onPress={() => {
-                                    Alert.alert(
-                                        t('appearance'),
-                                        t('appearance'),
-                                        [
-                                            {
-                                                text: t('theme_light'),
-                                                onPress: () =>
-                                                    setTheme('light'),
-                                            },
-                                            {
-                                                text: t('theme_dark'),
-                                                onPress: () => setTheme('dark'),
-                                            },
-                                            {
-                                                text: t('theme_system'),
-                                                onPress: () =>
-                                                    setTheme('system'),
-                                            },
-                                            {
-                                                text: t('cancel'),
-                                                style: 'cancel',
-                                            },
-                                        ],
-                                    );
-                                }}
-                            />
-                            <SettingItem
-                                icon={Star}
-                                label={t('rate_app')}
-                                onPress={handleRateApp}
-                            />
-                        </SessionFormSection>
-                        <SessionFormSection
-                            title={t('settings_legal_section')}
-                            kind="account"
-                        >
-                            <SettingItem
-                                icon={ShieldCheck}
-                                label={t('privacy_policy')}
-                                onPress={() =>
-                                    Linking.openURL(t('privacy_policy_url'))
-                                }
-                            />
-                            <SettingItem
-                                icon={Info}
-                                label={t('terms_of_use')}
-                                onPress={() =>
-                                    Linking.openURL(t('terms_of_use_url'))
-                                }
-                            />
-                        </SessionFormSection>
-                        <View style={{ paddingHorizontal: 18 }}>
-                            <SettingItem
-                                icon={LogOut}
-                                label={t('log_out')}
-                                onPress={() => {
-                                    void signOut();
-                                }}
-                            />
-                            <SettingItem
-                                icon={Trash2}
-                                label={t('delete_account')}
-                                onPress={handleDeleteAccount}
-                                destructive
-                            />
-                        </View>
                     </View>
                 </ScrollView>
+                {editing && (
+                    <View
+                        style={{
+                            paddingHorizontal: 20,
+                            paddingVertical: 14,
+                            borderTopWidth: 1,
+                            borderColor: c.border,
+                            backgroundColor: c.bg,
+                        }}
+                    >
+                        <View
+                            style={{
+                                width: '100%',
+                                maxWidth: 900,
+                                alignSelf: 'center',
+                                gap: 10,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: c.muted,
+                                    fontSize: 11,
+                                    lineHeight: 16,
+                                }}
+                            >
+                                {t('profileUX.saveScope')}
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                <View style={{ flex: 1 }}>
+                                    <CommunityButton
+                                        label={t('cancel')}
+                                        secondary
+                                        disabled={busy}
+                                        onPress={() => {
+                                            setEditing(false);
+                                            setSaveError('');
+                                        }}
+                                    />
+                                </View>
+                                <View style={{ flex: 2 }}>
+                                    <CommunityButton
+                                        label={t('profileUX.saveProfile')}
+                                        busy={saving}
+                                        disabled={
+                                            !ready ||
+                                            uploading ||
+                                            !artistName.trim()
+                                        }
+                                        onPress={() => {
+                                            void handleUpdateProfile();
+                                        }}
+                                    />
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+                )}
             </KeyboardAvoidingView>
+            {accountEditing && (
+                <AccountEditor
+                    currentEmail={session.user.email || ''}
+                    onClose={() => setAccountEditing(false)}
+                    onSaved={(message) => {
+                        setNotice(message);
+                        setAccountEditing(false);
+                    }}
+                />
+            )}
         </SafeAreaView>
     );
 }

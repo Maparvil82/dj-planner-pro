@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowUpRight, CheckCheck, TrendingUp } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { CurrencyTotals } from '../sessions/CurrencyTotals';
 
@@ -21,38 +20,8 @@ export function HomeSummaryCard({
     const dark = activeTheme === 'dark';
     const foreground = highlighted ? '#fff' : dark ? '#f3f4f8' : '#202538';
     const muted = highlighted ? '#d4ceef' : dark ? '#a8b2c6' : '#6d7588';
-    const Icon = highlighted ? TrendingUp : CheckCheck;
     const content = (
         <>
-            <View
-                style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 14,
-                }}
-            >
-                <View
-                    style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 11,
-                        backgroundColor: highlighted
-                            ? '#ffffff16'
-                            : dark
-                              ? '#123c3b'
-                              : '#e7f6f3',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Icon
-                        size={17}
-                        color={highlighted ? '#cec4ff' : '#099a91'}
-                    />
-                </View>
-                <ArrowUpRight size={16} color={muted} />
-            </View>
             <Text
                 style={{
                     color: highlighted ? '#e1dcff' : muted,
@@ -77,7 +46,7 @@ export function HomeSummaryCard({
             </Text>
         </>
     );
-    const layout = { padding: 18, borderRadius: 24, flex: 1, minHeight: 194 };
+    const layout = { padding: 18, borderRadius: 24, flex: 1, minHeight: 148 };
     return (
         <TouchableOpacity
             accessibilityRole="button"

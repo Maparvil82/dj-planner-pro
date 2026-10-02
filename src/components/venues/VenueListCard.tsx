@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { MapPin, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { Venue } from '../../types/venue';
 
@@ -41,20 +41,7 @@ export function VenueListCard({
                     style={{ width: 64, height: 64, borderRadius: 18 }}
                     resizeMode="cover"
                 />
-            ) : (
-                <View
-                    style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 18,
-                        backgroundColor: dark ? '#292743' : '#f0edfc',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <MapPin size={25} color={dark ? '#bdb0f5' : '#7666df'} />
-                </View>
-            )}
+            ) : null}
             <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
                 <Text
                     numberOfLines={2}

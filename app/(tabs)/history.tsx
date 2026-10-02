@@ -16,14 +16,7 @@ import {
     Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-    Calendar as CalendarIcon,
-    Search,
-    Filter,
-    X,
-    Check,
-    ArrowLeft
-} from 'lucide-react-native';
+import { Search, Filter, X, ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
@@ -328,9 +321,7 @@ export default function HistoryScreen() {
                 >
                     {groupedSessions.length === 0 ? (
                         <View className="py-20 items-center justify-center">
-                            <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
-                                <CalendarIcon size={32} color={isDark ? '#a8b2c6' : '#9CA3AF'} />
-                            </View>
+
                             <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
                                 {searchQuery || activeFiltersCount > 0 ? t('no_results_filtered') : t('no_sessions_yet')}
                             </Text>
@@ -458,7 +449,7 @@ export default function HistoryScreen() {
                                                     {startDate ? format(parseISO(startDate), 'dd/MM/yyyy') : '--/--/----'}
                                                 </Text>
                                             </View>
-                                            <CalendarIcon size={16} color={startDate ? '#7666df' : '#9CA3AF'} />
+
                                         </TouchableOpacity>
 
                                         <TouchableOpacity
@@ -471,7 +462,7 @@ export default function HistoryScreen() {
                                                     {endDate ? format(parseISO(endDate), 'dd/MM/yyyy') : '--/--/----'}
                                                 </Text>
                                             </View>
-                                            <CalendarIcon size={16} color={endDate ? '#7666df' : '#9CA3AF'} />
+
                                         </TouchableOpacity>
                                     </View>
                                     {(startDate || endDate) && (

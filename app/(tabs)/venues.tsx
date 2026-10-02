@@ -12,7 +12,7 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Plus, Search, X } from 'lucide-react-native';
+import { Plus, Search, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import {
@@ -267,20 +267,7 @@ export default function VenuesScreen() {
                                 gap: 16,
                             }}
                         >
-                            <View
-                                style={{
-                                    width: 64,
-                                    height: 64,
-                                    borderRadius: 20,
-                                    backgroundColor: isDark
-                                        ? '#292743'
-                                        : '#f0edfc',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <MapPin size={27} color="#8270e4" />
-                            </View>
+
                             <Text
                                 style={{
                                     color: text,

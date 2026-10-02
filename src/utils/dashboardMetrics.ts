@@ -288,7 +288,7 @@ export function dashboardInsights(
             ? (summary.cancelled / summary.selected.length) * 100
             : null,
         paid,
-        free: summary.active.filter((s) => s.earning_type === 'free').length,
+        free: summary.active.filter((s) => !s.is_guest && s.earning_type === 'free').length,
         unpriced: summary.active.filter(
             (s) => s.earning_type !== 'free' && sessionEarnings(s) <= 0,
         ).length,

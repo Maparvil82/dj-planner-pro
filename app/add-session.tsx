@@ -1,3 +1,4 @@
+import { SessionDJPicker } from '../src/components/sessions/SessionDJPicker';
 import {
     SessionFormHeader,
     SessionFormSection,
@@ -33,20 +34,7 @@ import { Stack, useGlobalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/useAuthStore';
-import {
-    Calendar as LucideCalendar,
-    MapPin,
-    Clock,
-    Users,
-    X,
-    DollarSign,
-    ChevronRight,
-    Repeat,
-    Palette,
-    Check,
-    Plus,
-    Camera,
-} from 'lucide-react-native';
+import { X, ChevronRight, Check, Plus, Camera } from 'lucide-react-native';
 import { ThemeContext } from '../src/contexts/ThemeContext';
 import { useCreateSessionMutation } from '../src/hooks/useSessionsQuery';
 import { useTagsQuery } from '../src/hooks/useTagsQuery';
@@ -116,6 +104,7 @@ export default function AddSessionScreen() {
     const [isCollective, setIsCollective] = useState(false);
     const [djInput, setDjInput] = useState('');
     const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
+    const [linkedDjs, setLinkedDjs] = useState<Record<string, string>>({});
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
     const [posterUrl, setPosterUrl] = useState<string | null>(null);
     const [isUploadingPoster, setIsUploadingPoster] = useState(false);
@@ -297,6 +286,7 @@ export default function AddSessionScreen() {
             end_time: endTime.trim(),
             is_collective: isCollective,
             djs: isCollective ? finalDjs : [],
+            dj_profile_ids: isCollective ? Object.values(linkedDjs) : [],
             earning_type: earningType,
             earning_amount: amount,
             currency,
@@ -465,12 +455,8 @@ export default function AddSessionScreen() {
                                 }}
                                 className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-[#8270e4] bg-[#f0edfc]' : 'border-[#e9ecf3] dark:border-[#252d40] bg-[#f8f9fd] dark:bg-[#111625]'}`}
                             >
-                                <MapPin
-                                    size={22}
-                                    color={venueId ? '#7666df' : '#9CA3AF'}
-                                />
                                 <Text
-                                    className={`flex-1 ml-3 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                    className={`flex-1 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}
                                 >
                                     {venue || t('venue_placeholder')}
                                 </Text>
@@ -497,11 +483,6 @@ export default function AddSessionScreen() {
                                 }}
                                 className="flex-row items-center bg-[#f8f9fd] dark:bg-[#111625] border border-[#e9ecf3] dark:border-[#252d40] rounded-xl px-4 py-3.5"
                             >
-                                <LucideCalendar
-                                    size={20}
-                                    color={isDark ? '#9CA3AF' : '#6B7280'}
-                                    className="mr-3"
-                                />
                                 <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
                                     {`${weekday}, ${dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' })}`}
                                 </Text>
@@ -571,11 +552,6 @@ export default function AddSessionScreen() {
                                 }}
                                 className="flex-row items-center bg-[#f8f9fd] dark:bg-[#111625] border border-[#e9ecf3] dark:border-[#252d40] rounded-xl px-4 py-3.5 mt-4"
                             >
-                                <Repeat
-                                    size={20}
-                                    color={isDark ? '#9CA3AF' : '#6B7280'}
-                                    className="mr-3"
-                                />
                                 <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
                                     {recurrenceType === 'none' &&
                                         t('does_not_repeat')}
@@ -741,7 +717,6 @@ export default function AddSessionScreen() {
                                         }
                                         className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-[#252d40] py-4"
                                     >
-                                        <Clock size={20} color="#9CA3AF" />
                                         <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">
                                             {startTime}
                                         </Text>
@@ -827,7 +802,6 @@ export default function AddSessionScreen() {
                                         }
                                         className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-[#252d40] py-4"
                                     >
-                                        <Clock size={20} color="#9CA3AF" />
                                         <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">
                                             {endTime}
                                         </Text>
@@ -1080,16 +1054,12 @@ export default function AddSessionScreen() {
                     >
                         <View className="flex-row items-center justify-between mb-4 mt-2 bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
                             <View className="flex-row items-center">
-                                <Users
-                                    size={20}
-                                    color={isDark ? '#bdb0f5' : '#7666df'}
-                                    className="mr-3"
-                                />
                                 <Text className="text-base font-semibold text-gray-900 dark:text-white">
                                     {t('collective_session')}
                                 </Text>
                             </View>
                             <Switch
+                                accessibilityLabel={t('collective_session')}
                                 trackColor={{
                                     false: isDark ? '#343d52' : '#d9dce8',
                                     true: '#8270e4',
@@ -1099,100 +1069,17 @@ export default function AddSessionScreen() {
                             />
                         </View>
                         {isCollective && (
-                            <View className="z-30 mb-6">
-                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
-                                    {t('add_djs')}
-                                </Text>
-                                <View
-                                    className={`rounded-2xl border-2 flex-row items-center pl-5 ${focusedInput === 'dj' ? 'border-[#8270e4] bg-[#f8f9fd] dark:bg-[#111625]' : 'border-[#e9ecf3] dark:border-[#252d40] bg-[#f8f9fd] dark:bg-[#111625]'}`}
-                                >
-                                    <Users
-                                        size={22}
-                                        color={
-                                            focusedInput === 'dj'
-                                                ? '#7666df'
-                                                : '#9CA3AF'
-                                        }
-                                    />
-                                    <TextInput
-                                        className="flex-1 px-4 py-4 text-gray-900 dark:text-white text-base font-medium"
-                                        placeholder={t('add_djs_placeholder')}
-                                        value={djInput}
-                                        onChangeText={setDjInput}
-                                        onFocus={() => handleFocus('dj')}
-                                        onBlur={handleBlur}
-                                        autoCapitalize="words"
-                                        onSubmitEditing={() => {
-                                            if (djInput.trim()) {
-                                                setSelectedDjs([
-                                                    ...selectedDjs,
-                                                    djInput.trim(),
-                                                ]);
-                                                setDjInput('');
-                                            }
-                                        }}
-                                    />
-                                </View>
-                                {filteredDjTags.length > 0 && (
-                                    <ScrollView
-                                        horizontal
-                                        showsHorizontalScrollIndicator={false}
-                                        className="mt-2"
-                                        contentContainerStyle={{
-                                            paddingHorizontal: 4,
-                                        }}
-                                        keyboardShouldPersistTaps="always"
-                                    >
-                                        {filteredDjTags.map((tag, idx) => (
-                                            <TouchableOpacity
-                                                key={idx}
-                                                onPress={() => {
-                                                    setSelectedDjs([
-                                                        ...selectedDjs,
-                                                        tag.name,
-                                                    ]);
-                                                    setDjInput('');
-                                                }}
-                                                className="bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-100 dark:border-gray-700"
-                                            >
-                                                <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">
-                                                    {tag.name}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ))}
-                                    </ScrollView>
-                                )}
-                                {selectedDjs.length > 0 && (
-                                    <View className="flex-row flex-wrap gap-2 mt-3 ml-1">
-                                        {selectedDjs.map((dj, index) => (
-                                            <View
-                                                key={index}
-                                                className="flex-row items-center bg-[#f0edfc] dark:bg-[#292743] px-3 py-1.5 rounded-full border border-[#dcd6f8] dark:border-[#4a4178]"
-                                            >
-                                                <Text className="text-[#7666df] dark:text-[#bdb0f5] text-sm font-bold">
-                                                    {dj}
-                                                </Text>
-                                                <TouchableOpacity
-                                                    onPress={() =>
-                                                        setSelectedDjs(
-                                                            selectedDjs.filter(
-                                                                (_, i) =>
-                                                                    i !== index,
-                                                            ),
-                                                        )
-                                                    }
-                                                    className="ml-2"
-                                                >
-                                                    <X
-                                                        size={14}
-                                                        color="#7666df"
-                                                    />
-                                                </TouchableOpacity>
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
+                            <SessionDJPicker
+                                names={selectedDjs}
+                                linked={linkedDjs}
+                                query={djInput}
+                                onQueryChange={setDjInput}
+                                suggestions={djTags}
+                                onChange={(names, refs) => {
+                                    setSelectedDjs(names);
+                                    setLinkedDjs(refs);
+                                }}
+                            />
                         )}
                     </SessionFormSection>
 
@@ -1493,14 +1380,6 @@ export default function AddSessionScreen() {
                                     }}
                                     className={`flex-row items-center p-4 mb-3 rounded-2xl border ${venueId === v.id ? 'border-[#8270e4] bg-[#f0edfc]' : 'border-gray-100 dark:border-gray-800'}`}
                                 >
-                                    <MapPin
-                                        size={20}
-                                        color={
-                                            venueId === v.id
-                                                ? '#7666df'
-                                                : '#9CA3AF'
-                                        }
-                                    />
                                     <View className="ml-3 flex-1">
                                         <Text className="font-bold text-gray-900 dark:text-white">
                                             {v.name}

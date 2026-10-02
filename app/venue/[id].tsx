@@ -14,18 +14,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, Redirect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-    Trash2,
-    Plus,
-    X,
-    Check,
-    CloudOff,
-    Camera,
-    Star,
-    Folder,
-    FolderPlus,
-    ChevronRight,
-} from 'lucide-react-native';
+import { Trash2, Plus, X, Check, CloudOff, Camera } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { venueService } from '../../src/services/venues';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -368,11 +357,7 @@ export default function VenueDetailScreen() {
                                       : '#f8f9fd',
                         }}
                     >
-                        <Star
-                            size={22}
-                            color={score <= value ? '#9983ee' : muted}
-                            fill={score <= value ? '#9983ee' : 'transparent'}
-                        />
+
                     </TouchableOpacity>
                 ))}
             </View>

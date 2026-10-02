@@ -1,21 +1,6 @@
 import type { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import {
-    MapPin,
-    Settings2,
-    ShieldCheck,
-    Speaker,
-    Star,
-    NotebookPen,
-    CalendarDays,
-    Disc3,
-    Wallet,
-    Users,
-    Camera,
-    CheckCheck,
-    X,
-    ArrowRight,
-} from 'lucide-react-native';
+import { X, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 
@@ -87,32 +72,29 @@ export function SessionFormHeader({
         </View>
     );
 }
-const icons = {
-    event: Disc3,
-    location: MapPin,
-    schedule: CalendarDays,
-    fee: Wallet,
-    booking: CheckCheck,
-    participants: Users,
-    poster: Camera,
-    equipment: Speaker,
-    rating: Star,
-    notes: NotebookPen,
-    settings: Settings2,
-    account: ShieldCheck,
-};
+type SectionKind =
+    | 'event'
+    | 'location'
+    | 'schedule'
+    | 'fee'
+    | 'booking'
+    | 'participants'
+    | 'poster'
+    | 'equipment'
+    | 'rating'
+    | 'notes'
+    | 'settings'
+    | 'account';
 export function SessionFormSection({
     title,
-    kind,
     children,
 }: {
     title: string;
-    kind: keyof typeof icons;
+    kind: SectionKind;
     children: ReactNode;
 }) {
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
-    const Icon = icons[kind];
     return (
         <View
             style={{
@@ -127,18 +109,6 @@ export function SessionFormSection({
             <View
                 style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}
             >
-                <View
-                    style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 11,
-                        backgroundColor: dark ? '#292743' : '#f0edfc',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Icon size={17} color={dark ? '#bdb0f5' : '#7666df'} />
-                </View>
                 <Text
                     style={{
                         flex: 1,

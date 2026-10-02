@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Users } from 'lucide-react-native';
+
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
@@ -59,7 +59,6 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
             <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
             >
-                <Users size={19} color={c.accent} />
                 <Text style={{ color: c.fg, fontWeight: '800', fontSize: 17 }}>
                     {t('community.title')}
                 </Text>

@@ -1,3 +1,4 @@
+import { collaborationService } from './collaborations';
 import { supabase } from '../lib/supabase';
 import { CreateSessionInput, Session } from '../types/session';
 import { TagOption } from '../types/tag';
@@ -34,7 +35,7 @@ export const sessionService = {
     async getUpdateConflicts(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll: boolean): Promise<Session[]> {
         const sessions = await this.getAllSessions(userId);
         const current = sessions.find(session => session.id === sessionId);
-        if (!current) throw new Error('error_loading_session');
+        if (!current || current.is_guest) throw new Error('error_loading_session');
         const targets = relatedSessionTargets(sessions, current, updateAll);
         const candidates = targets.map(session => ({ ...session, ...input, date: updateAll ? session.date : input.date || session.date }))
             .filter(session => session.status !== 'cancelled');
@@ -106,7 +107,7 @@ export const sessionService = {
                 .range(offset, offset + pageSize - 1);
             if (error) throw new Error(error.message);
             sessions.push(...(data || []));
-            if (!data || data.length < pageSize) return sessions;
+            if (!data || data.length < pageSize) return [...sessions, ...await collaborationService.agenda()].sort((a, b) => b.date.localeCompare(a.date));
         }
     },
     async getSessionsByMonth(year: number, month: number, userId: string): Promise<Session[]> {
@@ -132,7 +133,8 @@ export const sessionService = {
             throw new Error(error.message);
         }
 
-        return data || [];
+        const guests = (await collaborationService.agenda()).filter(session => session.date >= startPath && session.date < endPath);
+        return [...(data || []), ...guests].sort((a, b) => a.date.localeCompare(b.date));
     },
 
     async getUpcomingSessions(userId: string): Promise<Session[]> {
@@ -155,7 +157,8 @@ export const sessionService = {
             throw new Error(error.message);
         }
 
-        return (data || []).filter((session: Session) => sessionRange(session).end > new Date()).slice(0, 30);
+        const guests = (await collaborationService.agenda()).filter(session => session.date >= today && session.status !== 'cancelled');
+        return [...(data || []), ...guests].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)).filter((session: Session) => sessionRange(session).end > new Date()).slice(0, 30);
     },
 
     async getUserTags(userId: string, type: 'title' | 'venue' | 'dj'): Promise<TagOption[]> {
@@ -181,6 +184,7 @@ export const sessionService = {
             .eq('id', sessionId)
             .single();
 
+        if (error?.code === 'PGRST116') return (await collaborationService.agenda()).find(session => session.id === sessionId) || null;
         if (error) {
             console.error('Error fetching session by id:', error);
             throw new Error(error.message);
@@ -209,9 +213,9 @@ export const sessionService = {
     async updateSession(sessionId: string, input: Partial<CreateSessionInput>, userId: string, updateAll = false): Promise<void> {
         const sessions = await this.getAllSessions(userId);
         const current = sessions.find(session => session.id === sessionId);
-        if (!current) throw new Error('error_loading_session');
+        if (!current || current.is_guest) throw new Error('error_loading_session');
         const targets = relatedSessionTargets(sessions, current, updateAll);
-        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', ...(updateAll ? [] : ['date'])];
+        const allowed = ['title', 'venue', 'venue_id', 'start_time', 'end_time', 'is_collective', 'djs', 'dj_profile_ids', 'earning_type', 'earning_amount', 'currency', 'color', 'status', 'poster_url', ...(updateAll ? [] : ['date'])];
         const changes = Object.fromEntries(Object.entries(input).filter(([key, value]) => allowed.includes(key) && value !== undefined));
         if (!Object.keys(changes).length) return;
         if (Object.keys(changes).some(key => key !== 'color')) {

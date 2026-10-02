@@ -39,7 +39,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM public.community_session_shares WHERE user_id <> auth.uid()) THEN RAISE EXCEPTION 'Private sharing ledger exposed'; END IF;
  SELECT to_jsonb(f) INTO card FROM public.community_feed() f LIMIT 1;
  IF card ?| ARRAY['earning_amount','amount_paid','currency','djs','notes','contact_info','email','venue_id','recurrence_type'] THEN RAISE EXCEPTION 'Sensitive field exposed'; END IF;
- IF (select count(*) from jsonb_object_keys(card)) <> 12 THEN RAISE EXCEPTION 'Unexpected feed projection'; END IF;
+ IF (select count(*) from jsonb_object_keys(card)) <> 13 THEN RAISE EXCEPTION 'Unexpected feed projection'; END IF;
  BEGIN
   INSERT INTO public.community_session_shares(session_id,user_id) VALUES('00000000-0000-4000-8000-000000000916',auth.uid());
   RAISE EXCEPTION 'Another owner session published';

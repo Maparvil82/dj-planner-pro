@@ -1,6 +1,6 @@
 import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, Calendar, MapPin, LayoutDashboard, Users } from 'lucide-react-native';
+import { Home, MapPin, LayoutDashboard, Users } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';

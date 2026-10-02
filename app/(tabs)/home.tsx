@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
+import { ChevronRight, X, Calendar } from 'lucide-react-native';
 import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
 
         monthSessions.forEach((session: any) => {
-            if (session.status === 'cancelled') return;
+            if (session.status === 'cancelled' || session.is_guest) return;
             const amount = calculateSessionEarnings(session);
             const color = session.color || '#3B82F6';
 
@@ -98,7 +98,7 @@ export default function HomeScreen() {
         earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         pendingSessionsList.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions.filter(s => s.status !== 'pending' && s.status !== 'cancelled')), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
+        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions.filter(s => !s.is_guest && s.status !== 'pending' && s.status !== 'cancelled')), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
     }, [monthSessions, now]);
 
     const filteredUpcomingSessions = useMemo(() => {
@@ -296,7 +296,7 @@ export default function HomeScreen() {
                                                             <SessionPreviewCard
                                                                 session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
-                                                                onLongPress={() => Alert.alert(t('delete_session_title'), t('delete_session_message'), [
+                                                                onLongPress={session.is_guest ? undefined : () => Alert.alert(t('delete_session_title'), t('delete_session_message'), [
                                                                     { text: t('cancel'), style: 'cancel' },
                                                                     { text: t('delete'), style: 'destructive', onPress: () => deleteSessionMutation.mutate(session.id) }
                                                                 ])}

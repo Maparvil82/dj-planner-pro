@@ -12,11 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { useSubscription } from '../src/hooks/useSubscription';
-import {
-    X,
-    ArrowRight,
-    Check,
-} from 'lucide-react-native';
+import { X, ArrowRight, Check } from 'lucide-react-native';
 
 export default function PaywallScreen() {
     const { t } = useTranslation();

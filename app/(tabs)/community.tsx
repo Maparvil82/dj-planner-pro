@@ -121,7 +121,7 @@ export default function CommunityScreen() {
                                     gap: 12,
                                 }}
                             >
-                                <Users size={26} color={c.accent} />
+
                                 <Text
                                     style={{
                                         color: c.fg,

@@ -240,7 +240,7 @@ export default function CommunityProfileScreen() {
                                         <CommunitySessionCard
                                             key={item.session_id}
                                             item={item}
-                                            showAuthor={false}
+                                            showAuthor={item.author_id !== id}
                                         />
                                     ))
                             ) : (

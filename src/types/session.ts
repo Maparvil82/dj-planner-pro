@@ -11,6 +11,9 @@ export interface Session {
     color: string;
     is_collective: boolean;
     djs: string[];
+    dj_profile_ids?: string[];
+    is_guest?: boolean;
+    owner_name?: string;
     earning_type: 'free' | 'hourly' | 'fixed';
     earning_amount: number;
     currency: string;
@@ -34,6 +37,7 @@ export interface CreateSessionInput {
     color?: string;
     is_collective?: boolean;
     djs?: string[];
+    dj_profile_ids?: string[];
     earning_type?: 'free' | 'hourly' | 'fixed';
     earning_amount?: number;
     currency?: string;

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Clock3, ChevronRight, MapPin, Users } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { Session } from '../../types/session';
@@ -18,7 +18,7 @@ export function SessionPreviewCard({
     showDjs?: boolean;
 }) {
     const { activeTheme } = useTheme();
-    const { currentLanguage } = useTranslation();
+    const { t, currentLanguage } = useTranslation();
     const dark = activeTheme === 'dark';
     const text = dark ? '#f3f4f8' : '#202538';
     const muted = dark ? '#a8b2c6' : '#6d7588';
@@ -126,7 +126,6 @@ export function SessionPreviewCard({
                             gap: 5,
                         }}
                     >
-                        <MapPin size={12} color={muted} />
                         <Text
                             numberOfLines={1}
                             style={{ flex: 1, color: muted, fontSize: 12 }}
@@ -168,7 +167,6 @@ export function SessionPreviewCard({
                         gap: 6,
                     }}
                 >
-                    <Clock3 size={14} color={muted} />
                     <Text
                         style={{
                             color: muted,
@@ -179,11 +177,18 @@ export function SessionPreviewCard({
                         {session.start_time.slice(0, 5)} –{' '}
                         {session.end_time.slice(0, 5)}
                     </Text>
-                    {session.is_collective ? (
-                        <Users size={14} color={muted} />
-                    ) : null}
                 </View>
-                {session.earning_type !== 'free' ? (
+                {session.is_guest ? (
+                    <Text
+                        style={{
+                            color: muted,
+                            fontSize: 11,
+                            marginLeft: 'auto',
+                        }}
+                    >
+                        {t('collaboration.guestSession')}
+                    </Text>
+                ) : session.earning_type !== 'free' ? (
                     <Text
                         style={{
                             color: text,

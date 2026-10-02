@@ -6,12 +6,7 @@ import {
     Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-    CalendarDays,
-    Clock3,
-    MapPin,
-    ChevronRight,
-} from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Avatar } from '../ui/Avatar';
@@ -327,7 +322,6 @@ export function CommunitySessionCard({
                         gap: 8,
                     }}
                 >
-                    <MapPin size={15} color={c.accent} />
                     <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
                         {item.venue}
                         {item.city ? ` · ${item.city}` : ''}
@@ -340,11 +334,50 @@ export function CommunitySessionCard({
                         gap: 8,
                     }}
                 >
-                    <CalendarDays size={15} color={c.accent} />
                     <Text style={{ color: c.fg, fontSize: 13 }}>
                         {dateLabel}
                     </Text>
                 </View>
+                {!!item.collaborators?.length && (
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Text style={{ color: c.muted, fontSize: 12 }}>
+                            {t('collaboration.with')}
+                        </Text>
+                        {item.collaborators.map((person) => (
+                            <TouchableOpacity
+                                key={person.user_id}
+                                accessibilityRole="button"
+                                accessibilityLabel={`${t('community.viewProfile')}: ${person.artist_name}`}
+                                onPress={() =>
+                                    router.push(`/community/${person.user_id}`)
+                                }
+                                style={{
+                                    paddingVertical: 7,
+                                    paddingHorizontal: 10,
+                                    borderRadius: 12,
+                                    backgroundColor: c.tint,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: c.accent,
+                                        fontSize: 12,
+                                        fontWeight: '600',
+                                    }}
+                                >
+                                    {person.artist_name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
                 {!!item.start_time && (
                     <View
                         style={{
@@ -353,7 +386,6 @@ export function CommunitySessionCard({
                             gap: 8,
                         }}
                     >
-                        <Clock3 size={15} color={c.accent} />
                         <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
                             {item.start_time}
                             {item.end_time ? ` – ${item.end_time}` : ''}
