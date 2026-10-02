@@ -113,8 +113,9 @@ export default function TabLayout() {
                         <View className={`p-0.5 rounded-full border-2 ${color === (isDark ? '#bdb0f5' : '#6554df') ? 'border-violet-500' : 'border-transparent'}`}>
                             <Avatar
                                 url={profile?.avatar_url}
-                                name={session?.user?.email}
+                                name={profile?.artist_name || session?.user?.email}
                                 size="sm"
+                                className="w-6 h-6"
                             />
                         </View>
                     ),

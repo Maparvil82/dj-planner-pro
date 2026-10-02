@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import {
     MapPin,
+    Settings2,
+    ShieldCheck,
     Speaker,
     Star,
     NotebookPen,
@@ -96,6 +98,8 @@ const icons = {
     equipment: Speaker,
     rating: Star,
     notes: NotebookPen,
+    settings: Settings2,
+    account: ShieldCheck,
 };
 export function SessionFormSection({
     title,

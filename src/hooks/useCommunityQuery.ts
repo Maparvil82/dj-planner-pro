@@ -88,6 +88,12 @@ export function useCommunityMutation() {
                 action.enabled,
             );
         },
-        onSuccess: () => client.invalidateQueries({ queryKey: ['community'] }),
+        onSuccess: (data) => {
+            if (data) {
+                useAuthStore.getState().setProfile(data.profile);
+                client.setQueryData(['account-profile', userId], data.profile);
+            }
+            return client.invalidateQueries({ queryKey: ['community'] });
+        },
     });
 }

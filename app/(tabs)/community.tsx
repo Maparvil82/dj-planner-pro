@@ -90,13 +90,7 @@ export default function CommunityScreen() {
                     <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityLabel={t('community.myProfile')}
-                        onPress={() =>
-                            router.push(
-                                own.data
-                                    ? `/community/${userId}`
-                                    : '/community/edit-profile',
-                            )
-                        }
+                        onPress={() => router.push('/(tabs)/profile')}
                         style={{
                             width: 46,
                             height: 46,
@@ -165,7 +159,7 @@ export default function CommunityScreen() {
                                 <CommunityButton
                                     label={t('community.createProfile')}
                                     onPress={() =>
-                                        router.push('/community/edit-profile')
+                                        router.push('/(tabs)/profile?edit=1')
                                     }
                                 />
                             </View>
@@ -277,7 +271,7 @@ export default function CommunityScreen() {
                                             !own.data?.is_visible
                                         )
                                             router.push(
-                                                '/community/edit-profile',
+                                                '/(tabs)/profile?edit=1',
                                             );
                                         else
                                             mutation.mutate({

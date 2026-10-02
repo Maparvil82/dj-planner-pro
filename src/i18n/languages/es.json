@@ -484,7 +484,7 @@
     "community": {
         "title": "Comunidad",
         "intro": "Conecta con DJs y descubre sus sesiones.",
-        "myProfile": "Mi perfil DJ",
+        "myProfile": "Mi perfil",
         "viewProfile": "Ver perfil",
         "sharedSession": "Sesión compartida",
         "nextDay": "día siguiente",
@@ -495,8 +495,8 @@
         "djs": "DJs",
         "search": "Buscar DJs por nombre…",
         "joinTitle": "Tu música también conecta",
-        "joinHint": "Crea tu perfil DJ para que te encuentren, seguir a otros artistas y compartir tus sesiones. Tú eliges qué publicar.",
-        "createProfile": "Activar mi perfil DJ",
+        "joinHint": "Completa tu perfil y activa su visibilidad para seguir a otros DJs y compartir tus sesiones. Tú eliges qué publicar.",
+        "createProfile": "Completar mi perfil",
         "error": "No hemos podido completar la acción. Inténtalo de nuevo.",
         "loading": "Cargando comunidad…",
         "noDjs": "Todavía no hay DJs aquí",
@@ -507,10 +507,10 @@
         "noFollowingHint": "Sigue a otros DJs para ver las sesiones que compartan.",
         "discoverDjs": "Descubrir DJs",
         "loadMore": "Ver más",
-        "editProfile": "Editar perfil DJ",
+        "editProfile": "Editar perfil",
         "profileIntro": "Presenta tu música a la comunidad.",
         "identity": "Sobre ti",
-        "avatarHint": "Se utiliza tu foto de cuenta. El nombre de este perfil puede ser diferente.",
+        "avatarHint": "Una sola foto y un solo nombre artístico para tu perfil y Comunidad.",
         "genres": "Estilos musicales",
         "bio": "Biografía",
         "visibility": "Visibilidad",
@@ -533,5 +533,18 @@
         "sessionHidden": "Esta sesión está compartida, pero permanece oculta mientras tu perfil esté desactivado o la reserva no esté confirmada.",
         "sessionPrivate": "Esta sesión solo aparece en tu agenda privada.",
         "confirmFirst": "Solo puedes publicar sesiones confirmadas."
+    },
+    "unifiedProfile": {
+        "title": "Mi perfil",
+        "intro": "Tu identidad DJ y los ajustes de tu cuenta.",
+        "identity": "Tu perfil",
+        "changePhoto": "Cambiar foto",
+        "public": "Visible en Comunidad",
+        "private": "Solo para ti",
+        "preview": "Ver cómo me ven otros DJs",
+        "activate": "Activar visibilidad en Comunidad",
+        "accountHint": "Tu correo y contraseña son privados. La contraseña solo cambia si introduces una nueva.",
+        "emailSent": "Te hemos enviado un enlace para confirmar tu nuevo correo.",
+        "previewTitle": "Vista en Comunidad"
     }
 }

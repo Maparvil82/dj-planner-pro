@@ -1,3 +1,4 @@
+import type { UserProfile } from './profile';
 import { supabase } from '../lib/supabase';
 export interface CommunityProfile {
     user_id: string;
@@ -38,14 +39,15 @@ export const communityService = {
         if (error) throw error;
         return data;
     },
-    async saveProfile(id: string, input: CommunityProfileInput) {
-        const { data, error } = await supabase
-            .from('community_profiles')
-            .upsert({ user_id: id, ...input })
-            .select()
-            .single();
+    async saveProfile(
+        _id: string,
+        input: CommunityProfileInput,
+    ): Promise<{ profile: UserProfile; community: CommunityProfile }> {
+        const { data, error } = await supabase.rpc('save_unified_profile', {
+            input,
+        });
         if (error) throw error;
-        return data as CommunityProfile;
+        return data;
     },
     async discover(
         search: string,
@@ -80,7 +82,7 @@ export const communityService = {
                 .range(offset, offset + 999);
             if (error) throw error;
             const rows = data || [];
-            ids.push(...rows.map(row => row.following_id));
+            ids.push(...rows.map((row) => row.following_id));
             if (rows.length < 1000) return ids;
         }
     },

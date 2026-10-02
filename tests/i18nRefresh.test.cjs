@@ -25,7 +25,7 @@ test('first launch has community labels immediately, without an async initializa
     evaluateTranslations(engine);
     assert.equal(engine.isInitialized, true);
     assert.equal(engine.t('community.title'), 'Comunidad');
-    assert.equal(engine.t('community.myProfile'), 'Mi perfil DJ');
+    assert.equal(engine.t('community.myProfile'), 'Mi perfil');
 });
 
 test('Fast Refresh replaces a retained old resource bundle and preserves selected language', async () => {
@@ -36,8 +36,8 @@ test('Fast Refresh replaces a retained old resource bundle and preserves selecte
     engine.on('languageChanged', () => notifications++);
     evaluateTranslations(engine, 'en');
     assert.equal(engine.language, 'es');
-    assert.equal(engine.t('community.myProfile'), 'Mi perfil DJ');
-    assert.equal(engine.t('community.editProfile'), 'Editar perfil DJ');
+    assert.equal(engine.t('community.myProfile'), 'Mi perfil');
+    assert.equal(engine.t('community.editProfile'), 'Editar perfil');
     assert(notifications > 0, 'mounted screens must receive a translation refresh event');
     assert.equal(engine.t('home'), 'Inicio');
 });

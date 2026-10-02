@@ -24,7 +24,7 @@ import {
     useCommunityProfile,
 } from '../../src/hooks/useCommunityQuery';
 export default function CommunityProfileScreen() {
-    const params = useLocalSearchParams<{ id: string }>();
+    const params = useLocalSearchParams<{ id: string; preview?: string }>();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const c = useCommunityColors();
     const { t } = useTranslation();
@@ -49,6 +49,8 @@ export default function CommunityProfileScreen() {
         }, [refresh]),
     );
     if (!userId) return <Redirect href="/(auth)/login" />;
+    if (own && params.preview !== '1')
+        return <Redirect href="/(tabs)/profile" />;
     const person = profile.data;
     return (
         <SafeAreaView
@@ -56,7 +58,7 @@ export default function CommunityProfileScreen() {
             style={{ flex: 1, backgroundColor: c.bg }}
         >
             <SessionFormHeader
-                title={t(own ? 'community.myProfile' : 'community.djProfile')}
+                title={t(own ? 'unifiedProfile.previewTitle' : 'community.djProfile')}
                 subtitle={person?.artist_name || t('community.title')}
                 onClose={() => router.back()}
             />
@@ -156,7 +158,7 @@ export default function CommunityProfileScreen() {
                                         label={t('community.editProfile')}
                                         onPress={() =>
                                             router.push(
-                                                '/community/edit-profile',
+                                                '/(tabs)/profile?edit=1',
                                             )
                                         }
                                         secondary
@@ -179,9 +181,12 @@ export default function CommunityProfileScreen() {
                                         }
                                         secondary={isFollowing}
                                         onPress={() => {
-                                            if (!isFollowing && !viewer.data?.is_visible)
+                                            if (
+                                                !isFollowing &&
+                                                !viewer.data?.is_visible
+                                            )
                                                 router.push(
-                                                    '/community/edit-profile',
+                                                    '/(tabs)/profile?edit=1',
                                                 );
                                             else
                                                 mutation.mutate({
