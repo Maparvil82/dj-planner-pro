@@ -11,7 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, Plus, Search, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -355,181 +355,195 @@ export default function VenuesScreen() {
             <Modal
                 visible={isAddModalVisible}
                 animationType="slide"
+                presentationStyle="fullScreen"
                 onRequestClose={() => {
                     if (!isSaving) setIsAddModalVisible(false);
                 }}
             >
-                <SafeAreaView
-                    style={{ flex: 1, backgroundColor: background }}
-                    edges={['top', 'bottom', 'left', 'right']}
-                >
-                    <SessionFormHeader
-                        title={t('add_venue')}
-                        subtitle={t('places.addIntro')}
-                        onClose={() => {
-                            if (!isSaving) setIsAddModalVisible(false);
-                        }}
-                    />
-                    <KeyboardAvoidingView
-                        style={{ flex: 1 }}
-                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                <SafeAreaProvider>
+                    <SafeAreaView
+                        style={{ flex: 1, backgroundColor: background }}
+                        edges={['top', 'bottom', 'left', 'right']}
                     >
-                        <ScrollView
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode="on-drag"
-                            contentContainerStyle={{
-                                paddingHorizontal: 20,
-                                paddingBottom: 130,
-                                width: '100%',
-                                maxWidth: 900,
-                                alignSelf: 'center',
-                                gap: 16,
+                        <SessionFormHeader
+                            title={t('add_venue')}
+                            subtitle={t('places.addIntro')}
+                            onClose={() => {
+                                if (!isSaving) setIsAddModalVisible(false);
                             }}
-                        >
-                            <SessionFormSection
-                                kind="event"
-                                title={t('places.details')}
-                            >
-                                <View style={{ gap: 8 }}>
-                                    <Text
-                                        style={{
-                                            color: muted,
-                                            fontWeight: '600',
-                                            fontSize: 13,
-                                        }}
-                                    >
-                                        {t('venue_name')} *
-                                    </Text>
-                                    <TextInput
-                                        accessibilityLabel={t('venue_name')}
-                                        placeholder={t('venue_placeholder')}
-                                        placeholderTextColor={muted}
-                                        className="focus:outline-none"
-                                        selectionColor="#8270e4"
-                                        onFocus={() => setFocusedField('name')}
-                                        onBlur={() => setFocusedField(null)}
-                                        value={newName}
-                                        onChangeText={setNewName}
-                                        autoCapitalize="words"
-                                        autoFocus
-                                        editable={!isSaving}
-                                        style={[
-                                            inputStyle,
-                                            {
-                                                borderColor:
-                                                    focusedField === 'name'
-                                                        ? '#8270e4'
-                                                        : border,
-                                            },
-                                        ]}
-                                    />
-                                </View>
-                                <Text
-                                    style={{
-                                        color: muted,
-                                        fontSize: 12,
-                                        lineHeight: 18,
-                                    }}
-                                >
-                                    {t('places.nameHint')}
-                                </Text>
-                            </SessionFormSection>
-                            <SessionFormSection
-                                kind="location"
-                                title={t('places.location')}
-                            >
-                                <View style={{ gap: 8 }}>
-                                    <Text
-                                        style={{
-                                            color: muted,
-                                            fontWeight: '600',
-                                            fontSize: 13,
-                                        }}
-                                    >
-                                        {t('venue_city')}
-                                    </Text>
-                                    <TextInput
-                                        accessibilityLabel={t('venue_city')}
-                                        placeholder={t(
-                                            'places.cityPlaceholder',
-                                        )}
-                                        placeholderTextColor={muted}
-                                        className="focus:outline-none"
-                                        selectionColor="#8270e4"
-                                        onFocus={() => setFocusedField('city')}
-                                        onBlur={() => setFocusedField(null)}
-                                        value={newCity}
-                                        onChangeText={setNewCity}
-                                        autoCapitalize="words"
-                                        editable={!isSaving}
-                                        style={[
-                                            inputStyle,
-                                            {
-                                                borderColor:
-                                                    focusedField === 'city'
-                                                        ? '#8270e4'
-                                                        : border,
-                                            },
-                                        ]}
-                                    />
-                                </View>
-                                <View style={{ gap: 8 }}>
-                                    <Text
-                                        style={{
-                                            color: muted,
-                                            fontWeight: '600',
-                                            fontSize: 13,
-                                        }}
-                                    >
-                                        {t('venue_address')}
-                                    </Text>
-                                    <TextInput
-                                        accessibilityLabel={t('venue_address')}
-                                        placeholder={t(
-                                            'places.addressPlaceholder',
-                                        )}
-                                        placeholderTextColor={muted}
-                                        className="focus:outline-none"
-                                        selectionColor="#8270e4"
-                                        onFocus={() =>
-                                            setFocusedField('address')
-                                        }
-                                        onBlur={() => setFocusedField(null)}
-                                        value={newAddress}
-                                        onChangeText={setNewAddress}
-                                        autoCapitalize="words"
-                                        editable={!isSaving}
-                                        style={[
-                                            inputStyle,
-                                            {
-                                                borderColor:
-                                                    focusedField === 'address'
-                                                        ? '#8270e4'
-                                                        : border,
-                                            },
-                                        ]}
-                                    />
-                                </View>
-                                <Text
-                                    style={{
-                                        color: muted,
-                                        fontSize: 12,
-                                        lineHeight: 18,
-                                    }}
-                                >
-                                    {t('places.locationHint')}
-                                </Text>
-                            </SessionFormSection>
-                        </ScrollView>
-                        <SessionFormFooter
-                            label={t('save_venue')}
-                            disabled={!newName.trim() || isSaving}
-                            busy={isSaving}
-                            onSave={handleCreateVenue}
                         />
-                    </KeyboardAvoidingView>
-                </SafeAreaView>
+                        <KeyboardAvoidingView
+                            style={{ flex: 1 }}
+                            behavior={
+                                Platform.OS === 'ios' ? 'padding' : undefined
+                            }
+                            keyboardVerticalOffset={
+                                Platform.OS === 'ios' ? 90 : 0
+                            }
+                        >
+                            <ScrollView
+                                keyboardShouldPersistTaps="handled"
+                                keyboardDismissMode="on-drag"
+                                contentContainerStyle={{
+                                    paddingHorizontal: 20,
+                                    paddingBottom: 130,
+                                    width: '100%',
+                                    maxWidth: 900,
+                                    alignSelf: 'center',
+                                    gap: 16,
+                                }}
+                            >
+                                <SessionFormSection
+                                    kind="event"
+                                    title={t('places.details')}
+                                >
+                                    <View style={{ gap: 8 }}>
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontWeight: '600',
+                                                fontSize: 13,
+                                            }}
+                                        >
+                                            {t('venue_name')} *
+                                        </Text>
+                                        <TextInput
+                                            accessibilityLabel={t('venue_name')}
+                                            placeholder={t('venue_placeholder')}
+                                            placeholderTextColor={muted}
+                                            className="focus:outline-none"
+                                            selectionColor="#8270e4"
+                                            onFocus={() =>
+                                                setFocusedField('name')
+                                            }
+                                            onBlur={() => setFocusedField(null)}
+                                            value={newName}
+                                            onChangeText={setNewName}
+                                            autoCapitalize="words"
+                                            autoFocus
+                                            editable={!isSaving}
+                                            style={[
+                                                inputStyle,
+                                                {
+                                                    borderColor:
+                                                        focusedField === 'name'
+                                                            ? '#8270e4'
+                                                            : border,
+                                                },
+                                            ]}
+                                        />
+                                    </View>
+                                    <Text
+                                        style={{
+                                            color: muted,
+                                            fontSize: 12,
+                                            lineHeight: 18,
+                                        }}
+                                    >
+                                        {t('places.nameHint')}
+                                    </Text>
+                                </SessionFormSection>
+                                <SessionFormSection
+                                    kind="location"
+                                    title={t('places.location')}
+                                >
+                                    <View style={{ gap: 8 }}>
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontWeight: '600',
+                                                fontSize: 13,
+                                            }}
+                                        >
+                                            {t('venue_city')}
+                                        </Text>
+                                        <TextInput
+                                            accessibilityLabel={t('venue_city')}
+                                            placeholder={t(
+                                                'places.cityPlaceholder',
+                                            )}
+                                            placeholderTextColor={muted}
+                                            className="focus:outline-none"
+                                            selectionColor="#8270e4"
+                                            onFocus={() =>
+                                                setFocusedField('city')
+                                            }
+                                            onBlur={() => setFocusedField(null)}
+                                            value={newCity}
+                                            onChangeText={setNewCity}
+                                            autoCapitalize="words"
+                                            editable={!isSaving}
+                                            style={[
+                                                inputStyle,
+                                                {
+                                                    borderColor:
+                                                        focusedField === 'city'
+                                                            ? '#8270e4'
+                                                            : border,
+                                                },
+                                            ]}
+                                        />
+                                    </View>
+                                    <View style={{ gap: 8 }}>
+                                        <Text
+                                            style={{
+                                                color: muted,
+                                                fontWeight: '600',
+                                                fontSize: 13,
+                                            }}
+                                        >
+                                            {t('venue_address')}
+                                        </Text>
+                                        <TextInput
+                                            accessibilityLabel={t(
+                                                'venue_address',
+                                            )}
+                                            placeholder={t(
+                                                'places.addressPlaceholder',
+                                            )}
+                                            placeholderTextColor={muted}
+                                            className="focus:outline-none"
+                                            selectionColor="#8270e4"
+                                            onFocus={() =>
+                                                setFocusedField('address')
+                                            }
+                                            onBlur={() => setFocusedField(null)}
+                                            value={newAddress}
+                                            onChangeText={setNewAddress}
+                                            autoCapitalize="words"
+                                            editable={!isSaving}
+                                            style={[
+                                                inputStyle,
+                                                {
+                                                    borderColor:
+                                                        focusedField ===
+                                                        'address'
+                                                            ? '#8270e4'
+                                                            : border,
+                                                },
+                                            ]}
+                                        />
+                                    </View>
+                                    <Text
+                                        style={{
+                                            color: muted,
+                                            fontSize: 12,
+                                            lineHeight: 18,
+                                        }}
+                                    >
+                                        {t('places.locationHint')}
+                                    </Text>
+                                </SessionFormSection>
+                            </ScrollView>
+                            <SessionFormFooter
+                                label={t('save_venue')}
+                                disabled={!newName.trim() || isSaving}
+                                busy={isSaving}
+                                onSave={handleCreateVenue}
+                            />
+                        </KeyboardAvoidingView>
+                    </SafeAreaView>
+                </SafeAreaProvider>
             </Modal>
         </SafeAreaView>
     );
