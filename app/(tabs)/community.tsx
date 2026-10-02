@@ -8,7 +8,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { Tabs, useFocusEffect, useRouter } from 'expo-router';
 import { Users, UserRound } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -75,6 +75,14 @@ export default function CommunityScreen() {
             edges={['top']}
             style={{ flex: 1, backgroundColor: c.bg }}
         >
+            <Tabs.Screen
+                options={{
+                    title: t('community.title'),
+                    tabBarIcon: ({ color, size }) => (
+                        <Users color={color} size={size} />
+                    ),
+                }}
+            />
             <PageHeader
                 title={t('community.title')}
                 subtitle={t('community.intro')}
