@@ -52,7 +52,7 @@
     "earning_type": "支払いタイプ",
     "earning_free": "無料",
     "earning_hourly": "時給",
-    "earning_fixed": "固定",
+    "earning_fixed": "セッション単位",
     "earning_amount": "金額 (€)",
     "total_earnings": "推定合計:",
     "date": "日付",
@@ -432,5 +432,16 @@
         "historyIntro": "すべてのセッションを一か所に。"
     },
     "edit_session": "セッションを編集",
-    "back": "戻る"
+    "back": "戻る",
+    "form": {
+        "event": "セッション",
+        "schedule": "日付と時間",
+        "fee": "報酬",
+        "participants": "DJと参加者",
+        "addIntro": "次の公演を準備しましょう。",
+        "editIntro": "セッションの詳細を更新します。",
+        "posterHint": "JPGまたはPNG · 縦長3:4を推奨",
+        "hourlyAmount": "1時間あたりの金額",
+        "fixedAmount": "セッションの金額"
+    }
 }

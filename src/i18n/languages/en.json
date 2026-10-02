@@ -52,7 +52,7 @@
     "earning_type": "Payment type",
     "earning_free": "Free",
     "earning_hourly": "Hourly",
-    "earning_fixed": "Fixed",
+    "earning_fixed": "Per session",
     "earning_amount": "Amount (€)",
     "total_earnings": "Estimated total:",
     "date": "Date",
@@ -437,5 +437,16 @@
         "historyIntro": "All your sessions, in one place."
     },
     "edit_session": "Edit session",
-    "back": "Back"
+    "back": "Back",
+    "form": {
+        "event": "Your session",
+        "schedule": "Date and schedule",
+        "fee": "Fee",
+        "participants": "DJs and participants",
+        "addIntro": "Plan your next performance.",
+        "editIntro": "Update your session details.",
+        "posterHint": "JPG or PNG · Vertical 3:4 format recommended",
+        "hourlyAmount": "Hourly amount",
+        "fixedAmount": "Session amount"
+    }
 }

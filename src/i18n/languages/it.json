@@ -52,7 +52,7 @@
     "earning_type": "Tipo di pagamento",
     "earning_free": "Gratis",
     "earning_hourly": "All'ora",
-    "earning_fixed": "Fisso",
+    "earning_fixed": "Per sessione",
     "earning_amount": "Importo (€)",
     "total_earnings": "Totale stimato:",
     "date": "Data",
@@ -433,5 +433,16 @@
         "historyIntro": "Tutte le tue sessioni, in un unico posto."
     },
     "edit_session": "Modifica sessione",
-    "back": "Indietro"
+    "back": "Indietro",
+    "form": {
+        "event": "La tua sessione",
+        "schedule": "Data e orario",
+        "fee": "Compenso",
+        "participants": "DJ e partecipanti",
+        "addIntro": "Prepara la tua prossima esibizione.",
+        "editIntro": "Aggiorna i dettagli della sessione.",
+        "posterHint": "JPG o PNG · Formato verticale 3:4 consigliato",
+        "hourlyAmount": "Importo orario",
+        "fixedAmount": "Importo per sessione"
+    }
 }

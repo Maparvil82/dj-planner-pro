@@ -6,10 +6,12 @@ export function SessionStatusControl({
     value,
     onChange,
     allowCancelled = false,
+    showHeading = true,
 }: {
     value: BookingStatus;
     onChange: (status: BookingStatus) => void;
     allowCancelled?: boolean;
+    showHeading?: boolean;
 }) {
     const { t } = useTranslation();
     const { activeTheme } = useTheme();
@@ -18,17 +20,19 @@ export function SessionStatusControl({
         ? ['pending', 'confirmed', 'cancelled']
         : ['pending', 'confirmed'];
     return (
-        <View style={{ marginBottom: 22 }}>
-            <Text
-                style={{
-                    color: dark ? '#d1d5db' : '#374151',
-                    fontWeight: '700',
-                    fontSize: 13,
-                    marginBottom: 12,
-                }}
-            >
-                {t('workflow.bookingState')}
-            </Text>
+        <View style={{}}>
+            {showHeading ? (
+                <Text
+                    style={{
+                        color: dark ? '#d1d5db' : '#374151',
+                        fontWeight: '700',
+                        fontSize: 13,
+                        marginBottom: 12,
+                    }}
+                >
+                    {t('workflow.bookingState')}
+                </Text>
+            ) : null}
             <View style={{ gap: 8 }}>
                 {states.map((status) => (
                     <TouchableOpacity

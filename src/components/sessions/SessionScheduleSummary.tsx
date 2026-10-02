@@ -26,7 +26,9 @@ export function SessionScheduleSummary({
                 ? sessionDuration({ start_time: start, end_time: end })
                 : 1);
     } catch {}
-    const validTimes = [start, end].every(time => /^([01]\d|2[0-3]):[0-5]\d$/.test(time));
+    const validTimes = [start, end].every((time) =>
+        /^([01]\d|2[0-3]):[0-5]\d$/.test(time),
+    );
     const equal = start === end;
     return (
         <View
@@ -34,22 +36,40 @@ export function SessionScheduleSummary({
                 backgroundColor: activeTheme === 'dark' ? '#25233c' : '#f2effc',
                 borderRadius: 15,
                 padding: 15,
-                marginBottom: 22,
+
                 gap: 6,
             }}
         >
-            <Text style={{ color: '#8b78e6', fontWeight: '700', fontSize: 13 }}>
-                {!validTimes ? t('workflow.invalidTime') : equal
-                    ? t('workflow.equalTimes')
-                    : `${t('duration')}: ${new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(sessionDuration({ start_time: start, end_time: end }))} h`}
+            <Text
+                style={{
+                    color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                    fontWeight: '700',
+                    fontSize: 13,
+                }}
+            >
+                {!validTimes
+                    ? t('workflow.invalidTime')
+                    : equal
+                      ? t('workflow.equalTimes')
+                      : `${t('duration')}: ${new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(sessionDuration({ start_time: start, end_time: end }))} h`}
             </Text>
             {validTimes && !equal && end < start ? (
-                <Text style={{ color: '#8b78e6', fontSize: 12 }}>
+                <Text
+                    style={{
+                        color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                        fontSize: 12,
+                    }}
+                >
                     {t('workflow.nextDay')}
                 </Text>
             ) : null}
             {validTimes && !equal && total !== null ? (
-                <Text style={{ color: '#8b78e6', fontSize: 12 }}>
+                <Text
+                    style={{
+                        color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                        fontSize: 12,
+                    }}
+                >
                     {t('workflow.totalFee')}:{' '}
                     {new Intl.NumberFormat(i18n.language, {
                         maximumFractionDigits: 2,

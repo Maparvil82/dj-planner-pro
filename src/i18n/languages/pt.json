@@ -52,7 +52,7 @@
     "earning_type": "Tipo de pagamento",
     "earning_free": "Gratis",
     "earning_hourly": "Por hora",
-    "earning_fixed": "Fixo",
+    "earning_fixed": "Por sessão",
     "earning_amount": "Valor (€)",
     "total_earnings": "Total estimado:",
     "date": "Data",
@@ -431,5 +431,16 @@
         "historyIntro": "Todas as tuas sessões, num só lugar."
     },
     "edit_session": "Editar sessão",
-    "back": "Voltar"
+    "back": "Voltar",
+    "form": {
+        "event": "A tua sessão",
+        "schedule": "Data e horário",
+        "fee": "Cachê",
+        "participants": "DJs e participantes",
+        "addIntro": "Prepara a tua próxima atuação.",
+        "editIntro": "Atualiza os detalhes da tua sessão.",
+        "posterHint": "JPG ou PNG · Formato vertical 3:4 recomendado",
+        "hourlyAmount": "Valor por hora",
+        "fixedAmount": "Valor por sessão"
+    }
 }
