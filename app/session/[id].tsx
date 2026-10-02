@@ -1,3 +1,4 @@
+import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
 import { SessionPayments } from '../../src/components/sessions/SessionPayments';
 import { SessionCollaborationDetails } from '../../src/components/sessions/SessionCollaborationDetails';
 import { SessionCommunitySharing } from '../../src/components/community/SessionCommunitySharing';
@@ -19,7 +20,6 @@ import {
 import { Stack, useLocalSearchParams, useRouter, Redirect } from 'expo-router';
 import {
     useSessionByIdQuery,
-    useDeleteSessionMutation,
     useUpdateSessionColorMutation,
 } from '../../src/hooks/useSessionsQuery';
 import {
@@ -58,7 +58,7 @@ export default function SessionDetailScreen() {
         isLoading,
         error,
     } = useSessionByIdQuery(id as string);
-    const deleteSessionMutation = useDeleteSessionMutation();
+    const deletion = useSessionDeletion(() => router.replace('/(tabs)/home'));
     const updateColorMutation = useUpdateSessionColorMutation();
 
     const { data: associatedFolders = [], isLoading: isLoadingFolders } =
@@ -69,22 +69,7 @@ export default function SessionDetailScreen() {
     const [isColorModalVisible, setIsColorModalVisible] = useState(false);
 
     const handleDelete = () => {
-        Alert.alert(
-            t('delete_session_title') || 'Eliminar Sesión',
-            t('delete_session_message') ||
-                '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-            [
-                { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                {
-                    text: t('delete') || 'Eliminar',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await deleteSessionMutation.mutateAsync(id as string);
-                        router.back();
-                    },
-                },
-            ],
-        );
+        if (session) deletion.requestDelete(session);
     };
 
     const handleShare = async () => {
@@ -220,6 +205,9 @@ export default function SessionDetailScreen() {
                     {!session.is_guest && (
                         <TouchableOpacity
                             onPress={handleDelete}
+                            disabled={deletion.isDeleting}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('delete_session_title')}
                             className="w-10 h-10 items-center justify-center bg-red-50 dark:bg-red-900/20 rounded-full"
                         >
                             <Trash2 size={20} color="#EF4444" />
@@ -681,6 +669,7 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
             </Modal>
+            {deletion.dialog}
         </SafeAreaView>
     );
 }

@@ -660,5 +660,14 @@
         "reactivate": "Reactivar sesión",
         "invalid": "El importe recibido debe ser un número válido igual o mayor que cero.",
         "save": "Guardar importe"
+    },
+    "sessionDeletion": {
+        "single": "Eliminar solo esta sesión",
+        "series": "Eliminar toda la serie",
+        "seriesMessage": "Esta sesión pertenece a una serie. Elige qué quieres eliminar. Esta acción no se puede deshacer.",
+        "allDates": "Toda la serie incluye sus fechas pasadas y futuras. No afecta a otras series ni a sesiones independientes.",
+        "error": "No se ha podido eliminar. Recarga las sesiones y vuelve a intentarlo.",
+        "deleting": "Eliminando sesión",
+        "singleSafe": "Solo se eliminará esta fecha. El resto de la serie está protegido."
     }
 }

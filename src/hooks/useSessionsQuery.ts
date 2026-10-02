@@ -58,12 +58,20 @@ export const useDeleteSessionMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (sessionId: string) => {
-            return sessionService.deleteSession(sessionId);
+        mutationFn: ({
+            sessionId,
+            scope,
+        }: {
+            sessionId: string;
+            scope: 'single' | 'series';
+        }) => {
+            return sessionService.deleteSession(sessionId, scope);
         },
         onSuccess: () => {
             // Refetch calendar and upcoming sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
             queryClient.invalidateQueries({ queryKey: ['collaborations'] });
         },

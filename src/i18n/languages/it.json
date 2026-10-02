@@ -660,5 +660,14 @@
         "reactivate": "Riattiva sessione",
         "invalid": "Inserisci un importo valido maggiore o uguale a zero.",
         "save": "Salva importo"
+    },
+    "sessionDeletion": {
+        "single": "Elimina solo questa sessione",
+        "series": "Elimina tutta la serie",
+        "seriesMessage": "Questa sessione fa parte di una serie. Scegli cosa eliminare. L’azione è irreversibile.",
+        "allDates": "L’intera serie include le date passate e future. Le altre serie e sessioni indipendenti restano invariate.",
+        "error": "Impossibile eliminare. Ricarica le sessioni e riprova.",
+        "deleting": "Eliminazione sessione",
+        "singleSafe": "Verrà eliminata solo questa data. Il resto della serie è protetto."
     }
 }

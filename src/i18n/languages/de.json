@@ -660,5 +660,14 @@
         "reactivate": "Session reaktivieren",
         "invalid": "Gib einen gültigen Betrag größer oder gleich null ein.",
         "save": "Betrag speichern"
+    },
+    "sessionDeletion": {
+        "single": "Nur diese Session löschen",
+        "series": "Die gesamte Serie löschen",
+        "seriesMessage": "Diese Session gehört zu einer Serie. Wähle aus, was gelöscht werden soll. Dies kann nicht rückgängig gemacht werden.",
+        "allDates": "Die gesamte Serie umfasst vergangene und zukünftige Termine. Andere Serien und einzelne Sessions bleiben erhalten.",
+        "error": "Löschen fehlgeschlagen. Lade die Sessions neu und versuche es erneut.",
+        "deleting": "Session wird gelöscht",
+        "singleSafe": "Nur dieser Termin wird gelöscht. Der Rest der Serie ist geschützt."
     }
 }

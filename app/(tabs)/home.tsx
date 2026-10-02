@@ -1,15 +1,17 @@
+import type { Session } from '../../src/types/session';
+import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
 import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { useSessionsQuery, useUpcomingSessionsQuery, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { ChevronRight, X, Calendar } from 'lucide-react-native';
 import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
@@ -36,7 +38,19 @@ export default function HomeScreen() {
 
     const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
     const { data: allSessions } = useAllSessionsQuery();
-    const deleteSessionMutation = useDeleteSessionMutation();
+    const deletion = useSessionDeletion();
+    const queuedDeletion = useRef<Session | null>(null);
+    const showQueuedDeletion = () => {
+        const target = queuedDeletion.current;
+        queuedDeletion.current = null;
+        if (target) deletion.requestDelete(target);
+    };
+    const requestListDelete = (target: Session, source: 'earnings' | 'projected') => {
+        if (Platform.OS === 'ios') queuedDeletion.current = target;
+        if (source === 'earnings') setIsEarningsModalVisible(false);
+        else setIsProjectedModalVisible(false);
+        if (Platform.OS !== 'ios') deletion.requestDelete(target);
+    };
 
     const [now, setNow] = useState(() => new Date());
     useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer); }, []);
@@ -299,10 +313,7 @@ export default function HomeScreen() {
                                                                 showPoster
                                                                 session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
-                                                                onLongPress={session.is_guest ? undefined : () => Alert.alert(t('delete_session_title'), t('delete_session_message'), [
-                                                                    { text: t('cancel'), style: 'cancel' },
-                                                                    { text: t('delete'), style: 'destructive', onPress: () => deleteSessionMutation.mutate(session.id) }
-                                                                ])}
+                                                                onLongPress={session.is_guest ? undefined : () => deletion.requestDelete(session)}
                                                             />
                                                         </View>
                                                     );
@@ -333,6 +344,7 @@ export default function HomeScreen() {
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setIsEarningsModalVisible(false)}
+                onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
@@ -360,23 +372,7 @@ export default function HomeScreen() {
                                                 setIsEarningsModalVisible(false);
                                                 router.push(`/session/${session.id}` as any);
                                             }}
-                                            onLongPress={() => {
-                                                Alert.alert(
-                                                    t('delete_session_title') || 'Eliminar Sesión',
-                                                    t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                    [
-                                                        { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                        {
-                                                            text: t('delete') || 'Eliminar',
-                                                            style: 'destructive',
-                                                            onPress: () => {
-                                                                setIsEarningsModalVisible(false);
-                                                                deleteSessionMutation.mutate(session.id);
-                                                            }
-                                                        }
-                                                    ]
-                                                );
-                                            }}
+                                            onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'earnings')}
                                             className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                         >
                                             <View className="flex-1 pr-4">
@@ -411,6 +407,7 @@ export default function HomeScreen() {
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setIsProjectedModalVisible(false)}
+                onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
@@ -444,23 +441,7 @@ export default function HomeScreen() {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
-                                                onLongPress={() => {
-                                                    Alert.alert(
-                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                        [
-                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                            {
-                                                                text: t('delete') || 'Eliminar',
-                                                                style: 'destructive',
-                                                                onPress: () => {
-                                                                    setIsProjectedModalVisible(false);
-                                                                    deleteSessionMutation.mutate(session.id);
-                                                                }
-                                                            }
-                                                        ]
-                                                    );
-                                                }}
+                                                onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
@@ -503,23 +484,7 @@ export default function HomeScreen() {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
-                                                onLongPress={() => {
-                                                    Alert.alert(
-                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                        [
-                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                            {
-                                                                text: t('delete') || 'Eliminar',
-                                                                style: 'destructive',
-                                                                onPress: () => {
-                                                                    setIsProjectedModalVisible(false);
-                                                                    deleteSessionMutation.mutate(session.id);
-                                                                }
-                                                            }
-                                                        ]
-                                                    );
-                                                }}
+                                                onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
@@ -550,6 +515,7 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </Modal>
+            {deletion.dialog}
         </SafeAreaView >
     );
 }

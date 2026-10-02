@@ -194,16 +194,11 @@ export const sessionService = {
         return data || null;
     },
 
-    async deleteSession(sessionId: string): Promise<void> {
-        const { error } = await supabase
-            .from('sessions')
-            .delete()
-            .eq('id', sessionId);
-
-        if (error) {
-            console.error('Error deleting session:', error);
-            throw new Error(error.message);
-        }
+    async deleteSession(sessionId: string, scope: 'single' | 'series' = 'single'): Promise<void> {
+        if (!sessionId || !['single', 'series'].includes(scope)) throw new Error('error_deleting_session');
+        const { data, error } = await supabase.rpc('delete_session_safely', { session_id: sessionId, delete_scope: scope });
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error('error_deleting_session');
     },
 
     async updateSessionColor(sessionId: string, color: string, updateAll = false): Promise<void> {

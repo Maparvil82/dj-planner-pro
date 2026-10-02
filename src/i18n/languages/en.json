@@ -664,5 +664,14 @@
         "reactivate": "Reactivate session",
         "invalid": "Enter a valid amount equal to or greater than zero.",
         "save": "Save amount"
+    },
+    "sessionDeletion": {
+        "single": "Delete only this session",
+        "series": "Delete the entire series",
+        "seriesMessage": "This session belongs to a series. Choose what to delete. This action cannot be undone.",
+        "allDates": "The entire series includes its past and future dates. Other series and independent sessions are unaffected.",
+        "error": "Could not delete. Reload your sessions and try again.",
+        "deleting": "Deleting session",
+        "singleSafe": "Only this date will be deleted. The rest of the series is protected."
     }
 }

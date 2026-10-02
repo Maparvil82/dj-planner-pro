@@ -658,5 +658,14 @@
         "reactivate": "Reativar sessão",
         "invalid": "Introduz um valor válido igual ou superior a zero.",
         "save": "Guardar valor"
+    },
+    "sessionDeletion": {
+        "single": "Eliminar só esta sessão",
+        "series": "Eliminar toda a série",
+        "seriesMessage": "Esta sessão faz parte de uma série. Escolhe o que eliminar. Esta ação não pode ser desfeita.",
+        "allDates": "Toda a série inclui as datas passadas e futuras. Outras séries e sessões independentes não são afetadas.",
+        "error": "Não foi possível eliminar. Recarrega as sessões e tenta novamente.",
+        "deleting": "A eliminar sessão",
+        "singleSafe": "Só esta data será eliminada. O resto da série está protegido."
     }
 }

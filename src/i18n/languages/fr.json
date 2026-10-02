@@ -658,5 +658,14 @@
         "reactivate": "Réactiver la séance",
         "invalid": "Saisissez un montant valide supérieur ou égal à zéro.",
         "save": "Enregistrer le montant"
+    },
+    "sessionDeletion": {
+        "single": "Supprimer cette séance uniquement",
+        "series": "Supprimer toute la série",
+        "seriesMessage": "Cette séance appartient à une série. Choisissez quoi supprimer. Cette action est irréversible.",
+        "allDates": "Toute la série inclut ses dates passées et futures, sans affecter les autres séries et séances indépendantes.",
+        "error": "Suppression impossible. Rechargez les séances et réessayez.",
+        "deleting": "Suppression de la séance",
+        "singleSafe": "Seule cette date sera supprimée. Le reste de la série est protégé."
     }
 }
