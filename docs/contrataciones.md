@@ -2,7 +2,9 @@
 
 ## Estado
 
-Implementación preparada en esta rama. La migración y `booking-gateway` **no están aplicadas ni desplegadas en Supabase**. El enlace público, correo real y publicación web quedan pendientes: el propietario todavía no tiene dominio ni proveedor de correo. La revisión automática rechazó los cambios persistentes de base de datos; su activación requiere aprobación específica antes de ejecutarlos.
+La migración `20261003151535_booking_workspace.sql` está aplicada en `voyurnwckmateohuzbab` y `booking-gateway` está desplegada y activa (versión 1), tras la aprobación del propietario. El nombre del archivo coincide con la versión asignada por el historial remoto de Supabase.
+
+El enlace público, correo real y publicación web siguen pendientes: todavía no hay dominio ni proveedor de correo configurados. El servicio permanece con `ready=false`. Se pueden guardar ajustes y previsualizar la página desde la app, pero no activar un enlace ni recibir consultas reales. No se ha configurado el trabajador de la cola de correos.
 
 En la app: **Tú → Contrataciones → Ver mi página** permite previsualizar el perfil real del DJ sin activar un enlace público. Mientras el servicio no está preparado, la interfaz muestra «Próximamente» y la pantalla de pago no anuncia Contrataciones como disponible.
 
@@ -31,11 +33,11 @@ En la app: **Tú → Contrataciones → Ver mi página** permite previsualizar e
 - Modificar manualmente una sesión después de aceptar no modifica las condiciones históricas de la propuesta ni renegocia el acuerdo. Cualquier cambio posterior debe comunicarse al promotor por la conversación.
 - Los mensajes se consultan cada 15 segundos y la bandeja cada 30; esta versión no utiliza WebSockets.
 
-## Activación pendiente
+## Base y función desplegadas; publicación pendiente
 
-Después de aprobar los cambios de datos:
+Los pasos 1 y 2 ya están completados. Los siguientes corresponden a la publicación:
 
-1. Aplicar y registrar `20261002191529_booking_workspace.sql` en el proyecto correcto. Añade tablas, permisos, notificaciones de contratación, zona horaria opcional en sesiones y los controles de bloqueos. No borra las sesiones existentes.
+1. Aplicar y registrar `20261003151535_booking_workspace.sql` en el proyecto correcto. Añade tablas, permisos, notificaciones de contratación, zona horaria opcional en sesiones y los controles de bloqueos. No borra las sesiones existentes.
 2. Desplegar `supabase/functions/booking-gateway/index.ts` **con `verify_jwt=false`** porque sirve a visitantes sin cuenta. Esto no elimina la autorización: cada acción del DJ verifica su JWT con `auth.getUser`; las acciones de promotor exigen su clave privada; el despachador de correos exige credenciales de servicio.
 3. Elegir y publicar la web Expo, con reescrituras para `/book/*` y `/booking/*`, usando HTTPS. No asociar `/booking/*` a enlaces que abran la aplicación nativa: el promotor debe continuar en el navegador. Servir las páginas privadas sin indexación y con `Referrer-Policy: no-referrer`.
 4. Configurar exclusivamente como secretos del servidor:
@@ -62,3 +64,11 @@ La cola reclama mensajes con `SKIP LOCKED`, conserva el mismo enlace durante rei
 - Prueba del navegador con llamadas externas simuladas: formulario público completo, creación de propuesta, clave privada retirada de la URL, revisión/aceptación explícita y pantallas en siete idiomas a 320 px. No se han enviado correos, creado consultas ni comprado suscripciones reales.
 
 La prueba del navegador está en `tests/browser/bookingFlow.cjs`; requiere Playwright y la vista previa en localhost:8081. Se puede configurar `PLAYWRIGHT_MODULE` y `PLAYWRIGHT_CHROMIUM` para usar un runtime instalado. Las capturas en `docs/previews` muestran datos ficticios.
+
+### Verificación del despliegue
+
+- `tests/booking-workspace-database.sql` pasó en el proyecto real con todas sus escrituras revertidas: ajustes, servicio pendiente, permisos, claves privadas, correo verificado, aviso único, acceso exclusivo del DJ, bloqueo nocturno, versiones, aceptación de la última propuesta, una sola sesión, caché, cobro pendiente, zona horaria y ausencia de publicación automática. La prueba de aceptación utiliza el contexto de servicio sin identidad de DJ, como el servidor real.
+- Después de revertir: 189 sesiones originales, cero consultas y cero usuarios de prueba; publicación desactivada.
+- La revisión de seguridad muestra RLS activa. Las cuatro tablas del esquema privado no tienen políticas para clientes deliberadamente; solo operan las funciones autorizadas y el servidor. Los avisos existentes de borrado de cuenta y protección de contraseñas no pertenecen a esta incorporación.
+- La función desplegada rechaza acceso sin autenticar al DJ, enlaces no publicados y claves privadas inválidas. No se han enviado correos reales.
+- Los bundles de iOS y Android se generaron correctamente antes del despliegue.

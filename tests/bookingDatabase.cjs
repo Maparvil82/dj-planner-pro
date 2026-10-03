@@ -22,7 +22,7 @@ async function run(){
  await db.exec(fs.readFileSync(path.join(__dirname,'fixtures/bookingBase.sql'),'utf8'));
  await migrate('20261002173802_free_session_limit.sql');
  await migrate('20261002173934_private_subscription_usage.sql');
- await migrate('20261002191529_booking_workspace.sql');
+ await migrate('20261003151535_booking_workspace.sql');
  await db.query('insert into auth.users values($1),($2)',[owner,other]);
  await db.query("insert into public.community_profiles values($1,'DJ Fixture',true),($2,'Other DJ',true)",[owner,other]);
  await db.query("select public.sync_subscription_access($1,now()+interval '5 minutes')",[owner]);
