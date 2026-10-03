@@ -154,6 +154,30 @@ export default function VenuesScreen() {
                     alignSelf: 'center',
                 }}
             >
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={t('add_venue')}
+                    onPress={() => setIsAddModalVisible(true)}
+                    style={{
+                        alignSelf: 'flex-start',
+                        marginHorizontal: 20,
+                        marginBottom: 14,
+                        paddingHorizontal: 18,
+                        paddingVertical: 13,
+                        borderRadius: 14,
+                        backgroundColor: isDark ? '#292743' : '#f0edfc',
+                    }}
+                >
+                    <Text
+                        style={{
+                            color: isDark ? '#bdb0f5' : '#6554df',
+                            fontSize: 14,
+                            fontWeight: '700',
+                        }}
+                    >
+                        {t('add_venue')}
+                    </Text>
+                </TouchableOpacity>
                 <View
                     style={{
                         marginHorizontal: 20,
@@ -210,28 +234,6 @@ export default function VenuesScreen() {
                     }
                     showsVerticalScrollIndicator={false}
                 >
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel={t('add_venue')}
-                        onPress={() => setIsAddModalVisible(true)}
-                        style={{
-                            alignSelf: 'flex-start',
-                            paddingHorizontal: 18,
-                            paddingVertical: 13,
-                            borderRadius: 14,
-                            backgroundColor: isDark ? '#292743' : '#f0edfc',
-                        }}
-                    >
-                        <Text
-                            style={{
-                                color: isDark ? '#bdb0f5' : '#6554df',
-                                fontSize: 14,
-                                fontWeight: '700',
-                            }}
-                        >
-                            {t('add_venue')}
-                        </Text>
-                    </TouchableOpacity>
                     {isLoading ? (
                         <ActivityIndicator
                             color="#8270e4"
