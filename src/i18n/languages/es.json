@@ -907,5 +907,14 @@
         "hint": "Si no tiene nombre, usaremos el lugar.",
         "atVenue": "Sesión en {{venue}}",
         "untitled": "Sesión"
+    },
+    "venuePicker": {
+        "title": "Elegir lugar",
+        "hint": "Busca entre tus lugares o añade uno nuevo.",
+        "newTitle": "Nuevo lugar",
+        "newHint": "Guárdalo en tus lugares y úsalo en esta sesión.",
+        "back": "Volver a mis lugares",
+        "empty": "No hay lugares que coincidan.",
+        "saveError": "No se pudo guardar el lugar. Inténtalo de nuevo."
     }
 }

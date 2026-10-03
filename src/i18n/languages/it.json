@@ -907,5 +907,14 @@
         "hint": "Se non ha un nome, useremo il locale.",
         "atVenue": "Sessione a {{venue}}",
         "untitled": "Sessione"
+    },
+    "venuePicker": {
+        "title": "Scegli un luogo",
+        "hint": "Cerca tra i tuoi luoghi o aggiungine uno nuovo.",
+        "newTitle": "Nuovo luogo",
+        "newHint": "Salvalo tra i tuoi luoghi e usalo per questa sessione.",
+        "back": "Torna ai miei luoghi",
+        "empty": "Nessun luogo corrispondente.",
+        "saveError": "Impossibile salvare il luogo. Riprova."
     }
 }

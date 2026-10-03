@@ -905,5 +905,14 @@
         "hint": "Se não tiver nome, usaremos o local.",
         "atVenue": "Sessão em {{venue}}",
         "untitled": "Sessão"
+    },
+    "venuePicker": {
+        "title": "Escolher local",
+        "hint": "Pesquisa nos teus locais ou adiciona um novo.",
+        "newTitle": "Novo local",
+        "newHint": "Guarda-o nos teus locais e usa-o nesta sessão.",
+        "back": "Voltar aos meus locais",
+        "empty": "Nenhum local correspondente.",
+        "saveError": "Não foi possível guardar o local. Tenta novamente."
     }
 }

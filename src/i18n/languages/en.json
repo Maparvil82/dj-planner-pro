@@ -911,5 +911,14 @@
         "hint": "If it has no name, we will use the venue.",
         "atVenue": "Session at {{venue}}",
         "untitled": "Session"
+    },
+    "venuePicker": {
+        "title": "Choose a venue",
+        "hint": "Search your venues or add a new one.",
+        "newTitle": "New venue",
+        "newHint": "Save it to your venues and use it for this session.",
+        "back": "Back to my venues",
+        "empty": "No matching venues.",
+        "saveError": "Could not save the venue. Please try again."
     }
 }

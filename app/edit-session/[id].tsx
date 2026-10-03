@@ -1,3 +1,4 @@
+import { SessionVenueSheet } from '../../src/components/venues/SessionVenueSheet';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { SessionPosterPreview } from '../../src/components/sessions/SessionPosterPreview';
 import type { PosterPosition } from '../../src/utils/posterFrame';
@@ -171,18 +172,8 @@ export default function EditSessionScreen() {
 
     // Queries and memoized filters
     const { data: titleTags = [] } = useTagsQuery('title');
-    const { data: venueTags = [] } = useTagsQuery('venue');
     const { data: venues = [] } = useVenuesQuery();
     const { data: djTags = [] } = useTagsQuery('dj');
-
-    const filteredVenues = React.useMemo(() => {
-        if (!venue) return venues;
-        return venues.filter(
-            (v) =>
-                v.name.toLowerCase().includes(venue.toLowerCase()) ||
-                v.address?.toLowerCase().includes(venue.toLowerCase()),
-        );
-    }, [venue, venues]);
 
     const filteredTitleTags =
         focusedInput === 'title'
@@ -191,17 +182,6 @@ export default function EditSessionScreen() {
                       (t) =>
                           t.name.toLowerCase().includes(title.toLowerCase()) &&
                           t.name.toLowerCase() !== title.toLowerCase(),
-                  )
-                  .slice(0, 10)
-            : [];
-
-    const filteredVenueTags =
-        focusedInput === 'venue'
-            ? venueTags
-                  .filter(
-                      (v) =>
-                          v.name.toLowerCase().includes(venue.toLowerCase()) &&
-                          v.name.toLowerCase() !== venue.toLowerCase(),
                   )
                   .slice(0, 10)
             : [];
@@ -712,257 +692,20 @@ export default function EditSessionScreen() {
                             </TouchableOpacity>
 
                             {/* Venue Selection Modal */}
-                            <Modal
+                            <SessionVenueSheet
                                 visible={isVenueModalVisible}
-                                animationType="slide"
-                                transparent
-                            >
-                                <View className="flex-1 justify-end bg-black/60">
-                                    <Pressable
-                                        className="flex-1"
-                                        onPress={() =>
-                                            setIsVenueModalVisible(false)
-                                        }
-                                    />
-                                    <KeyboardAvoidingView
-                                        behavior={
-                                            Platform.OS === 'ios'
-                                                ? 'padding'
-                                                : undefined
-                                        }
-                                        className="bg-white dark:bg-gray-950 rounded-t-[40px] px-6 pt-8 pb-10 h-[80%]"
-                                    >
-                                        <View className="flex-row items-center justify-between mb-6">
-                                            <Text className="text-2xl font-black text-gray-900 dark:text-white">
-                                                {t('venues_title')}
-                                            </Text>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    setIsVenueModalVisible(
-                                                        false,
-                                                    )
-                                                }
-                                                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900 items-center justify-center"
-                                            >
-                                                <X
-                                                    size={24}
-                                                    color={
-                                                        isDark ? '#FFF' : '#000'
-                                                    }
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <ScrollView
-                                            showsVerticalScrollIndicator={false}
-                                        >
-                                            <View className="mb-6">
-                                                <View className="flex-row items-center bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 pr-3">
-                                                    <TextInput
-                                                        className="flex-1 px-4 py-3 text-gray-900 dark:text-white font-bold"
-                                                        placeholder={t(
-                                                            'venue_placeholder',
-                                                        )}
-                                                        value={venue}
-                                                        onChangeText={(
-                                                            value,
-                                                        ) => {
-                                                            setVenue(value);
-                                                            setVenueId(null);
-                                                        }}
-                                                        onFocus={() =>
-                                                            handleFocus('venue')
-                                                        }
-                                                        onBlur={handleBlur}
-                                                        autoCapitalize="words"
-                                                    />
-                                                    {venue.length > 0 && (
-                                                        <TouchableOpacity
-                                                            onPress={() => {
-                                                                setVenue('');
-                                                                setVenueId(
-                                                                    null,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <X
-                                                                size={18}
-                                                                color={
-                                                                    isDark
-                                                                        ? '#4B5563'
-                                                                        : '#9CA3AF'
-                                                                }
-                                                            />
-                                                        </TouchableOpacity>
-                                                    )}
-                                                </View>
-                                                {filteredVenueTags.length >
-                                                    0 && (
-                                                    <ScrollView
-                                                        horizontal
-                                                        showsHorizontalScrollIndicator={
-                                                            false
-                                                        }
-                                                        keyboardShouldPersistTaps="always"
-                                                        className="mt-2 mb-2"
-                                                        contentContainerStyle={{
-                                                            paddingHorizontal: 4,
-                                                        }}
-                                                    >
-                                                        {filteredVenueTags.map(
-                                                            (tag) => (
-                                                                <TouchableOpacity
-                                                                    key={
-                                                                        tag.name
-                                                                    }
-                                                                    className="bg-white dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-200 dark:border-gray-700"
-                                                                    onPress={() => {
-                                                                        setVenue(
-                                                                            tag.name,
-                                                                        );
-                                                                        setVenueId(
-                                                                            null,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">
-                                                                        {
-                                                                            tag.name
-                                                                        }
-                                                                    </Text>
-                                                                </TouchableOpacity>
-                                                            ),
-                                                        )}
-                                                    </ScrollView>
-                                                )}
-                                                {venue.trim().length > 0 &&
-                                                    !venues.some(
-                                                        (v) =>
-                                                            v.name.toLowerCase() ===
-                                                            venue.toLowerCase(),
-                                                    ) && (
-                                                        <TouchableOpacity
-                                                            onPress={async () => {
-                                                                try {
-                                                                    const newVenue =
-                                                                        await createVenueMutation.mutateAsync(
-                                                                            {
-                                                                                name: venue.trim(),
-                                                                            },
-                                                                        );
-                                                                    setVenue(
-                                                                        newVenue.name,
-                                                                    );
-                                                                    setVenueId(
-                                                                        newVenue.id,
-                                                                    );
-                                                                    setIsVenueModalVisible(
-                                                                        false,
-                                                                    );
-                                                                } catch (error) {
-                                                                    showError(
-                                                                        t(
-                                                                            'error',
-                                                                        ),
-                                                                        t(
-                                                                            'error_saving_session',
-                                                                        ),
-                                                                    );
-                                                                }
-                                                            }}
-                                                            className="mt-3 flex-row items-center p-4 bg-[#f0edfc] dark:bg-[#292743] rounded-2xl border border-[#dcd6f8] dark:border-[#4a4178]"
-                                                        >
-                                                            <View className="w-8 h-8 rounded-full bg-[#6554df] items-center justify-center mr-3">
-                                                                <Plus
-                                                                    size={16}
-                                                                    color="#FFF"
-                                                                />
-                                                            </View>
-                                                            <Text className="text-[#7666df] dark:text-[#bdb0f5] font-bold flex-1">
-                                                                {t(
-                                                                    'add_as_new_venue',
-                                                                    {
-                                                                        name: venue.trim(),
-                                                                    },
-                                                                )}
-                                                            </Text>
-                                                        </TouchableOpacity>
-                                                    )}
-                                            </View>
-
-                                            <Text className="text-xs font-bold text-gray-400 st mb-3">
-                                                {t('venues_title')}
-                                            </Text>
-                                            {filteredVenues.length === 0 ? (
-                                                <TouchableOpacity
-                                                    onPress={() => {
-                                                        setIsVenueModalVisible(
-                                                            false,
-                                                        );
-                                                        router.push(
-                                                            '/(tabs)/venues',
-                                                        );
-                                                    }}
-                                                    className="items-center py-10 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700"
-                                                >
-                                                    <Text className="text-[#7666df] font-bold mt-2">
-                                                        {t('add_venue')}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ) : (
-                                                filteredVenues.map((v) => (
-                                                    <TouchableOpacity
-                                                        key={v.id}
-                                                        onPress={() => {
-                                                            setVenue(v.name);
-                                                            setVenueId(v.id);
-                                                            setIsVenueModalVisible(
-                                                                false,
-                                                            );
-                                                        }}
-                                                        className={`flex-row items-center p-4 mb-3 rounded-2xl border ${venueId === v.id ? 'border-[#8270e4] bg-[#f0edfc]' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900'}`}
-                                                    >
-                                                        <View className="ml-3 flex-1">
-                                                            <Text
-                                                                className={`font-bold ${venueId === v.id ? 'text-[#7666df]' : 'text-gray-900 dark:text-white'}`}
-                                                            >
-                                                                {v.name}
-                                                            </Text>
-                                                            {v.address && (
-                                                                <Text
-                                                                    className="text-xs text-gray-400"
-                                                                    numberOfLines={
-                                                                        1
-                                                                    }
-                                                                >
-                                                                    {v.address}
-                                                                </Text>
-                                                            )}
-                                                        </View>
-                                                        {venueId === v.id && (
-                                                            <Check
-                                                                size={20}
-                                                                color="#7666df"
-                                                            />
-                                                        )}
-                                                    </TouchableOpacity>
-                                                ))
-                                            )}
-                                        </ScrollView>
-
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                setIsVenueModalVisible(false)
-                                            }
-                                            className="mt-6 bg-[#6554df] py-4 rounded-2xl items-center"
-                                        >
-                                            <Text className="text-white font-black text-lg">
-                                                {t('filter_apply')}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    </KeyboardAvoidingView>
-                                </View>
-                            </Modal>
+                                venues={venues}
+                                selectedId={venueId}
+                                onClose={() => setIsVenueModalVisible(false)}
+                                onSelect={(selected) => {
+                                    setVenue(selected.name);
+                                    setVenueId(selected.id);
+                                    setIsVenueModalVisible(false);
+                                }}
+                                onCreate={(name) =>
+                                    createVenueMutation.mutateAsync({ name })
+                                }
+                            />
                         </View>
                     </SessionFormSection>
 

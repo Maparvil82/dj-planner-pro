@@ -907,5 +907,14 @@
         "hint": "Ohne Namen verwenden wir den Veranstaltungsort.",
         "atVenue": "Session in {{venue}}",
         "untitled": "Session"
+    },
+    "venuePicker": {
+        "title": "Ort auswählen",
+        "hint": "Suche in deinen Orten oder füge einen neuen hinzu.",
+        "newTitle": "Neuer Ort",
+        "newHint": "Speichere ihn in deinen Orten und nutze ihn für diese Session.",
+        "back": "Zurück zu meinen Orten",
+        "empty": "Keine passenden Orte.",
+        "saveError": "Der Ort konnte nicht gespeichert werden. Versuche es erneut."
     }
 }

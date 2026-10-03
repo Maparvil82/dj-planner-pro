@@ -905,5 +905,14 @@
         "hint": "Sans nom, nous utiliserons le lieu.",
         "atVenue": "Session à {{venue}}",
         "untitled": "Session"
+    },
+    "venuePicker": {
+        "title": "Choisir un lieu",
+        "hint": "Recherchez parmi vos lieux ou ajoutez-en un nouveau.",
+        "newTitle": "Nouveau lieu",
+        "newHint": "Enregistrez-le dans vos lieux pour cette session.",
+        "back": "Retour à mes lieux",
+        "empty": "Aucun lieu correspondant.",
+        "saveError": "Impossible d’enregistrer le lieu. Réessayez."
     }
 }
