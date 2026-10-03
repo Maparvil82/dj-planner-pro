@@ -1,3 +1,4 @@
+import { FEATURES } from '../src/config/features';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import { useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
@@ -36,7 +37,9 @@ export default function NotificationsScreen() {
         }, [notifications.refetch, inbox.refetch]),
     );
     if (!userId) return <Redirect href="/(auth)/login" />;
-    const rows = notifications.data?.pages.flat() || [];
+    const rows = (notifications.data?.pages.flat() || []).filter(
+        (item) => FEATURES.bookings || !item.kind.startsWith('booking_'),
+    );
     const refresh = () => {
         void notifications.refetch();
         void inbox.refetch();
@@ -155,7 +158,12 @@ export default function NotificationsScreen() {
                                                 `notifications.${item.kind}${item.kind === 'invitation_response' ? '_' + item.response : ''}`,
                                                 {
                                                     name: item.actor_name,
-                                                    title: sessionDisplayTitle(invitation?.session || { title: item.session_title }, t),
+                                                    title: sessionDisplayTitle(
+                                                        invitation?.session || {
+                                                            title: item.session_title,
+                                                        },
+                                                        t,
+                                                    ),
                                                 },
                                             )}
                                         </Text>

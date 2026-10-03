@@ -1,3 +1,4 @@
+import { FEATURES } from '../src/config/features';
 import React, { useState } from 'react';
 import {
     View,
@@ -46,7 +47,7 @@ export default function PaywallScreen() {
     const bookings = useQuery({
         queryKey: ['booking-status', session?.user.id],
         queryFn: () => bookingCall<BookingStatus>('owner_status'),
-        enabled: !!session && params.reason === 'bookings',
+        enabled: FEATURES.bookings && !!session && params.reason === 'bookings',
         retry: false,
     });
     const [selected, setSelected] = useState<'monthly' | 'yearly'>('yearly');
@@ -220,7 +221,7 @@ export default function PaywallScreen() {
                         {t('billing.benefit')}
                     </Text>
                 </View>
-                {params.reason === 'bookings' && (
+                {FEATURES.bookings && params.reason === 'bookings' && (
                     <View
                         style={{
                             backgroundColor: c.card,

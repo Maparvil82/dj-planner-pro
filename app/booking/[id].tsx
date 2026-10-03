@@ -1,6 +1,7 @@
+import { FEATURES } from '../../src/config/features';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import Head from 'expo-router/head';
 import { BookingThreadScreen } from '../../src/components/bookings/BookingThread';
 import {
@@ -10,6 +11,14 @@ import {
 } from '../../src/components/bookings/BookingUI';
 import { useTranslation } from '../../src/i18n/useTranslation';
 export default function PromoterConversation() {
+    return FEATURES.bookings ? (
+        <PromoterConversationContent />
+    ) : (
+        <Redirect href="/(tabs)/home" />
+    );
+}
+
+function PromoterConversationContent() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { t } = useTranslation();
     const router = useRouter();

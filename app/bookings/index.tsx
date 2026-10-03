@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import { useState } from 'react';
 import { View, Switch, Platform, Share } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -28,6 +29,14 @@ import {
     useCommunityColors,
 } from '../../src/components/community/CommunityUI';
 export default function BookingsScreen() {
+    return FEATURES.bookings ? (
+        <BookingsScreenContent />
+    ) : (
+        <Redirect href="/(tabs)/home" />
+    );
+}
+
+function BookingsScreenContent() {
     const { t, currentLanguage } = useTranslation();
     const router = useRouter();
     const c = useCommunityColors();

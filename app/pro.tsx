@@ -1,3 +1,4 @@
+import { FEATURES } from '../src/config/features';
 import {
     ImageBackground,
     Pressable,
@@ -165,54 +166,56 @@ export default function ProScreen() {
                             {t('proPage.unlimitedHint')}
                         </Text>
                     </View>
-                    <View
-                        style={{
-                            borderRadius: 24,
-                            padding: 22,
-                            backgroundColor: c.card,
-                            gap: 12,
-                            borderWidth: 1,
-                            borderColor: c.border,
-                        }}
-                    >
-                        <Text
+                    {FEATURES.bookings && (
+                        <View
                             style={{
-                                color: c.accent,
-                                fontSize: 11,
-                                fontWeight: '800',
-                                letterSpacing: 1,
+                                borderRadius: 24,
+                                padding: 22,
+                                backgroundColor: c.card,
+                                gap: 12,
+                                borderWidth: 1,
+                                borderColor: c.border,
                             }}
                         >
-                            {t('proPage.soon')}
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.fg,
-                                fontSize: 19,
-                                fontWeight: '800',
-                            }}
-                        >
-                            {t('bookings.title')}
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.muted,
-                                fontSize: 14,
-                                lineHeight: 22,
-                            }}
-                        >
-                            {t('proPage.bookingsHint')}
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.muted,
-                                fontSize: 12,
-                                lineHeight: 19,
-                            }}
-                        >
-                            {t('proPage.bookingsPending')}
-                        </Text>
-                    </View>
+                            <Text
+                                style={{
+                                    color: c.accent,
+                                    fontSize: 11,
+                                    fontWeight: '800',
+                                    letterSpacing: 1,
+                                }}
+                            >
+                                {t('proPage.soon')}
+                            </Text>
+                            <Text
+                                style={{
+                                    color: c.fg,
+                                    fontSize: 19,
+                                    fontWeight: '800',
+                                }}
+                            >
+                                {t('bookings.title')}
+                            </Text>
+                            <Text
+                                style={{
+                                    color: c.muted,
+                                    fontSize: 14,
+                                    lineHeight: 22,
+                                }}
+                            >
+                                {t('proPage.bookingsHint')}
+                            </Text>
+                            <Text
+                                style={{
+                                    color: c.muted,
+                                    fontSize: 12,
+                                    lineHeight: 19,
+                                }}
+                            >
+                                {t('proPage.bookingsPending')}
+                            </Text>
+                        </View>
+                    )}
                 </View>
                 <View
                     style={{

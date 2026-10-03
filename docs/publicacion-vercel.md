@@ -1,5 +1,7 @@
 # Publicación provisional de Contrataciones
 
+Contrataciones está oculta por decisión del propietario. La actualización web mantiene el proyecto y su dirección, pero oculta los accesos y redirige sus rutas al inicio. La preparación descrita a continuación se conserva para una futura activación.
+
 ## Preparación local
 
 - `npm run build:web` genera `dist` con Expo Router en modo web `single`.

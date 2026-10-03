@@ -2,6 +2,8 @@
 
 ## Estado
 
+Por decisión del propietario, Contrataciones está oculta mediante `FEATURES.bookings = false`. No aparece en el menú, las ventajas de Pro ni el paywall. Sus rutas redirigen al inicio sin montar las pantallas ni consultar el servicio. Las notificaciones de contratación tampoco se muestran. El código, las traducciones y la base existente se conservan para una versión futura; no se han eliminado datos ni activado correo o solicitudes reales.
+
 La migración `20261003151535_booking_workspace.sql` está aplicada en `voyurnwckmateohuzbab` y `booking-gateway` está desplegada y activa (versión 1), tras la aprobación del propietario. El nombre del archivo coincide con la versión asignada por el historial remoto de Supabase.
 
 La web está publicada en https://dj-planner-bookings.vercel.app; véase `publicacion-vercel.md`. La configuración del origen en Supabase, el correo real y el trabajador de la cola siguen pendientes. Resend no tiene ningún dominio verificado. El servicio permanece desactivado: se pueden guardar ajustes y previsualizar la página desde la app, pero no activar un enlace ni recibir consultas reales.

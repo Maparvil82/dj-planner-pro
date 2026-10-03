@@ -1,2 +1,2 @@
-// Keep the documents module available for a future release without exposing its UI.
-export const FEATURES = { documents: false };
+// Keep future modules programmed without exposing their UI.
+export const FEATURES = { documents: false, bookings: false };

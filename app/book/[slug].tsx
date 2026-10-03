@@ -1,7 +1,8 @@
+import { FEATURES } from '../../src/config/features';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useRef, useState } from 'react';
 import { View, Image, Platform } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -25,6 +26,14 @@ import {
 import { CommunityButton } from '../../src/components/community/CommunityUI';
 import { validAuthEmail } from '../../src/utils/authExperience';
 export default function PublicBooking() {
+    return FEATURES.bookings ? (
+        <PublicBookingContent />
+    ) : (
+        <Redirect href="/(tabs)/home" />
+    );
+}
+
+function PublicBookingContent() {
     const { slug, preview } = useLocalSearchParams<{
         slug: string;
         preview?: string;
@@ -240,7 +249,9 @@ export default function PublicBooking() {
                             </BookingText>
                             {q.data.sessions.map((s: any) => (
                                 <BookingCard key={s.id}>
-                                    <BookingText large>{sessionDisplayTitle(s, t)}</BookingText>
+                                    <BookingText large>
+                                        {sessionDisplayTitle(s, t)}
+                                    </BookingText>
                                     <BookingText muted>
                                         {s.title?.trim() ? `${s.venue} · ` : ''}
                                         {new Date(

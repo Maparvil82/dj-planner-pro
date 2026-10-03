@@ -1,3 +1,4 @@
+import { FEATURES } from '../../config/features';
 import {
     createContext,
     useContext,
@@ -133,7 +134,9 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
             count: unread.data || 0,
         },
         { key: 'history', href: '/(tabs)/history' },
-        { key: 'bookings', href: '/bookings' },
+        ...(FEATURES.bookings
+            ? [{ key: 'bookings', href: '/bookings' as Href }]
+            : []),
         { key: 'plan', href: '/profile?section=plan' },
         { key: 'settings', href: '/profile?section=settings' },
     ];
