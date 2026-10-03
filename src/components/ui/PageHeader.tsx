@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { AccountAvatarButton } from '../navigation/AccountDrawer';
-import { AddSessionButton } from './AddSessionButton';
 
 export function PageHeader({
     title,
@@ -67,7 +66,7 @@ export function PageHeader({
                     </Text>
                 </View>
                 {children}
-                {action === undefined ? <AddSessionButton /> : action}
+                {action}
                 {showAvatar && <AccountAvatarButton />}
             </View>
         </View>

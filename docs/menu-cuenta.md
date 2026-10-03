@@ -2,7 +2,7 @@
 
 El avatar de la cabecera abre un panel lateral desde la izquierda hacia la derecha en Inicio, Dashboard, Lugares, Comunidad e Historial. Conserva la foto o la inicial y el indicativo de notificaciones sin leer. El panel se puede cerrar con el botón, tocando el fondo, con Atrás en Android o Escape en web.
 
-La navegación inferior contiene las cuatro áreas principales. El perfil deja de ser una pestaña: desde el menú se abre como una pantalla independiente con regreso a la pantalla anterior.
+La navegación inferior contiene Inicio, Dashboard, el botón morado de añadir sesión en el centro, Lugares y Comunidad. El botón conserva su estilo y abre el formulario existente; se oculta y reaparece con la barra al hacer scroll. Las cabeceras dejan de duplicar el botón de añadir sesión. El perfil deja de ser una pestaña: desde el menú se abre como una pantalla independiente con regreso a la pantalla anterior.
 
 ## Recorrido
 

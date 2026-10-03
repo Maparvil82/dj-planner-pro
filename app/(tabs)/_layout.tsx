@@ -1,3 +1,4 @@
+import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
 import { AccountDrawerProvider } from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
@@ -86,6 +87,25 @@ function TabLayoutContent() {
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
                         <LayoutDashboard color={color} size={size} />
+                    ),
+                }}
+            />
+
+            <ExpoTabs.Screen
+                name="create-session"
+                options={{
+                    title: t('insights.add'),
+                    tabBarShowLabel: false,
+                    tabBarButton: () => (
+                        <View
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <AddSessionButton />
+                        </View>
                     ),
                 }}
             />
