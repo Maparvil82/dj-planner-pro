@@ -102,6 +102,7 @@ function TabLayoutContent() {
                                 flex: 1,
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                paddingBottom: 16,
                             }}
                         >
                             <AddSessionButton />
