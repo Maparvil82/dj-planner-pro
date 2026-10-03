@@ -869,5 +869,36 @@
         "proBenefit": "Deine Buchungsseite, private Unterhaltungen, Angebote mit Bedingungen und vorübergehend freigehaltene Termine.",
         "releaseHold": "Termin freigeben, ohne abzulehnen",
         "holdReleased": "Ich habe die vorübergehende Blockierung aufgehoben. Das Angebot bleibt gültig, vorbehaltlich der Verfügbarkeit bei Annahme."
+    },
+    "accountMenu": {
+        "open": "Kontomenü öffnen",
+        "close": "Menü schließen",
+        "profile": "Mein DJ-Profil ansehen",
+        "notifications": "Benachrichtigungen",
+        "history": "Session-Verlauf",
+        "bookings": "Buchungen",
+        "plan": "Mein Tarif",
+        "settings": "Konto und Einstellungen",
+        "settingsHint": "Verwalte dein Konto und deine Einstellungen.",
+        "proTitle": "Dein Kalender ohne Grenzen",
+        "proHint": "Erweitere deinen Kalender und entdecke Pro.",
+        "discoverPro": "Pro entdecken",
+        "planHint": "Dein Abonnement und deine Kalendernutzung.",
+        "profileHint": "Deine DJ-Identität und dein Auftritt in der Community."
+    },
+    "proPage": {
+        "title": "Dein nächstes Kapitel als DJ",
+        "intro": "Mehr Platz für deine Sessions und Tools für dein Wachstum.",
+        "benefits": "Das bietet Pro",
+        "unlimited": "Unbegrenzte Sessions",
+        "unlimitedHint": "Speichere alle kommenden und vergangenen Sessions ohne das Limit von 30.",
+        "soon": "DEMNÄCHST",
+        "bookingsHint": "Dein professioneller Link für Anfragen, Verhandlungen und bestätigte Sessions. Veranstalter benötigen keine App.",
+        "bookingsPending": "Du kannst deine Seite bereits vorbereiten und ansehen. Der öffentliche Link und E-Mail-Hinweise sind noch nicht verfügbar.",
+        "freeTitle": "Kostenlos bleibt vollständig",
+        "freeHint": "Kalender, Dashboard, Orte und Community mit bis zu 30 eigenen gespeicherten Sessions.",
+        "plans": "Tarife ansehen und abonnieren",
+        "active": "Du hast Pro · Mein Tarif",
+        "purchaseHint": "Im nächsten Schritt siehst du Preis und Bedingungen vor dem Abschluss."
     }
 }

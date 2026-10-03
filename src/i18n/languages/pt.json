@@ -867,5 +867,36 @@
         "proBenefit": "A tua página de contratação, conversas privadas, propostas com condições e bloqueios temporários de datas.",
         "releaseHold": "Libertar data sem recusar",
         "holdReleased": "Libertei o bloqueio temporário da data. A proposta continua válida, sujeita a disponibilidade ao aceitar."
+    },
+    "accountMenu": {
+        "open": "Abrir menu da conta",
+        "close": "Fechar menu",
+        "profile": "Ver o meu perfil de DJ",
+        "notifications": "Notificações",
+        "history": "Histórico de sessões",
+        "bookings": "Contratações",
+        "plan": "O meu plano",
+        "settings": "Conta e definições",
+        "settingsHint": "Gere a tua conta e preferências.",
+        "proTitle": "A tua agenda sem limites",
+        "proHint": "Expande a tua agenda e descobre as vantagens Pro.",
+        "discoverPro": "Descobrir Pro",
+        "planHint": "A tua subscrição e a utilização da agenda.",
+        "profileHint": "A tua identidade DJ e a tua presença na comunidade."
+    },
+    "proPage": {
+        "title": "A tua próxima etapa como DJ",
+        "intro": "Mais espaço para as sessões e ferramentas para cresceres ao teu ritmo.",
+        "benefits": "O que inclui Pro",
+        "unlimited": "Sessões ilimitadas",
+        "unlimitedHint": "Guarda todas as sessões futuras e passadas, sem o limite de 30.",
+        "soon": "EM BREVE",
+        "bookingsHint": "O teu link profissional para receber pedidos, negociar condições e transformar acordos em sessões. O promotor não precisará de instalar a app.",
+        "bookingsPending": "Já podes preparar e pré-visualizar a tua página. O link público e os avisos por email ainda não estão disponíveis.",
+        "freeTitle": "Grátis continua completo",
+        "freeHint": "Agenda, dashboard, locais e comunidade, com até 30 sessões próprias guardadas.",
+        "plans": "Ver planos e subscrever",
+        "active": "Tens Pro · Ver o meu plano",
+        "purchaseHint": "No próximo passo verás o preço e as condições antes de confirmar."
     }
 }

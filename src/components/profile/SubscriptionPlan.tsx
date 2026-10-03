@@ -98,7 +98,7 @@ export function SubscriptionPlan() {
                                 ? void Linking.openURL(
                                       'https://apps.apple.com/account/subscriptions',
                                   )
-                                : router.push('/paywall')
+                                : router.push('/pro')
                         }
                     />
                 </>

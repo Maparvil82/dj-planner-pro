@@ -25,7 +25,7 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
     const active = share.data && profile.data?.is_visible && confirmed;
     const toggle = async () => {
         if (!share.data && !profile.data?.is_visible) {
-            router.push('/(tabs)/profile?edit=1');
+            router.push('/profile?edit=1');
             return;
         }
         if (

@@ -1,18 +1,23 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { AccountAvatarButton } from '../navigation/AccountDrawer';
 import { AddSessionButton } from './AddSessionButton';
 
 export function PageHeader({
     title,
     subtitle,
     children,
+    leading,
     action,
+    showAvatar = true,
 }: {
     title: string;
     subtitle: string;
     children?: ReactNode;
+    leading?: ReactNode;
     action?: ReactNode;
+    showAvatar?: boolean;
 }) {
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
@@ -33,6 +38,7 @@ export function PageHeader({
                     gap: 12,
                 }}
             >
+                {leading}
                 <View style={{ flex: 1, minWidth: 0 }}>
                     <Text
                         numberOfLines={1}
@@ -62,6 +68,7 @@ export function PageHeader({
                 </View>
                 {children}
                 {action === undefined ? <AddSessionButton /> : action}
+                {showAvatar && <AccountAvatarButton />}
             </View>
         </View>
     );

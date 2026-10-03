@@ -70,7 +70,7 @@ export function BookingPage({
                         onClose={() =>
                             router.canGoBack()
                                 ? router.back()
-                                : router.replace('/(tabs)/profile')
+                                : router.replace('/profile')
                         }
                     />
                 )}

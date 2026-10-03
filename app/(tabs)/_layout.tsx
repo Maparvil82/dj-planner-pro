@@ -1,3 +1,4 @@
+import { AccountDrawerProvider } from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
 import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
@@ -9,23 +10,21 @@ import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
 import { FEATURES } from '../../src/config/features';
-import { useUnreadNotifications } from '../../src/hooks/useNotifications';
-import { TabProfileIcon } from '../../src/components/ui/TabProfileIcon';
 
 export default function TabLayout() {
     return (
         <TabBarVisibilityProvider>
-            <TabLayoutContent />
+            <AccountDrawerProvider>
+                <TabLayoutContent />
+            </AccountDrawerProvider>
         </TabBarVisibilityProvider>
     );
 }
 
 function TabLayoutContent() {
     const { t } = useTranslation();
-    const unread = useUnreadNotifications();
-    const unreadCount = unread.data || 0;
     const { width } = useWindowDimensions();
-    const { session, profile, initialized } = useAuthStore();
+    const { session, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
 
@@ -126,25 +125,6 @@ function TabLayoutContent() {
                     title: t('community.title'),
                     tabBarIcon: ({ color, size }) => (
                         <Users color={color} size={size} />
-                    ),
-                }}
-            />
-            <ExpoTabs.Screen
-                name="profile"
-                options={{
-                    title: t('tab_you'),
-                    tabBarAccessibilityLabel: unreadCount
-                        ? `${t('tab_you')}, ${t('notifications.openUnread', { count: unreadCount })}`
-                        : t('tab_you'),
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <TabProfileIcon
-                            url={profile?.avatar_url}
-                            name={profile?.artist_name || session?.user?.email}
-                            size={size}
-                            color={color}
-                            focused={focused}
-                            hasUnread={unreadCount > 0}
-                        />
                     ),
                 }}
             />

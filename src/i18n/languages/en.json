@@ -873,5 +873,36 @@
         "proBenefit": "Your booking page, private conversations, proposals with terms and temporary date holds.",
         "releaseHold": "Release date without declining",
         "holdReleased": "I released the temporary date hold. The proposal remains valid, subject to availability when accepted."
+    },
+    "accountMenu": {
+        "open": "Open account menu",
+        "close": "Close menu",
+        "profile": "View my DJ profile",
+        "notifications": "Notifications",
+        "history": "Session history",
+        "bookings": "Bookings",
+        "plan": "My plan",
+        "settings": "Account and settings",
+        "settingsHint": "Manage your account and preferences.",
+        "proTitle": "Your schedule, unlimited",
+        "proHint": "Grow your schedule and discover Pro benefits.",
+        "discoverPro": "Discover Pro",
+        "planHint": "Your subscription and schedule usage.",
+        "profileHint": "Your DJ identity and presence in the community."
+    },
+    "proPage": {
+        "title": "Your next chapter as a DJ",
+        "intro": "More room for your sessions and tools to grow at your own pace.",
+        "benefits": "What Pro includes",
+        "unlimited": "Unlimited sessions",
+        "unlimitedHint": "Keep every upcoming and past session. No 30-session limit.",
+        "soon": "COMING SOON",
+        "bookingsHint": "Your professional link to receive enquiries, negotiate terms and turn agreements into sessions. Promoters will not need to install the app.",
+        "bookingsPending": "You can already prepare and preview your page. The public link and email alerts are not available yet.",
+        "freeTitle": "Free stays complete",
+        "freeHint": "Schedule, dashboard, venues and community, with up to 30 saved sessions of your own.",
+        "plans": "View plans and subscribe",
+        "active": "You have Pro · View my plan",
+        "purchaseHint": "You will see the price and terms before confirming your subscription in the next step."
     }
 }

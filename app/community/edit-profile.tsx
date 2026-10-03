@@ -2,5 +2,5 @@ import { Redirect } from 'expo-router';
 
 // Preserve existing links while all editing now lives in the account profile.
 export default function EditCommunityProfile() {
-    return <Redirect href="/(tabs)/profile?edit=1" />;
+    return <Redirect href="/profile?edit=1" />;
 }

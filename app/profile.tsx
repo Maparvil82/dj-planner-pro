@@ -1,7 +1,3 @@
-import {
-    useTabBarScroll,
-    useTabBarVisibility,
-} from '../../src/contexts/TabBarVisibilityContext';
 import { useCallback, useEffect, useState } from 'react';
 import {
     View,
@@ -26,32 +22,31 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
-import { Pencil, Camera, ChevronRight } from 'lucide-react-native';
-import { useTranslation } from '../../src/i18n/useTranslation';
-import { Avatar } from '../../src/components/ui/Avatar';
-import { NotificationButton } from '../../src/components/ui/NotificationButton';
-import { PageHeader } from '../../src/components/ui/PageHeader';
-import { SessionFormSection } from '../../src/components/sessions/SessionFormLayout';
+import { Camera, ChevronRight, ArrowLeft } from 'lucide-react-native';
+import { useTranslation } from '../src/i18n/useTranslation';
+import { Avatar } from '../src/components/ui/Avatar';
+import { PageHeader } from '../src/components/ui/PageHeader';
+import { SessionFormSection } from '../src/components/sessions/SessionFormLayout';
 import {
     CommunityButton,
     CommunityMessage,
     useCommunityColors,
-} from '../../src/components/community/CommunityUI';
+} from '../src/components/community/CommunityUI';
 import {
     useCommunityMutation,
     useCommunityProfile,
-} from '../../src/hooks/useCommunityQuery';
-import { useAuthStore } from '../../src/store/useAuthStore';
-import { useTheme } from '../../src/contexts/ThemeContext';
-import { profileService } from '../../src/services/profile';
-import { DJ_PLATFORMS, normalizeDJLink } from '../../src/utils/communityLinks';
-import { SubscriptionPlan } from '../../src/components/profile/SubscriptionPlan';
-import { AccountEditor } from '../../src/components/profile/AccountEditor';
-import { MusicGenrePicker } from '../../src/components/profile/MusicGenrePicker';
+} from '../src/hooks/useCommunityQuery';
+import { useAuthStore } from '../src/store/useAuthStore';
+import { useTheme } from '../src/contexts/ThemeContext';
+import { profileService } from '../src/services/profile';
+import { DJ_PLATFORMS, normalizeDJLink } from '../src/utils/communityLinks';
+import { SubscriptionPlan } from '../src/components/profile/SubscriptionPlan';
+import { AccountEditor } from '../src/components/profile/AccountEditor';
+import { MusicGenrePicker } from '../src/components/profile/MusicGenrePicker';
 import {
     serializeMusicGenres,
     parseMusicGenres,
-} from '../../src/utils/musicGenres';
+} from '../src/utils/musicGenres';
 
 function SettingItem({
     label,
@@ -100,15 +95,16 @@ function SettingItem({
     );
 }
 export default function ProfileScreen() {
-    const onTabScroll = useTabBarScroll();
-    const { hidden: tabBarHidden } = useTabBarVisibility();
     const { t } = useTranslation();
     const c = useCommunityColors();
     const { theme, setTheme } = useTheme();
     const { session, profile, signOut, setProfile } = useAuthStore();
     const userId = session?.user.id;
     const router = useRouter();
-    const params = useLocalSearchParams<{ edit?: string }>();
+    const params = useLocalSearchParams<{ edit?: string; section?: string }>();
+    const settingsPage = params.section === 'settings';
+    const planPage = params.section === 'plan';
+    const profilePage = !settingsPage && !planPage;
     const client = useQueryClient();
     const social = useCommunityProfile(userId);
     const mutation = useCommunityMutation();
@@ -174,6 +170,12 @@ export default function ProfileScreen() {
     useEffect(() => {
         if (!editing) resetDraft();
     }, [editing, resetDraft]);
+    useEffect(() => {
+        setEditing(false);
+        setAccountEditing(false);
+        setSaveError('');
+        setNotice('');
+    }, [params.section]);
     useEffect(() => {
         if (params.edit === '1' && ready) {
             setEditing(true);
@@ -389,50 +391,62 @@ export default function ProfileScreen() {
     if (!session) return <Redirect href="/(auth)/login" />;
     return (
         <SafeAreaView
-            edges={['top']}
+            edges={['top', 'bottom']}
             style={{ flex: 1, backgroundColor: c.bg }}
         >
             <PageHeader
-                title={t(editing ? 'edit_profile' : 'unifiedProfile.title')}
-                subtitle={t(
-                    editing ? 'profileUX.editIntro' : 'unifiedProfile.intro',
+                showAvatar={false}
+                title={t(
+                    settingsPage
+                        ? 'accountMenu.settings'
+                        : planPage
+                          ? 'accountMenu.plan'
+                          : editing
+                            ? 'edit_profile'
+                            : 'unifiedProfile.title',
                 )}
-                action={
-                    editing ? null : (
+                subtitle={t(
+                    settingsPage
+                        ? 'accountMenu.settingsHint'
+                        : planPage
+                          ? 'accountMenu.planHint'
+                          : editing
+                            ? 'profileUX.editIntro'
+                            : 'accountMenu.profileHint',
+                )}
+                leading={
+                    !editing ? (
                         <TouchableOpacity
                             accessibilityRole="button"
-                            accessibilityLabel={t('edit_profile')}
-                            disabled={!ready || busy || editing}
-                            onPress={() => {
-                                setEditing(true);
-                                setSaveError('');
-                            }}
+                            accessibilityLabel={t('back')}
+                            onPress={() =>
+                                router.canGoBack()
+                                    ? router.back()
+                                    : router.replace('/(tabs)/home')
+                            }
                             style={{
-                                width: 46,
-                                height: 46,
-                                borderRadius: 16,
-                                backgroundColor: c.tint,
+                                width: 44,
+                                height: 44,
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                opacity: !ready || busy || editing ? 0.5 : 1,
                             }}
                         >
-                            <Pencil size={21} color={c.accent} />
+                            <ArrowLeft size={22} color={c.fg} />
                         </TouchableOpacity>
-                    )
+                    ) : null
                 }
+                action={null}
             />
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <ScrollView
-                    onScroll={onTabScroll}
                     scrollEventThrottle={16}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         paddingHorizontal: 20,
-                        paddingBottom: 112,
+                        paddingBottom: 28,
                     }}
                 >
                     <View
@@ -458,336 +472,351 @@ export default function ProfileScreen() {
                                 loading
                             />
                         )}
-                        {!editing && <NotificationButton />}
-                        <SessionFormSection
-                            title={t('unifiedProfile.identity')}
-                            kind="participants"
-                        >
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    gap: 16,
-                                }}
-                            >
-                                <View>
-                                    <Avatar
-                                        url={
-                                            editing
-                                                ? avatar
-                                                : profile?.avatar_url
-                                        }
-                                        name={
-                                            editing
-                                                ? artistName
-                                                : profile?.artist_name
-                                        }
-                                        size="lg"
-                                    />
-                                    {uploading ? (
-                                        <ActivityIndicator
-                                            style={{
-                                                position: 'absolute',
-                                                top: 20,
-                                                left: 20,
-                                            }}
-                                            color={c.accent}
-                                        />
-                                    ) : (
-                                        <TouchableOpacity
-                                            accessibilityRole="button"
-                                            accessibilityLabel={t(
-                                                'unifiedProfile.changePhoto',
+                        {profilePage && (
+                            <>
+                                <SessionFormSection
+                                    title={t('unifiedProfile.identity')}
+                                    kind="participants"
+                                >
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            gap: 16,
+                                        }}
+                                    >
+                                        <View>
+                                            <Avatar
+                                                url={
+                                                    editing
+                                                        ? avatar
+                                                        : profile?.avatar_url
+                                                }
+                                                name={
+                                                    editing
+                                                        ? artistName
+                                                        : profile?.artist_name
+                                                }
+                                                size="lg"
+                                            />
+                                            {uploading ? (
+                                                <ActivityIndicator
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 20,
+                                                        left: 20,
+                                                    }}
+                                                    color={c.accent}
+                                                />
+                                            ) : (
+                                                <TouchableOpacity
+                                                    accessibilityRole="button"
+                                                    accessibilityLabel={t(
+                                                        'unifiedProfile.changePhoto',
+                                                    )}
+                                                    disabled={busy || !ready}
+                                                    onPress={handlePickAvatar}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: -5,
+                                                        bottom: -4,
+                                                        width: 30,
+                                                        height: 30,
+                                                        borderRadius: 11,
+                                                        alignItems: 'center',
+                                                        justifyContent:
+                                                            'center',
+                                                        backgroundColor:
+                                                            '#6554df',
+                                                    }}
+                                                >
+                                                    <Camera
+                                                        size={15}
+                                                        color="#fff"
+                                                    />
+                                                </TouchableOpacity>
                                             )}
-                                            disabled={busy || !ready}
-                                            onPress={handlePickAvatar}
+                                        </View>
+                                        <View style={{ flex: 1, gap: 5 }}>
+                                            <Text
+                                                style={{
+                                                    color: c.fg,
+                                                    fontSize: 23,
+                                                    fontWeight: '800',
+                                                }}
+                                            >
+                                                {editing
+                                                    ? artistName ||
+                                                      t('artist_name')
+                                                    : profile?.artist_name ||
+                                                      t('artist_name')}
+                                            </Text>
+                                            {!!city && (
+                                                <Text
+                                                    style={{
+                                                        color: c.muted,
+                                                        fontSize: 13,
+                                                    }}
+                                                >
+                                                    {city}
+                                                </Text>
+                                            )}
+                                            <Text
+                                                style={{
+                                                    color: c.accent,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                {t(
+                                                    visible
+                                                        ? 'unifiedProfile.public'
+                                                        : 'unifiedProfile.private',
+                                                )}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    {editing ? (
+                                        <>
+                                            {field(
+                                                t('artist_name'),
+                                                artistName,
+                                                setArtistName,
+                                                80,
+                                            )}
+                                            {field(
+                                                t('venue_city'),
+                                                city,
+                                                setCity,
+                                                100,
+                                            )}
+                                            <MusicGenrePicker
+                                                value={genres}
+                                                onChange={setGenres}
+                                                disabled={busy}
+                                            />
+                                            {field(
+                                                t('community.bio'),
+                                                bio,
+                                                setBio,
+                                                500,
+                                                true,
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {!!genres && (
+                                                <Text
+                                                    style={{
+                                                        color: c.accent,
+                                                        fontSize: 13,
+                                                    }}
+                                                >
+                                                    {genres}
+                                                </Text>
+                                            )}
+                                            {!!bio && (
+                                                <Text
+                                                    style={{
+                                                        color: c.muted,
+                                                        lineHeight: 21,
+                                                        fontSize: 14,
+                                                    }}
+                                                >
+                                                    {bio}
+                                                </Text>
+                                            )}
+                                            <CommunityButton
+                                                label={t('edit_profile')}
+                                                secondary
+                                                onPress={() => {
+                                                    setEditing(true);
+                                                    setSaveError('');
+                                                }}
+                                                disabled={!ready || busy}
+                                            />
+                                        </>
+                                    )}
+                                </SessionFormSection>
+                                {editing && (
+                                    <SessionFormSection
+                                        title={t('djPage.customize')}
+                                        kind="participants"
+                                    >
+                                        <Text
                                             style={{
-                                                position: 'absolute',
-                                                right: -5,
-                                                bottom: -4,
-                                                width: 30,
-                                                height: 30,
-                                                borderRadius: 11,
+                                                color: c.muted,
+                                                fontSize: 13,
+                                                lineHeight: 20,
+                                            }}
+                                        >
+                                            {t('djPage.coverHint')}
+                                        </Text>
+                                        <View
+                                            style={{
+                                                height: 150,
+                                                borderRadius: 18,
+                                                overflow: 'hidden',
+                                                backgroundColor: c.tint,
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                backgroundColor: '#6554df',
                                             }}
                                         >
-                                            <Camera size={15} color="#fff" />
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                                <View style={{ flex: 1, gap: 5 }}>
-                                    <Text
-                                        style={{
-                                            color: c.fg,
-                                            fontSize: 23,
-                                            fontWeight: '800',
-                                        }}
-                                    >
-                                        {editing
-                                            ? artistName || t('artist_name')
-                                            : profile?.artist_name ||
-                                              t('artist_name')}
-                                    </Text>
-                                    {!!city && (
-                                        <Text
-                                            style={{
-                                                color: c.muted,
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            {city}
-                                        </Text>
-                                    )}
-                                    <Text
-                                        style={{
-                                            color: c.accent,
-                                            fontSize: 12,
-                                        }}
-                                    >
-                                        {t(
-                                            visible
-                                                ? 'unifiedProfile.public'
-                                                : 'unifiedProfile.private',
+                                            {cover ? (
+                                                <Image
+                                                    source={{ uri: cover }}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                    }}
+                                                    resizeMode="cover"
+                                                />
+                                            ) : (
+                                                <Text
+                                                    style={{
+                                                        color: c.muted,
+                                                        fontSize: 13,
+                                                    }}
+                                                >
+                                                    {t('djPage.cover')}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        <CommunityButton
+                                            label={t('djPage.changeCover')}
+                                            secondary
+                                            disabled={busy}
+                                            onPress={handlePickCover}
+                                        />
+                                        {!!cover && (
+                                            <CommunityButton
+                                                label={t('djPage.removeCover')}
+                                                secondary
+                                                disabled={busy}
+                                                onPress={() => setCover(null)}
+                                            />
                                         )}
-                                    </Text>
-                                </View>
-                            </View>
-                            {editing ? (
-                                <>
-                                    {field(
-                                        t('artist_name'),
-                                        artistName,
-                                        setArtistName,
-                                        80,
-                                    )}
-                                    {field(t('venue_city'), city, setCity, 100)}
-                                    <MusicGenrePicker
-                                        value={genres}
-                                        onChange={setGenres}
-                                        disabled={busy}
-                                    />
-                                    {field(
-                                        t('community.bio'),
-                                        bio,
-                                        setBio,
-                                        500,
-                                        true,
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {!!genres && (
-                                        <Text
-                                            style={{
-                                                color: c.accent,
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            {genres}
-                                        </Text>
-                                    )}
-                                    {!!bio && (
                                         <Text
                                             style={{
                                                 color: c.muted,
-                                                lineHeight: 21,
+                                                fontSize: 13,
+                                                lineHeight: 20,
+                                            }}
+                                        >
+                                            {t('djPage.linksHint')}
+                                        </Text>
+                                        {DJ_PLATFORMS.map((platform) => (
+                                            <View key={platform}>
+                                                {field(
+                                                    platform === 'mixcloud'
+                                                        ? 'Mixcloud'
+                                                        : platform ===
+                                                            'soundcloud'
+                                                          ? 'SoundCloud'
+                                                          : 'Instagram',
+                                                    links[platform],
+                                                    (value) =>
+                                                        setLinks((current) => ({
+                                                            ...current,
+                                                            [platform]: value,
+                                                        })),
+                                                    500,
+                                                    false,
+                                                    true,
+                                                )}
+                                            </View>
+                                        ))}
+                                    </SessionFormSection>
+                                )}
+                                <SessionFormSection
+                                    title={t('community.title')}
+                                    kind="participants"
+                                >
+                                    {editing ? (
+                                        <View
+                                            style={{
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                gap: 12,
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: c.fg,
+                                                    flex: 1,
+                                                    fontSize: 14,
+                                                    fontWeight: '600',
+                                                }}
+                                            >
+                                                {t('community.visible')}
+                                            </Text>
+                                            <Switch
+                                                accessibilityLabel={t(
+                                                    'community.visible',
+                                                )}
+                                                value={visible}
+                                                onValueChange={setVisible}
+                                                trackColor={{
+                                                    false: c.border,
+                                                    true: '#6554df',
+                                                }}
+                                            />
+                                        </View>
+                                    ) : (
+                                        <Text
+                                            style={{
+                                                color: c.fg,
+                                                fontWeight: '600',
                                                 fontSize: 14,
                                             }}
                                         >
-                                            {bio}
+                                            {t(
+                                                visible
+                                                    ? 'unifiedProfile.public'
+                                                    : 'unifiedProfile.private',
+                                            )}
                                         </Text>
                                     )}
-                                    <CommunityButton
-                                        label={t('edit_profile')}
-                                        secondary
-                                        onPress={() => {
-                                            setEditing(true);
-                                            setSaveError('');
-                                        }}
-                                        disabled={!ready || busy}
-                                    />
-                                </>
-                            )}
-                        </SessionFormSection>
-                        {editing && (
-                            <SessionFormSection
-                                title={t('djPage.customize')}
-                                kind="participants"
-                            >
-                                <Text
-                                    style={{
-                                        color: c.muted,
-                                        fontSize: 13,
-                                        lineHeight: 20,
-                                    }}
-                                >
-                                    {t('djPage.coverHint')}
-                                </Text>
-                                <View
-                                    style={{
-                                        height: 150,
-                                        borderRadius: 18,
-                                        overflow: 'hidden',
-                                        backgroundColor: c.tint,
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}
-                                >
-                                    {cover ? (
-                                        <Image
-                                            source={{ uri: cover }}
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                            }}
-                                            resizeMode="cover"
-                                        />
-                                    ) : (
-                                        <Text
-                                            style={{
-                                                color: c.muted,
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            {t('djPage.cover')}
-                                        </Text>
-                                    )}
-                                </View>
-                                <CommunityButton
-                                    label={t('djPage.changeCover')}
-                                    secondary
-                                    disabled={busy}
-                                    onPress={handlePickCover}
-                                />
-                                {!!cover && (
-                                    <CommunityButton
-                                        label={t('djPage.removeCover')}
-                                        secondary
-                                        disabled={busy}
-                                        onPress={() => setCover(null)}
-                                    />
-                                )}
-                                <Text
-                                    style={{
-                                        color: c.muted,
-                                        fontSize: 13,
-                                        lineHeight: 20,
-                                    }}
-                                >
-                                    {t('djPage.linksHint')}
-                                </Text>
-                                {DJ_PLATFORMS.map((platform) => (
-                                    <View key={platform}>
-                                        {field(
-                                            platform === 'mixcloud'
-                                                ? 'Mixcloud'
-                                                : platform === 'soundcloud'
-                                                  ? 'SoundCloud'
-                                                  : 'Instagram',
-                                            links[platform],
-                                            (value) =>
-                                                setLinks((current) => ({
-                                                    ...current,
-                                                    [platform]: value,
-                                                })),
-                                            500,
-                                            false,
-                                            true,
-                                        )}
-                                    </View>
-                                ))}
-                            </SessionFormSection>
-                        )}
-                        <SessionFormSection
-                            title={t('community.title')}
-                            kind="participants"
-                        >
-                            {editing ? (
-                                <View
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        gap: 12,
-                                    }}
-                                >
                                     <Text
                                         style={{
-                                            color: c.fg,
-                                            flex: 1,
-                                            fontSize: 14,
-                                            fontWeight: '600',
+                                            color: c.muted,
+                                            fontSize: 12,
+                                            lineHeight: 19,
                                         }}
                                     >
-                                        {t('community.visible')}
+                                        {t('community.visibilityHint')}
                                     </Text>
-                                    <Switch
-                                        accessibilityLabel={t(
-                                            'community.visible',
-                                        )}
-                                        value={visible}
-                                        onValueChange={setVisible}
-                                        trackColor={{
-                                            false: c.border,
-                                            true: '#6554df',
+                                    <Text
+                                        style={{
+                                            color: c.muted,
+                                            fontSize: 12,
+                                            lineHeight: 19,
                                         }}
-                                    />
-                                </View>
-                            ) : (
-                                <Text
-                                    style={{
-                                        color: c.fg,
-                                        fontWeight: '600',
-                                        fontSize: 14,
-                                    }}
-                                >
-                                    {t(
-                                        visible
-                                            ? 'unifiedProfile.public'
-                                            : 'unifiedProfile.private',
+                                    >
+                                        {t('community.privacyHint')}
+                                    </Text>
+                                    {!editing && social.data?.is_visible && (
+                                        <CommunityButton
+                                            label={t('unifiedProfile.preview')}
+                                            secondary
+                                            onPress={() =>
+                                                router.push(
+                                                    `/community/${userId}?preview=1`,
+                                                )
+                                            }
+                                        />
                                     )}
-                                </Text>
-                            )}
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 12,
-                                    lineHeight: 19,
-                                }}
-                            >
-                                {t('community.visibilityHint')}
-                            </Text>
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 12,
-                                    lineHeight: 19,
-                                }}
-                            >
-                                {t('community.privacyHint')}
-                            </Text>
-                            {!editing && social.data?.is_visible && (
-                                <CommunityButton
-                                    label={t('unifiedProfile.preview')}
-                                    secondary
-                                    onPress={() =>
-                                        router.push(
-                                            `/community/${userId}?preview=1`,
-                                        )
-                                    }
-                                />
-                            )}
-                            {!editing && !social.data?.is_visible && (
-                                <CommunityButton
-                                    label={t('unifiedProfile.activate')}
-                                    secondary
-                                    disabled={!ready || busy}
-                                    onPress={() => setEditing(true)}
-                                />
-                            )}
-                        </SessionFormSection>
-                        {!editing && (
+                                    {!editing && !social.data?.is_visible && (
+                                        <CommunityButton
+                                            label={t('unifiedProfile.activate')}
+                                            secondary
+                                            disabled={!ready || busy}
+                                            onPress={() => setEditing(true)}
+                                        />
+                                    )}
+                                </SessionFormSection>
+                            </>
+                        )}
+                        {settingsPage && !editing && (
                             <SessionFormSection
                                 title={t('settings_account_section')}
                                 kind="account"
@@ -814,29 +843,7 @@ export default function ProfileScreen() {
                                 />
                             </SessionFormSection>
                         )}
-                        {!editing && (
-                            <>
-                                <SubscriptionPlan />
-                                <SessionFormSection
-                                    title={t('bookings.title')}
-                                    kind="booking"
-                                >
-                                    <Text
-                                        style={{
-                                            color: c.muted,
-                                            fontSize: 14,
-                                            lineHeight: 22,
-                                        }}
-                                    >
-                                        {t('bookings.heroHint')}
-                                    </Text>
-                                    <CommunityButton
-                                        label={t('bookings.openWorkspace')}
-                                        onPress={() => router.push('/bookings')}
-                                    />
-                                </SessionFormSection>
-                            </>
-                        )}
+                        {planPage && <SubscriptionPlan />}
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}
@@ -848,7 +855,7 @@ export default function ProfileScreen() {
                             />
                         )}
                         {!!notice && <CommunityMessage title={notice} />}
-                        {!editing && (
+                        {settingsPage && !editing && (
                             <>
                                 <SessionFormSection
                                     title={t('settings_app_section')}
@@ -933,7 +940,6 @@ export default function ProfileScreen() {
                         style={{
                             paddingHorizontal: 20,
                             paddingVertical: 14,
-                            marginBottom: tabBarHidden ? 0 : 80,
                             borderTopWidth: 1,
                             borderColor: c.border,
                             backgroundColor: c.bg,

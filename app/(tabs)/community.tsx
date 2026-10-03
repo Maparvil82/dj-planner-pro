@@ -146,7 +146,7 @@ export default function CommunityScreen() {
                                 <CommunityButton
                                     label={t('community.createProfile')}
                                     onPress={() =>
-                                        router.push('/(tabs)/profile?edit=1')
+                                        router.push('/profile?edit=1')
                                     }
                                 />
                             </View>
@@ -258,7 +258,7 @@ export default function CommunityScreen() {
                                             !own.data?.is_visible
                                         )
                                             router.push(
-                                                '/(tabs)/profile?edit=1',
+                                                '/profile?edit=1',
                                             );
                                         else
                                             mutation.mutate({

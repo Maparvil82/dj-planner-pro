@@ -869,5 +869,36 @@
         "proBenefit": "La tua pagina per gli ingaggi, conversazioni private, proposte con condizioni e blocchi temporanei delle date.",
         "releaseHold": "Libera la data senza rifiutare",
         "holdReleased": "Ho rimosso il blocco temporaneo della data. La proposta resta valida, soggetta a disponibilità al momento dell’accettazione."
+    },
+    "accountMenu": {
+        "open": "Apri il menu account",
+        "close": "Chiudi il menu",
+        "profile": "Vedi il mio profilo DJ",
+        "notifications": "Notifiche",
+        "history": "Cronologia sessioni",
+        "bookings": "Ingaggi",
+        "plan": "Il mio piano",
+        "settings": "Account e impostazioni",
+        "settingsHint": "Gestisci account e preferenze.",
+        "proTitle": "La tua agenda senza limiti",
+        "proHint": "Amplia la tua agenda e scopri i vantaggi Pro.",
+        "discoverPro": "Scopri Pro",
+        "planHint": "Il tuo abbonamento e l’utilizzo dell’agenda.",
+        "profileHint": "La tua identità DJ e la tua presenza nella community."
+    },
+    "proPage": {
+        "title": "Il tuo prossimo passo come DJ",
+        "intro": "Più spazio per le sessioni e strumenti per crescere al tuo ritmo.",
+        "benefits": "Cosa include Pro",
+        "unlimited": "Sessioni illimitate",
+        "unlimitedHint": "Conserva tutte le sessioni future e passate, senza il limite di 30.",
+        "soon": "IN ARRIVO",
+        "bookingsHint": "Il tuo link professionale per ricevere richieste, negoziare e trasformare accordi in sessioni. I promoter non dovranno installare l’app.",
+        "bookingsPending": "Puoi già preparare e vedere l’anteprima della pagina. Il link pubblico e gli avvisi email non sono ancora disponibili.",
+        "freeTitle": "Gratis resta completo",
+        "freeHint": "Agenda, dashboard, locali e community, con fino a 30 sessioni personali salvate.",
+        "plans": "Vedi piani e abbonati",
+        "active": "Hai Pro · Vedi il mio piano",
+        "purchaseHint": "Nel prossimo passaggio vedrai prezzo e condizioni prima di confermare."
     }
 }

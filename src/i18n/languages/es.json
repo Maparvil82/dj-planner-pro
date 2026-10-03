@@ -869,5 +869,36 @@
         "proBenefit": "Tu página de contratación, conversaciones privadas, propuestas con condiciones y bloqueos temporales de fechas.",
         "releaseHold": "Liberar fecha sin rechazar la consulta",
         "holdReleased": "He liberado el bloqueo temporal de esta fecha. La propuesta sigue vigente, sujeta a disponibilidad al aceptar."
+    },
+    "accountMenu": {
+        "open": "Abrir menú de cuenta",
+        "close": "Cerrar menú",
+        "profile": "Ver mi perfil de DJ",
+        "notifications": "Notificaciones",
+        "history": "Historial de sesiones",
+        "bookings": "Contrataciones",
+        "plan": "Mi plan",
+        "settings": "Cuenta y ajustes",
+        "settingsHint": "Gestiona tu cuenta y tus preferencias.",
+        "proTitle": "Tu agenda, sin límites",
+        "proHint": "Amplía tu agenda y descubre las ventajas de Pro.",
+        "discoverPro": "Descubrir Pro",
+        "planHint": "Tu suscripción y el uso de tu agenda.",
+        "profileHint": "Tu identidad como DJ y tu presencia en Comunidad."
+    },
+    "proPage": {
+        "title": "Tu próxima etapa como DJ",
+        "intro": "Más espacio para tus sesiones y herramientas para crecer a tu ritmo.",
+        "benefits": "Qué incluye Pro",
+        "unlimited": "Sesiones ilimitadas",
+        "unlimitedHint": "Guarda todas tus sesiones, las próximas y las que ya forman parte de tu trayectoria. Sin el límite de 30.",
+        "soon": "PRÓXIMAMENTE",
+        "bookingsHint": "Tu enlace profesional para recibir solicitudes, negociar condiciones y convertir acuerdos en sesiones. El promotor no necesitará instalar la app.",
+        "bookingsPending": "Ya puedes preparar y previsualizar tu página. El enlace público y los avisos por correo aún no están disponibles.",
+        "freeTitle": "Gratis sigue siendo completo",
+        "freeHint": "Agenda, dashboard, lugares y comunidad, con hasta 30 sesiones propias guardadas.",
+        "plans": "Ver planes y suscribirme",
+        "active": "Ya tienes Pro · Ver mi plan",
+        "purchaseHint": "En el siguiente paso verás el precio y las condiciones antes de confirmar la suscripción."
     }
 }

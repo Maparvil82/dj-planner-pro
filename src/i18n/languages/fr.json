@@ -867,5 +867,36 @@
         "proBenefit": "Votre page de réservation, des conversations privées, des propositions avec conditions et des dates bloquées temporairement.",
         "releaseHold": "Libérer la date sans refuser",
         "holdReleased": "J’ai libéré le blocage temporaire. La proposition reste valable, sous réserve de disponibilité lors de l’acceptation."
+    },
+    "accountMenu": {
+        "open": "Ouvrir le menu du compte",
+        "close": "Fermer le menu",
+        "profile": "Voir mon profil DJ",
+        "notifications": "Notifications",
+        "history": "Historique des sessions",
+        "bookings": "Réservations",
+        "plan": "Mon offre",
+        "settings": "Compte et réglages",
+        "settingsHint": "Gère ton compte et tes préférences.",
+        "proTitle": "Ton agenda sans limites",
+        "proHint": "Développe ton agenda et découvre les avantages Pro.",
+        "discoverPro": "Découvrir Pro",
+        "planHint": "Ton abonnement et l’utilisation de ton agenda.",
+        "profileHint": "Ton identité DJ et ta présence dans la communauté."
+    },
+    "proPage": {
+        "title": "Ta prochaine étape comme DJ",
+        "intro": "Plus de place pour tes sessions et des outils pour évoluer à ton rythme.",
+        "benefits": "Les avantages Pro",
+        "unlimited": "Sessions illimitées",
+        "unlimitedHint": "Conserve toutes tes sessions à venir et passées, sans la limite de 30.",
+        "soon": "BIENTÔT",
+        "bookingsHint": "Ton lien professionnel pour recevoir des demandes, négocier et transformer les accords en sessions. Les organisateurs ne devront pas installer l’app.",
+        "bookingsPending": "Tu peux déjà préparer et prévisualiser ta page. Le lien public et les alertes par e-mail ne sont pas encore disponibles.",
+        "freeTitle": "Gratuit reste complet",
+        "freeHint": "Agenda, dashboard, lieux et communauté, avec jusqu’à 30 sessions personnelles enregistrées.",
+        "plans": "Voir les offres et s’abonner",
+        "active": "Tu as Pro · Voir mon offre",
+        "purchaseHint": "Le prix et les conditions seront affichés avant de confirmer ton abonnement."
     }
 }

@@ -56,7 +56,7 @@ export default function CommunityProfileScreen() {
     );
     if (!userId) return <Redirect href="/(auth)/login" />;
     if (own && params.preview !== '1')
-        return <Redirect href="/(tabs)/profile" />;
+        return <Redirect href="/profile" />;
     const person = profile.data;
     return (
         <SafeAreaView
@@ -152,7 +152,7 @@ export default function CommunityProfileScreen() {
                                             label={t('community.editProfile')}
                                             onPress={() =>
                                                 router.push(
-                                                    '/(tabs)/profile?edit=1',
+                                                    '/profile?edit=1',
                                                 )
                                             }
                                             secondary
@@ -181,7 +181,7 @@ export default function CommunityProfileScreen() {
                                                     !viewer.data?.is_visible
                                                 )
                                                     router.push(
-                                                        '/(tabs)/profile?edit=1',
+                                                        '/profile?edit=1',
                                                     );
                                                 else
                                                     mutation.mutate({
