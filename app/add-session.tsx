@@ -1,3 +1,4 @@
+import { useKeyboardVisible } from '../src/hooks/useKeyboardVisible';
 import { SessionVenueSheet } from '../src/components/venues/SessionVenueSheet';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import { SessionPosterPreview } from '../src/components/sessions/SessionPosterPreview';
@@ -25,7 +26,6 @@ import {
     ActivityIndicator,
     Switch,
     Keyboard,
-    KeyboardAvoidingView,
     Platform,
     Modal,
     Pressable,
@@ -58,6 +58,7 @@ export default function AddSessionScreen() {
     const { date } = useGlobalSearchParams<{ date: string }>();
     const router = useRouter();
     const { t, currentLanguage } = useTranslation();
+    const keyboardVisible = useKeyboardVisible();
     const { session } = useAuthStore();
     const createVenueMutation = useCreateVenueMutation();
 
@@ -368,7 +369,11 @@ export default function AddSessionScreen() {
     return (
         <SafeAreaView
             style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }}
-            edges={['top', 'bottom', 'left', 'right']}
+            edges={
+                keyboardVisible
+                    ? ['top', 'left', 'right']
+                    : ['top', 'bottom', 'left', 'right']
+            }
         >
             <SessionFormHeader
                 title={t('add_session')}
@@ -376,22 +381,19 @@ export default function AddSessionScreen() {
                 onClose={() => router.back()}
             />
 
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
+            <View style={{ flex: 1 }}>
                 <ScrollView
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
-                        paddingBottom: 130,
+                        paddingBottom: keyboardVisible ? 24 : 130,
                         gap: 16,
                         width: '100%',
                         maxWidth: 900,
                         alignSelf: 'center',
                     }}
                     showsVerticalScrollIndicator={false}
+                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                 >
@@ -1128,17 +1130,19 @@ export default function AddSessionScreen() {
                     </SessionFormSection>
                 </ScrollView>
 
-                <SessionFormFooter
-                    disabled={
-                        isChecking ||
-                        isUploadingPoster ||
-                        createSessionMutation.isPending ||
-                        !venue.trim()
-                    }
-                    busy={isChecking || createSessionMutation.isPending}
-                    onSave={handleSave}
-                />
-            </KeyboardAvoidingView>
+                {!keyboardVisible && (
+                    <SessionFormFooter
+                        disabled={
+                            isChecking ||
+                            isUploadingPoster ||
+                            createSessionMutation.isPending ||
+                            !venue.trim()
+                        }
+                        busy={isChecking || createSessionMutation.isPending}
+                        onSave={handleSave}
+                    />
+                )}
+            </View>
 
             {/* Modals for Repeat and Color Picker same as before */}
             <Modal

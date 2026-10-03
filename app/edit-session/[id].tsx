@@ -1,3 +1,4 @@
+import { useKeyboardVisible } from '../../src/hooks/useKeyboardVisible';
 import { SessionVenueSheet } from '../../src/components/venues/SessionVenueSheet';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { SessionPosterPreview } from '../../src/components/sessions/SessionPosterPreview';
@@ -26,7 +27,6 @@ import {
     ActivityIndicator,
     Switch,
     Keyboard,
-    KeyboardAvoidingView,
     Platform,
     Modal,
     Pressable,
@@ -67,6 +67,7 @@ export default function EditSessionScreen() {
     } = useSessionByIdQuery(id);
     const router = useRouter();
     const { t, currentLanguage } = useTranslation();
+    const keyboardVisible = useKeyboardVisible();
     const { session: authSession } = useAuthStore();
     const createVenueMutation = useCreateVenueMutation();
     const themeCtx = useContext(ThemeContext) as { activeTheme?: string };
@@ -509,7 +510,11 @@ export default function EditSessionScreen() {
     return (
         <SafeAreaView
             style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }}
-            edges={['top', 'bottom', 'left', 'right']}
+            edges={
+                keyboardVisible
+                    ? ['top', 'left', 'right']
+                    : ['top', 'bottom', 'left', 'right']
+            }
         >
             <Modal
                 visible={!!scopeAction}
@@ -597,22 +602,19 @@ export default function EditSessionScreen() {
                 onClose={() => router.back()}
             />
 
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
+            <View style={{ flex: 1 }}>
                 <ScrollView
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
-                        paddingBottom: 130,
+                        paddingBottom: keyboardVisible ? 24 : 130,
                         gap: 16,
                         width: '100%',
                         maxWidth: 900,
                         alignSelf: 'center',
                     }}
                     showsVerticalScrollIndicator={false}
+                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                 >
@@ -1243,17 +1245,19 @@ export default function EditSessionScreen() {
                     </SessionFormSection>
                 </ScrollView>
 
-                <SessionFormFooter
-                    disabled={
-                        isChecking ||
-                        isUploadingPoster ||
-                        updateSessionMutation.isPending ||
-                        !venue.trim()
-                    }
-                    busy={isChecking || updateSessionMutation.isPending}
-                    onSave={handleSave}
-                />
-            </KeyboardAvoidingView>
+                {!keyboardVisible && (
+                    <SessionFormFooter
+                        disabled={
+                            isChecking ||
+                            isUploadingPoster ||
+                            updateSessionMutation.isPending ||
+                            !venue.trim()
+                        }
+                        busy={isChecking || updateSessionMutation.isPending}
+                        onSave={handleSave}
+                    />
+                )}
+            </View>
         </SafeAreaView>
     );
 }
