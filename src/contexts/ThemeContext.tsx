@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
+import { colorScheme } from 'nativewind';
 
 type ThemeType = 'light' | 'dark' | 'system';
 
@@ -45,6 +46,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const activeTheme = theme === 'system' ? (systemColorScheme === 'dark' ? 'dark' : 'light') : theme;
+
+    useEffect(() => {
+        // Web class selectors need the resolved system preference; native can follow it directly.
+        colorScheme.set(Platform.OS === 'web' ? activeTheme : theme);
+    }, [theme, activeTheme]);
 
     return (
         <ThemeContext.Provider value={{ theme, activeTheme, setTheme, isReady }}>

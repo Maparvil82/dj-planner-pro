@@ -1,0 +1,20 @@
+BEGIN;
+INSERT INTO auth.users (id,raw_user_meta_data) VALUES ('00000000-0000-4000-8000-000000000951','{}'),('00000000-0000-4000-8000-000000000952','{}');
+SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000951',true);
+SET LOCAL ROLE authenticated;
+DO $$ DECLARE s public.sessions; BEGIN
+ SELECT * INTO s FROM public.create_session_series('{"date":"2026-10-02","title":"Payment state fixture","venue":"Test venue","start_time":"22:00","end_time":"04:00","earning_type":"fixed","earning_amount":300,"status":"pending","recurrence_type":"weekly"}'::jsonb,ARRAY['2026-10-02','2026-10-09']::date[]);
+ IF s.status <> 'confirmed' THEN RAISE EXCEPTION 'Legacy status not normalized'; END IF;
+ UPDATE public.sessions SET amount_paid=100 WHERE id=s.id;
+ UPDATE public.sessions SET status='cancelled' WHERE id=s.id;
+ IF NOT EXISTS(SELECT 1 FROM public.sessions WHERE id=s.id AND status='cancelled' AND amount_paid=100) THEN RAISE EXCEPTION 'Cancellation lost receipts'; END IF;
+ IF EXISTS(SELECT 1 FROM public.sessions WHERE parent_session_id=s.id AND amount_paid<>0) THEN RAISE EXCEPTION 'Payment leaked to another occurrence'; END IF;
+ UPDATE public.sessions SET amount_paid=0,status='confirmed' WHERE id=s.id;
+ IF NOT EXISTS(SELECT 1 FROM public.sessions WHERE id=s.id AND status='confirmed' AND amount_paid=0) THEN RAISE EXCEPTION 'Refund or reactivation failed'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000952',true);
+ UPDATE public.sessions SET amount_paid=300 WHERE id=s.id;
+ IF FOUND THEN RAISE EXCEPTION 'Other user modified private receipts'; END IF;
+ END $$;
+RESET ROLE;
+SELECT 'PASS: active normalization, cancellation, refunds, recurrence isolation and payment ownership' AS result;
+ROLLBACK;

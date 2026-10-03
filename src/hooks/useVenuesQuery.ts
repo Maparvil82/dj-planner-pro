@@ -43,6 +43,7 @@ export const useCreateVenueMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
         },
     });
 };
@@ -56,6 +57,7 @@ export const useUpdateVenueMutation = () => {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
             queryClient.invalidateQueries({ queryKey: ['venue', data.id] });
             // Invalidate sessions and tags to reflect name changes in real-time
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -73,6 +75,7 @@ export const useDeleteVenueMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
         },
     });
 };

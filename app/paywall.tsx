@@ -3,229 +3,424 @@ import {
     View,
     Text,
     TouchableOpacity,
-    Alert,
-    ActivityIndicator,
     ScrollView,
+    Platform,
 } from 'react-native';
-import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Linking from 'expo-linking';
+import { X } from 'lucide-react-native';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { useSubscription } from '../src/hooks/useSubscription';
+import { useAuthStore } from '../src/store/useAuthStore';
 import {
-    X,
-    ArrowRight,
-    Check,
-} from 'lucide-react-native';
+    CommunityButton,
+    useCommunityColors,
+} from '../src/components/community/CommunityUI';
+import { syncSubscriptionAccess } from '../src/services/subscriptionAccess';
+import { showError } from '../src/utils/showError';
+import { bookingCall, type BookingStatus } from '../src/services/bookings';
+import { FREE_SESSION_LIMIT } from '../src/utils/sessionLimit';
 
 export default function PaywallScreen() {
     const { t } = useTranslation();
+    const c = useCommunityColors();
     const router = useRouter();
-
+    const client = useQueryClient();
+    const session = useAuthStore((state) => state.session);
+    const params = useLocalSearchParams<{
+        reason?: string;
+        count?: string;
+        requested?: string;
+    }>();
     const {
         purchaseMonthly,
         purchaseAnnual,
         restorePurchases,
         isLoading,
+        isPro,
         monthlyPackage,
-        annualPackage
+        annualPackage,
     } = useSubscription();
-
-    const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
-
-    const handleSubscribe = async () => {
-        let success = false;
-        if (selectedPlan === 'monthly') {
-            success = await purchaseMonthly();
-        } else {
-            success = await purchaseAnnual();
-        }
-
-        if (success) {
-            router.replace('/');
+    const bookings = useQuery({
+        queryKey: ['booking-status', session?.user.id],
+        queryFn: () => bookingCall<BookingStatus>('owner_status'),
+        enabled: !!session && params.reason === 'bookings',
+        retry: false,
+    });
+    const [selected, setSelected] = useState<'monthly' | 'yearly'>('yearly');
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState('');
+    const [verified, setVerified] = useState(false);
+    const pkg = selected === 'monthly' ? monthlyPackage : annualPackage;
+    const available = Platform.OS === 'ios' && !!pkg;
+    const close = () =>
+        router.canGoBack() ? router.back() : router.replace('/');
+    const verify = async () => {
+        const usage = await syncSubscriptionAccess();
+        if (!usage.isPro) throw new Error('billing.verificationError');
+        await client.invalidateQueries({ queryKey: ['session-usage'] });
+        await client.invalidateQueries({ queryKey: ['booking-status'] });
+        setVerified(true);
+        setMessage(t('billing.activated'));
+    };
+    const act = async (restore = false) => {
+        if (busy || isLoading) return;
+        setBusy(true);
+        setMessage('');
+        try {
+            const success = restore
+                ? await restorePurchases()
+                : isPro ||
+                  (await (selected === 'monthly'
+                      ? purchaseMonthly()
+                      : purchaseAnnual()));
+            if (success) await verify();
+            else if (restore) setMessage(t('billing.noPurchases'));
+        } catch (error) {
+            const key =
+                error instanceof Error && error.message.startsWith('billing.')
+                    ? error.message
+                    : 'billing.purchaseError';
+            showError(t('error'), t(key));
+        } finally {
+            setBusy(false);
         }
     };
-
-    const handleRestore = async () => {
-        const success = await restorePurchases();
-        if (success) {
-            Alert.alert(
-                t('restore_purchases_success_title', { defaultValue: 'Restored' }),
-                t('restore_purchases_success_msg', { defaultValue: 'Your purchases have been restored successfully.' })
-            );
-            router.replace('/');
-        } else {
-            Alert.alert(t('restore_purchases'), t('restore_no_purchases'));
-        }
-    };
-
-    // Use dynamic prices from RevenueCat if available, fallback to translations
-    const monthlyPriceString = monthlyPackage?.product.priceString || t('plan_monthly_desc');
-    const annualPriceString = annualPackage?.product.priceString || t('plan_yearly_desc');
-
+    if (!session) return <Redirect href="/(auth)/login" />;
+    const saving =
+        monthlyPackage && annualPackage
+            ? Math.round(
+                  (1 -
+                      annualPackage.product.price /
+                          (monthlyPackage.product.price * 12)) *
+                      100,
+              )
+            : 0;
     return (
-        <View className="flex-1 bg-white">
-            {/* HEADER SECTION */}
-            <SafeAreaView edges={['top']}>
-                <View className="px-6 py-4 flex-row items-center justify-between">
-                    <TouchableOpacity
-                        onPress={() => router.replace('/')}
-                        className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+        <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
+            <View
+                style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 14,
+                    alignItems: 'flex-end',
+                }}
+            >
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={t('close')}
+                    onPress={close}
+                    disabled={busy || isLoading}
+                    style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 16,
+                        backgroundColor: c.tint,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <X size={22} color={c.fg} />
+                </TouchableOpacity>
+            </View>
+            <ScrollView
+                contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingBottom: 40,
+                    gap: 20,
+                    width: '100%',
+                    maxWidth: 600,
+                    alignSelf: 'center',
+                }}
+            >
+                <View style={{ gap: 10 }}>
+                    <Text
+                        style={{
+                            color: c.accent,
+                            fontWeight: '800',
+                            fontSize: 12,
+                            letterSpacing: 1,
+                        }}
                     >
-                        <X size={24} color="#000000" />
+                        DJ PLANNER PRO
+                    </Text>
+                    <Text
+                        style={{
+                            color: c.fg,
+                            fontSize: 32,
+                            fontWeight: '900',
+                            letterSpacing: -1,
+                        }}
+                    >
+                        {t(
+                            params.reason === 'session-limit'
+                                ? 'billing.limitTitle'
+                                : 'billing.title',
+                        )}
+                    </Text>
+                    <Text
+                        style={{ color: c.muted, fontSize: 15, lineHeight: 23 }}
+                    >
+                        {t('billing.intro', { limit: FREE_SESSION_LIMIT })}
+                    </Text>
+                </View>
+                {params.reason === 'session-limit' && (
+                    <View
+                        style={{
+                            backgroundColor: c.tint,
+                            borderRadius: 20,
+                            padding: 18,
+                            gap: 7,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.accent,
+                                fontSize: 17,
+                                fontWeight: '800',
+                            }}
+                        >
+                            {t('billing.limitUsage', {
+                                count: Number(params.count) || 0,
+                                limit: FREE_SESSION_LIMIT,
+                            })}
+                        </Text>
+                        <Text
+                            style={{
+                                color: c.muted,
+                                fontSize: 13,
+                                lineHeight: 20,
+                            }}
+                        >
+                            {t('billing.limitHint', {
+                                requested: Number(params.requested) || 1,
+                            })}
+                        </Text>
+                    </View>
+                )}
+                <View
+                    style={{
+                        backgroundColor: c.card,
+                        borderColor: c.border,
+                        borderWidth: 1,
+                        borderRadius: 24,
+                        padding: 20,
+                        gap: 10,
+                    }}
+                >
+                    <Text
+                        style={{ color: c.fg, fontWeight: '800', fontSize: 20 }}
+                    >
+                        {t('billing.unlimited')}
+                    </Text>
+                    <Text
+                        style={{ color: c.muted, lineHeight: 21, fontSize: 14 }}
+                    >
+                        {t('billing.benefit')}
+                    </Text>
+                </View>
+                {params.reason === 'bookings' && (
+                    <View
+                        style={{
+                            backgroundColor: c.card,
+                            padding: 20,
+                            borderRadius: 22,
+                            gap: 10,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontSize: 20,
+                                fontWeight: '800',
+                            }}
+                        >
+                            {t(
+                                bookings.data?.serviceReady
+                                    ? 'bookings.title'
+                                    : 'bookings.setupPending',
+                            )}
+                        </Text>
+                        <Text style={{ color: c.muted, lineHeight: 21 }}>
+                            {t(
+                                bookings.data?.serviceReady
+                                    ? 'bookings.proBenefit'
+                                    : 'bookings.setupPendingHint',
+                            )}
+                        </Text>
+                    </View>
+                )}
+                {(['monthly', 'yearly'] as const).map((plan) => {
+                    const item =
+                        plan === 'monthly' ? monthlyPackage : annualPackage;
+                    return (
+                        <TouchableOpacity
+                            key={plan}
+                            accessibilityRole="radio"
+                            accessibilityState={{ selected: selected === plan }}
+                            disabled={busy || isLoading}
+                            onPress={() => setSelected(plan)}
+                            style={{
+                                backgroundColor:
+                                    selected === plan ? c.tint : c.card,
+                                borderColor:
+                                    selected === plan ? c.accent : c.border,
+                                borderWidth: 2,
+                                borderRadius: 22,
+                                padding: 20,
+                                gap: 8,
+                            }}
+                        >
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    gap: 10,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: c.fg,
+                                        fontWeight: '800',
+                                        fontSize: 17,
+                                    }}
+                                >
+                                    {t(
+                                        plan === 'monthly'
+                                            ? 'plan_monthly'
+                                            : 'plan_yearly',
+                                    )}
+                                </Text>
+                                {plan === 'yearly' && saving > 0 && (
+                                    <Text
+                                        style={{
+                                            color: c.accent,
+                                            fontWeight: '800',
+                                        }}
+                                    >
+                                        {t('billing.saving', {
+                                            percent: saving,
+                                        })}
+                                    </Text>
+                                )}
+                            </View>
+                            <Text
+                                style={{
+                                    color: c.fg,
+                                    fontWeight: '900',
+                                    fontSize: 23,
+                                }}
+                            >
+                                {item
+                                    ? `${item.product.priceString} ${t(plan === 'monthly' ? 'billing.perMonth' : 'billing.perYear')}`
+                                    : t('billing.priceUnavailable')}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+                {!!message && (
+                    <Text
+                        accessibilityRole="alert"
+                        style={{
+                            color: verified ? c.accent : c.muted,
+                            fontSize: 14,
+                            lineHeight: 21,
+                        }}
+                    >
+                        {message}
+                    </Text>
+                )}
+                {!available && !isLoading && !isPro && (
+                    <Text
+                        style={{ color: c.muted, fontSize: 13, lineHeight: 20 }}
+                    >
+                        {t(
+                            Platform.OS === 'ios'
+                                ? 'billing.storeUnavailable'
+                                : 'billing.platformUnavailable',
+                        )}
+                    </Text>
+                )}
+                <CommunityButton
+                    label={t(
+                        verified
+                            ? 'billing.return'
+                            : isPro
+                              ? 'billing.verify'
+                              : 'billing.subscribe',
+                    )}
+                    busy={busy || isLoading}
+                    disabled={!verified && !isPro && !available}
+                    onPress={verified ? close : () => void act()}
+                />
+                {!isPro && !verified && (
+                    <CommunityButton
+                        label={t('billing.stayFree')}
+                        secondary
+                        disabled={busy || isLoading}
+                        onPress={close}
+                    />
+                )}
+                <Text style={{ color: c.muted, fontSize: 12, lineHeight: 19 }}>
+                    {t('billing.renewal')}
+                </Text>
+                <TouchableOpacity
+                    accessibilityRole="button"
+                    disabled={busy || isLoading || Platform.OS !== 'ios'}
+                    onPress={() => void act(true)}
+                >
+                    <Text
+                        style={{
+                            color: c.accent,
+                            textAlign: 'center',
+                            fontWeight: '700',
+                            opacity: Platform.OS === 'ios' ? 1 : 0.5,
+                        }}
+                    >
+                        {t('restore_purchases')}
+                    </Text>
+                </TouchableOpacity>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        gap: 18,
+                    }}
+                >
+                    <TouchableOpacity
+                        onPress={() =>
+                            void Linking.openURL(t('terms_of_use_url'))
+                        }
+                    >
+                        <Text
+                            style={{
+                                color: c.muted,
+                                fontSize: 12,
+                                textDecorationLine: 'underline',
+                            }}
+                        >
+                            {t('terms_of_use')}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() =>
+                            void Linking.openURL(t('privacy_policy_url'))
+                        }
+                    >
+                        <Text
+                            style={{
+                                color: c.muted,
+                                fontSize: 12,
+                                textDecorationLine: 'underline',
+                            }}
+                        >
+                            {t('privacy_policy')}
+                        </Text>
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
-
-            {/* CONTENT SECTION */}
-            <ScrollView 
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 }}
-            >
-                <View className="flex-1 justify-between">
-                    <View className="mt-2">
-                        <Text className="text-black font-semibold text-3xl mb-4 tracking-tight text-left">
-                            {t('choose_plan').replace(/\|/g, '')}
-                        </Text>
-                        
-                        <Text className="text-gray-600 text-sm mb-6 leading-5">
-                            {t('subscription_explanation')}
-                        </Text>
-
-                        {/* PRO BENEFITS */}
-                        <View className="mb-6 bg-gray-50 p-4 rounded-2xl">
-                            <Text className="text-black font-bold text-base mb-3">{t('pro_benefits_title')}</Text>
-                            <View className="flex-row flex-wrap gap-y-3">
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_sessions')}</Text>
-                                </View>
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_venues_rates')}</Text>
-                                </View>
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_economy')}</Text>
-                                </View>
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_analytics')}</Text>
-                                </View>
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_ai')}</Text>
-                                </View>
-                                <View className="w-1/2 flex-row items-center pr-2">
-                                    <Check size={16} color="#000" className="mr-2" />
-                                    <Text className="text-gray-700 text-xs font-medium leading-tight">{t('pro_billing')}</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        {/* PRICING PLANS STACKED */}
-                        <View className="flex-col mb-2 gap-4">
-                            {/* MONTHLY PLAN CARD */}
-                            <TouchableOpacity
-                                onPress={() => setSelectedPlan('monthly')}
-                                activeOpacity={0.8}
-                                className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
-                                    }`}
-                                style={{ minHeight: 110 }}
-                            >
-                                <View className="flex-1">
-                                    <Text className="text-black font-semibold text-base leading-tight">{t('subscription_name_monthly')}</Text>
-                                    <Text className="text-gray-600 text-sm mt-1">{t('plan_monthly')}: {monthlyPriceString}</Text>
-                                    <Text className="text-black text-xs font-bold mt-2">{t('plan_monthly_trial')}</Text>
-                                </View>
-                                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'monthly' ? 'border-black' : 'border-gray-300'
-                                    }`}>
-                                    {selectedPlan === 'monthly' && <View className="w-2.5 h-2.5 rounded-full bg-black" />}
-                                </View>
-                            </TouchableOpacity>
-
-                            {/* YEARLY PLAN CARD */}
-                            <TouchableOpacity
-                                onPress={() => setSelectedPlan('yearly')}
-                                activeOpacity={0.8}
-                                className={`w-full p-5 rounded-3xl border-2 flex-row items-center justify-between relative ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-100 bg-white'
-                                    }`}
-                                style={{ minHeight: 110 }}
-                            >
-                                <View className="flex-1">
-                                    <Text className="text-black font-semibold text-base leading-tight">{t('subscription_name_yearly')}</Text>
-                                    <Text className="text-gray-600 text-sm mt-1">{t('plan_yearly')}: {annualPriceString}</Text>
-                                    <Text className="text-black text-xs font-bold mt-2">{t('plan_yearly_trial')}</Text>
-                                </View>
-                                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center ml-2 ${selectedPlan === 'yearly' ? 'border-black' : 'border-gray-300'
-                                    }`}>
-                                    {selectedPlan === 'yearly' && <View className="w-2.5 h-2.5 rounded-full bg-black" />}
-                                </View>
-
-                                {/* SAVE BADGE */}
-                                <View className="absolute -top-3 right-4 bg-black px-2 py-0.5 rounded-full shadow-sm">
-                                    <Text className="text-white font-bold text-[9px] uppercase">
-                                        -{t('save_badge', { percent: '70' }).match(/\d+/)?.[0]}%
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* MAIN CTA BUTTON */}
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={handleSubscribe}
-                            disabled={isLoading}
-                            className={`py-5 rounded-full flex-row items-center justify-center mt-6 shadow-md ${isLoading ? 'bg-gray-400' : 'bg-black'}`}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <>
-                                    <Text className="text-white font-semibold text-base mr-2">
-                                        {selectedPlan === 'monthly' ? t('trial_button_7') : t('trial_button_14')}
-                                    </Text>
-                                    <ArrowRight size={20} color="white" />
-                                </>
-                            )}
-                        </TouchableOpacity>
-
-                        {/* COMPLIANCE INFO & DISCLAIMERS */}
-                        <View className="mt-8">
-                            <Text className="text-center text-gray-500 text-[10px] leading-4 px-2 mb-3">
-                                {selectedPlan === 'monthly'
-                                    ? t('plan_monthly_disclaimer')
-                                    : t('plan_yearly_disclaimer')}
-                            </Text>
-
-                            <Text className="text-justify text-gray-400 text-[9px] leading-3 mb-2">
-                                {t('subscription_notice')}
-                            </Text>
-
-                            <Text className="text-justify text-gray-400 text-[9px] leading-3">
-                                {t('manage_apple_id')}
-                            </Text>
-                        </View>
-                    </View>
-
-                    {/* FOOTER LINKS */}
-                    <View className="items-center mt-8 pb-4 border-t border-gray-100 pt-6">
-                        <View className="flex-row items-center flex-wrap justify-center gap-x-3 gap-y-2">
-                            <TouchableOpacity onPress={() => Linking.openURL(t('terms_of_use_url'))}>
-                                <Text className="text-gray-500 text-[10px] font-medium underline">{t('terms_of_use')}</Text>
-                            </TouchableOpacity>
-                            <View className="w-1 h-1 rounded-full bg-gray-300 hidden sm:flex" />
-                            <TouchableOpacity onPress={() => Linking.openURL(t('privacy_policy_url'))}>
-                                <Text className="text-gray-500 text-[10px] font-medium underline">{t('privacy_policy')}</Text>
-                            </TouchableOpacity>
-                            <View className="w-1 h-1 rounded-full bg-gray-300 hidden sm:flex" />
-                            <TouchableOpacity onPress={handleRestore} disabled={isLoading}>
-                                <Text className={`text-[10px] font-medium underline ${isLoading ? 'text-gray-300' : 'text-gray-500'}`}>{t('restore_purchases')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }

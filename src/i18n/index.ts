@@ -21,23 +21,40 @@ const resources = {
 };
 
 export const initI18n = async () => {
-    // Get device language, slice only the first 2 characters ('en-US' -> 'en')
-    const deviceLanguageCode = Localization.getLocales()[0]?.languageCode || 'en';
-    const deviceLanguage = resources[deviceLanguageCode as keyof typeof resources] ? deviceLanguageCode : 'en';
-
-    i18n
-        .use(initReactI18next)
-        .init({
-            resources,
-            lng: deviceLanguage,
-            fallbackLng: 'en',
-            interpolation: {
-                escapeValue: false, // React already does escaping
-            },
-        });
+    if (i18n.isInitialized) {
+        // Fast Refresh retains the singleton. Replace its bundled resources
+        // without resetting a language the user may already have selected.
+        for (const [language, namespaces] of Object.entries(resources)) {
+            i18n.addResourceBundle(
+                language,
+                'translation',
+                namespaces.translation,
+                true,
+                true,
+            );
+        }
+        i18n.emit('languageChanged', i18n.language);
+        return;
+    }
+    const deviceLanguageCode =
+        Localization.getLocales()[0]?.languageCode || 'en';
+    const deviceLanguage = resources[
+        deviceLanguageCode as keyof typeof resources
+    ]
+        ? deviceLanguageCode
+        : 'en';
+    await i18n.use(initReactI18next).init({
+        resources,
+        lng: deviceLanguage,
+        fallbackLng: 'en',
+        initAsync: false,
+        interpolation: { escapeValue: false },
+        react: {
+            bindI18n: 'languageChanged loaded',
+            bindI18nStore: 'added removed',
+        },
+    });
 };
 
-// Initial synchronous call fallback in case we need it, though AppProviders normally waits
-initI18n();
-
+void initI18n();
 export default i18n;

@@ -1,3 +1,4 @@
+import { FEATURES } from '../../src/config/features';
 import React, { useState, useContext } from 'react';
 import {
     View,
@@ -21,18 +22,7 @@ import {
 import { VaultFile } from '../../src/types/session';
 import { vaultService } from '../../src/services/vault';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import {
-    File,
-    FileText,
-    Image as ImageIcon,
-    Plus,
-    ChevronLeft,
-    Trash2,
-    Download,
-    ExternalLink,
-    FileMinus,
-    Share2
-} from 'lucide-react-native';
+import { File, FileText, Image as ImageIcon, Plus, ChevronLeft, Trash2, ExternalLink, FileMinus, Share2 } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -41,6 +31,10 @@ import { decode } from 'base64-arraybuffer';
 const { width } = Dimensions.get('window');
 
 export default function FolderDetailScreen() {
+    return FEATURES.documents ? <FolderDetailScreenContent /> : <Redirect href="/(tabs)/home" />;
+}
+
+function FolderDetailScreenContent() {
     const { id, name } = useLocalSearchParams<{ id: string, name: string }>();
     const { t } = useTranslation();
     const router = useRouter();
