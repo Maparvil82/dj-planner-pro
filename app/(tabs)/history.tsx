@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
@@ -87,14 +88,14 @@ export default function HistoryScreen() {
         if (!sessions) return [];
         const venues = Array.from(new Set(sessions.map(s => s.venue).filter(Boolean)));
         return venues.sort();
-    }, [sessions]);
+    }, [sessions, t]);
 
     // Unique Titles for filter
     const uniqueTitles = useMemo(() => {
         if (!sessions) return [];
-        const titles = Array.from(new Set(sessions.map(s => s.title).filter(Boolean)));
+        const titles = Array.from(new Set(sessions.map(s => sessionDisplayTitle(s, t))));
         return titles.sort();
-    }, [sessions]);
+    }, [sessions, t]);
 
     // Filtering Logic
     const filteredSessions = useMemo(() => {
@@ -104,14 +105,14 @@ export default function HistoryScreen() {
             // Search Query
             if (searchQuery) {
                 const searchLower = searchQuery.toLowerCase();
-                const matchesTitle = session.title?.toLowerCase().includes(searchLower);
+                const matchesTitle = sessionDisplayTitle(session, t).toLowerCase().includes(searchLower);
                 const matchesVenue = session.venue?.toLowerCase().includes(searchLower);
                 if (!matchesTitle && !matchesVenue) return false;
             }
 
             // Advanced Filters
             if (selectedVenues.length > 0 && !selectedVenues.includes(session.venue)) return false;
-            if (selectedTitles.length > 0 && !selectedTitles.includes(session.title)) return false;
+            if (selectedTitles.length > 0 && !selectedTitles.includes(sessionDisplayTitle(session, t))) return false;
             if (selectedEarningTypes.length > 0 && !selectedEarningTypes.includes(session.earning_type)) return false;
 
             // Date Range logic (inclusive)
@@ -136,7 +137,7 @@ export default function HistoryScreen() {
 
             return true;
         });
-    }, [sessions, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
+    }, [sessions, t, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
 
     // Calendar Marked Dates Logic
     const calendarMarkedDates = useMemo(() => {

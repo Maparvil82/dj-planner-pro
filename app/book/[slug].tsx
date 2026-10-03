@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useRef, useState } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -239,9 +240,9 @@ export default function PublicBooking() {
                             </BookingText>
                             {q.data.sessions.map((s: any) => (
                                 <BookingCard key={s.id}>
-                                    <BookingText large>{s.title}</BookingText>
+                                    <BookingText large>{sessionDisplayTitle(s, t)}</BookingText>
                                     <BookingText muted>
-                                        {s.venue} ·{' '}
+                                        {s.title?.trim() ? `${s.venue} · ` : ''}
                                         {new Date(
                                             s.date + 'T12:00:00',
                                         ).toLocaleDateString(currentLanguage)}

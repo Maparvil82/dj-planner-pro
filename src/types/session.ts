@@ -6,6 +6,7 @@ export interface Session {
     date: string; // date 'YYYY-MM-DD'
     title: string;
     venue: string;
+    venue_city?: string | null; // Display metadata from the linked place.
     start_time: string; // e.g., '22:00'
     end_time: string; // e.g., '04:00'
     booking_timezone?: string | null;

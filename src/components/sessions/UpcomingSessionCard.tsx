@@ -1,3 +1,7 @@
+import {
+    sessionDisplayTitle,
+    sessionDisplaySubtitle,
+} from '../../utils/sessionNaming';
 import { useState } from 'react';
 import {
     Text,
@@ -26,6 +30,7 @@ export function UpcomingSessionCard({
         !!session.poster_url && session.poster_url !== failedPosterUri;
     const { activeTheme } = useTheme();
     const { t, currentLanguage } = useTranslation();
+    const subtitle = sessionDisplaySubtitle(session);
     const { fontScale } = useWindowDimensions();
     const cardHeight = Math.round(128 * Math.max(1, fontScale));
     const dark = activeTheme === 'dark';
@@ -37,7 +42,7 @@ export function UpcomingSessionCard({
     return (
         <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={`${session.title}, ${session.venue}, ${date.toLocaleDateString(currentLanguage)}, ${session.start_time.slice(0, 5)}–${session.end_time.slice(0, 5)}`}
+            accessibilityLabel={`${sessionDisplayTitle(session, t)}, ${subtitle}, ${date.toLocaleDateString(currentLanguage)}, ${session.start_time.slice(0, 5)}–${session.end_time.slice(0, 5)}`}
             onPress={onPress}
             onLongPress={onLongPress}
             activeOpacity={0.8}
@@ -124,14 +129,20 @@ export function UpcomingSessionCard({
                             letterSpacing: -0.2,
                         }}
                     >
-                        {session.title}
+                        {sessionDisplayTitle(session, t)}
                     </Text>
-                    <Text
-                        numberOfLines={1}
-                        style={{ color: muted, fontSize: 11, lineHeight: 15 }}
-                    >
-                        {session.venue}
-                    </Text>
+                    {!!subtitle && (
+                        <Text
+                            numberOfLines={1}
+                            style={{
+                                color: muted,
+                                fontSize: 11,
+                                lineHeight: 15,
+                            }}
+                        >
+                            {subtitle}
+                        </Text>
+                    )}
                 </View>
                 <View
                     style={{

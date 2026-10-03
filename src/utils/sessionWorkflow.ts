@@ -28,7 +28,7 @@ export function parseSessionAmount(
 export function validateSessionInput(
     input: CreateSessionInput,
 ): CreateSessionInput {
-    if (!input.title.trim() || !input.venue.trim())
+    if (!input.venue.trim())
         throw new Error('missing_fields');
     if (!validSessionDate(input.date)) throw new Error('workflow.invalidDate');
     if (

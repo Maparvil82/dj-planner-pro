@@ -1,3 +1,7 @@
+import {
+    sessionDisplayTitle,
+    sessionDisplaySubtitle,
+} from '../../utils/sessionNaming';
 import { UpcomingSessionCard } from './UpcomingSessionCard';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
@@ -22,6 +26,7 @@ export function SessionPreviewCard({
 }) {
     const { activeTheme } = useTheme();
     const { t, currentLanguage } = useTranslation();
+    const subtitle = sessionDisplaySubtitle(session);
     const dark = activeTheme === 'dark';
     const text = dark ? '#f3f4f8' : '#202538';
     const muted = dark ? '#a8b2c6' : '#6d7588';
@@ -45,7 +50,7 @@ export function SessionPreviewCard({
     return (
         <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={`${session.title}, ${session.venue}, ${date.toLocaleDateString(currentLanguage)}`}
+            accessibilityLabel={`${sessionDisplayTitle(session, t)}, ${subtitle}, ${date.toLocaleDateString(currentLanguage)}`}
             activeOpacity={0.8}
             onPress={onPress}
             onLongPress={onLongPress}
@@ -134,7 +139,7 @@ export function SessionPreviewCard({
                                     lineHeight: 21,
                                 }}
                             >
-                                {session.title}
+                                {sessionDisplayTitle(session, t)}
                             </Text>
                         </View>
                         <View
@@ -144,12 +149,18 @@ export function SessionPreviewCard({
                                 gap: 5,
                             }}
                         >
-                            <Text
-                                numberOfLines={1}
-                                style={{ flex: 1, color: muted, fontSize: 12 }}
-                            >
-                                {session.venue}
-                            </Text>
+                            {!!subtitle && (
+                                <Text
+                                    numberOfLines={1}
+                                    style={{
+                                        flex: 1,
+                                        color: muted,
+                                        fontSize: 12,
+                                    }}
+                                >
+                                    {subtitle}
+                                </Text>
+                            )}
                         </View>
                         <SessionStatusBadge session={session} />
                         {showDjs &&

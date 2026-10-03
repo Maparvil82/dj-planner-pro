@@ -11,6 +11,11 @@ import { relatedSessionTargets, validateSessionInput } from '../utils/sessionWor
 
 const TAG_COLORS: string[] = [];
 
+function withVenueCity(row: Session & { place?: { city?: string | null } | null }): Session {
+    const { place, ...session } = row;
+    return { ...session, venue_city: place?.city || null };
+}
+
 export const getColorForString = (str: string) => {
     // The user requested to default to the Neutral 800 black color used in the "Prevees_ganar" tracking card.
     return '#262626';
@@ -111,11 +116,11 @@ export const sessionService = {
         const sessions: Session[] = [];
         const pageSize = 1000;
         for (let offset = 0; ; offset += pageSize) {
-            const { data, error } = await supabase.from('sessions').select('*')
+            const { data, error } = await supabase.from('sessions').select('*, place:venues(city)')
                 .eq('user_id', userId).order('date', { ascending: false }).order('id')
                 .range(offset, offset + pageSize - 1);
             if (error) throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
-            sessions.push(...(data || []));
+            sessions.push(...(data || []).map(withVenueCity));
             if (!data || data.length < pageSize) return [...sessions, ...await collaborationService.agenda()].sort((a, b) => b.date.localeCompare(a.date));
         }
     },
@@ -131,7 +136,7 @@ export const sessionService = {
 
         const { data, error } = await supabase
             .from('sessions')
-            .select('*')
+            .select('*, place:venues(city)')
             .eq('user_id', userId)
             .gte('date', startPath)
             .lt('date', endPath)
@@ -143,7 +148,7 @@ export const sessionService = {
         }
 
         const guests = (await collaborationService.agenda()).filter(session => session.date >= startPath && session.date < endPath);
-        return [...(data || []), ...guests].sort((a, b) => a.date.localeCompare(b.date));
+        return [...(data || []).map(withVenueCity), ...guests].sort((a, b) => a.date.localeCompare(b.date));
     },
 
     async getUpcomingSessions(userId: string): Promise<Session[]> {
@@ -153,7 +158,7 @@ export const sessionService = {
 
         const { data, error } = await supabase
             .from('sessions')
-            .select('*')
+            .select('*, place:venues(city)')
             .eq('user_id', userId)
             .gte('date', today)
             .or('status.is.null,status.neq.cancelled')
@@ -167,7 +172,7 @@ export const sessionService = {
         }
 
         const guests = (await collaborationService.agenda()).filter(session => session.date >= today && session.status !== 'cancelled');
-        return [...(data || []), ...guests].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)).filter((session: Session) => sessionRange(session).end > new Date()).slice(0, 30);
+        return [...(data || []).map(withVenueCity), ...guests].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time)).filter((session: Session) => sessionRange(session).end > new Date()).slice(0, 30);
     },
 
     async getUserTags(userId: string, type: 'title' | 'venue' | 'dj'): Promise<TagOption[]> {
@@ -189,7 +194,7 @@ export const sessionService = {
     async getSessionById(sessionId: string): Promise<Session | null> {
         const { data, error } = await supabase
             .from('sessions')
-            .select('*')
+            .select('*, place:venues(city)')
             .eq('id', sessionId)
             .single();
 
@@ -199,7 +204,7 @@ export const sessionService = {
             throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         }
 
-        return data || null;
+        return data ? withVenueCity(data) : null;
     },
 
     async deleteSession(sessionId: string, scope: 'single' | 'series' = 'single'): Promise<void> {

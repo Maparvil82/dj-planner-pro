@@ -1,3 +1,8 @@
+import { useTranslation } from '../../i18n/useTranslation';
+import {
+    sessionDisplayTitle,
+    sessionDisplaySubtitle,
+} from '../../utils/sessionNaming';
 import { PosterFrameImage } from './PosterFrameImage';
 import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -5,6 +10,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { Session } from '../../types/session';
 
 export function SessionArtwork({ session }: { session: Session }) {
+    const { t } = useTranslation();
+    const subtitle = sessionDisplaySubtitle(session);
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
     const onError = useCallback(
         () => setFailedUrl(session.poster_url || null),
@@ -72,18 +79,20 @@ export function SessionArtwork({ session }: { session: Session }) {
                             letterSpacing: -0.7,
                         }}
                     >
-                        {session.title}
+                        {sessionDisplayTitle(session, t)}
                     </Text>
-                    <Text
-                        numberOfLines={1}
-                        style={{
-                            color: '#d3d8e7',
-                            fontSize: 12,
-                            fontWeight: '500',
-                        }}
-                    >
-                        {session.venue}
-                    </Text>
+                    {!!subtitle && (
+                        <Text
+                            numberOfLines={1}
+                            style={{
+                                color: '#d3d8e7',
+                                fontSize: 12,
+                                fontWeight: '500',
+                            }}
+                        >
+                            {subtitle}
+                        </Text>
+                    )}
                 </View>
             )}
         </LinearGradient>

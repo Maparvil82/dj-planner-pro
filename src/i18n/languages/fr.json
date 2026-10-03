@@ -32,7 +32,7 @@
     "selected_date": "Date sélectionnée",
     "session_title": "Titre de la session",
     "session_title_placeholder": "Ex : Summer DJ Set",
-    "venue": "Lieu / Club",
+    "venue": "Lieu",
     "venue_placeholder": "Ex : Club Amnesia",
     "start_time": "Heure de début",
     "end_time": "Heure de fin",
@@ -898,5 +898,12 @@
         "plans": "Voir les offres et s’abonner",
         "active": "Tu as Pro · Voir mon offre",
         "purchaseHint": "Le prix et les conditions seront affichés avant de confirmer ton abonnement."
+    },
+    "sessionNaming": {
+        "label": "Nom de l’événement · Facultatif",
+        "placeholder": "Ex. Closing Party",
+        "hint": "Sans nom, nous utiliserons le lieu.",
+        "atVenue": "Session à {{venue}}",
+        "untitled": "Session"
     }
 }

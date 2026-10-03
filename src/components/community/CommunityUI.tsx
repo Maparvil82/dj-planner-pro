@@ -1,10 +1,9 @@
-import { PosterFrameImage } from '../sessions/PosterFrameImage';
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    ActivityIndicator,
-} from 'react-native';
+    sessionDisplayTitle,
+    sessionDisplaySubtitle,
+} from '../../utils/sessionNaming';
+import { PosterFrameImage } from '../sessions/PosterFrameImage';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -232,6 +231,7 @@ export function CommunitySessionCard({
     const c = useCommunityColors();
     const { t, currentLanguage } = useTranslation();
     const router = useRouter();
+    const subtitle = sessionDisplaySubtitle(item);
     const date = new Date(`${item.date}T12:00:00`);
     const dateLabel = Number.isNaN(date.getTime())
         ? item.date
@@ -287,7 +287,11 @@ export function CommunitySessionCard({
                 </TouchableOpacity>
             )}
             {!!item.poster_url && (
-                <PosterFrameImage uri={item.poster_url!} x={item.poster_focus_x} y={item.poster_focus_y} />
+                <PosterFrameImage
+                    uri={item.poster_url!}
+                    x={item.poster_focus_x}
+                    y={item.poster_focus_y}
+                />
             )}
             <View
                 style={{
@@ -304,20 +308,24 @@ export function CommunitySessionCard({
                         letterSpacing: -0.5,
                     }}
                 >
-                    {item.title}
+                    {sessionDisplayTitle(item, t)}
                 </Text>
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 8,
-                    }}
-                >
-                    <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
-                        {item.venue}
-                        {item.city ? ` · ${item.city}` : ''}
-                    </Text>
-                </View>
+                {!!subtitle && (
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                        }}
+                    >
+                        <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
+                            {subtitle}
+                            {item.title?.trim() && item.city
+                                ? ` · ${item.city}`
+                                : ''}
+                        </Text>
+                    </View>
+                )}
                 <View
                     style={{
                         flexDirection: 'row',

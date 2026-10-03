@@ -32,7 +32,7 @@
     "selected_date": "Selected date",
     "session_title": "Session title",
     "session_title_placeholder": "e.g., Summer DJ Set",
-    "venue": "Venue / Club",
+    "venue": "Venue",
     "venue_placeholder": "e.g., Amnesia Club",
     "start_time": "Start time",
     "end_time": "End time",
@@ -904,5 +904,12 @@
         "plans": "View plans and subscribe",
         "active": "You have Pro · View my plan",
         "purchaseHint": "You will see the price and terms before confirming your subscription in the next step."
+    },
+    "sessionNaming": {
+        "label": "Event name · Optional",
+        "placeholder": "e.g. Closing Party",
+        "hint": "If it has no name, we will use the venue.",
+        "atVenue": "Session at {{venue}}",
+        "untitled": "Session"
     }
 }

@@ -32,7 +32,7 @@
     "selected_date": "選択された日付",
     "session_title": "セッション名",
     "session_title_placeholder": "例：サマーDJセット",
-    "venue": "会場 / クラブ",
+    "venue": "会場",
     "venue_placeholder": "例：クラブ・アムネシア",
     "start_time": "開始時間",
     "end_time": "終了時間",
@@ -899,5 +899,12 @@
         "plans": "プランを確認して登録",
         "active": "Pro利用中 · プランを見る",
         "purchaseHint": "次の画面で料金と条件を確認してから登録できます。"
+    },
+    "sessionNaming": {
+        "label": "イベント名 · 任意",
+        "placeholder": "例：Closing Party",
+        "hint": "名前がない場合は会場名を表示します。",
+        "atVenue": "{{venue}}でのセッション",
+        "untitled": "セッション"
     }
 }

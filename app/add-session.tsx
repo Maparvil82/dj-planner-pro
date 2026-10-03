@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import { SessionPosterPreview } from '../src/components/sessions/SessionPosterPreview';
 import type { PosterPosition } from '../src/utils/posterFrame';
 import { SessionDJPicker } from '../src/components/sessions/SessionDJPicker';
@@ -259,7 +260,7 @@ export default function AddSessionScreen() {
 
     const handleSave = async () => {
         if (saving.current || !session) return;
-        if (!title.trim() || !venue.trim()) {
+        if (!venue.trim()) {
             showError(t('error'), t('missing_fields'));
             return;
         }
@@ -329,7 +330,7 @@ export default function AddSessionScreen() {
                             .slice(0, 3)
                             .map(
                                 (item) =>
-                                    `${item.title} · ${item.date} · ${item.start_time}–${item.end_time}`,
+                                    `${sessionDisplayTitle(item, t)} · ${item.date} · ${item.start_time}–${item.end_time}`,
                             )
                             .join('\n'),
                     }),
@@ -370,8 +371,9 @@ export default function AddSessionScreen() {
                     'recurrence_limit',
                     'invalid_earning_amount',
                 ].includes(key) ||
-                key.startsWith('workflow.') ||
-                key.startsWith('billing.') || key.startsWith('bookings.errors.')
+                    key.startsWith('workflow.') ||
+                    key.startsWith('billing.') ||
+                    key.startsWith('bookings.errors.')
                     ? t(key)
                     : t('error_saving_session'),
             );
@@ -416,14 +418,17 @@ export default function AddSessionScreen() {
                     <SessionFormSection kind="event" title={t('form.event')}>
                         <View className="z-50">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
-                                {t('session_title')} *
+                                {t('sessionNaming.label')}
                             </Text>
                             <View
                                 className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-[#8270e4] bg-[#f8f9fd] dark:bg-[#111625]' : 'border-[#e9ecf3] dark:border-[#252d40] bg-[#f8f9fd] dark:bg-[#111625]'}`}
                             >
                                 <TextInput
                                     className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
-                                    placeholder={t('session_title_placeholder')}
+                                    accessibilityLabel={t(
+                                        'sessionNaming.label',
+                                    )}
+                                    placeholder={t('sessionNaming.placeholder')}
                                     value={title}
                                     onChangeText={setTitle}
                                     onFocus={() => handleFocus('title')}
@@ -431,6 +436,9 @@ export default function AddSessionScreen() {
                                     autoCapitalize="words"
                                 />
                             </View>
+                            <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-1">
+                                {t('sessionNaming.hint')}
+                            </Text>
                             {filteredTitleTags.length > 0 && (
                                 <ScrollView
                                     horizontal
@@ -1145,7 +1153,6 @@ export default function AddSessionScreen() {
                         isChecking ||
                         isUploadingPoster ||
                         createSessionMutation.isPending ||
-                        !title.trim() ||
                         !venue.trim()
                     }
                     busy={isChecking || createSessionMutation.isPending}

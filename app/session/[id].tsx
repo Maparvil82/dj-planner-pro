@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
 import { SessionPayments } from '../../src/components/sessions/SessionPayments';
 import { SessionCollaborationDetails } from '../../src/components/sessions/SessionCollaborationDetails';
@@ -75,7 +76,7 @@ export default function SessionDetailScreen() {
     const handleShare = async () => {
         if (!session) return;
         try {
-            const message = `${session.title}\n📍 ${session.venue}\n📅 ${capitalizedDate}\n⏰ ${session.start_time} - ${session.end_time}`;
+            const message = `${sessionDisplayTitle(session, t)}\n📍 ${session.venue}\n📅 ${capitalizedDate}\n⏰ ${session.start_time} - ${session.end_time}`;
             await Share.share({ message });
         } catch (error) {
             console.error('Error sharing session:', error);
@@ -231,7 +232,7 @@ export default function SessionDetailScreen() {
                         <SessionStatusBadge session={session} />
                     </View>
                     <Text className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                        {session.title}
+                        {sessionDisplayTitle(session, t)}
                     </Text>
                 </View>
 

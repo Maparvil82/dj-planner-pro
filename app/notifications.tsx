@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import { useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -154,7 +155,7 @@ export default function NotificationsScreen() {
                                                 `notifications.${item.kind}${item.kind === 'invitation_response' ? '_' + item.response : ''}`,
                                                 {
                                                     name: item.actor_name,
-                                                    title: item.session_title,
+                                                    title: sessionDisplayTitle(invitation?.session || { title: item.session_title }, t),
                                                 },
                                             )}
                                         </Text>

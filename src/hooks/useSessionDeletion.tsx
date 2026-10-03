@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../utils/sessionNaming';
 import { useState } from 'react';
 import {
     Modal,
@@ -100,7 +101,7 @@ export function useSessionDeletion(onDeleted?: () => void) {
                                 fontWeight: '700',
                             }}
                         >
-                            {target?.title}
+                            {target ? sessionDisplayTitle(target, t) : ''}
                         </Text>
                         {target && (
                             <Text style={{ color: muted, fontSize: 13 }}>

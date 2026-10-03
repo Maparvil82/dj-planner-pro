@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { SessionPosterPreview } from '../../src/components/sessions/SessionPosterPreview';
 import type { PosterPosition } from '../../src/utils/posterFrame';
 import { useSessionCollaborators } from '../../src/hooks/useCollaborations';
@@ -308,7 +309,7 @@ export default function EditSessionScreen() {
             showError(t('error'), t('invalid_earning_amount'));
             return;
         }
-        if (!title.trim() || !venue.trim()) {
+        if (!venue.trim()) {
             showError(t('error'), t('missing_fields'));
             return;
         }
@@ -438,7 +439,7 @@ export default function EditSessionScreen() {
                                 .slice(0, 3)
                                 .map(
                                     (item) =>
-                                        `${item.title} · ${item.date} · ${item.start_time}–${item.end_time}`,
+                                        `${sessionDisplayTitle(item, t)} · ${item.date} · ${item.start_time}–${item.end_time}`,
                                 )
                                 .join('\n'),
                         }),
@@ -462,7 +463,8 @@ export default function EditSessionScreen() {
             } catch (error: any) {
                 showError(
                     t('error'),
-                    error.message?.startsWith('workflow.') || error.message?.startsWith('bookings.errors.') ||
+                    error.message?.startsWith('workflow.') ||
+                        error.message?.startsWith('bookings.errors.') ||
                         error.message === 'invalid_earning_amount'
                         ? t(error.message)
                         : t('error_saving_session'),
@@ -637,7 +639,7 @@ export default function EditSessionScreen() {
                     <SessionFormSection kind="event" title={t('form.event')}>
                         <View className="z-50">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
-                                {t('session_title')} *
+                                {t('sessionNaming.label')}
                             </Text>
                             {filteredTitleTags.length > 0 && (
                                 <ScrollView
@@ -670,6 +672,10 @@ export default function EditSessionScreen() {
                             >
                                 <TextInput
                                     className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                    accessibilityLabel={t(
+                                        'sessionNaming.label',
+                                    )}
+                                    placeholder={t('sessionNaming.placeholder')}
                                     value={title}
                                     onChangeText={setTitle}
                                     onFocus={() => handleFocus('title')}
@@ -677,6 +683,9 @@ export default function EditSessionScreen() {
                                     autoCapitalize="words"
                                 />
                             </View>
+                            <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-1">
+                                {t('sessionNaming.hint')}
+                            </Text>
                         </View>
                         <View className="z-40">
                             <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
@@ -1496,7 +1505,6 @@ export default function EditSessionScreen() {
                         isChecking ||
                         isUploadingPoster ||
                         updateSessionMutation.isPending ||
-                        !title.trim() ||
                         !venue.trim()
                     }
                     busy={isChecking || updateSessionMutation.isPending}

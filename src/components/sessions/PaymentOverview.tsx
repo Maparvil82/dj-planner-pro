@@ -1,3 +1,4 @@
+import { sessionDisplayTitle } from '../../utils/sessionNaming';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -42,7 +43,7 @@ export function PaymentOverview({ sessions }: { sessions: Session[] }) {
                     {unpaid.slice(0, 3).map(session => (
                         <TouchableOpacity key={session.id} onPress={() => router.push(`/session/${session.id}`)} accessibilityRole="button" className="py-3 flex-row items-center gap-3">
                             <View className="flex-1">
-                                <Text numberOfLines={1} className="font-semibold text-gray-900 dark:text-white">{session.title}</Text>
+                                <Text numberOfLines={1} className="font-semibold text-gray-900 dark:text-white">{sessionDisplayTitle(session, t)}</Text>
                                 <Text numberOfLines={1} className="text-xs text-gray-500 dark:text-gray-400">{session.venue} · {session.date}</Text>
                             </View>
                             <Text className="font-bold text-amber-700 dark:text-amber-400">{money(sessionBalance(session), session.currency || '€')} ›</Text>

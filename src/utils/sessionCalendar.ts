@@ -18,7 +18,7 @@ function foldLine(line: string): string {
     return lines.join('\r\n');
 }
 
-export function buildSessionCalendar(session: Session, now = new Date()): string {
+export function buildSessionCalendar(session: Session, now = new Date(), displayTitle = session.title.trim() || session.venue): string {
     const startTime = session.start_time || '00:00';
     const endTime = session.end_time || '00:00';
     const start = `${session.date.replace(/-/g, '')}T${startTime.slice(0, 5).replace(':', '')}00`;
@@ -30,9 +30,9 @@ export function buildSessionCalendar(session: Session, now = new Date()): string
         'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DJ Planner Pro//Sessions//EN', 'CALSCALE:GREGORIAN',
         'BEGIN:VEVENT', `UID:${session.id}@djplannerpro`, `DTSTAMP:${stamp}`,
         // Floating local times preserve the hours entered in the app, which has no venue timezone field.
-        `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escapeText(session.title)}`, `LOCATION:${escapeText(session.venue)}`,
+        `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escapeText(displayTitle)}`, `LOCATION:${escapeText(session.venue)}`,
         `STATUS:${session.status === 'cancelled' ? 'CANCELLED' : session.status === 'pending' ? 'TENTATIVE' : 'CONFIRMED'}`,
-        ...(session.status === 'cancelled' ? [] : ['BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', `DESCRIPTION:${escapeText(session.title)}`, 'END:VALARM']),
+        ...(session.status === 'cancelled' ? [] : ['BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', `DESCRIPTION:${escapeText(displayTitle)}`, 'END:VALARM']),
         'END:VEVENT', 'END:VCALENDAR', ''
     ].map(foldLine).join('\r\n');
 }

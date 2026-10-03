@@ -1,3 +1,4 @@
+import { sessionDisplayTitle, sessionDisplaySubtitle } from '../../src/utils/sessionNaming';
 import type { Session } from '../../src/types/session';
 import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
@@ -377,10 +378,10 @@ export default function HomeScreen() {
                                         >
                                             <View className="flex-1 pr-4">
                                                 <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                    {session.title}
+                                                    {sessionDisplayTitle(session, t)}
                                                 </Text>
                                                 <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {d}/{m}/{y} • {session.venue}
+                                                    {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                 </Text>
                                             </View>
                                             <View className="flex-row items-center">
@@ -446,10 +447,10 @@ export default function HomeScreen() {
                                             >
                                                 <View className="flex-1 pr-4">
                                                     <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                        {session.title}
+                                                        {sessionDisplayTitle(session, t)}
                                                     </Text>
                                                     <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {d}/{m}/{y} • {session.venue}
+                                                        {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
@@ -489,10 +490,10 @@ export default function HomeScreen() {
                                             >
                                                 <View className="flex-1 pr-4">
                                                     <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                        {session.title}
+                                                        {sessionDisplayTitle(session, t)}
                                                     </Text>
                                                     <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {d}/{m}/{y} • {session.venue}
+                                                        {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
