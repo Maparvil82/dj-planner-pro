@@ -4,7 +4,7 @@
 
 La migración `20261003151535_booking_workspace.sql` está aplicada en `voyurnwckmateohuzbab` y `booking-gateway` está desplegada y activa (versión 1), tras la aprobación del propietario. El nombre del archivo coincide con la versión asignada por el historial remoto de Supabase.
 
-El enlace público, correo real y publicación web siguen pendientes: todavía no hay dominio ni proveedor de correo configurados. El servicio permanece con `ready=false`. Se pueden guardar ajustes y previsualizar la página desde la app, pero no activar un enlace ni recibir consultas reales. No se ha configurado el trabajador de la cola de correos.
+La web está publicada en https://dj-planner-bookings.vercel.app; véase `publicacion-vercel.md`. La configuración del origen en Supabase, el correo real y el trabajador de la cola siguen pendientes. Resend no tiene ningún dominio verificado. El servicio permanece desactivado: se pueden guardar ajustes y previsualizar la página desde la app, pero no activar un enlace ni recibir consultas reales.
 
 En la app: **Tú → Contrataciones → Ver mi página** permite previsualizar el perfil real del DJ sin activar un enlace público. Mientras el servicio no está preparado, la interfaz muestra «Próximamente» y la pantalla de pago no anuncia Contrataciones como disponible.
 
