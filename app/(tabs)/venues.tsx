@@ -13,7 +13,7 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Search, X } from 'lucide-react-native';
+import { Search, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import {
@@ -145,23 +145,6 @@ export default function VenuesScreen() {
             <PageHeader
                 title={t('venues_title')}
                 subtitle={t('places.intro')}
-                action={
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel={t('add_venue')}
-                        onPress={() => setIsAddModalVisible(true)}
-                        style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: 16,
-                            backgroundColor: '#6554df',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Plus size={24} color="#fff" />
-                    </TouchableOpacity>
-                }
             />
             <View
                 style={{
@@ -227,6 +210,28 @@ export default function VenuesScreen() {
                     }
                     showsVerticalScrollIndicator={false}
                 >
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t('add_venue')}
+                        onPress={() => setIsAddModalVisible(true)}
+                        style={{
+                            alignSelf: 'flex-start',
+                            paddingHorizontal: 18,
+                            paddingVertical: 13,
+                            borderRadius: 14,
+                            backgroundColor: isDark ? '#292743' : '#f0edfc',
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: isDark ? '#bdb0f5' : '#6554df',
+                                fontSize: 14,
+                                fontWeight: '700',
+                            }}
+                        >
+                            {t('add_venue')}
+                        </Text>
+                    </TouchableOpacity>
                     {isLoading ? (
                         <ActivityIndicator
                             color="#8270e4"
