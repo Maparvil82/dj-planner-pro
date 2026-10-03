@@ -126,3 +126,11 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 - El retorno se genera con `Linking.createURL('reset-password')`. La app instalada utiliza `djplannerpro://reset-password`; en Expo Go se utiliza la dirección concreta del servidor de desarrollo. Cuando cambie esa dirección, debe añadirse el nuevo retorno exacto en Supabase Auth → URL Configuration. No se permiten comodines de destinos externos.
 - Revisado el 2 de octubre de 2026: este proyecto todavía usa el envío básico de Supabase. Debe conectarse un proveedor SMTP para enviar recuperación y confirmación de registro a todos los usuarios en producción. La plantilla actual utiliza `{{ .ConfirmationURL }}`.
 - Verificación: escenarios de recuperación y acceso en navegador con respuestas simuladas (sin crear cuentas ni enviar correos reales), pantallas de 320 y 390 px, modo claro/oscuro y los siete idiomas de la app.
+
+## Contrataciones Pro (preparado, pendiente de activar)
+
+- Acceso desde **Tú → Contrataciones**. El DJ gestiona las consultas en la app; el promotor utiliza una página web sin instalar ni registrarse.
+- Perfil público, consulta con correo verificado, conversación privada, propuestas con versiones, bloqueos temporales y creación de sesión al aceptar la última propuesta.
+- Dominio, correo real, despliegue y cambios de Supabase siguen pendientes. La vista previa funciona sin publicarlos; la pantalla de pago anuncia la función solo cuando el servidor confirma que está disponible.
+- Recorrido, privacidad, activación y pruebas: [docs/contrataciones.md](docs/contrataciones.md).
+- Prueba de base de datos aislada: `npm run test:bookings-db`. Nunca modifica el proyecto Supabase.

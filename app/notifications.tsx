@@ -184,7 +184,20 @@ export default function NotificationsScreen() {
                                             minute: '2-digit',
                                         })}
                                     </Text>
-                                    {waiting && invitation ? (
+                                    {item.booking_id ? (
+                                        <CommunityButton
+                                            label={t(
+                                                'bookings.openConversation',
+                                            )}
+                                            secondary
+                                            onPress={() => {
+                                                markRead.mutate(item.id);
+                                                router.push(
+                                                    `/bookings/${item.booking_id}`,
+                                                );
+                                            }}
+                                        />
+                                    ) : waiting && invitation ? (
                                         <>
                                             <CommunitySessionCard
                                                 showAuthor={false}

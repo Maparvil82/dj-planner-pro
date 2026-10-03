@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import { X } from 'lucide-react-native';
 import { useTranslation } from '../src/i18n/useTranslation';
@@ -20,6 +20,7 @@ import {
 } from '../src/components/community/CommunityUI';
 import { syncSubscriptionAccess } from '../src/services/subscriptionAccess';
 import { showError } from '../src/utils/showError';
+import { bookingCall, type BookingStatus } from '../src/services/bookings';
 import { FREE_SESSION_LIMIT } from '../src/utils/sessionLimit';
 
 export default function PaywallScreen() {
@@ -42,6 +43,12 @@ export default function PaywallScreen() {
         monthlyPackage,
         annualPackage,
     } = useSubscription();
+    const bookings = useQuery({
+        queryKey: ['booking-status', session?.user.id],
+        queryFn: () => bookingCall<BookingStatus>('owner_status'),
+        enabled: !!session && params.reason === 'bookings',
+        retry: false,
+    });
     const [selected, setSelected] = useState<'monthly' | 'yearly'>('yearly');
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
@@ -54,6 +61,7 @@ export default function PaywallScreen() {
         const usage = await syncSubscriptionAccess();
         if (!usage.isPro) throw new Error('billing.verificationError');
         await client.invalidateQueries({ queryKey: ['session-usage'] });
+        await client.invalidateQueries({ queryKey: ['booking-status'] });
         setVerified(true);
         setMessage(t('billing.activated'));
     };
@@ -212,6 +220,37 @@ export default function PaywallScreen() {
                         {t('billing.benefit')}
                     </Text>
                 </View>
+                {params.reason === 'bookings' && (
+                    <View
+                        style={{
+                            backgroundColor: c.card,
+                            padding: 20,
+                            borderRadius: 22,
+                            gap: 10,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontSize: 20,
+                                fontWeight: '800',
+                            }}
+                        >
+                            {t(
+                                bookings.data?.serviceReady
+                                    ? 'bookings.title'
+                                    : 'bookings.setupPending',
+                            )}
+                        </Text>
+                        <Text style={{ color: c.muted, lineHeight: 21 }}>
+                            {t(
+                                bookings.data?.serviceReady
+                                    ? 'bookings.proBenefit'
+                                    : 'bookings.setupPendingHint',
+                            )}
+                        </Text>
+                    </View>
+                )}
                 {(['monthly', 'yearly'] as const).map((plan) => {
                     const item =
                         plan === 'monthly' ? monthlyPackage : annualPackage;

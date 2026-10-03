@@ -462,7 +462,7 @@ export default function EditSessionScreen() {
             } catch (error: any) {
                 showError(
                     t('error'),
-                    error.message?.startsWith('workflow.') ||
+                    error.message?.startsWith('workflow.') || error.message?.startsWith('bookings.errors.') ||
                         error.message === 'invalid_earning_amount'
                         ? t(error.message)
                         : t('error_saving_session'),

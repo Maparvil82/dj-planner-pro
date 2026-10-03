@@ -2,13 +2,17 @@ import { supabase } from '../lib/supabase';
 export interface SocialNotification {
     id: string;
     recipient_id: string;
-    actor_id: string;
+    actor_id: string | null;
+    booking_id?: string | null;
     kind:
         | 'follow'
         | 'shared_session'
         | 'session_invitation'
         | 'invitation_response'
-        | 'session_update';
+        | 'session_update'
+        | 'booking_request'
+        | 'booking_message'
+        | 'booking_confirmed';
     session_id: string | null;
     actor_name: string;
     session_title: string | null;

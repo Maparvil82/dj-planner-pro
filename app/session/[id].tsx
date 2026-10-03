@@ -317,6 +317,7 @@ export default function SessionDetailScreen() {
                             </Text>
                             <Text className="text-base text-gray-900 dark:text-white font-bold">
                                 {session.start_time} — {session.end_time}
+                                {session.booking_timezone ? ` · ${session.booking_timezone}` : ''}
                             </Text>
                         </View>
 

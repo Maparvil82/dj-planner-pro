@@ -30,7 +30,7 @@ export const sessionService = {
             session_dates: dates,
         }).single();
         if (error?.message === 'session_limit_reached') throw new SessionLimitError(await getSessionUsage(), dates.length);
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         if (!data) throw new Error('error_saving_session');
         this.syncTags(input, userId).catch(err => console.warn('Tag synchronization failed', err));
         return data as Session;
@@ -114,7 +114,7 @@ export const sessionService = {
             const { data, error } = await supabase.from('sessions').select('*')
                 .eq('user_id', userId).order('date', { ascending: false }).order('id')
                 .range(offset, offset + pageSize - 1);
-            if (error) throw new Error(error.message);
+            if (error) throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
             sessions.push(...(data || []));
             if (!data || data.length < pageSize) return [...sessions, ...await collaborationService.agenda()].sort((a, b) => b.date.localeCompare(a.date));
         }
@@ -139,7 +139,7 @@ export const sessionService = {
 
         if (error) {
             console.error('Error fetching sessions:', error);
-            throw new Error(error.message);
+            throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         }
 
         const guests = (await collaborationService.agenda()).filter(session => session.date >= startPath && session.date < endPath);
@@ -163,7 +163,7 @@ export const sessionService = {
 
         if (error) {
             console.error('Error fetching upcoming sessions:', error);
-            throw new Error(error.message);
+            throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         }
 
         const guests = (await collaborationService.agenda()).filter(session => session.date >= today && session.status !== 'cancelled');
@@ -196,7 +196,7 @@ export const sessionService = {
         if (error?.code === 'PGRST116') return (await collaborationService.agenda()).find(session => session.id === sessionId) || null;
         if (error) {
             console.error('Error fetching session by id:', error);
-            throw new Error(error.message);
+            throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         }
 
         return data || null;
@@ -205,7 +205,7 @@ export const sessionService = {
     async deleteSession(sessionId: string, scope: 'single' | 'series' = 'single'): Promise<void> {
         if (!sessionId || !['single', 'series'].includes(scope)) throw new Error('error_deleting_session');
         const { data, error } = await supabase.rpc('delete_session_safely', { session_id: sessionId, delete_scope: scope });
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         if (!data) throw new Error('error_deleting_session');
     },
 
@@ -232,7 +232,7 @@ export const sessionService = {
         const { data, error } = await supabase.from('sessions')
             .update({ ...changes, updated_at: new Date().toISOString() })
             .eq('user_id', userId).in('id', targets.map(target => target.id)).select('id');
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(error.message === 'booking_hold_conflict' ? 'bookings.errors.booking_hold_conflict' : error.message);
         if (!data?.length) throw new Error('error_saving_session');
         this.syncTags(changes, userId).catch(error => console.warn('Tag synchronization failed', error));
     },

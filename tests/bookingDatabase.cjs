@@ -1,0 +1,147 @@
+// Run with npm run test:bookings-db. Uses a temporary PostgreSQL instance in memory.
+const { PGlite } = require('@electric-sql/pglite');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const db = new PGlite();
+const owner = '00000000-0000-4000-8000-000000000991';
+const other = '00000000-0000-4000-8000-000000000992';
+const migrate = name => db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations',name),'utf8'));
+let passed=0;
+const check=(value,message)=>{assert.ok(value,message);passed++;};
+async function role(name,uid=''){
+ await db.exec('reset role');
+ await db.query("select set_config('request.jwt.claim.sub',$1,false)",[uid]);
+ await db.exec(`set role ${name}`);
+}
+async function rpc(fn,action,input){return (await db.query(`select public.${fn}($1,$2::jsonb) as result`,[action,JSON.stringify(input)])).rows[0].result;}
+const dj=(a,x)=>rpc('booking_dj_action',a,x);
+const guest=(a,x)=>rpc('booking_guest_action',a,x);
+async function rejects(fn,pattern){await assert.rejects(fn,pattern);passed++;}
+async function run(){
+ await db.exec(fs.readFileSync(path.join(__dirname,'fixtures/bookingBase.sql'),'utf8'));
+ await migrate('20261002173802_free_session_limit.sql');
+ await migrate('20261002173934_private_subscription_usage.sql');
+ await migrate('20261002191529_booking_workspace.sql');
+ await db.query('insert into auth.users values($1),($2)',[owner,other]);
+ await db.query("insert into public.community_profiles values($1,'DJ Fixture',true),($2,'Other DJ',true)",[owner,other]);
+ await db.query("select public.sync_subscription_access($1,now()+interval '5 minutes')",[owner]);
+ await role('authenticated',owner);
+ await rejects(()=>dj('settings',{slug:'dj-fixture',enabled:true,timezone:'Europe/Madrid',default_terms:''}),/service_not_ready/);
+ await dj('settings',{slug:'dj-fixture',enabled:false,timezone:'Europe/Madrid',default_terms:'Payment after set'});
+ await role('postgres');await db.exec('select public.booking_set_ready(true)');
+ await role('authenticated',other);
+ await rejects(()=>dj('settings',{slug:'other-dj',enabled:true,timezone:'Europe/Madrid',default_terms:''}),/pro_required/);
+ await role('authenticated',owner);
+ await dj('settings',{slug:'dj-fixture',enabled:true,timezone:'Europe/Madrid',default_terms:''});
+ await rejects(()=>db.exec('update public.booking_links set enabled=false'),/permission denied/);
+ await rejects(()=>db.exec('select public.booking_set_ready(true)'),/permission denied/);
+ await rejects(()=>db.exec('select * from booking_private.guest_access'),/permission denied/);
+ await role('service_role');
+ const input={slug:'dj-fixture',promoter_name:'Promoter',promoter_email:'fixture@example.invalid',event_title:'Fixture Night',venue:'Test Club',city:'Madrid',date:'2027-06-01',start_time:'22:00',end_time:'04:00',budget:500,currency:'EUR',language:'es',body:'Equipment included',submission_key:'00000000-0000-4000-8000-000000000993',token:'a'.repeat(64),token_hash:'hash-fixture'};
+ const r=await guest('request',input);
+ check((await guest('request',input)).id===r.id,'retry duplicates request');
+ await role('authenticated',owner);
+ check((await db.exec('select * from public.booking_requests'))[0].rows.length===0,'unverified enquiry visible to DJ');
+ await rejects(()=>dj('read',{id:r.id}),/request_not_found/);
+ await role('service_role');
+ await rejects(()=>guest('read',{id:r.id,token_hash:'wrong'}),/access_expired/);
+ await rejects(()=>guest('read',{id:r.id,token_hash:'hash-fixture'}),/email_unverified/);
+ const access={id:r.id,token_hash:'hash-fixture'};
+ const verified=await guest('verify',access);
+ check(verified.request.state==='new','verification state');
+ const expiry=(await db.exec("select expires_at from booking_private.guest_access"))[0].rows[0].expires_at;
+ await guest('verify',access);
+ check((await db.exec('select count(*)::int n from public.social_notifications'))[0].rows[0].n===1,'verification repeats notification');
+ check(String((await db.exec('select expires_at from booking_private.guest_access'))[0].rows[0].expires_at)===String(expiry),'polling extended private token lifetime');
+ await role('authenticated',other);
+ check((await db.exec('select * from public.booking_requests'))[0].rows.length===0,'another DJ sees request');
+ await rejects(()=>dj('read',{id:r.id}),/request_not_found/);
+ await role('anon');
+ await rejects(()=>db.exec('select * from public.booking_requests'),/permission denied/);
+ await rejects(()=>guest('read',access),/permission denied/);
+ await role('authenticated',owner);
+ const proposal={id:r.id,event_title:'Agreed Night',venue:'Test Club',city:'Madrid',date:input.date,start_time:'22:00',end_time:'04:00',fee:600,currency:'EUR',terms:'Equipment and transport included',expires_hours:48,hold:true};
+ const first=await dj('propose',proposal);const v1=first.request.latest_proposal_id;
+ check(first.proposals[0].version===1,'version numbering');
+ check(first.proposals[0].hold_until!==null,'hold absent');
+ await rejects(()=>db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) values($1,'2027-06-02','Overlap','Test','02:00','05:00')",[owner]),/booking_hold_conflict/);
+ await rejects(()=>db.exec('update public.booking_proposals set fee=1'),/permission denied/);
+ await role('service_role');
+ const joint=(await db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) values($1,'2027-06-01','Other DJ event','Test','22:00','04:00') returning id",[other])).rows[0].id;
+ await rejects(()=>db.query("insert into public.session_collaborators values($1,$2,'accepted')",[joint,owner]),/booking_hold_conflict/);
+ await role('authenticated',owner);
+ const second=await dj('propose',{...proposal,fee:700});const v2=second.request.latest_proposal_id;
+ check(second.proposals.length===2,'terms history lost');
+ await role('service_role');
+ await rejects(()=>guest('accept',{...access,proposal_id:v1}),/proposal_changed/);
+ const change=await guest('changes',{...access,body:'Please include travel'});
+ check(change.request.state==='negotiating','request changes still accepts proposal');
+ await rejects(()=>guest('accept',{...access,proposal_id:v2}),/proposal_changed/);
+ await role('authenticated',owner);
+ // Requesting changes releases the hold, even while the old proposal still exists.
+ const adjacent=(await db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) values($1,'2027-06-02','Adjacent','Test','04:00','05:00') returning id",[owner])).rows[0].id;
+ await dj('propose',{...proposal,fee:750});
+ const latest=await dj('read',{id:r.id});const v3=latest.request.latest_proposal_id;
+ await role('service_role');
+ const accepted=await guest('accept',{...access,proposal_id:v3});
+ check(accepted.request.state==='accepted'&&!!accepted.request.session_id,'agreement did not create session');
+ const repeated=await guest('accept',{...access,proposal_id:v3});
+ check(repeated.request.session_id===accepted.request.session_id,'double accept creates two sessions');
+ const sessions=(await db.query('select * from public.sessions where id=$1',[accepted.request.session_id])).rows;
+ check(sessions.length===1&&Number(sessions[0].earning_amount)===750&&sessions[0].status==='confirmed'&&sessions[0].booking_timezone==='Europe/Madrid','accepted fee/session mismatch');
+ check((await db.exec('select count(*)::int n from public.community_session_shares'))[0].rows[0].n===0,'private booking published publicly');
+ await role('authenticated',owner);
+ await rejects(()=>dj('propose',proposal),/request_closed/);
+ await dj('message',{id:r.id,body:'See you at the club'});
+ await role('service_role');
+ const r2=await guest('request',{...input,date:'2027-06-03',submission_key:'00000000-0000-4000-8000-000000000994',token_hash:'hash-fixture-2'});
+ const access2={id:r2.id,token_hash:'hash-fixture-2'};await guest('verify',access2);
+ await role('authenticated',owner);
+ await rejects(()=>dj('propose',{...proposal,id:r2.id,date:'2027-06-01'}),/schedule_conflict/);
+ await dj('settings',{slug:'dj-fixture',enabled:true,timezone:'Asia/Tokyo',default_terms:''});
+ await rejects(()=>dj('propose',{...proposal,id:r2.id,date:'2027-06-02',start_time:'06:00',end_time:'11:00'}),/schedule_conflict/);
+ await dj('settings',{slug:'dj-fixture',enabled:true,timezone:'Europe/Madrid',default_terms:''});
+ const exp=await dj('propose',{...proposal,id:r2.id,date:'2027-06-03',hold:true});
+ await role('postgres');await db.query("update public.booking_proposals set expires_at=now()-interval '1 minute',hold_until=now()-interval '1 minute' where id=$1",[exp.request.latest_proposal_id]);
+ await role('service_role');await rejects(()=>guest('accept',{...access2,proposal_id:exp.request.latest_proposal_id}),/proposal_expired/);
+ await role('authenticated',owner);
+ await db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) values($1,'2027-06-03','Released','Test','22:00','04:00')",[owner]);passed++;
+ // A collision introduced after a proposal without a hold must roll back acceptance.
+ const r3Input={...input,date:'2027-07-01',submission_key:'00000000-0000-4000-8000-000000000995',token_hash:'hash-fixture-3'};
+ await role('service_role');const r3=await guest('request',r3Input);const access3={id:r3.id,token_hash:'hash-fixture-3'};await guest('verify',access3);
+ await role('authenticated',owner);const p3=await dj('propose',{...proposal,id:r3.id,date:r3.date,hold:false});
+ await db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) values($1,'2027-07-01','New clash','Test','22:00','04:00')",[owner]);
+ await role('service_role');await rejects(()=>guest('accept',{...access3,proposal_id:p3.request.latest_proposal_id}),/schedule_conflict/);
+ check((await guest('read',access3)).request.state==='proposed','failed acceptance partially committed');
+ await role('postgres');await db.query("select public.sync_subscription_access($1,now()-interval '1 minute')",[owner]);
+ await role('authenticated',owner);await rejects(()=>dj('propose',{...proposal,id:r3.id,date:'2027-07-02'}),/pro_required/);
+ // Acceptance enforces the same 30-session quota, with no partial agreement on failure.
+ await role('postgres');await db.query("select public.sync_subscription_access($1,now()+interval '5 minutes')",[owner]);
+ await role('service_role');const r4=await guest('request',{...input,date:'2027-08-01',submission_key:'00000000-0000-4000-8000-000000000996',token_hash:'hash-fixture-4'});const access4={id:r4.id,token_hash:'hash-fixture-4'};await guest('verify',access4);
+ await role('authenticated',owner);const p4=await dj('propose',{...proposal,id:r4.id,date:r4.date,hold:true});
+ await role('postgres');await db.query("select public.sync_subscription_access($1,now()-interval '1 minute')",[owner]);
+ await db.query("insert into public.sessions(user_id,date,title,venue,start_time,end_time) select $1,'2030-01-01'::date+i,'Quota fixture','Test','12:00','13:00' from generate_series(1,30-(select count(*)::int from public.sessions where user_id=$1)) i",[owner]);
+ await role('service_role');await rejects(()=>guest('accept',{...access4,proposal_id:p4.request.latest_proposal_id}),/session_limit_reached/);
+ const quotaBlocked=await guest('read',access4);check(quotaBlocked.request.state==='proposed'&&quotaBlocked.request.session_id===null,'quota failure partially confirmed agreement');
+ await role('authenticated',owner);
+ const freed=await dj('release_hold',{id:r4.id,body:'The temporary hold has been released.'});
+ const freedProposal=freed.proposals.find(p=>p.id===p4.request.latest_proposal_id);
+ check(freedProposal.hold_until===null&&Number(freedProposal.fee)===600&&freed.request.state==='proposed','release changed terms or rejected enquiry');
+ // Releasing a hold remains possible after Pro expiry, and repeated release is a no-op.
+ const freedAgain=await dj('release_hold',{id:r4.id,body:'The temporary hold has been released.'});
+ check(freedAgain.messages.length===freed.messages.length,'double release produced duplicate messages');
+ // Outbox leasing and retries preserve a private token and do not expose it to DJs.
+ await role('service_role');const leased=(await db.exec('select public.booking_email_claim() item'))[0].rows[0].item;
+ check(!!leased,'outbox was not populated');
+ const mailToken=(await db.query('select public.booking_delivery_token($1,$2,$3) token',[leased.id,'b'.repeat(64),'hash-mail'])).rows[0].token;
+ check((await db.query('select public.booking_delivery_token($1,$2,$3) token',[leased.id,'c'.repeat(64),'hash-mail2'])).rows[0].token===mailToken,'retry changes idempotent email body');
+ await db.query('select public.booking_email_finish($1,true)',[leased.id]);
+ check((await db.query('select public.booking_email_sent($1) sent',[leased.request_id])).rows[0].sent===true,'sent request retry cannot be acknowledged');
+ check(JSON.stringify((await db.query('select payload from booking_private.email_outbox where id=$1',[leased.id])).rows[0].payload)==='{}','delivered raw token retained in outbox');
+ // Hourly limits are enforced server-side.
+ check((await db.exec("select public.booking_rate_limit('fixture-bucket',1) allowed"))[0].rows[0].allowed===true,'first attempt blocked');
+ check((await db.exec("select public.booking_rate_limit('fixture-bucket',1) allowed"))[0].rows[0].allowed===false,'rate limit bypassed');
+ console.log(`PASS ${passed} isolated PostgreSQL checks: RLS, verified email, own access, Pro, overnight holds, immutable versions, changes, expiry, atomic acceptance, idempotency, private notifications and outbox.`);
+}
+run().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>db.close());

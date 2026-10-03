@@ -371,7 +371,7 @@ export default function AddSessionScreen() {
                     'invalid_earning_amount',
                 ].includes(key) ||
                 key.startsWith('workflow.') ||
-                key.startsWith('billing.')
+                key.startsWith('billing.') || key.startsWith('bookings.errors.')
                     ? t(key)
                     : t('error_saving_session'),
             );

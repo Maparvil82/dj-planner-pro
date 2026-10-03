@@ -1,4 +1,7 @@
-import { useTabBarScroll, useTabBarVisibility } from '../../src/contexts/TabBarVisibilityContext';
+import {
+    useTabBarScroll,
+    useTabBarVisibility,
+} from '../../src/contexts/TabBarVisibilityContext';
 import { useCallback, useEffect, useState } from 'react';
 import {
     View,
@@ -811,7 +814,29 @@ export default function ProfileScreen() {
                                 />
                             </SessionFormSection>
                         )}
-                        {!editing && <SubscriptionPlan />}
+                        {!editing && (
+                            <>
+                                <SubscriptionPlan />
+                                <SessionFormSection
+                                    title={t('bookings.title')}
+                                    kind="booking"
+                                >
+                                    <Text
+                                        style={{
+                                            color: c.muted,
+                                            fontSize: 14,
+                                            lineHeight: 22,
+                                        }}
+                                    >
+                                        {t('bookings.heroHint')}
+                                    </Text>
+                                    <CommunityButton
+                                        label={t('bookings.openWorkspace')}
+                                        onPress={() => router.push('/bookings')}
+                                    />
+                                </SessionFormSection>
+                            </>
+                        )}
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}

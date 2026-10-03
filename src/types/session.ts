@@ -8,6 +8,7 @@ export interface Session {
     venue: string;
     start_time: string; // e.g., '22:00'
     end_time: string; // e.g., '04:00'
+    booking_timezone?: string | null;
     color: string;
     is_collective: boolean;
     djs: string[];
