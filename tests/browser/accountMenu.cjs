@@ -113,15 +113,16 @@ const errors = [];
     const open = () =>
         page.getByRole('button', { name: /^Abrir menú de cuenta/ }).click();
     await open();
+    assert.equal(await page.getByText('PRO', { exact: true }).count(), 0);
     await page
         .getByRole('button', { name: 'Descubrir Pro', exact: true })
         .waitFor();
-    await page.waitForFunction(
-        () =>
-            document
-                .querySelector('[aria-label="Ver mi perfil de DJ"]')
-                ?.getBoundingClientRect().x < 80,
-    );
+    await page.waitForFunction(() => {
+        const x = document
+            .querySelector('[aria-label="Ver mi perfil de DJ"]')
+            ?.getBoundingClientRect().x;
+        return x !== undefined && x >= 23 && x <= 25;
+    });
     await page.screenshot({
         path: '/private/tmp/djplanner-account-drawer.png',
     });
@@ -180,12 +181,12 @@ const errors = [];
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
     await page.waitForTimeout(500);
     await open();
-    await page.waitForFunction(
-        () =>
-            document
-                .querySelector('[aria-label="Ver mi perfil de DJ"]')
-                ?.getBoundingClientRect().x < 80,
-    );
+    await page.waitForFunction(() => {
+        const x = document
+            .querySelector('[aria-label="Ver mi perfil de DJ"]')
+            ?.getBoundingClientRect().x;
+        return x !== undefined && x >= 23 && x <= 25;
+    });
     await page.keyboard.press('Escape');
     await page
         .getByRole('button', { name: 'Ver mi perfil de DJ', exact: true })
@@ -201,7 +202,13 @@ const errors = [];
             .count(),
         0,
     );
-    await page.waitForTimeout(350);
+    await page.waitForFunction(() => {
+        const x = document
+            .querySelector('[aria-label="Ver mi perfil de DJ"]')
+            ?.getBoundingClientRect().x;
+        return x !== undefined && x >= 23 && x <= 25;
+    });
+    assert.equal(await page.getByText('PRO', { exact: true }).count(), 2);
     await page.screenshot({
         path: '/private/tmp/djplanner-account-drawer-pro-dark.png',
     });

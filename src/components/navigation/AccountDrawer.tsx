@@ -26,24 +26,28 @@ import { useSessionUsage } from '../../hooks/useSessionUsage';
 import { useCommunityColors } from '../community/CommunityUI';
 import { TabProfileIcon } from '../ui/TabProfileIcon';
 
-const DrawerContext = createContext<(() => void) | null>(null);
+const DrawerContext = createContext<{
+    open: () => void;
+    isPro: boolean;
+} | null>(null);
 export function AccountAvatarButton() {
-    const open = useContext(DrawerContext);
+    const menu = useContext(DrawerContext);
     const { profile, session } = useAuthStore();
     const { t } = useTranslation();
     const c = useCommunityColors();
     const unread = useUnreadNotifications();
-    if (!open || !session) return null;
+    if (!menu || !session) return null;
     return (
         <Pressable
             accessibilityRole="button"
             accessibilityLabel={
                 t('accountMenu.open') +
+                (menu.isPro ? `, ${t('billing.proPlan')}` : '') +
                 (unread.data
                     ? `, ${t('notifications.openUnread', { count: unread.data })}`
                     : '')
             }
-            onPress={open}
+            onPress={menu.open}
             style={{
                 width: 46,
                 height: 46,
@@ -59,6 +63,33 @@ export function AccountAvatarButton() {
                 focused={false}
                 hasUnread={!!unread.data}
             />
+            {menu.isPro && (
+                <View
+                    pointerEvents="none"
+                    style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
+                        borderRadius: 5,
+                        backgroundColor: '#6554df',
+                        borderWidth: 1.5,
+                        borderColor: c.bg,
+                    }}
+                >
+                    <Text
+                        style={{
+                            color: '#fff',
+                            fontSize: 7,
+                            lineHeight: 9,
+                            fontWeight: '900',
+                            letterSpacing: 0.4,
+                        }}
+                    >
+                        PRO
+                    </Text>
+                </View>
+            )}
         </Pressable>
     );
 }
@@ -66,7 +97,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
     const { width } = useWindowDimensions();
     const drawerWidth = Math.min(360, width * 0.88);
-    const translate = useRef(new Animated.Value(drawerWidth)).current;
+    const translate = useRef(new Animated.Value(-drawerWidth)).current;
     const { profile, session } = useAuthStore();
     const c = useCommunityColors();
     const { t } = useTranslation();
@@ -86,7 +117,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
         return () => document.removeEventListener('keydown', handleKey);
     }, [open]);
     const show = () => {
-        translate.setValue(drawerWidth);
+        translate.setValue(-drawerWidth);
         setOpen(true);
         void unread.refetch();
         void usage.refetch();
@@ -107,7 +138,9 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
         { key: 'settings', href: '/profile?section=settings' },
     ];
     return (
-        <DrawerContext.Provider value={show}>
+        <DrawerContext.Provider
+            value={{ open: show, isPro: usage.data?.isPro === true }}
+        >
             {children}
             <Modal
                 visible={open}
@@ -129,12 +162,6 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                         backgroundColor: '#00000066',
                     }}
                 >
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t('accountMenu.close')}
-                        onPress={close}
-                        style={{ flex: 1 }}
-                    />
                     <Animated.View
                         accessibilityViewIsModal
                         style={{
@@ -195,18 +222,53 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                         color={c.fg}
                                         focused={false}
                                     />
-                                    <Text
-                                        numberOfLines={2}
+
+                                    <View
                                         style={{
-                                            fontSize: 25,
-                                            lineHeight: 31,
-                                            fontWeight: '800',
-                                            color: c.fg,
+                                            flexDirection: 'row',
+                                            flexWrap: 'wrap',
+                                            alignItems: 'center',
+                                            gap: 8,
                                         }}
                                     >
-                                        {profile?.artist_name ||
-                                            t('unifiedProfile.title')}
-                                    </Text>
+                                        <Text
+                                            numberOfLines={2}
+                                            style={{
+                                                flexShrink: 1,
+                                                fontSize: 25,
+                                                lineHeight: 31,
+                                                fontWeight: '800',
+                                                color: c.fg,
+                                            }}
+                                        >
+                                            {profile?.artist_name ||
+                                                t('unifiedProfile.title')}
+                                        </Text>
+                                        {usage.data?.isPro && (
+                                            <View
+                                                accessibilityLabel={t(
+                                                    'billing.proPlan',
+                                                )}
+                                                style={{
+                                                    backgroundColor: '#6554df',
+                                                    borderRadius: 7,
+                                                    paddingHorizontal: 8,
+                                                    paddingVertical: 4,
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        color: '#fff',
+                                                        fontSize: 10,
+                                                        fontWeight: '900',
+                                                        letterSpacing: 0.7,
+                                                    }}
+                                                >
+                                                    PRO
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
                                     <Text
                                         style={{
                                             color: c.accent,
@@ -338,6 +400,12 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                             </ScrollView>
                         </SafeAreaView>
                     </Animated.View>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t('accountMenu.close')}
+                        onPress={close}
+                        style={{ flex: 1 }}
+                    />
                 </View>
             </Modal>
         </DrawerContext.Provider>

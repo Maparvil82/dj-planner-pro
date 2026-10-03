@@ -1,6 +1,6 @@
 # Menú de cuenta y presentación de Pro
 
-El avatar de la cabecera abre un panel lateral desde la derecha en Inicio, Dashboard, Lugares, Comunidad e Historial. Conserva la foto o la inicial y el indicativo de notificaciones sin leer. El panel se puede cerrar con el botón, tocando el fondo, con Atrás en Android o Escape en web.
+El avatar de la cabecera abre un panel lateral desde la izquierda hacia la derecha en Inicio, Dashboard, Lugares, Comunidad e Historial. Conserva la foto o la inicial y el indicativo de notificaciones sin leer. El panel se puede cerrar con el botón, tocando el fondo, con Atrás en Android o Escape en web.
 
 La navegación inferior contiene las cuatro áreas principales. El perfil deja de ser una pestaña: desde el menú se abre como una pantalla independiente con regreso a la pantalla anterior.
 
@@ -28,3 +28,5 @@ No cambia el nombre de la app, las compras, los identificadores de RevenueCat, l
 - Capturas en `docs/previews/account-menu.png`, `account-settings.png` y `pro-overview.png`. Datos ficticios.
 
 La comprobación en navegador y la compilación no sustituyen la prueba del panel en un dispositivo físico con Expo Go.
+
+Las cuentas Pro muestran un distintivo morado junto al nombre en el panel y una etiqueta pequeña en el avatar de la cabecera. Se basa en el acceso vigente verificado por el servidor; no sustituye ni tapa el punto de notificaciones.
