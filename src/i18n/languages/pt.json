@@ -971,5 +971,20 @@
         "proRequired": "É necessário Pro para configurar ou fechar um acordo.",
         "singleSession": "O acerto aplica-se apenas a esta sessão, não a toda a série.",
         "notFinished": "Podes fechar o acerto quando a sessão terminar."
+    },
+    "communityFilters": {
+        "city": "Cidade",
+        "genre": "Estilo",
+        "allCities": "Todas as cidades",
+        "allGenres": "Todos os estilos",
+        "clear": "Limpar filtros",
+        "searchCity": "Pesquisar cidade",
+        "searchGenre": "Pesquisar estilo",
+        "sessionCityHint": "Cidade do local da atuação.",
+        "djCityHint": "Cidade no perfil do DJ.",
+        "genreHint": "Estilos musicais dos DJs. Nas sessões incluem-se também os participantes que aceitaram.",
+        "noOptions": "Nenhuma opção corresponde.",
+        "noResults": "Sem resultados com estes filtros",
+        "noResultsHint": "Experimenta outra cidade ou estilo, ou limpa os filtros."
     }
 }

@@ -973,5 +973,20 @@
         "proRequired": "Pro è necessario per configurare o chiudere un accordo.",
         "singleSession": "Il calcolo si applica solo a questa sessione, non all’intera serie.",
         "notFinished": "Puoi chiudere il calcolo dopo la fine della sessione."
+    },
+    "communityFilters": {
+        "city": "Città",
+        "genre": "Genere",
+        "allCities": "Tutte le città",
+        "allGenres": "Tutti i generi",
+        "clear": "Azzera filtri",
+        "searchCity": "Cerca città",
+        "searchGenre": "Cerca genere",
+        "sessionCityHint": "Città del luogo dell’esibizione.",
+        "djCityHint": "Città nel profilo del DJ.",
+        "genreHint": "Generi musicali dei DJ. Nelle sessioni sono inclusi anche i partecipanti che hanno accettato.",
+        "noOptions": "Nessuna opzione corrispondente.",
+        "noResults": "Nessun risultato con questi filtri",
+        "noResultsHint": "Prova un’altra città o un altro genere oppure azzera i filtri."
     }
 }

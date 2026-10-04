@@ -977,5 +977,20 @@
         "proRequired": "Pro is required to configure or settle an agreement.",
         "singleSession": "Settlement applies to this session only, not the whole series.",
         "notFinished": "You can close settlement after the session ends."
+    },
+    "communityFilters": {
+        "city": "City",
+        "genre": "Genre",
+        "allCities": "All cities",
+        "allGenres": "All genres",
+        "clear": "Clear filters",
+        "searchCity": "Search cities",
+        "searchGenre": "Search genres",
+        "sessionCityHint": "City of the performance venue.",
+        "djCityHint": "City on the DJ’s profile.",
+        "genreHint": "DJ music genres. Sessions also include accepted participants.",
+        "noOptions": "No matching options.",
+        "noResults": "No results for these filters",
+        "noResultsHint": "Try another city or genre, or clear the filters."
     }
 }

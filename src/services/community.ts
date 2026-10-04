@@ -42,8 +42,14 @@ export interface CommunitySession {
     poster_focus_x?: number;
     poster_focus_y?: number;
     shared_at: string;
-    collaborators?: { user_id: string; artist_name: string; avatar_url: string | null }[];
+    collaborators?: {
+        user_id: string;
+        artist_name: string;
+        avatar_url: string | null;
+    }[];
 }
+export type CommunityFilters = { city: string; genre: string };
+export type CommunityFilterOptions = { cities: string[]; genres: string[] };
 const PAGE_SIZE = 20;
 export const communityService = {
     async profile(id: string): Promise<CommunityProfile | null> {
@@ -68,7 +74,22 @@ export const communityService = {
     async discover(
         search: string,
         offset: number,
+        filters?: CommunityFilters,
     ): Promise<CommunityProfile[]> {
+        if (filters?.city || filters?.genre) {
+            const { data, error } = await supabase.rpc(
+                'community_discover_filtered',
+                {
+                    search_name: search,
+                    filter_city: filters.city,
+                    filter_genre: filters.genre,
+                    page_offset: offset,
+                    page_size: PAGE_SIZE,
+                },
+            );
+            if (error) throw error;
+            return data || [];
+        }
         let query = supabase
             .from('community_profiles')
             .select('*')
@@ -84,6 +105,15 @@ export const communityService = {
         const { data, error } = await query;
         if (error) throw error;
         return data || [];
+    },
+    async filterOptions(
+        mode: 'sessions' | 'djs',
+    ): Promise<CommunityFilterOptions> {
+        const { data, error } = await supabase.rpc('community_filter_options', {
+            mode,
+        });
+        if (error) throw error;
+        return data || { cities: [], genres: [] };
     },
     async following(userId: string): Promise<string[]> {
         const ids: string[] = [];
@@ -118,13 +148,22 @@ export const communityService = {
         following: boolean,
         author: string | null,
         offset: number,
+        filters?: CommunityFilters,
     ): Promise<CommunitySession[]> {
-        const { data, error } = await supabase.rpc('community_feed', {
-            only_following: following,
-            author,
-            page_offset: offset,
-            page_size: PAGE_SIZE,
-        });
+        const { data, error } = await supabase.rpc(
+            filters?.city || filters?.genre
+                ? 'community_feed_filtered'
+                : 'community_feed',
+            {
+                ...(filters?.city || filters?.genre
+                    ? { filter_city: filters.city, filter_genre: filters.genre }
+                    : {}),
+                only_following: following,
+                author,
+                page_offset: offset,
+                page_size: PAGE_SIZE,
+            },
+        );
         if (error) throw error;
         return data || [];
     },

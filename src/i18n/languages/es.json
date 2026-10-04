@@ -973,5 +973,20 @@
         "proRequired": "Necesitas Pro para configurar o liquidar un acuerdo.",
         "singleSession": "La liquidación solo puede aplicarse a esta sesión, no a toda la serie.",
         "notFinished": "Podrás cerrar la liquidación cuando termine la sesión."
+    },
+    "communityFilters": {
+        "city": "Ciudad",
+        "genre": "Estilo",
+        "allCities": "Todas las ciudades",
+        "allGenres": "Todos los estilos",
+        "clear": "Limpiar filtros",
+        "searchCity": "Buscar ciudad",
+        "searchGenre": "Buscar estilo",
+        "sessionCityHint": "Ciudad del lugar de la actuación.",
+        "djCityHint": "Ciudad del perfil del DJ.",
+        "genreHint": "Estilos musicales de los DJs. En sesiones, también se incluyen los participantes aceptados.",
+        "noOptions": "No hay opciones que coincidan.",
+        "noResults": "No hay resultados con estos filtros",
+        "noResultsHint": "Prueba otra ciudad o estilo, o limpia los filtros."
     }
 }

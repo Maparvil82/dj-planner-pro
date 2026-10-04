@@ -972,5 +972,20 @@
         "proRequired": "契約の設定や精算にはProが必要です。",
         "singleSession": "精算はこのセッションのみに適用され、シリーズ全体には適用されません。",
         "notFinished": "セッション終了後に精算を確定できます。"
+    },
+    "communityFilters": {
+        "city": "都市",
+        "genre": "ジャンル",
+        "allCities": "すべての都市",
+        "allGenres": "すべてのジャンル",
+        "clear": "フィルターを解除",
+        "searchCity": "都市を検索",
+        "searchGenre": "ジャンルを検索",
+        "sessionCityHint": "出演会場の都市。",
+        "djCityHint": "DJプロフィールの都市。",
+        "genreHint": "DJの音楽ジャンル。セッションには参加を承認したDJも含まれます。",
+        "noOptions": "一致する候補がありません。",
+        "noResults": "この条件に一致する結果はありません",
+        "noResultsHint": "別の都市やジャンルを選ぶか、フィルターを解除してください。"
     }
 }

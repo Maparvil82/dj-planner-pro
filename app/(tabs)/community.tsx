@@ -1,3 +1,5 @@
+import { CommunityFiltersBar } from '../../src/components/community/CommunityFiltersBar';
+import type { CommunityFilters } from '../../src/services/community';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -23,6 +25,7 @@ import {
 } from '../../src/components/community/CommunityUI';
 import {
     useCommunityDiscover,
+    useCommunityFilterOptions,
     useCommunityFeed,
     useCommunityFollowing,
     useCommunityMutation,
@@ -37,6 +40,17 @@ export default function CommunityScreen() {
     const [tab, setTab] = useState<'sessions' | 'following' | 'djs'>(
         'sessions',
     );
+    const [sessionFilters, setSessionFilters] = useState<CommunityFilters>({
+        city: '',
+        genre: '',
+    });
+    const [djFilters, setDjFilters] = useState<CommunityFilters>({
+        city: '',
+        genre: '',
+    });
+    const filterOptions = useCommunityFilterOptions(
+        tab === 'djs' ? 'djs' : 'sessions',
+    );
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
     useEffect(() => {
@@ -45,8 +59,12 @@ export default function CommunityScreen() {
     }, [search]);
     const own = useCommunityProfile(userId);
     const following = useCommunityFollowing();
-    const feed = useCommunityFeed(tab === 'following');
-    const discover = useCommunityDiscover(debounced);
+    const feed = useCommunityFeed(
+        tab === 'following',
+        null,
+        tab === 'sessions' ? sessionFilters : undefined,
+    );
+    const discover = useCommunityDiscover(debounced, djFilters);
     const mutation = useCommunityMutation();
     useFocusEffect(
         useCallback(() => {
@@ -54,7 +72,14 @@ export default function CommunityScreen() {
             void following.refetch();
             void feed.refetch();
             void discover.refetch();
-        }, [own.refetch, following.refetch, feed.refetch, discover.refetch]),
+            void filterOptions.refetch();
+        }, [
+            own.refetch,
+            following.refetch,
+            feed.refetch,
+            discover.refetch,
+            filterOptions.refetch,
+        ]),
     );
     const active = tab === 'djs' ? discover : feed;
     const error =
@@ -62,6 +87,7 @@ export default function CommunityScreen() {
     const retry = () => {
         mutation.reset();
         void active.refetch();
+        void filterOptions.refetch();
         void own.refetch();
         void following.refetch();
     };
@@ -69,6 +95,7 @@ export default function CommunityScreen() {
     const sessions = feed.data?.pages.flat() || [];
     const refresh = () => {
         void active.refetch();
+        void filterOptions.refetch();
         void own.refetch();
         void following.refetch();
     };
@@ -214,6 +241,21 @@ export default function CommunityScreen() {
                             }}
                         />
                     )}
+                    {tab !== 'following' && (
+                        <CommunityFiltersBar
+                            value={tab === 'djs' ? djFilters : sessionFilters}
+                            onChange={
+                                tab === 'djs' ? setDjFilters : setSessionFilters
+                            }
+                            mode={tab === 'djs' ? 'djs' : 'sessions'}
+                            options={filterOptions.data}
+                            loading={filterOptions.isPending}
+                            error={filterOptions.isError}
+                            retry={() => {
+                                void filterOptions.refetch();
+                            }}
+                        />
+                    )}
                     {error && (
                         <CommunityMessage
                             title={t('community.error')}
@@ -257,9 +299,7 @@ export default function CommunityScreen() {
                                             ) &&
                                             !own.data?.is_visible
                                         )
-                                            router.push(
-                                                '/profile?edit=1',
-                                            );
+                                            router.push('/profile?edit=1');
                                         else
                                             mutation.mutate({
                                                 kind: 'follow',
@@ -275,8 +315,16 @@ export default function CommunityScreen() {
                         ) : (
                             !active.isError && (
                                 <CommunityMessage
-                                    title={t('community.noDjs')}
-                                    hint={t('community.noDjsHint')}
+                                    title={t(
+                                        djFilters.city || djFilters.genre
+                                            ? 'communityFilters.noResults'
+                                            : 'community.noDjs',
+                                    )}
+                                    hint={t(
+                                        djFilters.city || djFilters.genre
+                                            ? 'communityFilters.noResultsHint'
+                                            : 'community.noDjsHint',
+                                    )}
                                 />
                             )
                         )
@@ -291,14 +339,22 @@ export default function CommunityScreen() {
                         !active.isError && (
                             <CommunityMessage
                                 title={t(
-                                    tab === 'following'
-                                        ? 'community.noFollowingSessions'
-                                        : 'community.noSessions',
+                                    tab === 'sessions' &&
+                                        (sessionFilters.city ||
+                                            sessionFilters.genre)
+                                        ? 'communityFilters.noResults'
+                                        : tab === 'following'
+                                          ? 'community.noFollowingSessions'
+                                          : 'community.noSessions',
                                 )}
                                 hint={t(
-                                    tab === 'following'
-                                        ? 'community.noFollowingHint'
-                                        : 'community.noSessionsHint',
+                                    tab === 'sessions' &&
+                                        (sessionFilters.city ||
+                                            sessionFilters.genre)
+                                        ? 'communityFilters.noResultsHint'
+                                        : tab === 'following'
+                                          ? 'community.noFollowingHint'
+                                          : 'community.noSessionsHint',
                                 )}
                             />
                         )

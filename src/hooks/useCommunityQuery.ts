@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import {
     communityService,
     CommunityProfileInput,
+    CommunityFilters,
     PAGE_SIZE,
 } from '../services/community';
 export function useCommunityProfile(id?: string) {
@@ -26,33 +27,63 @@ export function useCommunityFollowing() {
         enabled: !!userId,
     });
 }
-export function useCommunityDiscover(search: string) {
-    const userId = useAuthStore((state) => state.session?.user.id);
-    return useInfiniteQuery({
-        queryKey: ['community', 'discover', userId, search],
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            communityService.discover(search, pageParam),
-        enabled: !!userId,
-        getNextPageParam: (last, pages) =>
-            last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
-    });
-}
-export function useCommunityFeed(
-    following = false,
-    author: string | null = null,
+export function useCommunityDiscover(
+    search: string,
+    filters?: CommunityFilters,
 ) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useInfiniteQuery({
-        queryKey: ['community', 'feed', userId, following, author],
+        queryKey: [
+            'community',
+            'discover',
+            userId,
+            search,
+            filters?.city || '',
+            filters?.genre || '',
+        ],
         initialPageParam: 0,
         queryFn: ({ pageParam }) =>
-            communityService.feed(following, author, pageParam),
+            communityService.discover(search, pageParam, filters),
         enabled: !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
                 ? pages.length * PAGE_SIZE
                 : undefined,
+    });
+}
+export function useCommunityFeed(
+    following = false,
+    author: string | null = null,
+    filters?: CommunityFilters,
+) {
+    const userId = useAuthStore((state) => state.session?.user.id);
+    return useInfiniteQuery({
+        queryKey: [
+            'community',
+            'feed',
+            userId,
+            following,
+            author,
+            filters?.city || '',
+            filters?.genre || '',
+        ],
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) =>
+            communityService.feed(following, author, pageParam, filters),
+        enabled: !!userId,
+        getNextPageParam: (last, pages) =>
+            last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
+                ? pages.length * PAGE_SIZE
+                : undefined,
+    });
+}
+export function useCommunityFilterOptions(mode: 'sessions' | 'djs') {
+    const userId = useAuthStore((state) => state.session?.user.id);
+    return useQuery({
+        queryKey: ['community', 'filter-options', userId, mode],
+        queryFn: () => communityService.filterOptions(mode),
+        enabled: !!userId,
+        staleTime: 60000,
     });
 }
 export function useCommunityShare(sessionId: string) {

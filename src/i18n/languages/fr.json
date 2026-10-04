@@ -971,5 +971,20 @@
         "proRequired": "Pro est nécessaire pour configurer ou finaliser un accord.",
         "singleSession": "Le décompte s’applique uniquement à cette session, pas à toute la série.",
         "notFinished": "Vous pourrez finaliser le décompte après la session."
+    },
+    "communityFilters": {
+        "city": "Ville",
+        "genre": "Style",
+        "allCities": "Toutes les villes",
+        "allGenres": "Tous les styles",
+        "clear": "Effacer les filtres",
+        "searchCity": "Rechercher une ville",
+        "searchGenre": "Rechercher un style",
+        "sessionCityHint": "Ville du lieu de l’événement.",
+        "djCityHint": "Ville du profil du DJ.",
+        "genreHint": "Styles des DJs. Pour les sessions, les participants ayant accepté sont aussi inclus.",
+        "noOptions": "Aucune option correspondante.",
+        "noResults": "Aucun résultat avec ces filtres",
+        "noResultsHint": "Essayez une autre ville ou un autre style, ou effacez les filtres."
     }
 }

@@ -973,5 +973,20 @@
         "proRequired": "Pro ist erforderlich, um eine Vereinbarung zu konfigurieren oder abzurechnen.",
         "singleSession": "Die Abrechnung gilt nur für diesen Auftritt, nicht für die gesamte Serie.",
         "notFinished": "Du kannst die Abrechnung nach Ende des Auftritts abschließen."
+    },
+    "communityFilters": {
+        "city": "Stadt",
+        "genre": "Musikstil",
+        "allCities": "Alle Städte",
+        "allGenres": "Alle Musikstile",
+        "clear": "Filter löschen",
+        "searchCity": "Stadt suchen",
+        "searchGenre": "Musikstil suchen",
+        "sessionCityHint": "Stadt des Veranstaltungsorts.",
+        "djCityHint": "Stadt im DJ-Profil.",
+        "genreHint": "Musikstile der DJs. Bei Auftritten zählen auch bestätigte Teilnehmer.",
+        "noOptions": "Keine passenden Optionen.",
+        "noResults": "Keine Ergebnisse für diese Filter",
+        "noResultsHint": "Andere Stadt oder anderen Musikstil wählen oder Filter löschen."
     }
 }
