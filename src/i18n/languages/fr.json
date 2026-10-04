@@ -1030,6 +1030,7 @@
         "consent": "En publiant, ton profil sera visible dans la communauté. Ton agenda et tes cachets restent privés.",
         "publish": "Publier mon profil et rejoindre",
         "photoButton": "Photo de profil",
-        "coverButton": "Couverture"
+        "coverButton": "Couverture",
+        "setupHint": "Photo de profil, nom, ville et au moins un style sont obligatoires. La couverture et la biographie sont facultatives."
     }
 }

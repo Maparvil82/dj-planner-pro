@@ -1032,6 +1032,7 @@
         "consent": "Pubblicando, il tuo profilo sarà visibile nella community. Agenda e compensi restano privati.",
         "publish": "Pubblica profilo ed entra",
         "photoButton": "Foto profilo",
-        "coverButton": "Copertina"
+        "coverButton": "Copertina",
+        "setupHint": "Foto profilo, nome, città e almeno uno stile sono obbligatori. Copertina e biografia sono facoltative."
     }
 }

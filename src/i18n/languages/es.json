@@ -1032,6 +1032,7 @@
         "consent": "Al publicar, tu perfil será visible en Comunidad. Tu agenda y tus cachés seguirán siendo privados.",
         "publish": "Publicar perfil y entrar",
         "photoButton": "Foto de perfil",
-        "coverButton": "Portada"
+        "coverButton": "Portada",
+        "setupHint": "Foto de perfil, nombre, ciudad y al menos un estilo son obligatorios. La portada y la biografía son opcionales."
     }
 }

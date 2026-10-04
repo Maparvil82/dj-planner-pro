@@ -152,7 +152,9 @@ export default function CommunityProfileScreen() {
                                         <CommunityButton
                                             label={t('community.editProfile')}
                                             onPress={() =>
-                                                router.push('/profile?edit=1')
+                                                router.push(
+                                                    '/edit-dj-profile?edit=1',
+                                                )
                                             }
                                             secondary
                                         />
@@ -182,7 +184,7 @@ export default function CommunityProfileScreen() {
                                                     )
                                                 )
                                                     router.push(
-                                                        '/profile?edit=1',
+                                                        '/edit-dj-profile?edit=1',
                                                     );
                                                 else
                                                     mutation.mutate({

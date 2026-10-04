@@ -1036,6 +1036,7 @@
         "consent": "Publishing makes your profile visible in Community. Your schedule and fees stay private.",
         "publish": "Publish profile and join",
         "photoButton": "Profile photo",
-        "coverButton": "Cover"
+        "coverButton": "Cover",
+        "setupHint": "A profile photo, name, city and at least one style are required. Cover and biography are optional."
     }
 }

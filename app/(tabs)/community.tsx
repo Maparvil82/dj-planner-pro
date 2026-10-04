@@ -294,7 +294,7 @@ export default function CommunityScreen() {
                                                     !canUseDJProfile(own.data)
                                                 )
                                                     router.push(
-                                                        '/profile?edit=1',
+                                                        '/edit-dj-profile?edit=1',
                                                     );
                                                 else
                                                     mutation.mutate({

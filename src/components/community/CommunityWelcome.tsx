@@ -92,7 +92,9 @@ export function CommunityWelcome() {
                 <View style={{ gap: 12 }}>
                     <CommunityButton
                         label={t('socialProfile.completeAction')}
-                        onPress={() => router.push('/profile?edit=1&setup=1')}
+                        onPress={() =>
+                            router.push('/edit-dj-profile?edit=1&setup=1')
+                        }
                     />
                     <Text
                         style={{

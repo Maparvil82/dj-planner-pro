@@ -205,8 +205,13 @@ const errors = [];
     await page
         .getByRole('button', { name: 'Completar perfil', exact: true })
         .click();
-    await page.waitForURL('**/profile**');
+    await page.waitForURL('**/edit-dj-profile**');
     assert.equal(followed.length, 0);
+    assert.equal(
+        await page.getByText('Tus enlaces · opcional', { exact: true }).count(),
+        0,
+        'Setup must not show external links',
+    );
     await page
         .getByRole('button', { name: 'Cambiar foto', exact: true })
         .first()
@@ -244,7 +249,10 @@ const errors = [];
         fullPage: true,
     });
     // Incomplete setup cannot publish. Returning later resumes the welcome gate.
-    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Cancelar', exact: true })
+        .last()
+        .click();
     await page
         .getByRole('button', { name: 'Completar perfil', exact: true })
         .waitFor();
@@ -256,7 +264,7 @@ const errors = [];
         genres: 'Jazz · House',
         is_visible: false,
     };
-    await page.goto('http://localhost:8081/profile?edit=1&setup=1');
+    await page.goto('http://localhost:8081/edit-dj-profile?edit=1&setup=1');
     await page
         .getByRole('button', { name: 'Publicar perfil y entrar', exact: true })
         .click();
@@ -271,6 +279,21 @@ const errors = [];
     await page
         .getByRole('button', { name: 'Añadir mix', exact: true })
         .waitFor();
+    await page
+        .getByRole('button', { name: 'Editar Perfil', exact: true })
+        .click();
+    await page.getByText('Tus enlaces · opcional', { exact: true }).waitFor();
+    assert.equal(
+        await page
+            .getByRole('textbox', { name: 'Ciudad *', exact: true })
+            .inputValue(),
+        'Madrid',
+        'Editing hydrates saved city',
+    );
+    await page
+        .getByRole('button', { name: 'Cancelar', exact: true })
+        .last()
+        .click();
     await page.getByRole('button', { name: 'Añadir mix', exact: true }).click();
     await page
         .getByRole('textbox', { name: 'Título del mix', exact: true })

@@ -25,7 +25,19 @@ export default function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-session" options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="edit-dj-profile"
+                    options={{
+                        presentation: 'transparentModal',
+                        animation: 'slide_from_bottom',
+                        gestureEnabled: false,
+                        contentStyle: { backgroundColor: 'transparent' },
+                    }}
+                />
+                <Stack.Screen
+                    name="add-session"
+                    options={{ headerShown: false }}
+                />
             </Stack>
             <StatusBar style="auto" />
         </AppProviders>

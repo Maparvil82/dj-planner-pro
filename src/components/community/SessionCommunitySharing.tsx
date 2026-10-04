@@ -26,7 +26,7 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
     const active = share.data && profile.data?.is_visible && confirmed;
     const toggle = async () => {
         if (!share.data && !canUseDJProfile(profile.data)) {
-            router.push('/profile?edit=1');
+            router.push('/edit-dj-profile?edit=1');
             return;
         }
         if (

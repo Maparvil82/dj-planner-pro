@@ -1032,6 +1032,7 @@
         "consent": "Mit der Veröffentlichung wird dein Profil in der Community sichtbar. Kalender und Gagen bleiben privat.",
         "publish": "Profil veröffentlichen und beitreten",
         "photoButton": "Profilfoto",
-        "coverButton": "Titelbild"
+        "coverButton": "Titelbild",
+        "setupHint": "Profilfoto, Name, Stadt und mindestens ein Stil sind erforderlich. Titelbild und Biografie sind optional."
     }
 }

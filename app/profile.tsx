@@ -1,5 +1,8 @@
 import { DJProfileEditor } from '../src/components/profile/DJProfileEditor';
-import { isDJProfileComplete } from '../src/utils/communityProfile';
+import {
+    canUseDJProfile,
+    isDJProfileComplete,
+} from '../src/utils/communityProfile';
 import { ProfileMixes } from '../src/components/community/ProfileMixes';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -96,7 +99,11 @@ function SettingItem({
         </TouchableOpacity>
     );
 }
-export default function ProfileScreen() {
+export default function ProfileScreen({
+    editorOnly = false,
+}: {
+    editorOnly?: boolean;
+}) {
     const { t } = useTranslation();
     const c = useCommunityColors();
     const { theme, setTheme } = useTheme();
@@ -124,7 +131,9 @@ export default function ProfileScreen() {
             return result;
         },
     });
-    const [editing, setEditing] = useState(false);
+    const [editingDraft, setEditing] = useState(false);
+    const editing = editorOnly || editingDraft;
+    const [draftHydrated, setDraftHydrated] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
@@ -178,13 +187,19 @@ export default function ProfileScreen() {
         if (!editing) resetDraft();
     }, [editing, resetDraft]);
     useEffect(() => {
+        if (editorOnly && ready && !draftHydrated) {
+            resetDraft();
+            setDraftHydrated(true);
+        }
+    }, [editorOnly, ready, draftHydrated, resetDraft]);
+    useEffect(() => {
         setEditing(false);
         setAccountEditing(false);
         setSaveError('');
         setNotice('');
     }, [params.section]);
     useEffect(() => {
-        if (params.edit === '1' && ready) {
+        if (editorOnly && params.edit === '1' && ready) {
             setEditing(true);
             router.setParams({ edit: undefined });
         }
@@ -254,7 +269,13 @@ export default function ProfileScreen() {
                 },
             });
             setEditing(false);
-            if (communitySetup) router.replace('/(tabs)/community');
+            if (editorOnly) {
+                if (router.canGoBack()) router.back();
+                else
+                    router.replace(
+                        communitySetup ? '/(tabs)/community' : '/profile',
+                    );
+            }
         } catch (error) {
             setSaveError(
                 error instanceof Error
@@ -404,6 +425,54 @@ export default function ProfileScreen() {
         </View>
     );
     if (!session) return <Redirect href="/(auth)/login" />;
+    if (!editorOnly && profilePage && params.edit === '1')
+        return (
+            <Redirect
+                href={
+                    communitySetup
+                        ? '/edit-dj-profile?edit=1&setup=1'
+                        : '/edit-dj-profile?edit=1'
+                }
+            />
+        );
+    if (editorOnly && (!ready || !draftHydrated))
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(9,6,22,.5)',
+                    justifyContent: 'center',
+                    padding: 24,
+                }}
+            >
+                <CommunityMessage
+                    title={t(
+                        account.isError || social.isError
+                            ? 'community.error'
+                            : 'community.loading',
+                    )}
+                    loading={!account.isError && !social.isError}
+                    retry={
+                        account.isError || social.isError
+                            ? () => {
+                                  void account.refetch();
+                                  void social.refetch();
+                              }
+                            : undefined
+                    }
+                />
+                <CommunityButton
+                    label={t('cancel')}
+                    secondary
+                    onPress={() =>
+                        router.canGoBack()
+                            ? router.back()
+                            : router.replace('/(tabs)/community')
+                    }
+                />
+            </View>
+        );
+
     if (profilePage && editing && ready)
         return (
             <DJProfileEditor
@@ -417,6 +486,7 @@ export default function ProfileScreen() {
                 visible={visible}
                 busy={busy}
                 setup={communitySetup}
+                linksEnabled={!communitySetup && canUseDJProfile(social.data)}
                 error={saveError}
                 onName={setArtistName}
                 onCity={setCity}
@@ -447,7 +517,15 @@ export default function ProfileScreen() {
                 onClose={() => {
                     setSaveError('');
                     setEditing(false);
-                    if (communitySetup) router.replace('/(tabs)/community');
+                    if (editorOnly) {
+                        if (router.canGoBack()) router.back();
+                        else
+                            router.replace(
+                                communitySetup
+                                    ? '/(tabs)/community'
+                                    : '/profile',
+                            );
+                    }
                 }}
             />
         );
@@ -553,7 +631,11 @@ export default function ProfileScreen() {
                                                 'unifiedProfile.changePhoto',
                                             )}
                                             disabled={busy || !ready}
-                                            onPress={handlePickAvatar}
+                                            onPress={() =>
+                                                router.push(
+                                                    '/edit-dj-profile?edit=1',
+                                                )
+                                            }
                                             style={{
                                                 width: 104,
                                                 height: 104,
@@ -653,7 +735,11 @@ export default function ProfileScreen() {
                                             )}
                                             secondary
                                             disabled={busy || !ready}
-                                            onPress={handlePickAvatar}
+                                            onPress={() =>
+                                                router.push(
+                                                    '/edit-dj-profile?edit=1',
+                                                )
+                                            }
                                         />
                                     )}
                                     {!isDJProfileComplete({
@@ -796,7 +882,9 @@ export default function ProfileScreen() {
                                                 label={t('edit_profile')}
                                                 secondary
                                                 onPress={() => {
-                                                    setEditing(true);
+                                                    router.push(
+                                                        '/edit-dj-profile?edit=1',
+                                                    );
                                                     setSaveError('');
                                                 }}
                                                 disabled={!ready || busy}
@@ -999,7 +1087,11 @@ export default function ProfileScreen() {
                                             label={t('unifiedProfile.activate')}
                                             secondary
                                             disabled={!ready || busy}
-                                            onPress={() => setEditing(true)}
+                                            onPress={() =>
+                                                router.push(
+                                                    '/edit-dj-profile?edit=1',
+                                                )
+                                            }
                                         />
                                     )}
                                 </SessionFormSection>
