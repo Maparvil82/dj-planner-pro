@@ -3,7 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import type { Session } from '../../types/session';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useUpdateSessionMutation } from '../../hooks/useSessionsQuery';
-import { sessionEarnings, sessionBalance, sessionDuration } from '../../utils/sessionPlanning';
+import {
+    sessionEarnings,
+    sessionBalance,
+    sessionDuration,
+} from '../../utils/sessionPlanning';
 import { confirmAction } from '../../utils/confirmAction';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -17,6 +21,8 @@ export function SessionPayments({ session }: { session: Session }) {
         setReceived(String(session.amount_paid || 0));
     }, [session.id, session.amount_paid]);
     const total = Math.round(sessionEarnings(session) * 100) / 100;
+    const unsettled =
+        session.earning_type === 'agreement' && !session.fee_agreement?.settled;
     const cancelled = session.status === 'cancelled';
     const money = (value: number) =>
         `${value.toLocaleString(currentLanguage, { maximumFractionDigits: 2 })} ${session.currency || '€'}`;
@@ -104,23 +110,27 @@ export function SessionPayments({ session }: { session: Session }) {
                                 color: fg,
                             }}
                         >
-                            {money(Number(value))}
+                            {unsettled && label !== t('payment_received')
+                                ? '—'
+                                : money(Number(value))}
                         </Text>
                     </View>
                 ))}
             </View>
             <Text style={{ color: muted, fontSize: 12, lineHeight: 18 }}>
-                {session.earning_type === 'hourly'
-                    ? t('calc_hourly', {
-                          amount: session.earning_amount,
-                          currency: session.currency || '€',
-                          hours: sessionDuration(session).toFixed(1),
-                      })
-                    : t(
-                          session.earning_type === 'free'
-                              ? 'calc_free'
-                              : 'calc_fixed',
-                      )}
+                {session.earning_type === 'agreement'
+                    ? t(unsettled ? 'agreement.pending' : 'agreement.settled')
+                    : session.earning_type === 'hourly'
+                      ? t('calc_hourly', {
+                            amount: session.earning_amount,
+                            currency: session.currency || '€',
+                            hours: sessionDuration(session).toFixed(1),
+                        })
+                      : t(
+                            session.earning_type === 'free'
+                                ? 'calc_free'
+                                : 'calc_fixed',
+                        )}
             </Text>
             {cancelled && (
                 <Text style={{ fontSize: 12, lineHeight: 18, color: muted }}>

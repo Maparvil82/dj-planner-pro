@@ -221,6 +221,29 @@ export default function PaywallScreen() {
                         {t('billing.benefit')}
                     </Text>
                 </View>
+                {
+                    <View
+                        style={{
+                            backgroundColor: c.tint,
+                            padding: 20,
+                            borderRadius: 22,
+                            gap: 10,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontWeight: '800',
+                                fontSize: 20,
+                            }}
+                        >
+                            {t('agreement.title')} · PRO
+                        </Text>
+                        <Text style={{ color: c.muted, lineHeight: 21 }}>
+                            {t('agreement.proBenefit')}
+                        </Text>
+                    </View>
+                }
                 {FEATURES.bookings && params.reason === 'bookings' && (
                     <View
                         style={{

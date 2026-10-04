@@ -12,7 +12,7 @@ export function SessionScheduleSummary({
 }: {
     start: string;
     end: string;
-    type: 'free' | 'hourly' | 'fixed';
+    type: 'free' | 'hourly' | 'fixed' | 'agreement';
     amount: string;
     currency: string;
 }) {
@@ -63,7 +63,7 @@ export function SessionScheduleSummary({
                     {t('workflow.nextDay')}
                 </Text>
             ) : null}
-            {validTimes && !equal && total !== null ? (
+            {validTimes && !equal && total !== null && type !== 'agreement' ? (
                 <Text
                     style={{
                         color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',

@@ -231,10 +231,16 @@ export function SessionPreviewCard({
                                 marginLeft: 'auto',
                             }}
                         >
-                            {new Intl.NumberFormat(currentLanguage, {
-                                maximumFractionDigits: 2,
-                            }).format(fee)}{' '}
-                            {session.currency || '€'}
+                            {session.earning_type === 'agreement' &&
+                            !session.fee_agreement?.settled
+                                ? '—'
+                                : new Intl.NumberFormat(currentLanguage, {
+                                      maximumFractionDigits: 2,
+                                  }).format(fee)}{' '}
+                            {session.earning_type === 'agreement' &&
+                            !session.fee_agreement?.settled
+                                ? ''
+                                : session.currency || '€'}
                         </Text>
                     ) : null}
                 </View>

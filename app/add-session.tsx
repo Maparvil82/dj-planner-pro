@@ -1,3 +1,9 @@
+import {
+    FeeAgreementCard,
+    ProLabel,
+} from '../src/components/sessions/FeeAgreementCard';
+import { type FeeAgreement, agreementAmount } from '../src/utils/feeAgreement';
+import { useSessionUsage } from '../src/hooks/useSessionUsage';
 import { useKeyboardVisible } from '../src/hooks/useKeyboardVisible';
 import { SessionVenueSheet } from '../src/components/venues/SessionVenueSheet';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
@@ -75,9 +81,11 @@ export default function AddSessionScreen() {
     const [endTime, setEndTime] = useState('04:00');
     const [venueId, setVenueId] = useState<string | null>(null);
     const [isVenueModalVisible, setIsVenueModalVisible] = useState(false);
-    const [earningType, setEarningType] = useState<'free' | 'hourly' | 'fixed'>(
-        'free',
-    );
+    const [earningType, setEarningType] = useState<
+        'free' | 'hourly' | 'fixed' | 'agreement'
+    >('free');
+    const [feeAgreement, setFeeAgreement] = useState<FeeAgreement | null>(null);
+    const usage = useSessionUsage();
     const [earningAmount, setEarningAmount] = useState('');
     const [currency, setCurrency] = useState('€');
 
@@ -247,9 +255,21 @@ export default function AddSessionScreen() {
         }
         let amount: number;
         try {
-            amount = parseSessionAmount(earningAmount, earningType);
+            if (earningType === 'agreement' && !feeAgreement)
+                throw new Error('agreement.noTerms');
+            amount =
+                earningType === 'agreement'
+                    ? agreementAmount(feeAgreement)
+                    : parseSessionAmount(earningAmount, earningType);
         } catch {
-            showError(t('error'), t('invalid_earning_amount'));
+            showError(
+                t('error'),
+                t(
+                    earningType === 'agreement'
+                        ? 'agreement.noTerms'
+                        : 'invalid_earning_amount',
+                ),
+            );
             return;
         }
         const finalDjs = [...selectedDjs];
@@ -270,6 +290,7 @@ export default function AddSessionScreen() {
             djs: isCollective ? finalDjs : [],
             dj_profile_ids: isCollective ? Object.values(linkedDjs) : [],
             earning_type: earningType,
+            fee_agreement: earningType === 'agreement' ? feeAgreement : null,
             earning_amount: amount,
             currency,
             recurrence_type: recurrenceType,
@@ -983,10 +1004,70 @@ export default function AddSessionScreen() {
                                     </Text>
                                 </TouchableOpacity>
                             </View>
+                            <TouchableOpacity
+                                accessibilityRole="button"
+                                accessibilityState={{
+                                    selected: earningType === 'agreement',
+                                }}
+                                onPress={async () => {
+                                    const verified = await usage.refetch();
+                                    if (verified.isError) {
+                                        Alert.alert(
+                                            t('error'),
+                                            t('error_saving_session'),
+                                        );
+                                        return;
+                                    }
+                                    if (verified.data?.isPro)
+                                        setEarningType('agreement');
+                                    else
+                                        router.push(
+                                            '/paywall?reason=agreement',
+                                        );
+                                }}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 8,
+                                    padding: 14,
+                                    borderRadius: 14,
+                                    backgroundColor:
+                                        earningType === 'agreement'
+                                            ? isDark
+                                                ? '#292743'
+                                                : '#f0edfc'
+                                            : isDark
+                                              ? '#252d40'
+                                              : '#e9ecf3',
+                                    marginBottom: 16,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: isDark ? '#bdb0f5' : '#6554df',
+                                        fontWeight: '800',
+                                    }}
+                                >
+                                    {t('agreement.title')}
+                                </Text>
+                                <ProLabel />
+                            </TouchableOpacity>
+                            {earningType === 'agreement' && (
+                                <FeeAgreementCard
+                                    value={feeAgreement}
+                                    onChange={setFeeAgreement}
+                                    onCurrency={setCurrency}
+                                    currency={currency}
+                                    names={isCollective ? selectedDjs : []}
+                                />
+                            )}
+
                             <View
                                 style={{
                                     display:
-                                        earningType !== 'free'
+                                        earningType !== 'free' &&
+                                        earningType !== 'agreement'
                                             ? 'flex'
                                             : 'none',
                                     backgroundColor: isDark

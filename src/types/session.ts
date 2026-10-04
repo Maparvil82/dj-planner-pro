@@ -1,4 +1,5 @@
-import { UserProfile } from "../services/profile";
+import type { FeeAgreement } from '../utils/feeAgreement';
+import { UserProfile } from '../services/profile';
 
 export interface Session {
     id: string; // uuid
@@ -16,10 +17,18 @@ export interface Session {
     dj_profile_ids?: string[];
     is_guest?: boolean;
     owner_name?: string;
-    earning_type: 'free' | 'hourly' | 'fixed';
+    earning_type: 'free' | 'hourly' | 'fixed' | 'agreement';
+    fee_agreement?: FeeAgreement | null;
     earning_amount: number;
     currency: string;
-    recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
+    recurrence_type?:
+        | 'none'
+        | 'daily'
+        | 'weekly'
+        | 'monthly'
+        | 'quarterly'
+        | 'biannually'
+        | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
     venue_id?: string | null; // uuid
@@ -42,10 +51,18 @@ export interface CreateSessionInput {
     is_collective?: boolean;
     djs?: string[];
     dj_profile_ids?: string[];
-    earning_type?: 'free' | 'hourly' | 'fixed';
+    earning_type?: 'free' | 'hourly' | 'fixed' | 'agreement';
+    fee_agreement?: FeeAgreement | null;
     earning_amount?: number;
     currency?: string;
-    recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
+    recurrence_type?:
+        | 'none'
+        | 'daily'
+        | 'weekly'
+        | 'monthly'
+        | 'quarterly'
+        | 'biannually'
+        | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
     venue_id?: string | null; // uuid

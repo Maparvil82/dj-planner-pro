@@ -166,6 +166,29 @@ export default function ProScreen() {
                             {t('proPage.unlimitedHint')}
                         </Text>
                     </View>
+                    <View
+                        style={{
+                            backgroundColor: c.card,
+                            padding: 22,
+                            borderRadius: 24,
+                            gap: 12,
+                            borderWidth: 1,
+                            borderColor: c.border,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontWeight: '800',
+                                fontSize: 19,
+                            }}
+                        >
+                            {t('agreement.title')} · PRO
+                        </Text>
+                        <Text style={{ color: c.muted, lineHeight: 22 }}>
+                            {t('agreement.proBenefit')}
+                        </Text>
+                    </View>
                     {FEATURES.bookings && (
                         <View
                             style={{

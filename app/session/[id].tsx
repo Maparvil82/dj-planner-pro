@@ -1,3 +1,7 @@
+import { FeeAgreementCard } from '../../src/components/sessions/FeeAgreementCard';
+import { useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
+import { agreementAmount } from '../../src/utils/feeAgreement';
+import { sessionPhase } from '../../src/utils/sessionWorkflow';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
 import { SessionPayments } from '../../src/components/sessions/SessionPayments';
@@ -59,6 +63,7 @@ export default function SessionDetailScreen() {
         isLoading,
         error,
     } = useSessionByIdQuery(id as string);
+    const agreementUpdate = useUpdateSessionMutation();
     const deletion = useSessionDeletion(() => router.replace('/(tabs)/home'));
     const updateColorMutation = useUpdateSessionColorMutation();
 
@@ -318,7 +323,9 @@ export default function SessionDetailScreen() {
                             </Text>
                             <Text className="text-base text-gray-900 dark:text-white font-bold">
                                 {session.start_time} — {session.end_time}
-                                {session.booking_timezone ? ` · ${session.booking_timezone}` : ''}
+                                {session.booking_timezone
+                                    ? ` · ${session.booking_timezone}`
+                                    : ''}
                             </Text>
                         </View>
 
@@ -350,6 +357,25 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
 
+                {!session.is_guest && session.fee_agreement && (
+                    <View style={{ marginTop: 24 }}>
+                        <FeeAgreementCard
+                            value={session.fee_agreement}
+                            currency={session.currency}
+                            canSettle={sessionPhase(session) === 'finished'}
+                            onChange={(a) =>
+                                agreementUpdate.mutateAsync({
+                                    sessionId: session.id,
+                                    input: {
+                                        fee_agreement: a,
+                                        earning_amount: agreementAmount(a),
+                                    },
+                                    updateAll: false,
+                                })
+                            }
+                        />
+                    </View>
+                )}
                 {/* VAULT SECTION (MOVED TO BOTTOM) */}
                 {FEATURES.documents && (
                     <>

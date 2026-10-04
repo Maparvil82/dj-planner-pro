@@ -1,3 +1,4 @@
+import { agreementAmount, validateFeeAgreement } from './feeAgreement';
 import type { CreateSessionInput, Session } from '../types/session';
 import { localDateString, sessionRange } from './sessionPlanning';
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled';
@@ -17,7 +18,7 @@ export function parseSessionAmount(
     value: string,
     type: CreateSessionInput['earning_type'],
 ) {
-    if (type === 'free') return 0;
+    if (type === 'free' || type === 'agreement') return 0;
     if (!/^\d+(?:[.,]\d{1,2})?$/.test(value.trim()))
         throw new Error('invalid_earning_amount');
     const amount = Number(value.trim().replace(',', '.'));
@@ -28,8 +29,7 @@ export function parseSessionAmount(
 export function validateSessionInput(
     input: CreateSessionInput,
 ): CreateSessionInput {
-    if (!input.venue.trim())
-        throw new Error('missing_fields');
+    if (!input.venue.trim()) throw new Error('missing_fields');
     if (!validSessionDate(input.date)) throw new Error('workflow.invalidDate');
     if (
         ![input.start_time, input.end_time].every((time) =>
@@ -45,8 +45,14 @@ export function validateSessionInput(
         )
     )
         throw new Error('workflow.invalidStatus');
-    if (!['free', 'fixed', 'hourly'].includes(input.earning_type || 'free'))
+    if (
+        !['free', 'fixed', 'hourly', 'agreement'].includes(
+            input.earning_type || 'free',
+        )
+    )
         throw new Error('invalid_earning_amount');
+    if (input.earning_type === 'agreement')
+        validateFeeAgreement(input.fee_agreement!);
     if ((input.earning_type || 'free') !== 'free')
         parseSessionAmount(String(input.earning_amount), input.earning_type);
     const djs = input.is_collective
@@ -67,11 +73,17 @@ export function validateSessionInput(
         title: input.title.trim(),
         venue: input.venue.trim(),
         djs,
-        dj_profile_ids: input.is_collective ? [...new Set(input.dj_profile_ids || [])] : [],
+        dj_profile_ids: input.is_collective
+            ? [...new Set(input.dj_profile_ids || [])]
+            : [],
+        fee_agreement:
+            input.earning_type === 'agreement' ? input.fee_agreement : null,
         earning_amount:
-            (input.earning_type || 'free') === 'free'
-                ? 0
-                : Number(input.earning_amount),
+            input.earning_type === 'agreement'
+                ? agreementAmount(input.fee_agreement)
+                : (input.earning_type || 'free') === 'free'
+                  ? 0
+                  : Number(input.earning_amount),
         status: input.status === 'cancelled' ? 'cancelled' : 'confirmed',
     };
 }
