@@ -1021,6 +1021,7 @@
         "missing": "Needed"
     },
     "profileMixes": {
+        "plays": "plays",
         "title": "Mixes",
         "ownerHint": "Your sound, on your profile. Add individual Mixcloud or SoundCloud recordings, without limits.",
         "listenerHint": "Listen to their sound without leaving the profile.",

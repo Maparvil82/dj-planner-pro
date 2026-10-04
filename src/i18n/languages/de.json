@@ -1017,6 +1017,7 @@
         "missing": "Erforderlich"
     },
     "profileMixes": {
+        "plays": "Wiedergaben",
         "title": "Mixes",
         "ownerHint": "Dein Sound auf deinem Profil. Füge einzelne Aufnahmen von Mixcloud oder SoundCloud hinzu, ohne Limit.",
         "listenerHint": "Höre den Sound direkt im Profil.",

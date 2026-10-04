@@ -20,6 +20,7 @@ import {
     useCommunityColors,
 } from './CommunityUI';
 import { MixPlayer } from './MixPlayer';
+import { MixListItem } from './MixListItem';
 
 export function ProfileMixes({
     userId,
@@ -278,49 +279,20 @@ export function ProfileMixes({
                         borderColor: c.border,
                     }}
                 >
-                    <Text
-                        style={{
-                            color: c.accent,
-                            fontSize: 11,
-                            fontWeight: '700',
-                            letterSpacing: 1,
+                    <MixListItem
+                        mix={mix}
+                        active={active === mix.id && focused}
+                        focused={focused}
+                        onPress={() => {
+                            setActive(active === mix.id ? null : mix.id);
+                            setPreview(false);
                         }}
-                    >
-                        {mix.platform === 'mixcloud'
-                            ? 'MIXCLOUD'
-                            : 'SOUNDCLOUD'}
-                    </Text>
-                    <Text
-                        style={{
-                            color: c.fg,
-                            fontSize: 17,
-                            fontWeight: '700',
-                            lineHeight: 23,
-                        }}
-                    >
-                        {mix.title}
-                    </Text>
-                    {active === mix.id && focused ? (
-                        <>
-                            <MixPlayer
-                                key={mix.id}
-                                source={mix}
-                                title={mix.title}
-                            />
-                            <CommunityButton
-                                label={t('profileMixes.closePlayer')}
-                                secondary
-                                onPress={() => setActive(null)}
-                            />
-                        </>
-                    ) : (
-                        <CommunityButton
-                            label={t('profileMixes.listen')}
-                            secondary
-                            onPress={() => {
-                                setActive(mix.id);
-                                setPreview(false);
-                            }}
+                    />
+                    {active === mix.id && focused && (
+                        <MixPlayer
+                            key={mix.id}
+                            source={mix}
+                            title={mix.title}
                         />
                     )}
                     {owner && (

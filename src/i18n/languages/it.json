@@ -1017,6 +1017,7 @@
         "missing": "Da completare"
     },
     "profileMixes": {
+        "plays": "ascolti",
         "title": "Mix",
         "ownerHint": "Il tuo sound, sul tuo profilo. Aggiungi registrazioni specifiche di Mixcloud o SoundCloud, senza limiti.",
         "listenerHint": "Ascolta il suo sound direttamente dal profilo.",

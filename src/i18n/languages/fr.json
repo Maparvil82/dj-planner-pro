@@ -1015,6 +1015,7 @@
         "missing": "À compléter"
     },
     "profileMixes": {
+        "plays": "écoutes",
         "title": "Mixes",
         "ownerHint": "Ton son, sur ton profil. Ajoute des enregistrements précis de Mixcloud ou SoundCloud, sans limite.",
         "listenerHint": "Écoute son son directement sur le profil.",

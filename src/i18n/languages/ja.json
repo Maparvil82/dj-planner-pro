@@ -1016,6 +1016,7 @@
         "missing": "未完了"
     },
     "profileMixes": {
+        "plays": "回再生",
         "title": "ミックス",
         "ownerHint": "自分のサウンドをプロフィールに。MixcloudやSoundCloudの個別の録音を制限なく追加できます。",
         "listenerHint": "プロフィール内でサウンドを聴けます。",

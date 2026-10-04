@@ -206,6 +206,38 @@ const errors = [];
             body: JSON.stringify(body),
         });
     });
+    await context.route('https://api.mixcloud.com/**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({
+                key: '/spartacus/party-time/',
+                user: { name: 'Spartacus' },
+                pictures: {
+                    large: 'https://thumbnailer.mixcloud.com/fixture.jpg',
+                },
+                tags: [
+                    { name: 'Jazz' },
+                    { name: 'Soul' },
+                    { name: 'Vinyl Only' },
+                ],
+                audio_length: 3840,
+                play_count: 230,
+            }),
+        }),
+    );
+    await context.route(
+        'https://thumbnailer.mixcloud.com/fixture.jpg',
+        (route) =>
+            route.fulfill({
+                contentType: 'image/jpeg',
+                body: fs.readFileSync(
+                    require('node:path').join(
+                        __dirname,
+                        '../../assets/community/dj-welcome.jpg',
+                    ),
+                ),
+            }),
+    );
     await context.route('**/widget/iframe/**', (route) =>
         route.fulfill({
             status: 200,
@@ -480,6 +512,17 @@ const errors = [];
         .getByRole('button', { name: 'Abrir reproductor', exact: true })
         .waitFor();
     assert.equal(recordings.length, 1);
+    await page.getByText('Spartacus', { exact: true }).waitFor();
+    await page
+        .getByText('1h 4m · 230 reproducciones', { exact: true })
+        .waitFor();
+    assert.equal(
+        await page
+            .getByRole('img', { name: 'Late Night Jazz', exact: true })
+            .count(),
+        1,
+    );
+
     await page
         .getByRole('button', { name: 'Abrir reproductor', exact: true })
         .click();

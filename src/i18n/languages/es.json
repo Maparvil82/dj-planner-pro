@@ -1017,6 +1017,7 @@
         "missing": "Pendiente"
     },
     "profileMixes": {
+        "plays": "reproducciones",
         "title": "Mixes",
         "ownerHint": "Tu sonido, en tu perfil. Añade grabaciones concretas de Mixcloud o SoundCloud, sin límite.",
         "listenerHint": "Escucha su sonido sin salir del perfil.",
