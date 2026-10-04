@@ -1,3 +1,5 @@
+import { isDJProfileComplete } from '../src/utils/communityProfile';
+import { ProfileMixes } from '../src/components/community/ProfileMixes';
 import { useCallback, useEffect, useState } from 'react';
 import {
     View,
@@ -22,9 +24,8 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
-import { Camera, ChevronRight, ArrowLeft } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { Avatar } from '../src/components/ui/Avatar';
 import { PageHeader } from '../src/components/ui/PageHeader';
 import { SessionFormSection } from '../src/components/sessions/SessionFormLayout';
 import {
@@ -190,6 +191,13 @@ export default function ProfileScreen() {
     );
     const handleUpdateProfile = async () => {
         if (!userId || !artistName.trim() || busy) return;
+        if (
+            visible &&
+            !isDJProfileComplete({ avatar_url: avatar, city, genres })
+        ) {
+            setSaveError(t('socialProfile.completeHint'));
+            return;
+        }
         setSaving(true);
         setSaveError('');
         setNotice('');
@@ -485,58 +493,65 @@ export default function ProfileScreen() {
                                             gap: 16,
                                         }}
                                     >
-                                        <View>
-                                            <Avatar
-                                                url={
-                                                    editing
-                                                        ? avatar
-                                                        : profile?.avatar_url
-                                                }
-                                                name={
-                                                    editing
-                                                        ? artistName
-                                                        : profile?.artist_name
-                                                }
-                                                size="lg"
-                                            />
-                                            {uploading ? (
-                                                <ActivityIndicator
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 20,
-                                                        left: 20,
+                                        <TouchableOpacity
+                                            accessibilityRole="button"
+                                            accessibilityLabel={t(
+                                                'unifiedProfile.changePhoto',
+                                            )}
+                                            disabled={busy || !ready}
+                                            onPress={handlePickAvatar}
+                                            style={{
+                                                width: 104,
+                                                height: 104,
+                                                borderRadius: 32,
+                                                backgroundColor: c.tint,
+                                                borderWidth: 2,
+                                                borderColor: c.border,
+                                                overflow: 'hidden',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            {(
+                                                editing
+                                                    ? avatar
+                                                    : profile?.avatar_url
+                                            ) ? (
+                                                <Image
+                                                    source={{
+                                                        uri: (editing
+                                                            ? avatar
+                                                            : profile?.avatar_url)!,
                                                     }}
-                                                    color={c.accent}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                    }}
+                                                    resizeMode="cover"
                                                 />
                                             ) : (
-                                                <TouchableOpacity
-                                                    accessibilityRole="button"
-                                                    accessibilityLabel={t(
-                                                        'unifiedProfile.changePhoto',
-                                                    )}
-                                                    disabled={busy || !ready}
-                                                    onPress={handlePickAvatar}
+                                                <Text
                                                     style={{
-                                                        position: 'absolute',
-                                                        right: -5,
-                                                        bottom: -4,
-                                                        width: 30,
-                                                        height: 30,
-                                                        borderRadius: 11,
-                                                        alignItems: 'center',
-                                                        justifyContent:
-                                                            'center',
-                                                        backgroundColor:
-                                                            '#6554df',
+                                                        color: c.accent,
+                                                        fontSize: 36,
+                                                        fontWeight: '800',
                                                     }}
                                                 >
-                                                    <Camera
-                                                        size={15}
-                                                        color="#fff"
-                                                    />
-                                                </TouchableOpacity>
+                                                    {(
+                                                        artistName.trim()[0] ||
+                                                        'DJ'
+                                                    ).toUpperCase()}
+                                                </Text>
                                             )}
-                                        </View>
+                                            {uploading && (
+                                                <ActivityIndicator
+                                                    color={c.accent}
+                                                    style={{
+                                                        position: 'absolute',
+                                                    }}
+                                                />
+                                            )}
+                                        </TouchableOpacity>
                                         <View style={{ flex: 1, gap: 5 }}>
                                             <Text
                                                 style={{
@@ -575,6 +590,104 @@ export default function ProfileScreen() {
                                             </Text>
                                         </View>
                                     </View>
+                                    {editing && (
+                                        <CommunityButton
+                                            label={t(
+                                                avatar
+                                                    ? 'unifiedProfile.changePhoto'
+                                                    : 'socialProfile.addPhoto',
+                                            )}
+                                            secondary
+                                            disabled={busy || !ready}
+                                            onPress={handlePickAvatar}
+                                        />
+                                    )}
+                                    {!isDJProfileComplete({
+                                        avatar_url: avatar,
+                                        city,
+                                        genres,
+                                    }) && (
+                                        <View
+                                            style={{
+                                                backgroundColor: c.tint,
+                                                borderRadius: 16,
+                                                padding: 14,
+                                                gap: 10,
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: c.fg,
+                                                    fontSize: 14,
+                                                    fontWeight: '700',
+                                                }}
+                                            >
+                                                {t(
+                                                    'socialProfile.completeTitle',
+                                                )}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    color: c.muted,
+                                                    fontSize: 12,
+                                                    lineHeight: 18,
+                                                }}
+                                            >
+                                                {t(
+                                                    'socialProfile.completeHint',
+                                                )}
+                                            </Text>
+                                            <View
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    flexWrap: 'wrap',
+                                                    gap: 8,
+                                                }}
+                                            >
+                                                {[
+                                                    [
+                                                        t(
+                                                            'socialProfile.photo',
+                                                        ),
+                                                        !!avatar,
+                                                    ],
+                                                    [
+                                                        t('venue_city'),
+                                                        !!city.trim(),
+                                                    ],
+                                                    [
+                                                        t('community.genres'),
+                                                        !!parseMusicGenres(
+                                                            genres,
+                                                        ).length,
+                                                    ],
+                                                ].map(([label, done]) => (
+                                                    <Text
+                                                        key={String(label)}
+                                                        style={{
+                                                            color: done
+                                                                ? c.accent
+                                                                : c.muted,
+                                                            fontSize: 12,
+                                                            fontWeight: '600',
+                                                            paddingVertical: 6,
+                                                            paddingHorizontal: 10,
+                                                            borderRadius: 12,
+                                                            backgroundColor:
+                                                                c.card,
+                                                        }}
+                                                    >
+                                                        {String(label)} ·{' '}
+                                                        {t(
+                                                            done
+                                                                ? 'socialProfile.done'
+                                                                : 'socialProfile.missing',
+                                                        )}
+                                                    </Text>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    )}
                                     {editing ? (
                                         <>
                                             {field(
@@ -584,7 +697,7 @@ export default function ProfileScreen() {
                                                 80,
                                             )}
                                             {field(
-                                                t('venue_city'),
+                                                t('venue_city') + ' *',
                                                 city,
                                                 setCity,
                                                 100,
@@ -754,7 +867,25 @@ export default function ProfileScreen() {
                                                     'community.visible',
                                                 )}
                                                 value={visible}
-                                                onValueChange={setVisible}
+                                                onValueChange={(next) => {
+                                                    if (
+                                                        next &&
+                                                        !isDJProfileComplete({
+                                                            avatar_url: avatar,
+                                                            city,
+                                                            genres,
+                                                        })
+                                                    ) {
+                                                        setSaveError(
+                                                            t(
+                                                                'socialProfile.completeHint',
+                                                            ),
+                                                        );
+                                                        return;
+                                                    }
+                                                    setSaveError('');
+                                                    setVisible(next);
+                                                }}
                                                 trackColor={{
                                                     false: c.border,
                                                     true: '#6554df',
@@ -794,17 +925,21 @@ export default function ProfileScreen() {
                                     >
                                         {t('community.privacyHint')}
                                     </Text>
-                                    {!editing && social.data?.is_visible && (
-                                        <CommunityButton
-                                            label={t('unifiedProfile.preview')}
-                                            secondary
-                                            onPress={() =>
-                                                router.push(
-                                                    `/community/${userId}?preview=1`,
-                                                )
-                                            }
-                                        />
-                                    )}
+                                    {!editing &&
+                                        social.data?.is_visible &&
+                                        isDJProfileComplete(social.data) && (
+                                            <CommunityButton
+                                                label={t(
+                                                    'unifiedProfile.preview',
+                                                )}
+                                                secondary
+                                                onPress={() =>
+                                                    router.push(
+                                                        `/community/${userId}?preview=1`,
+                                                    )
+                                                }
+                                            />
+                                        )}
                                     {!editing && !social.data?.is_visible && (
                                         <CommunityButton
                                             label={t('unifiedProfile.activate')}
@@ -814,6 +949,15 @@ export default function ProfileScreen() {
                                         />
                                     )}
                                 </SessionFormSection>
+                                {!editing && userId && (
+                                    <ProfileMixes
+                                        userId={userId}
+                                        editable
+                                        canAdd={isDJProfileComplete(
+                                            social.data,
+                                        )}
+                                    />
+                                )}
                             </>
                         )}
                         {settingsPage && !editing && (

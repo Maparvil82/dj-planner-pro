@@ -986,5 +986,38 @@
         "noOptions": "Nenhuma opção corresponde.",
         "noResults": "Sem resultados com estes filtros",
         "noResultsHint": "Experimenta outra cidade ou estilo, ou limpa os filtros."
+    },
+    "socialProfile": {
+        "completeTitle": "Completa o teu perfil DJ",
+        "completeHint": "Adiciona uma foto, a tua cidade e pelo menos um estilo musical para ativar o perfil e seguir outros DJs. Podes guardar um rascunho privado.",
+        "completeAction": "Completar perfil",
+        "addPhoto": "Adicionar foto de perfil *",
+        "photo": "Foto",
+        "done": "Pronto",
+        "missing": "Em falta"
+    },
+    "profileMixes": {
+        "title": "Mixes",
+        "ownerHint": "O teu som, no teu perfil. Adiciona gravações específicas do Mixcloud ou SoundCloud, sem limite.",
+        "listenerHint": "Ouve o seu som sem sair do perfil.",
+        "add": "Adicionar mix",
+        "edit": "Editar mix",
+        "name": "Título do mix",
+        "url": "Ligação da gravação",
+        "linkHint": "Cola a ligação pública de um mix específico. Ligações de perfil e código de incorporação não são aceites.",
+        "invalidLink": "Usa uma ligação HTTPS para uma gravação específica do Mixcloud ou SoundCloud.",
+        "preview": "Pré-visualizar",
+        "save": "Guardar mix",
+        "duplicate": "Este mix já está no teu perfil.",
+        "saveError": "A alteração não foi guardada. Verifica a ligação e tenta novamente.",
+        "empty": "Ainda não há mixes",
+        "emptyOwner": "Escolhe uma gravação que represente o teu som. Os outros poderão ouvi-la aqui quando o perfil for público.",
+        "emptyListener": "Este DJ ainda não adicionou gravações.",
+        "listen": "Abrir leitor",
+        "closePlayer": "Fechar leitor",
+        "deleteHint": "Remover este mix do perfil? A gravação original mantém-se na plataforma.",
+        "deleteConfirm": "Remover mix",
+        "playerError": "Não foi possível carregar o leitor.",
+        "openSource": "Abrir na plataforma"
     }
 }

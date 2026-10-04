@@ -992,5 +992,38 @@
         "noOptions": "No matching options.",
         "noResults": "No results for these filters",
         "noResultsHint": "Try another city or genre, or clear the filters."
+    },
+    "socialProfile": {
+        "completeTitle": "Complete your DJ profile",
+        "completeHint": "Add a photo, your city and at least one musical style to activate your profile and follow other DJs. You can save a private draft.",
+        "completeAction": "Complete profile",
+        "addPhoto": "Add profile photo *",
+        "photo": "Photo",
+        "done": "Done",
+        "missing": "Needed"
+    },
+    "profileMixes": {
+        "title": "Mixes",
+        "ownerHint": "Your sound, on your profile. Add individual Mixcloud or SoundCloud recordings, without limits.",
+        "listenerHint": "Listen to their sound without leaving the profile.",
+        "add": "Add a mix",
+        "edit": "Edit mix",
+        "name": "Mix title",
+        "url": "Recording link",
+        "linkHint": "Paste the public link to one specific mix. Profile links and embed code are not supported.",
+        "invalidLink": "Use an HTTPS link to an individual Mixcloud or SoundCloud recording.",
+        "preview": "Preview",
+        "save": "Save mix",
+        "duplicate": "This mix is already on your profile.",
+        "saveError": "The change was not saved. Check your connection and try again.",
+        "empty": "No mixes yet",
+        "emptyOwner": "Choose a recording that represents your sound. Others can listen here when your profile is public.",
+        "emptyListener": "This DJ has not added recordings yet.",
+        "listen": "Open player",
+        "closePlayer": "Close player",
+        "deleteHint": "Remove this mix from your profile? The original recording stays on its platform.",
+        "deleteConfirm": "Remove mix",
+        "playerError": "The player could not load.",
+        "openSource": "Open on its platform"
     }
 }

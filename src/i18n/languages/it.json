@@ -988,5 +988,38 @@
         "noOptions": "Nessuna opzione corrispondente.",
         "noResults": "Nessun risultato con questi filtri",
         "noResultsHint": "Prova un’altra città o un altro genere oppure azzera i filtri."
+    },
+    "socialProfile": {
+        "completeTitle": "Completa il tuo profilo DJ",
+        "completeHint": "Aggiungi una foto, la tua città e almeno uno stile musicale per attivare il profilo e seguire altri DJ. Puoi salvare una bozza privata.",
+        "completeAction": "Completa profilo",
+        "addPhoto": "Aggiungi foto profilo *",
+        "photo": "Foto",
+        "done": "Fatto",
+        "missing": "Da completare"
+    },
+    "profileMixes": {
+        "title": "Mix",
+        "ownerHint": "Il tuo sound, sul tuo profilo. Aggiungi registrazioni specifiche di Mixcloud o SoundCloud, senza limiti.",
+        "listenerHint": "Ascolta il suo sound direttamente dal profilo.",
+        "add": "Aggiungi mix",
+        "edit": "Modifica mix",
+        "name": "Titolo del mix",
+        "url": "Link della registrazione",
+        "linkHint": "Incolla il link pubblico di un mix specifico. Link al profilo e codice di incorporamento non sono supportati.",
+        "invalidLink": "Usa un link HTTPS a una registrazione specifica di Mixcloud o SoundCloud.",
+        "preview": "Anteprima",
+        "save": "Salva mix",
+        "duplicate": "Questo mix è già sul tuo profilo.",
+        "saveError": "La modifica non è stata salvata. Controlla la connessione e riprova.",
+        "empty": "Nessun mix ancora",
+        "emptyOwner": "Scegli una registrazione che rappresenti il tuo sound. Gli altri potranno ascoltarla qui quando il tuo profilo sarà pubblico.",
+        "emptyListener": "Questo DJ non ha ancora aggiunto registrazioni.",
+        "listen": "Apri lettore",
+        "closePlayer": "Chiudi lettore",
+        "deleteHint": "Rimuovere questo mix dal profilo? La registrazione originale resta sulla sua piattaforma.",
+        "deleteConfirm": "Rimuovi mix",
+        "playerError": "Impossibile caricare il lettore.",
+        "openSource": "Apri sulla piattaforma"
     }
 }

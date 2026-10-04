@@ -986,5 +986,38 @@
         "noOptions": "Aucune option correspondante.",
         "noResults": "Aucun résultat avec ces filtres",
         "noResultsHint": "Essayez une autre ville ou un autre style, ou effacez les filtres."
+    },
+    "socialProfile": {
+        "completeTitle": "Complète ton profil DJ",
+        "completeHint": "Ajoute une photo, ta ville et au moins un style musical pour activer ton profil et suivre des DJs. Tu peux enregistrer un brouillon privé.",
+        "completeAction": "Compléter le profil",
+        "addPhoto": "Ajouter une photo de profil *",
+        "photo": "Photo",
+        "done": "Prêt",
+        "missing": "À compléter"
+    },
+    "profileMixes": {
+        "title": "Mixes",
+        "ownerHint": "Ton son, sur ton profil. Ajoute des enregistrements précis de Mixcloud ou SoundCloud, sans limite.",
+        "listenerHint": "Écoute son son directement sur le profil.",
+        "add": "Ajouter un mix",
+        "edit": "Modifier le mix",
+        "name": "Titre du mix",
+        "url": "Lien de l’enregistrement",
+        "linkHint": "Colle le lien public d’un mix précis. Les liens de profil et les codes intégrés ne sont pas acceptés.",
+        "invalidLink": "Utilise un lien HTTPS vers un enregistrement précis de Mixcloud ou SoundCloud.",
+        "preview": "Aperçu",
+        "save": "Enregistrer le mix",
+        "duplicate": "Ce mix est déjà sur ton profil.",
+        "saveError": "La modification n’a pas été enregistrée. Vérifie ta connexion et réessaie.",
+        "empty": "Pas encore de mixes",
+        "emptyOwner": "Choisis un enregistrement qui représente ton son. Les autres pourront l’écouter ici quand ton profil sera public.",
+        "emptyListener": "Ce DJ n’a pas encore ajouté d’enregistrements.",
+        "listen": "Ouvrir le lecteur",
+        "closePlayer": "Fermer le lecteur",
+        "deleteHint": "Retirer ce mix de ton profil ? L’enregistrement original reste sur sa plateforme.",
+        "deleteConfirm": "Retirer le mix",
+        "playerError": "Impossible de charger le lecteur.",
+        "openSource": "Ouvrir sur sa plateforme"
     }
 }

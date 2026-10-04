@@ -1,3 +1,5 @@
+import { ProfileMixes } from '../../src/components/community/ProfileMixes';
+import { canUseDJProfile } from '../../src/utils/communityProfile';
 import { useCallback } from 'react';
 import {
     View,
@@ -55,8 +57,7 @@ export default function CommunityProfileScreen() {
         }, [refresh]),
     );
     if (!userId) return <Redirect href="/(auth)/login" />;
-    if (own && params.preview !== '1')
-        return <Redirect href="/profile" />;
+    if (own && params.preview !== '1') return <Redirect href="/profile" />;
     const person = profile.data;
     return (
         <SafeAreaView
@@ -151,9 +152,7 @@ export default function CommunityProfileScreen() {
                                         <CommunityButton
                                             label={t('community.editProfile')}
                                             onPress={() =>
-                                                router.push(
-                                                    '/profile?edit=1',
-                                                )
+                                                router.push('/profile?edit=1')
                                             }
                                             secondary
                                         />
@@ -178,7 +177,9 @@ export default function CommunityProfileScreen() {
                                             onPress={() => {
                                                 if (
                                                     !isFollowing &&
-                                                    !viewer.data?.is_visible
+                                                    !canUseDJProfile(
+                                                        viewer.data,
+                                                    )
                                                 )
                                                     router.push(
                                                         '/profile?edit=1',
@@ -211,6 +212,7 @@ export default function CommunityProfileScreen() {
                                     }}
                                 />
                             )}
+                            <ProfileMixes userId={id} />
                             <Text
                                 style={{
                                     color: c.fg,

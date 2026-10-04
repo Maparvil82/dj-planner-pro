@@ -22,7 +22,7 @@ export function MusicGenrePicker({
     const { t } = useTranslation();
     const [query, setQuery] = useState('');
     const selected = parseMusicGenres(value);
-    const options = suggestMusicGenres(query, selected);
+    const options = query.trim() ? suggestMusicGenres(query, selected) : [];
     const add = (name: string) => {
         const next = serializeMusicGenres([...selected, name]);
         if (next.length <= 120) {
@@ -33,7 +33,7 @@ export function MusicGenrePicker({
     return (
         <View style={{ gap: 10 }}>
             <Text style={{ color: c.muted, fontSize: 12, fontWeight: '600' }}>
-                {t('community.genres')}
+                {t('community.genres')} *
             </Text>
             <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
                 {t('profileUX.genreHint')}

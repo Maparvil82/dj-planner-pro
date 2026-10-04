@@ -1,3 +1,4 @@
+import { canUseDJProfile } from '../../utils/communityProfile';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -24,7 +25,7 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
     const failed = profile.isError || share.isError || mutation.isError;
     const active = share.data && profile.data?.is_visible && confirmed;
     const toggle = async () => {
-        if (!share.data && !profile.data?.is_visible) {
+        if (!share.data && !canUseDJProfile(profile.data)) {
             router.push('/profile?edit=1');
             return;
         }
@@ -103,9 +104,9 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
                 label={t(
                     share.data
                         ? 'community.unpublish'
-                        : profile.data?.is_visible
+                        : canUseDJProfile(profile.data)
                           ? 'community.publish'
-                          : 'community.createProfile',
+                          : 'socialProfile.completeAction',
                 )}
                 secondary={!!share.data}
                 disabled={failed || (!confirmed && !share.data)}

@@ -988,5 +988,38 @@
         "noOptions": "Keine passenden Optionen.",
         "noResults": "Keine Ergebnisse für diese Filter",
         "noResultsHint": "Andere Stadt oder anderen Musikstil wählen oder Filter löschen."
+    },
+    "socialProfile": {
+        "completeTitle": "Vervollständige dein DJ-Profil",
+        "completeHint": "Füge ein Foto, deine Stadt und mindestens einen Musikstil hinzu, um dein Profil zu aktivieren und DJs zu folgen. Du kannst einen privaten Entwurf speichern.",
+        "completeAction": "Profil vervollständigen",
+        "addPhoto": "Profilfoto hinzufügen *",
+        "photo": "Foto",
+        "done": "Erledigt",
+        "missing": "Erforderlich"
+    },
+    "profileMixes": {
+        "title": "Mixes",
+        "ownerHint": "Dein Sound auf deinem Profil. Füge einzelne Aufnahmen von Mixcloud oder SoundCloud hinzu, ohne Limit.",
+        "listenerHint": "Höre den Sound direkt im Profil.",
+        "add": "Mix hinzufügen",
+        "edit": "Mix bearbeiten",
+        "name": "Mix-Titel",
+        "url": "Link zur Aufnahme",
+        "linkHint": "Füge den öffentlichen Link zu einem einzelnen Mix ein. Profillinks und Einbettungscode werden nicht unterstützt.",
+        "invalidLink": "Nutze einen HTTPS-Link zu einer einzelnen Mixcloud- oder SoundCloud-Aufnahme.",
+        "preview": "Vorschau",
+        "save": "Mix speichern",
+        "duplicate": "Dieser Mix ist bereits in deinem Profil.",
+        "saveError": "Die Änderung wurde nicht gespeichert. Prüfe deine Verbindung und versuche es erneut.",
+        "empty": "Noch keine Mixes",
+        "emptyOwner": "Wähle eine Aufnahme, die deinen Sound zeigt. Andere können sie hier hören, sobald dein Profil öffentlich ist.",
+        "emptyListener": "Dieser DJ hat noch keine Aufnahmen hinzugefügt.",
+        "listen": "Player öffnen",
+        "closePlayer": "Player schließen",
+        "deleteHint": "Diesen Mix aus deinem Profil entfernen? Die Originalaufnahme bleibt auf ihrer Plattform.",
+        "deleteConfirm": "Mix entfernen",
+        "playerError": "Der Player konnte nicht geladen werden.",
+        "openSource": "Auf der Plattform öffnen"
     }
 }

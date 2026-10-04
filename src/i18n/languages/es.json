@@ -988,5 +988,38 @@
         "noOptions": "No hay opciones que coincidan.",
         "noResults": "No hay resultados con estos filtros",
         "noResultsHint": "Prueba otra ciudad o estilo, o limpia los filtros."
+    },
+    "socialProfile": {
+        "completeTitle": "Completa tu perfil de DJ",
+        "completeHint": "Añade una foto, tu ciudad y al menos un estilo musical para activar tu perfil y seguir a otros DJs. Puedes guardar un borrador privado.",
+        "completeAction": "Completar perfil",
+        "addPhoto": "Añadir foto de perfil *",
+        "photo": "Foto",
+        "done": "Listo",
+        "missing": "Pendiente"
+    },
+    "profileMixes": {
+        "title": "Mixes",
+        "ownerHint": "Tu sonido, en tu perfil. Añade grabaciones concretas de Mixcloud o SoundCloud, sin límite.",
+        "listenerHint": "Escucha su sonido sin salir del perfil.",
+        "add": "Añadir mix",
+        "edit": "Editar mix",
+        "name": "Título del mix",
+        "url": "Enlace de la grabación",
+        "linkHint": "Copia el enlace público de un mix concreto. Los enlaces de perfil y los códigos de inserción no sirven.",
+        "invalidLink": "Usa un enlace HTTPS a un mix concreto de Mixcloud o SoundCloud.",
+        "preview": "Vista previa",
+        "save": "Guardar mix",
+        "duplicate": "Este mix ya está en tu perfil.",
+        "saveError": "No se ha guardado el cambio. Comprueba tu conexión y vuelve a intentarlo.",
+        "empty": "Todavía no hay mixes",
+        "emptyOwner": "Elige una grabación que represente tu sonido. Los demás podrán escucharla aquí cuando tu perfil sea público.",
+        "emptyListener": "Este DJ aún no ha añadido grabaciones.",
+        "listen": "Abrir reproductor",
+        "closePlayer": "Cerrar reproductor",
+        "deleteHint": "¿Quitar este mix de tu perfil? La grabación original seguirá en su plataforma.",
+        "deleteConfirm": "Quitar mix",
+        "playerError": "No se ha podido cargar el reproductor.",
+        "openSource": "Abrir en su plataforma"
     }
 }

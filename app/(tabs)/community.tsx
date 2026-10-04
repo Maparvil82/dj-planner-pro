@@ -1,3 +1,4 @@
+import { canUseDJProfile } from '../../src/utils/communityProfile';
 import { CommunityFiltersBar } from '../../src/components/community/CommunityFiltersBar';
 import type { CommunityFilters } from '../../src/services/community';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
@@ -143,7 +144,7 @@ export default function CommunityScreen() {
                 >
                     {!own.isPending &&
                         !own.isError &&
-                        !own.data?.is_visible && (
+                        !canUseDJProfile(own.data) && (
                             <View
                                 style={{
                                     padding: 20,
@@ -159,7 +160,7 @@ export default function CommunityScreen() {
                                         fontWeight: '800',
                                     }}
                                 >
-                                    {t('community.joinTitle')}
+                                    {t('socialProfile.completeTitle')}
                                 </Text>
                                 <Text
                                     style={{
@@ -168,10 +169,10 @@ export default function CommunityScreen() {
                                         fontSize: 13,
                                     }}
                                 >
-                                    {t('community.joinHint')}
+                                    {t('socialProfile.completeHint')}
                                 </Text>
                                 <CommunityButton
-                                    label={t('community.createProfile')}
+                                    label={t('socialProfile.completeAction')}
                                     onPress={() =>
                                         router.push('/profile?edit=1')
                                     }
@@ -297,7 +298,7 @@ export default function CommunityScreen() {
                                             !following.data?.includes(
                                                 profile.user_id,
                                             ) &&
-                                            !own.data?.is_visible
+                                            !canUseDJProfile(own.data)
                                         )
                                             router.push('/profile?edit=1');
                                         else
