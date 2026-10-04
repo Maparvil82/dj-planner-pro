@@ -1,3 +1,4 @@
+import { FEATURES } from '../src/config/features';
 import {
     FeeAgreementCard,
     ProLabel,
@@ -1004,64 +1005,69 @@ export default function AddSessionScreen() {
                                     </Text>
                                 </TouchableOpacity>
                             </View>
-                            <TouchableOpacity
-                                accessibilityRole="button"
-                                accessibilityState={{
-                                    selected: earningType === 'agreement',
-                                }}
-                                onPress={async () => {
-                                    const verified = await usage.refetch();
-                                    if (verified.isError) {
-                                        Alert.alert(
-                                            t('error'),
-                                            t('error_saving_session'),
-                                        );
-                                        return;
-                                    }
-                                    if (verified.data?.isPro)
-                                        setEarningType('agreement');
-                                    else
-                                        router.push(
-                                            '/paywall?reason=agreement',
-                                        );
-                                }}
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    padding: 14,
-                                    borderRadius: 14,
-                                    backgroundColor:
-                                        earningType === 'agreement'
-                                            ? isDark
-                                                ? '#292743'
-                                                : '#f0edfc'
-                                            : isDark
-                                              ? '#252d40'
-                                              : '#e9ecf3',
-                                    marginBottom: 16,
-                                }}
-                            >
-                                <Text
+                            {FEATURES.feeAgreements && (
+                                <TouchableOpacity
+                                    accessibilityRole="button"
+                                    accessibilityState={{
+                                        selected: earningType === 'agreement',
+                                    }}
+                                    onPress={async () => {
+                                        const verified = await usage.refetch();
+                                        if (verified.isError) {
+                                            Alert.alert(
+                                                t('error'),
+                                                t('error_saving_session'),
+                                            );
+                                            return;
+                                        }
+                                        if (verified.data?.isPro)
+                                            setEarningType('agreement');
+                                        else
+                                            router.push(
+                                                '/paywall?reason=agreement',
+                                            );
+                                    }}
                                     style={{
-                                        color: isDark ? '#bdb0f5' : '#6554df',
-                                        fontWeight: '800',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 8,
+                                        padding: 14,
+                                        borderRadius: 14,
+                                        backgroundColor:
+                                            earningType === 'agreement'
+                                                ? isDark
+                                                    ? '#292743'
+                                                    : '#f0edfc'
+                                                : isDark
+                                                  ? '#252d40'
+                                                  : '#e9ecf3',
+                                        marginBottom: 16,
                                     }}
                                 >
-                                    {t('agreement.title')}
-                                </Text>
-                                <ProLabel />
-                            </TouchableOpacity>
-                            {earningType === 'agreement' && (
-                                <FeeAgreementCard
-                                    value={feeAgreement}
-                                    onChange={setFeeAgreement}
-                                    onCurrency={setCurrency}
-                                    currency={currency}
-                                    names={isCollective ? selectedDjs : []}
-                                />
+                                    <Text
+                                        style={{
+                                            color: isDark
+                                                ? '#bdb0f5'
+                                                : '#6554df',
+                                            fontWeight: '800',
+                                        }}
+                                    >
+                                        {t('agreement.title')}
+                                    </Text>
+                                    <ProLabel />
+                                </TouchableOpacity>
                             )}
+                            {FEATURES.feeAgreements &&
+                                earningType === 'agreement' && (
+                                    <FeeAgreementCard
+                                        value={feeAgreement}
+                                        onChange={setFeeAgreement}
+                                        onCurrency={setCurrency}
+                                        currency={currency}
+                                        names={isCollective ? selectedDjs : []}
+                                    />
+                                )}
 
                             <View
                                 style={{

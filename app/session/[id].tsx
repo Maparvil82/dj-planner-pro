@@ -357,25 +357,27 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
 
-                {!session.is_guest && session.fee_agreement && (
-                    <View style={{ marginTop: 24 }}>
-                        <FeeAgreementCard
-                            value={session.fee_agreement}
-                            currency={session.currency}
-                            canSettle={sessionPhase(session) === 'finished'}
-                            onChange={(a) =>
-                                agreementUpdate.mutateAsync({
-                                    sessionId: session.id,
-                                    input: {
-                                        fee_agreement: a,
-                                        earning_amount: agreementAmount(a),
-                                    },
-                                    updateAll: false,
-                                })
-                            }
-                        />
-                    </View>
-                )}
+                {FEATURES.feeAgreements &&
+                    !session.is_guest &&
+                    session.fee_agreement && (
+                        <View style={{ marginTop: 24 }}>
+                            <FeeAgreementCard
+                                value={session.fee_agreement}
+                                currency={session.currency}
+                                canSettle={sessionPhase(session) === 'finished'}
+                                onChange={(a) =>
+                                    agreementUpdate.mutateAsync({
+                                        sessionId: session.id,
+                                        input: {
+                                            fee_agreement: a,
+                                            earning_amount: agreementAmount(a),
+                                        },
+                                        updateAll: false,
+                                    })
+                                }
+                            />
+                        </View>
+                    )}
                 {/* VAULT SECTION (MOVED TO BOTTOM) */}
                 {FEATURES.documents && (
                     <>

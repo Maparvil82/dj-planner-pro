@@ -221,7 +221,7 @@ export default function PaywallScreen() {
                         {t('billing.benefit')}
                     </Text>
                 </View>
-                {
+                {FEATURES.feeAgreements && (
                     <View
                         style={{
                             backgroundColor: c.tint,
@@ -243,7 +243,7 @@ export default function PaywallScreen() {
                             {t('agreement.proBenefit')}
                         </Text>
                     </View>
-                }
+                )}
                 {FEATURES.bookings && params.reason === 'bookings' && (
                     <View
                         style={{

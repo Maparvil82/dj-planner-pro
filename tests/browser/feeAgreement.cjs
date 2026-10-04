@@ -165,6 +165,52 @@ const errors = [];
             'utf8',
         ),
     ).agreement;
+    if (
+        /feeAgreements:\s*false/.test(
+            fs.readFileSync(
+                require('node:path').join(
+                    __dirname,
+                    '../../src/config/features.ts',
+                ),
+                'utf8',
+            ),
+        )
+    ) {
+        await page.goto('http://localhost:8081/add-session');
+        await page
+            .getByRole('textbox', {
+                name: 'Nombre del evento · Opcional',
+                exact: true,
+            })
+            .waitFor();
+        assert.equal(
+            await page
+                .getByRole('button', { name: 'Por acuerdo PRO', exact: true })
+                .count(),
+            0,
+        );
+        for (const name of ['Gratis', 'Por hora', 'Por sesión'])
+            await page.getByText(name, { exact: true }).waitFor();
+        await page.goto('http://localhost:8081/pro');
+        await page
+            .getByText(labels.proBenefit, { exact: true })
+            .waitFor({ state: 'hidden' });
+        await page.goto('http://localhost:8081/paywall?reason=agreement');
+        await page
+            .getByRole('button', { name: 'Restaurar Compras', exact: true })
+            .waitFor();
+        assert.equal(
+            await page.getByText(labels.proBenefit, { exact: true }).count(),
+            0,
+        );
+        assert.deepEqual(errors, []);
+        await context.close();
+        await browser.close();
+        console.log(
+            'PASS fee agreement hidden; original fee options and paywall preserved. Mock APIs.',
+        );
+        return;
+    }
     await page.goto('http://localhost:8081/add-session?date=2020-01-01');
     await page.getByText('Ej: Club Amnesia', { exact: true }).click();
     await page.getByText('Sala X', { exact: true }).last().click();

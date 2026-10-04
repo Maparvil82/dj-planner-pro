@@ -1,3 +1,4 @@
+import { FEATURES } from '../../config/features';
 import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -45,6 +46,7 @@ export function FeeAgreementCard({
     const usage = useSessionUsage();
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
+    if (!FEATURES.feeAgreements) return null;
     let amount: number | null = null;
     try {
         if (value) amount = calculateFeeAgreement(value, value.settled).owner;

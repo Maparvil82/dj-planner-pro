@@ -1,5 +1,7 @@
 # Por acuerdo · Pro
 
+**Oculto temporalmente:** `FEATURES.feeAgreements = false`. La opción, calculadora y promoción Pro no aparecen en la app. Se conservan el código y los datos; no hay cambios destructivos en la base de datos.
+
 ## Recorrido
 
 1. Al crear o editar una sesión, elegir **Por acuerdo · PRO** en Caché.
