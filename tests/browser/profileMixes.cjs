@@ -132,7 +132,17 @@ const errors = [];
         let body = [];
         if (url.pathname.includes('/auth/v1/user')) body = user;
         else if (url.pathname.includes('/auth/v1/token')) body = session;
-        else if (url.pathname.includes('/rpc/save_unified_profile')) {
+        else if (url.pathname.includes('/rpc/community_filter_options')) {
+            body = {
+                cities: [
+                    'SEvilla',
+                    'sevilla',
+                    'Barcelona',
+                    ...(current.is_visible ? [current.city] : []),
+                ],
+                genres: ['Jazz', 'House'],
+            };
+        } else if (url.pathname.includes('/rpc/save_unified_profile')) {
             const input = req.postDataJSON().input;
             current = { ...current, ...input };
             body = { profile: { ...current, id: user.id }, community: current };
@@ -231,6 +241,20 @@ const errors = [];
         exact: true,
     });
     await genre.waitFor();
+    const cityInput = page.getByRole('textbox', {
+        name: 'Ciudad *',
+        exact: true,
+    });
+    await cityInput.fill('sev');
+    await page.getByRole('button', { name: 'Sevilla', exact: true }).click();
+    assert.equal(await cityInput.inputValue(), 'Sevilla');
+    await cityInput.fill('  SÃO   PAULO  ');
+    await genre.click();
+    assert.equal(
+        await cityInput.inputValue(),
+        'São Paulo',
+        'Unknown worldwide city can be entered manually',
+    );
     assert.equal(
         await page.getByText('House', { exact: true }).count(),
         0,
@@ -266,10 +290,14 @@ const errors = [];
     };
     await page.goto('http://localhost:8081/edit-dj-profile?edit=1&setup=1');
     await page
+        .getByRole('textbox', { name: 'Ciudad *', exact: true })
+        .fill('  MaDRID  ');
+    await page
         .getByRole('button', { name: 'Publicar perfil y entrar', exact: true })
         .click();
     await page.waitForURL('**/community');
     await page.getByText('Sesiones', { exact: true }).waitFor();
+    assert.equal(current.city, 'Madrid', 'Saving normalizes the city');
     assert.equal(
         current.is_visible,
         true,
@@ -289,6 +317,17 @@ const errors = [];
             .inputValue(),
         'Madrid',
         'Editing hydrates saved city',
+    );
+    await page
+        .getByRole('textbox', { name: 'Ciudad *', exact: true })
+        .fill('ma');
+    await page.getByRole('button', { name: 'Madrid', exact: true }).click();
+    assert.equal(
+        await page
+            .getByRole('textbox', { name: 'Ciudad *', exact: true })
+            .inputValue(),
+        'Madrid',
+        'A newly published city becomes a suggestion',
     );
     await page
         .getByRole('button', { name: 'Cancelar', exact: true })

@@ -576,7 +576,9 @@
         "removeGenre": "Retirer {{name}}",
         "addGenre": "Ajouter {{name}}",
         "legacyGenres": "Vos anciens styles sont conservés. Vous pouvez les remplacer par les suggestions.",
-        "noGenres": "Aucun style trouvé. Essayez un autre nom."
+        "noGenres": "Aucun style trouvé. Essayez un autre nom.",
+        "cityHint": "Saisissez votre ville ou choisissez une suggestion. Si elle manque, vous pouvez quand même l’enregistrer.",
+        "cityUnavailable": "Les suggestions n’ont pas pu être chargées. Vous pouvez saisir et enregistrer votre ville."
     },
     "collaboration": {
         "pickerHint": "Recherchez des profils publics pour inviter des DJs. Vous pouvez aussi saisir des noms.",

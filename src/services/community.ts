@@ -1,5 +1,6 @@
 import type { UserProfile } from './profile';
 import { supabase } from '../lib/supabase';
+import { normalizeCity } from '../utils/cities';
 export interface CommunityProfile {
     user_id: string;
     artist_name: string;
@@ -66,7 +67,7 @@ export const communityService = {
         input: CommunityProfileInput,
     ): Promise<{ profile: UserProfile; community: CommunityProfile }> {
         const { data, error } = await supabase.rpc('save_unified_profile', {
-            input,
+            input: { ...input, city: normalizeCity(input.city) },
         });
         if (error) throw error;
         return data;

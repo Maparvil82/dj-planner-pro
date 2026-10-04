@@ -17,6 +17,7 @@ import { DJ_PLATFORMS } from '../../utils/communityLinks';
 import { isDJProfileComplete } from '../../utils/communityProfile';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
 import { MusicGenrePicker } from './MusicGenrePicker';
+import { CityInput } from './CityInput';
 
 type Props = {
     artistName: string;
@@ -358,12 +359,11 @@ export function DJProfileEditor(p: Props) {
                                         p.onName,
                                         80,
                                     )}
-                                    {field(
-                                        t('venue_city') + ' *',
-                                        p.city,
-                                        p.onCity,
-                                        100,
-                                    )}
+                                    <CityInput
+                                        value={p.city}
+                                        onChange={p.onCity}
+                                        disabled={p.busy}
+                                    />
                                     <MusicGenrePicker
                                         value={p.genres}
                                         onChange={p.onGenres}

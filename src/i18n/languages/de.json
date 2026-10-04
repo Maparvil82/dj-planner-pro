@@ -578,7 +578,9 @@
         "removeGenre": "{{name}} entfernen",
         "addGenre": "{{name}} hinzufügen",
         "legacyGenres": "Deine bisherigen Stile bleiben erhalten. Du kannst sie durch Vorschläge ersetzen.",
-        "noGenres": "Kein passender Stil. Versuche einen anderen Namen."
+        "noGenres": "Kein passender Stil. Versuche einen anderen Namen.",
+        "cityHint": "Gib deine Stadt ein oder wähle einen Vorschlag. Fehlt sie, kannst du sie trotzdem speichern.",
+        "cityUnavailable": "Die Vorschläge konnten nicht geladen werden. Du kannst deine Stadt weiterhin eingeben und speichern."
     },
     "collaboration": {
         "pickerHint": "Suche öffentliche Profile, um DJs einzuladen. Du kannst auch Namen manuell hinzufügen.",
