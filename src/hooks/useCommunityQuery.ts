@@ -57,6 +57,7 @@ export function useCommunityFeed(
     author: string | null = null,
     filters?: CommunityFilters,
     enabled = true,
+    search = '',
 ) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useInfiniteQuery({
@@ -68,10 +69,42 @@ export function useCommunityFeed(
             author,
             filters?.city || '',
             filters?.genre || '',
+            search,
         ],
         initialPageParam: 0,
         queryFn: ({ pageParam }) =>
-            communityService.feed(following, author, pageParam, filters),
+            communityService.feed(
+                following,
+                author,
+                pageParam,
+                filters,
+                search,
+            ),
+        enabled: enabled && !!userId,
+        getNextPageParam: (last, pages) =>
+            last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
+                ? pages.length * PAGE_SIZE
+                : undefined,
+    });
+}
+export function useCommunityFollowedDjs(
+    search: string,
+    filters?: CommunityFilters,
+    enabled = true,
+) {
+    const userId = useAuthStore((state) => state.session?.user.id);
+    return useInfiniteQuery({
+        queryKey: [
+            'community',
+            'followed-djs',
+            userId,
+            search,
+            filters?.city || '',
+            filters?.genre || '',
+        ],
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) =>
+            communityService.followedDjs(search, pageParam, filters),
         enabled: enabled && !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000

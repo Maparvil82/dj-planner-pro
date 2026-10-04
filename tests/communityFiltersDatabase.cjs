@@ -181,6 +181,79 @@ const discover = async (
     await role('authenticated');
     assert.equal((await feed()).length, 0);
     assert.equal((await discover()).length, 0);
+    await role('postgres');
+    await db.exec(
+        'alter table public.community_profiles add column city_location jsonb; grant select on public.community_follows to authenticated; alter table public.community_follows enable row level security; create policy own_follows on public.community_follows for select to authenticated using(follower_id=(select auth.uid()));',
+    );
+    const hybrid = fs.readFileSync(
+        'supabase/migrations/20261004131746_hybrid_city_lookup.sql',
+        'utf8',
+    );
+    await db.exec(
+        hybrid.slice(
+            hybrid.indexOf('create function community_private.city_label'),
+            hybrid.indexOf('-- RLS exposes'),
+        ),
+    );
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004134238_community_followed_djs_and_search.sql',
+            'utf8',
+        ),
+    );
+    await db.query(
+        'insert into public.community_follows values($1,$2),($3,$4)',
+        [uid(1), uid(4), uid(2), uid(3)],
+    );
+    await session(326);
+    await db.query("update sessions set title='Unique Night' where id=$1", [
+        uid(326),
+    ]);
+    await role('authenticated', uid(1));
+    const followed = async (name = '', city = '', genre = '') =>
+        (
+            await db.query('select * from community_followed_djs($1,$2,$3)', [
+                name,
+                city,
+                genre,
+            ])
+        ).rows;
+    assert.deepEqual(
+        (await followed()).map((p) => p.user_id),
+        [uid(5)],
+        'Following lists DJ profiles without requiring their own published sessions, excluding private profiles and other users follows',
+    );
+    assert.equal((await followed('pepe', 'barcelona', 'house')).length, 1);
+    assert.equal((await followed('pepe', 'madrid', 'house')).length, 0);
+    assert.equal(
+        (
+            await db.query(
+                "select * from community_feed_search(search_text=>'unique night', page_size=>1)",
+            )
+        ).rows[0].session_id,
+        uid(326),
+        'Text search applies before pagination',
+    );
+    assert.equal(
+        (
+            await db.query(
+                "select * from community_feed_search(search_text=>'Unique Night',filter_genre=>'House')",
+            )
+        ).rows.length,
+        0,
+        'Search composes with exact style filters',
+    );
+    await role('anon');
+    await assert.rejects(() => followed(), /permission denied/);
+    await assert.rejects(
+        () =>
+            db.query(
+                "select * from community_feed_search(search_text=>'unique')",
+            ),
+        /permission denied/,
+    );
+    await role('authenticated');
+    assert.equal((await followed()).length, 0);
     console.log(
         'PASS combined filters, exact genres, accent/case city matching, accepted collaborators, pagination, name search, private data exclusion and authenticated-only access.',
     );

@@ -34,7 +34,7 @@ const errors = [];
         city: 'Madrid',
         genres: 'House',
         bio: 'Music first',
-        avatar_url: null,
+        avatar_url: 'https://fixture.example/avatar.jpg',
         cover_url: null,
         is_visible: true,
     };
@@ -155,6 +155,25 @@ const errors = [];
         genres: 'House',
     };
     const context = await setup('es', 320, true, false);
+    const otherDj = {
+        ...dj,
+        user_id: fixtures[1].author_id,
+        artist_name: 'Luna',
+        city: 'Madrid',
+        genres: 'Techno',
+    };
+    const follows = new Set();
+    await context.route('https://fixture.example/avatar.jpg', (route) =>
+        route.fulfill({
+            contentType: 'image/jpeg',
+            body: fs.readFileSync(
+                require('node:path').join(
+                    __dirname,
+                    '../../assets/community/dj-welcome.jpg',
+                ),
+            ),
+        }),
+    );
     await context.route('**/*.supabase.co/**', async (route) => {
         const req = route.request(),
             url = new URL(req.url());
@@ -167,31 +186,59 @@ const errors = [];
                         : ['Madrid', 'Málaga'],
                 genres: ['House', 'Techno'],
             };
+        else if (url.pathname.endsWith('/community_follows')) {
+            if (req.method() === 'POST') {
+                follows.add(req.postDataJSON().following_id);
+                body = null;
+            } else if (req.method() === 'DELETE') {
+                follows.delete(
+                    url.searchParams.get('following_id').replace('eq.', ''),
+                );
+                body = null;
+            } else
+                body = [...follows].map((following_id) => ({ following_id }));
+        } else if (
+            url.pathname.endsWith('/rpc/community_followed_djs') ||
+            url.pathname.endsWith('/rpc/community_discover_filtered')
+        ) {
+            const args = req.postDataJSON();
+            filters.push(args);
+            body = [dj, otherDj].filter(
+                (x) =>
+                    (!url.pathname.endsWith('community_followed_djs') ||
+                        follows.has(x.user_id)) &&
+                    (!args.search_name ||
+                        x.artist_name
+                            .toLowerCase()
+                            .includes(args.search_name.toLowerCase())) &&
+                    (!args.filter_city || x.city === args.filter_city) &&
+                    (!args.filter_genre || x.genres === args.filter_genre),
+            );
+        } else if (
+            url.pathname.endsWith('/community_profiles') &&
+            url.searchParams.get('is_visible')
+        )
+            body = [dj, otherDj];
         else if (url.pathname.endsWith('/rpc/community_feed')) body = fixtures;
-        else if (url.pathname.endsWith('/rpc/community_feed_filtered')) {
+        else if (
+            url.pathname.endsWith('/rpc/community_feed_filtered') ||
+            url.pathname.endsWith('/rpc/community_feed_search')
+        ) {
             const args = req.postDataJSON();
             filters.push(args);
             body = fixtures.filter(
                 (x) =>
                     (!args.filter_city || args.filter_city === x.city) &&
                     (!args.filter_genre ||
-                        (args.filter_genre === 'House' &&
-                            x.artist_name === 'Pepe')),
+                        x.title
+                            .toLowerCase()
+                            .includes(args.filter_genre.toLowerCase())) &&
+                    (!args.search_text ||
+                        (x.title + ' ' + x.venue)
+                            .toLowerCase()
+                            .includes(args.search_text.toLowerCase())),
             );
-        } else if (url.pathname.endsWith('/rpc/community_discover_filtered')) {
-            const args = req.postDataJSON();
-            filters.push(args);
-            body =
-                args.filter_city === 'Barcelona' &&
-                (!args.filter_genre || args.filter_genre === 'House')
-                    ? [dj]
-                    : [];
-        } else if (
-            url.pathname.endsWith('/community_profiles') &&
-            url.searchParams.get('is_visible')
-        )
-            body = [dj];
-        else {
+        } else {
             await route.fallback();
             return;
         }
@@ -201,47 +248,105 @@ const errors = [];
             body: JSON.stringify(body),
         });
     });
+    const openFilters = () =>
+        page.getByRole('button', { name: 'Filtros', exact: true }).click();
+    const pick = async (kind, choice) => {
+        await page.getByRole('button', { name: kind, exact: true }).click();
+        await page.getByRole('button', { name: choice, exact: true }).click();
+    };
+    const apply = () =>
+        page
+            .getByRole('button', { name: 'Aplicar filtros', exact: true })
+            .click();
     await page.goto('http://localhost:8081/community');
     await page.getByText('Techno Madrid', { exact: true }).waitFor();
-    const city = () => page.getByRole('button', { name: /^Ciudad:/ });
-    const genre = () => page.getByRole('button', { name: /^Estilo:/ });
-    await city().click();
-    await page
-        .getByRole('textbox', {
-            name: labels.communityFilters.searchCity,
-            exact: true,
-        })
-        .fill('malaga');
-    await page.getByRole('button', { name: 'Málaga', exact: true }).click();
+    assert.equal(
+        await page.getByRole('button', { name: 'Ciudad', exact: true }).count(),
+        0,
+        'Filters are inside the search action, not standalone buttons',
+    );
+    await openFilters();
+    await pick('Ciudad', 'Málaga');
+    await pick('Estilo', 'House');
+    await apply();
     await page.getByText('House Málaga', { exact: true }).waitFor();
     assert.equal(
         await page.getByText('Techno Madrid', { exact: true }).count(),
         0,
     );
-    await genre().click();
     await page
         .getByRole('textbox', {
-            name: labels.communityFilters.searchGenre,
+            name: labels.community.searchSessions,
             exact: true,
         })
-        .fill('house');
-    await page.getByRole('button', { name: 'House', exact: true }).click();
-    await page.getByText('House Málaga', { exact: true }).waitFor();
+        .fill('Club A');
+    await page.waitForResponse(
+        (r) =>
+            r.url().includes('community_feed_search') &&
+            r.request().postDataJSON().search_text === 'Club A',
+    );
     assert.ok(
         filters.some(
-            (x) => x.filter_city === 'Málaga' && x.filter_genre === 'House',
+            (x) =>
+                x.filter_city === 'Málaga' &&
+                x.filter_genre === 'House' &&
+                x.search_text === 'Club A',
         ),
     );
-    await page.screenshot({
-        path: '/private/tmp/djplanner-community-filters.png',
-    });
     await page
         .getByRole('button', { name: labels.community.djs, exact: true })
         .click();
-    await city().click();
-    await page.getByRole('button', { name: 'Barcelona', exact: true }).click();
-    await genre().click();
-    await page.getByRole('button', { name: 'House', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
+        .waitFor();
+    const a = await page
+        .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
+        .boundingBox();
+    const b = await page
+        .getByRole('button', { name: 'Ver perfil: Luna', exact: true })
+        .boundingBox();
+    assert.ok(
+        Math.abs(a.y - b.y) < 2 && b.x > a.x + a.width,
+        'DJs appear in two columns at 320px',
+    );
+    await page.screenshot({
+        path: '/private/tmp/djplanner-community-dj-grid.png',
+    });
+    await page
+        .getByRole('button', { name: 'Seguir Pepe', exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: 'Dejar de seguir Pepe', exact: true })
+        .waitFor();
+    await page
+        .getByRole('button', { name: labels.community.following, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
+        .waitFor();
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Ver perfil: Luna', exact: true })
+            .count(),
+        0,
+        'Only followed DJs appear, regardless of any session feed',
+    );
+    await page.screenshot({
+        path: '/private/tmp/djplanner-community-following.png',
+    });
+    await page
+        .getByRole('button', { name: 'Dejar de seguir Pepe', exact: true })
+        .click();
+    await page
+        .getByText(labels.community.noFollowingDjs, { exact: true })
+        .waitFor();
+    await page
+        .getByRole('button', { name: labels.community.djs, exact: true })
+        .click();
+    await openFilters();
+    await pick('Ciudad', 'Barcelona');
+    await pick('Estilo', 'House');
+    await apply();
     await page
         .getByRole('textbox', { name: labels.community.search, exact: true })
         .fill('Pepe');
@@ -259,35 +364,45 @@ const errors = [];
         ),
     );
     await page
-        .getByRole('button', {
-            name: labels.communityFilters.clear,
-            exact: true,
-        })
+        .getByRole('button', { name: 'Quitar filtro Barcelona', exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: 'Quitar filtro House', exact: true })
+        .click();
+    await openFilters();
+    await pick('Ciudad', 'Madrid');
+    await page
+        .getByRole('button', { name: 'Cancelar', exact: true })
+        .last()
         .click();
     assert.equal(
         await page
-            .getByRole('button', {
-                name: labels.communityFilters.clear,
-                exact: true,
-            })
+            .getByRole('button', { name: 'Quitar filtro Madrid', exact: true })
             .count(),
         0,
+        'Cancelling discards unapplied filters',
     );
-    await page
-        .getByRole('button', { name: labels.community.following, exact: true })
-        .click();
-    assert.equal(await city().count(), 0);
     await page
         .getByRole('button', { name: labels.community.sessions, exact: true })
         .click();
     await page
-        .getByRole('button', { name: 'Ciudad: Málaga', exact: true })
+        .getByRole('button', { name: 'Quitar filtro Málaga', exact: true })
         .waitFor();
+    assert.equal(
+        await page
+            .getByRole('textbox', {
+                name: labels.community.searchSessions,
+                exact: true,
+            })
+            .inputValue(),
+        'Club A',
+        'Search is independent between tabs',
+    );
     assert.deepEqual(errors, []);
     await context.close();
     await browser.close();
     console.log(
-        'PASS session and DJ filters, combinations, accent search, separate tab state, name search and clearing at 320px dark. Mock APIs.',
+        'PASS: two-column DJ cards at 320px, follow/unfollow list updates, filters inside search, combined search, cancel and independent tab state. Mock APIs.',
     );
 })().catch(async (e) => {
     console.error(e);

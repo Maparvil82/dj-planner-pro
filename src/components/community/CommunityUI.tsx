@@ -3,7 +3,14 @@ import {
     sessionDisplaySubtitle,
 } from '../../utils/sessionNaming';
 import { PosterFrameImage } from '../sessions/PosterFrameImage';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ActivityIndicator,
+    Image,
+} from 'react-native';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -154,73 +161,119 @@ export function CommunityProfileCard({
     const c = useCommunityColors();
     const { t } = useTranslation();
     const router = useRouter();
+    const [failedImage, setFailedImage] = useState<string | null>(null);
     return (
         <View
             style={{
+                flex: 1,
                 backgroundColor: c.card,
-                borderRadius: 24,
+                borderRadius: 22,
                 borderWidth: 1,
                 borderColor: c.border,
-                padding: 18,
-                gap: 16,
+                overflow: 'hidden',
             }}
         >
             <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel={`${t('community.viewProfile')}: ${profile.artist_name}`}
                 onPress={() => router.push(`/community/${profile.user_id}`)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
             >
-                <Avatar
-                    name={profile.artist_name}
-                    url={profile.avatar_url}
-                    size="lg"
-                />
-                <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-                    <Text
-                        style={{ color: c.fg, fontSize: 17, fontWeight: '800' }}
-                    >
-                        {profile.artist_name}
-                    </Text>
-                    {!!profile.city && (
-                        <Text style={{ color: c.muted, fontSize: 12 }}>
-                            {profile.city}
-                        </Text>
-                    )}
-                    {!!profile.genres && (
+                <View
+                    style={{
+                        aspectRatio: 1.2,
+                        backgroundColor: c.tint,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    {profile.avatar_url &&
+                    failedImage !== profile.avatar_url ? (
+                        <Image
+                            source={{ uri: profile.avatar_url }}
+                            resizeMode="cover"
+                            onError={() => setFailedImage(profile.avatar_url)}
+                            style={{ width: '100%', height: '100%' }}
+                        />
+                    ) : (
                         <Text
-                            numberOfLines={2}
-                            style={{ color: c.accent, fontSize: 12 }}
+                            style={{
+                                color: c.accent,
+                                fontWeight: '800',
+                                fontSize: 38,
+                            }}
                         >
-                            {profile.genres}
+                            {profile.artist_name.trim().charAt(0).toUpperCase()}
                         </Text>
                     )}
                 </View>
-                <ChevronRight size={18} color={c.muted} />
+                <View style={{ padding: 13, paddingBottom: 8, gap: 6 }}>
+                    <Text
+                        numberOfLines={2}
+                        style={{
+                            color: c.fg,
+                            fontSize: 16,
+                            lineHeight: 20,
+                            fontWeight: '800',
+                        }}
+                    >
+                        {profile.artist_name}
+                    </Text>
+                    <Text
+                        numberOfLines={2}
+                        style={{
+                            color: c.muted,
+                            fontSize: 12,
+                            lineHeight: 16,
+                        }}
+                    >
+                        {[profile.city, profile.city_location?.country]
+                            .filter(Boolean)
+                            .join(' · ')}
+                    </Text>
+                    <Text
+                        numberOfLines={2}
+                        style={{
+                            color: c.accent,
+                            fontSize: 12,
+                            lineHeight: 16,
+                        }}
+                    >
+                        {profile.genres}
+                    </Text>
+                </View>
             </TouchableOpacity>
-            {!!profile.bio && (
-                <Text
-                    numberOfLines={2}
-                    style={{ color: c.muted, lineHeight: 20, fontSize: 13 }}
-                >
-                    {profile.bio}
-                </Text>
-            )}
-            {!own && (
-                <CommunityButton
-                    label={t(
-                        following ? 'community.unfollow' : 'community.follow',
-                    )}
-                    accessibilityLabel={`${t(following ? 'community.unfollow' : 'community.follow')} ${profile.artist_name}`}
-                    onPress={onFollow}
-                    busy={busy}
-                    disabled={disabled}
-                    secondary={following}
-                />
-            )}
+            <View style={{ padding: 12, paddingTop: 2, marginTop: 'auto' }}>
+                {!own ? (
+                    <CommunityButton
+                        label={t(
+                            following
+                                ? 'community.following'
+                                : 'community.follow',
+                        )}
+                        accessibilityLabel={`${t(following ? 'community.unfollow' : 'community.follow')} ${profile.artist_name}`}
+                        onPress={onFollow}
+                        busy={busy}
+                        disabled={disabled}
+                        secondary={following}
+                    />
+                ) : (
+                    <View
+                        style={{
+                            minHeight: 46,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Text style={{ color: c.muted, fontSize: 12 }}>
+                            {t('community.myProfile')}
+                        </Text>
+                    </View>
+                )}
+            </View>
         </View>
     );
 }
+
 export function CommunitySessionCard({
     item,
     showAuthor = true,

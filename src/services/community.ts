@@ -129,6 +129,21 @@ export const communityService = {
         if (error) throw error;
         return data || { cities: [], genres: [] };
     },
+    async followedDjs(
+        search: string,
+        offset: number,
+        filters?: CommunityFilters,
+    ): Promise<CommunityProfile[]> {
+        const { data, error } = await supabase.rpc('community_followed_djs', {
+            search_name: search,
+            filter_city: filters?.city || '',
+            filter_genre: filters?.genre || '',
+            page_offset: offset,
+            page_size: PAGE_SIZE,
+        });
+        if (error) throw error;
+        return data || [];
+    },
     async following(userId: string): Promise<string[]> {
         const ids: string[] = [];
         // The Data API caps each response. Fetch every page before deciding
@@ -163,15 +178,22 @@ export const communityService = {
         author: string | null,
         offset: number,
         filters?: CommunityFilters,
+        search = '',
     ): Promise<CommunitySession[]> {
         const { data, error } = await supabase.rpc(
-            filters?.city || filters?.genre
-                ? 'community_feed_filtered'
-                : 'community_feed',
+            search.trim()
+                ? 'community_feed_search'
+                : filters?.city || filters?.genre
+                  ? 'community_feed_filtered'
+                  : 'community_feed',
             {
-                ...(filters?.city || filters?.genre
-                    ? { filter_city: filters.city, filter_genre: filters.genre }
+                ...(filters?.city || filters?.genre || search.trim()
+                    ? {
+                          filter_city: filters?.city || '',
+                          filter_genre: filters?.genre || '',
+                      }
                     : {}),
+                ...(search.trim() ? { search_text: search.trim() } : {}),
                 only_following: following,
                 author,
                 page_offset: offset,

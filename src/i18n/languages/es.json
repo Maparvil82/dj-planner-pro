@@ -533,7 +533,10 @@
         "sessionPublic": "Esta sesión es visible para los DJs de Comunidad.",
         "sessionHidden": "Esta sesión está compartida, pero permanece oculta mientras tu perfil esté desactivado o la sesión esté cancelada.",
         "sessionPrivate": "Esta sesión solo aparece en tu agenda privada.",
-        "confirmFirst": "Reactiva la sesión para poder publicarla."
+        "confirmFirst": "Reactiva la sesión para poder publicarla.",
+        "searchSessions": "Buscar sesiones o lugares…",
+        "noFollowingDjs": "Todavía no sigues a ningún DJ",
+        "noFollowingDjsHint": "Descubre DJs y pulsa Seguir. Sus perfiles aparecerán aquí, aunque no hayan publicado sesiones."
     },
     "unifiedProfile": {
         "title": "Mi perfil",
@@ -994,7 +997,12 @@
         "genreHint": "Estilos musicales de los DJs. En sesiones, también se incluyen los participantes aceptados.",
         "noOptions": "No hay opciones que coincidan.",
         "noResults": "No hay resultados con estos filtros",
-        "noResultsHint": "Prueba otra ciudad o estilo, o limpia los filtros."
+        "noResultsHint": "Prueba otra ciudad o estilo, o limpia los filtros.",
+        "title": "Filtros",
+        "apply": "Aplicar filtros",
+        "back": "Volver a filtros",
+        "clearSearch": "Borrar búsqueda",
+        "removeFilter": "Quitar filtro {{name}}"
     },
     "socialProfile": {
         "completeTitle": "Completa tu perfil de DJ",

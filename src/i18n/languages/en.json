@@ -537,7 +537,10 @@
         "sessionPublic": "This session is visible to DJs in Community.",
         "sessionHidden": "This session is shared but hidden while your profile is inactive or the booking is unconfirmed.",
         "sessionPrivate": "This session only appears in your private agenda.",
-        "confirmFirst": "You can only publish confirmed sessions."
+        "confirmFirst": "You can only publish confirmed sessions.",
+        "searchSessions": "Search sessions or venues…",
+        "noFollowingDjs": "You are not following any DJs yet",
+        "noFollowingDjsHint": "Discover DJs and tap Follow. Their profiles will appear here even if they have not shared sessions."
     },
     "unifiedProfile": {
         "title": "My profile",
@@ -998,7 +1001,12 @@
         "genreHint": "DJ music genres. Sessions also include accepted participants.",
         "noOptions": "No matching options.",
         "noResults": "No results for these filters",
-        "noResultsHint": "Try another city or genre, or clear the filters."
+        "noResultsHint": "Try another city or genre, or clear the filters.",
+        "title": "Filters",
+        "apply": "Apply filters",
+        "back": "Back to filters",
+        "clearSearch": "Clear search",
+        "removeFilter": "Remove {{name}} filter"
     },
     "socialProfile": {
         "completeTitle": "Complete your DJ profile",

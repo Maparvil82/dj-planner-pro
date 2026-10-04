@@ -532,7 +532,10 @@
         "sessionPublic": "このセッションはコミュニティのDJに表示されます。",
         "sessionHidden": "共有済みですが、プロフィールが無効または予約が未確定の間は非表示です。",
         "sessionPrivate": "このセッションは自分の非公開カレンダーにのみ表示されます。",
-        "confirmFirst": "確定済みセッションのみ公開できます。"
+        "confirmFirst": "確定済みセッションのみ公開できます。",
+        "searchSessions": "セッションや会場を検索…",
+        "noFollowingDjs": "まだDJをフォローしていません",
+        "noFollowingDjsHint": "DJを見つけてフォローしてください。セッションを公開していなくても、プロフィールがここに表示されます。"
     },
     "unifiedProfile": {
         "title": "自分のプロフィール",
@@ -993,7 +996,12 @@
         "genreHint": "DJの音楽ジャンル。セッションには参加を承認したDJも含まれます。",
         "noOptions": "一致する候補がありません。",
         "noResults": "この条件に一致する結果はありません",
-        "noResultsHint": "別の都市やジャンルを選ぶか、フィルターを解除してください。"
+        "noResultsHint": "別の都市やジャンルを選ぶか、フィルターを解除してください。",
+        "title": "フィルター",
+        "apply": "フィルターを適用",
+        "back": "フィルターに戻る",
+        "clearSearch": "検索をクリア",
+        "removeFilter": "{{name}}フィルターを解除"
     },
     "socialProfile": {
         "completeTitle": "DJプロフィールを完成させよう",
