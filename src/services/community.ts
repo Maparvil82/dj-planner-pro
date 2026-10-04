@@ -106,33 +106,16 @@ export const communityService = {
         offset: number,
         filters?: CommunityFilters,
     ): Promise<CommunityProfile[]> {
-        if (filters?.city || filters?.genre) {
-            const { data, error } = await supabase.rpc(
-                'community_discover_filtered',
-                {
-                    search_name: search,
-                    filter_city: filters.city,
-                    filter_genre: filters.genre,
-                    page_offset: offset,
-                    page_size: PAGE_SIZE,
-                },
-            );
-            if (error) throw error;
-            return data || [];
-        }
-        let query = supabase
-            .from('community_profiles')
-            .select('*')
-            .eq('is_visible', true)
-            .order('created_at', { ascending: false })
-            .order('user_id')
-            .range(offset, offset + PAGE_SIZE - 1);
-        if (search.trim())
-            query = query.ilike(
-                'artist_name',
-                `%${search.trim().replace(/[\\%_]/g, '\\$&')}%`,
-            );
-        const { data, error } = await query;
+        const { data, error } = await supabase.rpc(
+            'community_discover_filtered',
+            {
+                search_name: search,
+                filter_city: filters?.city || '',
+                filter_genre: filters?.genre || '',
+                page_offset: offset,
+                page_size: PAGE_SIZE,
+            },
+        );
         if (error) throw error;
         return data || [];
     },

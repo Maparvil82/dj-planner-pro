@@ -251,6 +251,48 @@ const discover = async (
         ),
     );
     await role('authenticated', uid(1));
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004233501_community_discover_exclude_self.sql',
+            'utf8',
+        ),
+    );
+    await role('authenticated', uid(1));
+    const discovery = async (
+        search = '',
+        city = '',
+        genre = '',
+        offset = 0,
+        size = 20,
+    ) =>
+        (
+            await db.query(
+                'select * from community_discover_filtered($1,$2,$3,$4,$5)',
+                [search, city, genre, offset, size],
+            )
+        ).rows;
+    assert.ok(
+        !(await discovery()).some((p) => p.user_id === uid(1)),
+        'Viewer excluded from unfiltered discovery',
+    );
+    assert.equal(
+        (await discovery('Viewer', 'Sevilla', 'House')).length,
+        0,
+        'Viewer excluded with combined filters',
+    );
+    const first = await discovery('', '', '', 0, 2);
+    const second = await discovery('', '', '', 2, 2);
+    assert.equal(
+        first.length,
+        2,
+        'Self exclusion happens before the page limit',
+    );
+    assert.equal(
+        new Set([...first, ...second].map((p) => p.user_id)).size,
+        3,
+        'All other public DJs can be paginated without gaps',
+    );
     const counts = async () =>
         (
             await db.query(

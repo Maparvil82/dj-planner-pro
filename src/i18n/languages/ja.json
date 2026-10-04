@@ -482,6 +482,9 @@
         "notFound": "会場が見つかりません。"
     },
     "community": {
+        "sessionsTabHint": "DJが公開した出演予定やイベント。",
+        "followingTabHint": "フォロー中のDJをまとめて表示。",
+        "djsTabHint": "名前・都市・ジャンルでDJを見つけよう。",
         "title": "コミュニティ",
         "intro": "DJとつながり、セッションを見つけよう。",
         "myProfile": "自分のプロフィール",

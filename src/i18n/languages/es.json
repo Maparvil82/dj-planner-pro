@@ -483,6 +483,9 @@
         "notFound": "No se encontró el lugar."
     },
     "community": {
+        "sessionsTabHint": "Actuaciones que los DJs han decidido compartir.",
+        "followingTabHint": "Los DJs que sigues, reunidos en un solo lugar.",
+        "djsTabHint": "Descubre DJs por nombre, ciudad o estilo.",
         "title": "Comunidad",
         "intro": "Conecta con DJs y descubre sus sesiones.",
         "myProfile": "Mi perfil",

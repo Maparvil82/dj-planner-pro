@@ -483,6 +483,9 @@
         "notFound": "Ort nicht gefunden."
     },
     "community": {
+        "sessionsTabHint": "Auftritte, die DJs mit der Community teilen.",
+        "followingTabHint": "Die DJs, denen du folgst, an einem Ort.",
+        "djsTabHint": "Entdecke DJs nach Name, Stadt oder Stil.",
         "title": "Community",
         "intro": "Vernetze dich mit DJs und entdecke ihre Sessions.",
         "myProfile": "Mein Profil",

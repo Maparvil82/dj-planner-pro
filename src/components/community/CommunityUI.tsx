@@ -42,6 +42,7 @@ export function CommunityButton({
     busy = false,
     secondary = false,
     accessibilityLabel,
+    compact = false,
 }: {
     label: string;
     onPress: () => void;
@@ -49,6 +50,7 @@ export function CommunityButton({
     busy?: boolean;
     secondary?: boolean;
     accessibilityLabel?: string;
+    compact?: boolean;
 }) {
     const c = useCommunityColors();
     return (
@@ -59,9 +61,9 @@ export function CommunityButton({
             disabled={disabled || busy}
             onPress={onPress}
             style={{
-                minHeight: 46,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
+                minHeight: compact ? 44 : 46,
+                paddingHorizontal: compact ? 8 : 16,
+                paddingVertical: compact ? 8 : 12,
                 borderRadius: 14,
                 backgroundColor: secondary ? c.tint : '#6554df',
                 alignItems: 'center',
@@ -75,7 +77,7 @@ export function CommunityButton({
                 <Text
                     style={{
                         color: secondary ? c.accent : '#fff',
-                        fontSize: 13,
+                        fontSize: compact ? 12 : 13,
                         fontWeight: '700',
                         textAlign: 'center',
                     }}
@@ -169,7 +171,7 @@ export function CommunityProfileCard({
             style={{
                 flex: 1,
                 backgroundColor: c.card,
-                borderRadius: 26,
+                borderRadius: 22,
                 shadowColor: '#202538',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: c.dark ? 0 : 0.05,
@@ -186,10 +188,10 @@ export function CommunityProfileCard({
             >
                 <View
                     style={{
-                        aspectRatio: 0.92,
-                        margin: 7,
+                        aspectRatio: 1.55,
+                        margin: 6,
                         marginBottom: 0,
-                        borderRadius: 20,
+                        borderRadius: 16,
                         overflow: 'hidden',
                         backgroundColor: c.tint,
                         alignItems: 'center',
@@ -208,7 +210,7 @@ export function CommunityProfileCard({
                         <Text
                             style={{
                                 color: c.accent,
-                                fontWeight: '800',
+                                fontWeight: '700',
                                 fontSize: 38,
                             }}
                         >
@@ -247,20 +249,20 @@ export function CommunityProfileCard({
                         </Text>
                     </View>
                 </View>
-                <View style={{ padding: 13, paddingBottom: 8, gap: 6 }}>
+                <View style={{ padding: 10, paddingBottom: 8, gap: 3 }}>
                     <Text
-                        numberOfLines={2}
+                        numberOfLines={1}
                         style={{
                             color: c.fg,
-                            fontSize: 16,
-                            lineHeight: 20,
-                            fontWeight: '800',
+                            fontSize: 14,
+                            lineHeight: 18,
+                            fontWeight: '700',
                         }}
                     >
                         {profile.artist_name}
                     </Text>
                     <Text
-                        numberOfLines={2}
+                        numberOfLines={1}
                         style={{
                             color: c.muted,
                             fontSize: 12,
@@ -272,7 +274,7 @@ export function CommunityProfileCard({
                             .join(' · ')}
                     </Text>
                     <Text
-                        numberOfLines={2}
+                        numberOfLines={1}
                         style={{
                             color: c.accent,
                             fontSize: 12,
@@ -283,9 +285,10 @@ export function CommunityProfileCard({
                     </Text>
                 </View>
             </TouchableOpacity>
-            <View style={{ padding: 12, paddingTop: 2, marginTop: 'auto' }}>
+            <View style={{ padding: 10, paddingTop: 0, marginTop: 'auto' }}>
                 {!own ? (
                     <CommunityButton
+                        compact
                         label={t(
                             following
                                 ? 'community.unfollow'

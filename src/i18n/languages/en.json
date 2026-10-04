@@ -487,6 +487,9 @@
         "notFound": "Venue not found."
     },
     "community": {
+        "sessionsTabHint": "Performances that DJs have chosen to share.",
+        "followingTabHint": "The DJs you follow, all in one place.",
+        "djsTabHint": "Discover DJs by name, city or style.",
         "title": "Community",
         "intro": "Connect with DJs and discover their sessions.",
         "myProfile": "My profile",

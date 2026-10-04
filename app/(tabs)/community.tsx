@@ -134,7 +134,9 @@ export default function CommunityScreen() {
         void following.refetch();
     };
     const profiles =
-        (tab === 'following' ? followedDjs : discover).data?.pages.flat() || [];
+        (tab === 'following' ? followedDjs : discover).data?.pages
+            .flat()
+            .filter((profile) => profile.user_id !== userId) || [];
     const counts = useCommunitySessionCounts(
         profiles.map((profile) => profile.user_id),
         socialReady && tab !== 'sessions',
@@ -254,6 +256,16 @@ export default function CommunityScreen() {
                                     </TouchableOpacity>
                                 ))}
                             </View>
+                            <Text
+                                style={{
+                                    color: c.muted,
+                                    fontSize: 12,
+                                    lineHeight: 17,
+                                    marginTop: -6,
+                                }}
+                            >
+                                {t(`community.${tab}TabHint`)}
+                            </Text>
                             <CommunityFiltersBar
                                 value={activeFilters}
                                 onChange={setFilters}

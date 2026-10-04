@@ -187,12 +187,10 @@ const errors = [];
                 genres: ['House', 'Techno'],
             };
         else if (url.pathname.endsWith('/rpc/community_profile_session_counts'))
-            body = req
-                .postDataJSON()
-                .author_ids.map((user_id) => ({
-                    user_id,
-                    session_count: user_id === dj.user_id ? 27 : 0,
-                }));
+            body = req.postDataJSON().author_ids.map((user_id) => ({
+                user_id,
+                session_count: user_id === dj.user_id ? 27 : 0,
+            }));
         else if (url.pathname.endsWith('/community_follows')) {
             if (req.method() === 'POST') {
                 follows.add(req.postDataJSON().following_id);
@@ -214,6 +212,7 @@ const errors = [];
                 (x) =>
                     (!url.pathname.endsWith('community_followed_djs') ||
                         follows.has(x.user_id)) &&
+                    x.user_id !== user.id &&
                     (!args.search_name ||
                         x.artist_name
                             .toLowerCase()
@@ -315,6 +314,16 @@ const errors = [];
     assert.ok(
         Math.abs(a.y - b.y) < 2 && b.x > a.x + a.width,
         'DJs appear in two columns at 320px',
+    );
+    assert.ok(
+        a.height < 180,
+        'Profile photo and metadata remain compact at 320px',
+    );
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Ver perfil: DJ Demo', exact: true })
+            .count(),
+        0,
     );
     await page
         .getByLabel(`27 ${labels.community.sessions}`, { exact: true })
