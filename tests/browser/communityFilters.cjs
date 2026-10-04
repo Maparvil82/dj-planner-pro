@@ -186,6 +186,13 @@ const errors = [];
                         : ['Madrid', 'Málaga'],
                 genres: ['House', 'Techno'],
             };
+        else if (url.pathname.endsWith('/rpc/community_profile_session_counts'))
+            body = req
+                .postDataJSON()
+                .author_ids.map((user_id) => ({
+                    user_id,
+                    session_count: user_id === dj.user_id ? 27 : 0,
+                }));
         else if (url.pathname.endsWith('/community_follows')) {
             if (req.method() === 'POST') {
                 follows.add(req.postDataJSON().following_id);
@@ -309,6 +316,12 @@ const errors = [];
         Math.abs(a.y - b.y) < 2 && b.x > a.x + a.width,
         'DJs appear in two columns at 320px',
     );
+    await page
+        .getByLabel(`27 ${labels.community.sessions}`, { exact: true })
+        .waitFor();
+    await page
+        .getByLabel(`0 ${labels.community.sessions}`, { exact: true })
+        .waitFor();
     await page.screenshot({
         path: '/private/tmp/djplanner-community-dj-grid.png',
     });

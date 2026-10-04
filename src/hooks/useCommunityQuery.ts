@@ -166,3 +166,14 @@ export function useCommunityMutation() {
         },
     });
 }
+
+export function useCommunitySessionCounts(ids: string[], enabled = true) {
+    const viewer = useAuthStore((state) => state.session?.user.id);
+    const sortedIds = [...new Set(ids)].sort();
+    return useQuery({
+        queryKey: ['community', 'session-counts', viewer, sortedIds],
+        queryFn: () => communityService.sessionCounts(sortedIds),
+        enabled: enabled && !!viewer && sortedIds.length > 0,
+        staleTime: 60000,
+    });
+}

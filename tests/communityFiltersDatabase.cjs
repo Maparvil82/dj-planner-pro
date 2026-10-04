@@ -243,6 +243,39 @@ const discover = async (
         0,
         'Search composes with exact style filters',
     );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004140016_community_profile_session_counts.sql',
+            'utf8',
+        ),
+    );
+    await role('authenticated', uid(1));
+    const counts = async () =>
+        (
+            await db.query(
+                'select * from community_profile_session_counts($1::uuid[])',
+                [[uid(2), uid(4), uid(5)]],
+            )
+        ).rows;
+    const rows = await counts();
+    assert.equal(
+        Number(rows.find((r) => r.user_id === uid(5)).session_count),
+        1,
+        'Accepted collaborator counts only public shared sessions',
+    );
+    assert.ok(
+        Number(rows.find((r) => r.user_id === uid(2)).session_count) > 20,
+        'Counts are independent of feed pagination',
+    );
+    assert.ok(
+        !rows.some((r) => r.user_id === uid(4)),
+        'Hidden profile counts are not exposed',
+    );
+    await role('authenticated');
+    assert.equal((await counts()).length, 0);
+    await role('anon');
+    await assert.rejects(() => counts(), /permission denied/);
     await role('anon');
     await assert.rejects(() => followed(), /permission denied/);
     await assert.rejects(

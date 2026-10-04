@@ -26,6 +26,7 @@ import {
 } from '../../src/components/community/CommunityUI';
 import {
     useCommunityDiscover,
+    useCommunitySessionCounts,
     useCommunityFollowedDjs,
     useCommunityFilterOptions,
     useCommunityFeed,
@@ -134,8 +135,13 @@ export default function CommunityScreen() {
     };
     const profiles =
         (tab === 'following' ? followedDjs : discover).data?.pages.flat() || [];
+    const counts = useCommunitySessionCounts(
+        profiles.map((profile) => profile.user_id),
+        socialReady && tab !== 'sessions',
+    );
     const sessions = feed.data?.pages.flat() || [];
     const refresh = () => {
+        if (tab !== 'sessions') void counts.refetch();
         void active.refetch();
         void filterOptions.refetch();
         void own.refetch();
@@ -303,6 +309,13 @@ export default function CommunityScreen() {
                                                         )
                                                         .map((profile) => (
                                                             <CommunityProfileCard
+                                                                sessionCount={
+                                                                    counts
+                                                                        .data?.[
+                                                                        profile
+                                                                            .user_id
+                                                                    ]
+                                                                }
                                                                 key={
                                                                     profile.user_id
                                                                 }

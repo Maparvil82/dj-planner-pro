@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, CalendarDays } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Avatar } from '../ui/Avatar';
@@ -145,6 +145,7 @@ export function CommunityMessage({
 }
 export function CommunityProfileCard({
     profile,
+    sessionCount,
     following,
     own,
     busy,
@@ -152,6 +153,7 @@ export function CommunityProfileCard({
     onFollow,
 }: {
     profile: CommunityProfile;
+    sessionCount?: number;
     following: boolean;
     own: boolean;
     busy: boolean;
@@ -167,10 +169,14 @@ export function CommunityProfileCard({
             style={{
                 flex: 1,
                 backgroundColor: c.card,
-                borderRadius: 22,
+                borderRadius: 26,
+                shadowColor: '#202538',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: c.dark ? 0 : 0.05,
+                shadowRadius: 12,
+                elevation: 2,
                 borderWidth: 1,
                 borderColor: c.border,
-                overflow: 'hidden',
             }}
         >
             <TouchableOpacity
@@ -180,7 +186,11 @@ export function CommunityProfileCard({
             >
                 <View
                     style={{
-                        aspectRatio: 1.2,
+                        aspectRatio: 0.92,
+                        margin: 7,
+                        marginBottom: 0,
+                        borderRadius: 20,
+                        overflow: 'hidden',
                         backgroundColor: c.tint,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -205,6 +215,37 @@ export function CommunityProfileCard({
                             {profile.artist_name.trim().charAt(0).toUpperCase()}
                         </Text>
                     )}
+                    <View
+                        accessible
+                        accessibilityLabel={
+                            sessionCount === undefined
+                                ? t('community.loading')
+                                : `${sessionCount} ${t('community.sessions')}`
+                        }
+                        style={{
+                            position: 'absolute',
+                            top: 9,
+                            right: 9,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 5,
+                            backgroundColor: 'rgba(16,18,28,0.62)',
+                            borderRadius: 20,
+                            paddingHorizontal: 8,
+                            paddingVertical: 5,
+                        }}
+                    >
+                        <CalendarDays size={12} color="#fff" />
+                        <Text
+                            style={{
+                                color: '#fff',
+                                fontSize: 11,
+                                fontWeight: '700',
+                            }}
+                        >
+                            {sessionCount === undefined ? '—' : sessionCount}
+                        </Text>
+                    </View>
                 </View>
                 <View style={{ padding: 13, paddingBottom: 8, gap: 6 }}>
                     <Text
@@ -247,7 +288,7 @@ export function CommunityProfileCard({
                     <CommunityButton
                         label={t(
                             following
-                                ? 'community.following'
+                                ? 'community.unfollow'
                                 : 'community.follow',
                         )}
                         accessibilityLabel={`${t(following ? 'community.unfollow' : 'community.follow')} ${profile.artist_name}`}
