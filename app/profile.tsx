@@ -1,3 +1,4 @@
+import { DJProfileEditor } from '../src/components/profile/DJProfileEditor';
 import { isDJProfileComplete } from '../src/utils/communityProfile';
 import { ProfileMixes } from '../src/components/community/ProfileMixes';
 import { useCallback, useEffect, useState } from 'react';
@@ -102,7 +103,12 @@ export default function ProfileScreen() {
     const { session, profile, signOut, setProfile } = useAuthStore();
     const userId = session?.user.id;
     const router = useRouter();
-    const params = useLocalSearchParams<{ edit?: string; section?: string }>();
+    const params = useLocalSearchParams<{
+        edit?: string;
+        section?: string;
+        setup?: string;
+    }>();
+    const communitySetup = params.setup === '1';
     const settingsPage = params.section === 'settings';
     const planPage = params.section === 'plan';
     const profilePage = !settingsPage && !planPage;
@@ -192,7 +198,7 @@ export default function ProfileScreen() {
     const handleUpdateProfile = async () => {
         if (!userId || !artistName.trim() || busy) return;
         if (
-            visible &&
+            (visible || communitySetup) &&
             !isDJProfileComplete({ avatar_url: avatar, city, genres })
         ) {
             setSaveError(t('socialProfile.completeHint'));
@@ -240,7 +246,7 @@ export default function ProfileScreen() {
                     city: city.trim(),
                     genres: genres.trim(),
                     bio: bio.trim(),
-                    is_visible: visible,
+                    is_visible: communitySetup || visible,
                     cover_url: savedCover,
                     mixcloud_url: normalized.mixcloud,
                     soundcloud_url: normalized.soundcloud,
@@ -248,6 +254,7 @@ export default function ProfileScreen() {
                 },
             });
             setEditing(false);
+            if (communitySetup) router.replace('/(tabs)/community');
         } catch (error) {
             setSaveError(
                 error instanceof Error
@@ -397,6 +404,53 @@ export default function ProfileScreen() {
         </View>
     );
     if (!session) return <Redirect href="/(auth)/login" />;
+    if (profilePage && editing && ready)
+        return (
+            <DJProfileEditor
+                artistName={artistName}
+                city={city}
+                genres={genres}
+                bio={bio}
+                avatar={avatar}
+                cover={cover}
+                links={links}
+                visible={visible}
+                busy={busy}
+                setup={communitySetup}
+                error={saveError}
+                onName={setArtistName}
+                onCity={setCity}
+                onGenres={setGenres}
+                onBio={setBio}
+                onLinks={setLinks}
+                onAvatar={handlePickAvatar}
+                onCover={handlePickCover}
+                onRemoveCover={() => setCover(null)}
+                onVisible={(next) => {
+                    if (
+                        next &&
+                        !isDJProfileComplete({
+                            avatar_url: avatar,
+                            city,
+                            genres,
+                        })
+                    ) {
+                        setSaveError(t('socialProfile.completeHint'));
+                        return;
+                    }
+                    setSaveError('');
+                    setVisible(next);
+                }}
+                onSave={() => {
+                    void handleUpdateProfile();
+                }}
+                onClose={() => {
+                    setSaveError('');
+                    setEditing(false);
+                    if (communitySetup) router.replace('/(tabs)/community');
+                }}
+            />
+        );
     return (
         <SafeAreaView
             edges={['top', 'bottom']}

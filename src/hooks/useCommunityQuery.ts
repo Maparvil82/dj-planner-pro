@@ -19,17 +19,18 @@ export function useCommunityProfile(id?: string) {
         enabled: !!viewer && !!id,
     });
 }
-export function useCommunityFollowing() {
+export function useCommunityFollowing(enabled = true) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useQuery({
         queryKey: ['community', 'following', userId],
         queryFn: () => communityService.following(userId!),
-        enabled: !!userId,
+        enabled: enabled && !!userId,
     });
 }
 export function useCommunityDiscover(
     search: string,
     filters?: CommunityFilters,
+    enabled = true,
 ) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useInfiniteQuery({
@@ -44,7 +45,7 @@ export function useCommunityDiscover(
         initialPageParam: 0,
         queryFn: ({ pageParam }) =>
             communityService.discover(search, pageParam, filters),
-        enabled: !!userId,
+        enabled: enabled && !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
                 ? pages.length * PAGE_SIZE
@@ -55,6 +56,7 @@ export function useCommunityFeed(
     following = false,
     author: string | null = null,
     filters?: CommunityFilters,
+    enabled = true,
 ) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useInfiniteQuery({
@@ -70,19 +72,22 @@ export function useCommunityFeed(
         initialPageParam: 0,
         queryFn: ({ pageParam }) =>
             communityService.feed(following, author, pageParam, filters),
-        enabled: !!userId,
+        enabled: enabled && !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
                 ? pages.length * PAGE_SIZE
                 : undefined,
     });
 }
-export function useCommunityFilterOptions(mode: 'sessions' | 'djs') {
+export function useCommunityFilterOptions(
+    mode: 'sessions' | 'djs',
+    enabled = true,
+) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useQuery({
         queryKey: ['community', 'filter-options', userId, mode],
         queryFn: () => communityService.filterOptions(mode),
-        enabled: !!userId,
+        enabled: enabled && !!userId,
         staleTime: 60000,
     });
 }

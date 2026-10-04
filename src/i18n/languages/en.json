@@ -1025,5 +1025,17 @@
         "deleteConfirm": "Remove mix",
         "playerError": "The player could not load.",
         "openSource": "Open on its platform"
+    },
+    "communityEntry": {
+        "title": "Your sound deserves\na community.",
+        "hint": "Before you join, introduce yourself as a DJ. Add your photo, city and musical styles to connect with other DJs and share your sound.",
+        "privateAgenda": "Your schedule and fees will stay private.",
+        "yourSound": "Your DJ identity",
+        "requiredHint": "A profile photo, name, city and at least one style are required. Cover, biography and links are optional.",
+        "links": "Your links · optional",
+        "consent": "Publishing makes your profile visible in Community. Your schedule and fees stay private.",
+        "publish": "Publish profile and join",
+        "photoButton": "Profile photo",
+        "coverButton": "Cover"
     }
 }

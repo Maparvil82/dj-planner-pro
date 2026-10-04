@@ -190,21 +190,37 @@ const errors = [];
         }),
     );
     await page.goto('http://localhost:8081/community');
-    await page.getByText('Completa tu perfil de DJ', { exact: true }).waitFor();
-    await page.getByText('DJs', { exact: true }).click();
-    await page.getByText('Seguir', { exact: true }).first().click();
-    await page.waitForURL('**/profile**');
-    assert.equal(
-        followed.length,
-        0,
-        'Incomplete users must enter profile editing without creating a follow',
-    );
     await page
-        .getByRole('textbox', { name: 'Buscar estilo musical' })
-        .count()
-        .then(() => {});
-    await page.getByRole('button', { name: 'Cambiar foto', exact: true }).first().scrollIntoViewIfNeeded();
+        .getByRole('button', { name: 'Completar perfil', exact: true })
+        .waitFor();
+    for (const label of ['Sesiones', 'Siguiendo', 'DJs', 'Ciudad', 'Estilo'])
+        assert.equal(
+            await page.getByText(label, { exact: true }).count(),
+            0,
+            `Gate must hide ${label}`,
+        );
+    await page.screenshot({
+        path: '/private/tmp/djplanner-community-welcome.png',
+    });
+    await page
+        .getByRole('button', { name: 'Completar perfil', exact: true })
+        .click();
+    await page.waitForURL('**/profile**');
+    assert.equal(followed.length, 0);
+    await page
+        .getByRole('button', { name: 'Cambiar foto', exact: true })
+        .first()
+        .waitFor();
     await page.screenshot({ path: '/private/tmp/djplanner-profile-photo.png' });
+    assert.equal(
+        await page
+            .getByRole('button', {
+                name: 'Publicar perfil y entrar',
+                exact: true,
+            })
+            .isDisabled(),
+        true,
+    );
     const genre = page.getByRole('textbox', {
         name: 'Estilos musicales',
         exact: true,
@@ -227,24 +243,31 @@ const errors = [];
         path: '/private/tmp/djplanner-profile-completion.png',
         fullPage: true,
     });
-    // Saving a private draft does not demand public activation.
-    await page.getByText('Guardar perfil', { exact: true }).click();
-    await page.getByText('Añadir mix', { exact: true }).waitFor();
-    assert.equal(
-        await page
-            .getByRole('button', { name: 'Añadir mix', exact: true })
-            .isDisabled(),
-        true,
-    );
-    // Reload with the photo/city that the native picker and city field supply.
+    // Incomplete setup cannot publish. Returning later resumes the welcome gate.
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Completar perfil', exact: true })
+        .waitFor();
+    // Fixture supplies a photo already uploaded through the native picker boundary.
     current = {
         ...current,
         avatar_url: profile.avatar_url,
         city: 'Madrid',
         genres: 'Jazz · House',
-        is_visible: true,
+        is_visible: false,
     };
-    await page.reload();
+    await page.goto('http://localhost:8081/profile?edit=1&setup=1');
+    await page
+        .getByRole('button', { name: 'Publicar perfil y entrar', exact: true })
+        .click();
+    await page.waitForURL('**/community');
+    await page.getByText('Sesiones', { exact: true }).waitFor();
+    assert.equal(
+        current.is_visible,
+        true,
+        'Setup explicitly activates the public DJ profile',
+    );
+    await page.goto('http://localhost:8081/profile');
     await page
         .getByRole('button', { name: 'Añadir mix', exact: true })
         .waitFor();
@@ -317,7 +340,7 @@ const errors = [];
     assert.equal(recordings.length, 0);
     assert.deepEqual(errors, []);
     console.log(
-        'PASS: incomplete follow gate, no default genre chips, Jazz multi-select, draft, mix validation/preview/save/public embed/edit/remove',
+        'PASS: full welcome gate, hidden social navigation, DJ editor, incomplete setup/cancel, explicit public activation and mix management',
     );
     await browser.close();
 })().catch(async (e) => {

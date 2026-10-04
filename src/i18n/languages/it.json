@@ -1021,5 +1021,17 @@
         "deleteConfirm": "Rimuovi mix",
         "playerError": "Impossibile caricare il lettore.",
         "openSource": "Apri sulla piattaforma"
+    },
+    "communityEntry": {
+        "title": "Il tuo sound merita\nuna community.",
+        "hint": "Prima di entrare, presentati come DJ. Aggiungi foto, città e stili musicali per connetterti con altri DJ e condividere il tuo sound.",
+        "privateAgenda": "La tua agenda e i tuoi compensi restano privati.",
+        "yourSound": "La tua identità DJ",
+        "requiredHint": "Foto profilo, nome, città e almeno uno stile sono obbligatori. Copertina, biografia e link sono facoltativi.",
+        "links": "I tuoi link · facoltativo",
+        "consent": "Pubblicando, il tuo profilo sarà visibile nella community. Agenda e compensi restano privati.",
+        "publish": "Pubblica profilo ed entra",
+        "photoButton": "Foto profilo",
+        "coverButton": "Copertina"
     }
 }
