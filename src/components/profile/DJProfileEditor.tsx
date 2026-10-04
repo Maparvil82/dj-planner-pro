@@ -47,6 +47,12 @@ export function DJProfileEditor(p: Props) {
     const c = useCommunityColors(),
         { t } = useTranslation();
     const insets = useSafeAreaInsets();
+    // Display the artist name as a handle; this is not a unique account username.
+    const profileLabel = p.artistName
+        .trim()
+        .replace(/^@+/, '')
+        .replace(/\s+/g, '')
+        .toLowerCase();
     const complete = isDJProfileComplete({
         avatar_url: p.avatar,
         city: p.city,
@@ -286,13 +292,15 @@ export function DJProfileEditor(p: Props) {
                                             {p.artistName || t('artist_name')}
                                         </Text>
                                         <Text
+                                            numberOfLines={1}
                                             style={{
                                                 color: c.muted,
                                                 fontSize: 13,
                                             }}
                                         >
-                                            {p.city ||
-                                                t('communityEntry.yourSound')}
+                                            {profileLabel
+                                                ? `@${profileLabel}`
+                                                : t('communityEntry.yourSound')}
                                         </Text>
                                     </View>
                                 </View>
