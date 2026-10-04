@@ -584,7 +584,12 @@
         "legacyGenres": "Your previous custom styles have been kept. You can replace them with suggestions.",
         "noGenres": "No matching style. Try another name.",
         "cityHint": "Type your city or choose a suggestion. If it is missing, you can still save it.",
-        "cityUnavailable": "Suggestions could not be loaded. You can still type and save your city."
+        "cityUnavailable": "Suggestions could not be loaded. You can still type and save your city.",
+        "cityHybridHint": "Community cities come first, followed by search results. You can also add your city manually.",
+        "cityCommunity": "In the community",
+        "cityExternal": "Search result",
+        "citySearching": "Searching for cities…",
+        "cityUseManual": "Use “{{city}}” manually"
     },
     "collaboration": {
         "pickerHint": "Search public profiles to invite DJs. You can also add names manually.",

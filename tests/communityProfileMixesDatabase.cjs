@@ -241,6 +241,154 @@ async function role(user, name = 'authenticated') {
     );
     await role(id(1));
     await db.query('delete from community_profile_mixes where id=$1', [mix]);
+    await role(id(1), 'postgres');
+    const filters = fs.readFileSync(
+        'supabase/migrations/20261004014648_community_city_genre_filters.sql',
+        'utf8',
+    );
+    await db.exec(
+        filters.slice(
+            0,
+            filters.indexOf(
+                'create or replace function community_private.session_feed_filtered',
+            ),
+        ),
+    );
+    await db.exec(
+        'create table public.venues(id uuid,user_id uuid,city text); alter table public.sessions add column venue_id uuid;',
+    );
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004131746_hybrid_city_lookup.sql',
+            'utf8',
+        ),
+    );
+    const spain = {
+        id: 'photon:R:342563',
+        name: 'Córdoba',
+        region: 'Andalucía',
+        country: 'España',
+        countryCode: 'ES',
+    };
+    const argentina = {
+        id: 'photon:N:1234',
+        name: 'Córdoba',
+        region: 'Córdoba',
+        country: 'Argentina',
+        countryCode: 'AR',
+    };
+    await role(id(2));
+    await save({
+        ...draft,
+        artist_name: 'DJ 2',
+        avatar_url: 'https://example.com/a.jpg',
+        city: 'Córdoba',
+        genres: 'Jazz',
+        is_visible: true,
+        city_location: spain,
+    });
+    await role(id(4));
+    await save({
+        ...draft,
+        artist_name: 'DJ 4',
+        avatar_url: 'https://example.com/a.jpg',
+        city: 'Córdoba',
+        genres: 'Jazz',
+        is_visible: true,
+        city_location: argentina,
+    });
+    await role(id(3));
+    await save({
+        ...draft,
+        artist_name: 'DJ 3',
+        avatar_url: 'https://example.com/a.jpg',
+        city: 'Secret Town',
+        genres: 'Jazz',
+        is_visible: false,
+    });
+    await role(id(1));
+    assert.equal(
+        (await db.query("select * from community_city_suggestions('cordoba')"))
+            .rows.length,
+        2,
+        'Homonymous places retain both identities',
+    );
+    assert.equal(
+        (await db.query("select * from community_city_suggestions('secret')"))
+            .rows.length,
+        0,
+        'Private profile cities are not suggested',
+    );
+    assert.equal(
+        (
+            await db.query(
+                "select * from community_discover_filtered('', 'Córdoba · Andalucía · España')",
+            )
+        ).rows.length,
+        1,
+        'Country-qualified filters distinguish homonyms',
+    );
+    const opts = (
+        await db.query(
+            "select community_private.filter_options('djs') as options",
+        )
+    ).rows[0].options;
+    assert.ok(opts.cities.includes('Córdoba · Andalucía · España'));
+    assert.ok(opts.cities.includes('Córdoba · Córdoba · Argentina'));
+    await role(id(2));
+    await save({
+        ...draft,
+        artist_name: 'DJ 2',
+        avatar_url: 'https://example.com/a.jpg',
+        city: 'Córdoba',
+        genres: 'Jazz',
+        is_visible: true,
+    });
+    assert.equal(
+        (
+            await db.query(
+                'select city_location from community_profiles where user_id=$1',
+                [id(2)],
+            )
+        ).rows[0].city_location.id,
+        spain.id,
+        'Legacy saves preserve unchanged location',
+    );
+    await assert.rejects(
+        save({
+            ...draft,
+            artist_name: 'DJ 2',
+            avatar_url: 'https://example.com/a.jpg',
+            city: 'Madrid',
+            genres: 'Jazz',
+            is_visible: true,
+            city_location: spain,
+        }),
+        (e) => e.code === '22023',
+    );
+    await save({
+        ...draft,
+        artist_name: 'DJ 2',
+        avatar_url: 'https://example.com/a.jpg',
+        city: 'Madrid',
+        genres: 'Jazz',
+        is_visible: true,
+    });
+    assert.equal(
+        (
+            await db.query(
+                'select city_location from community_profiles where user_id=$1',
+                [id(2)],
+            )
+        ).rows[0].city_location,
+        null,
+        'Changing city clears stale metadata',
+    );
+    await role('', 'anon');
+    await assert.rejects(
+        db.query("select * from community_city_suggestions('cordoba')"),
+        (e) => e.code === '42501',
+    );
     console.log(
         'PASS: profile prerequisites, drafts, Jazz normalization, follow gate, mix ownership/privacy/URL constraints and deletion',
     );

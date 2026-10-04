@@ -18,10 +18,12 @@ import { isDJProfileComplete } from '../../utils/communityProfile';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
 import { MusicGenrePicker } from './MusicGenrePicker';
 import { CityInput } from './CityInput';
+import type { CityLocation } from '../../utils/cities';
 
 type Props = {
     artistName: string;
     city: string;
+    cityLocation: CityLocation | null;
     genres: string;
     bio: string;
     avatar: string | null;
@@ -34,6 +36,7 @@ type Props = {
     error: string;
     onName: (value: string) => void;
     onCity: (value: string) => void;
+    onCityLocation: (value: CityLocation | null) => void;
     onGenres: (value: string) => void;
     onBio: (value: string) => void;
     onLinks: (value: Props['links']) => void;
@@ -362,6 +365,8 @@ export function DJProfileEditor(p: Props) {
                                     <CityInput
                                         value={p.city}
                                         onChange={p.onCity}
+                                        location={p.cityLocation}
+                                        onLocation={p.onCityLocation}
                                         disabled={p.busy}
                                     />
                                     <MusicGenrePicker

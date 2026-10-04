@@ -10,6 +10,7 @@ import {
 import type { CommunityProfile } from '../../services/community';
 import { useTranslation } from '../../i18n/useTranslation';
 import { DJ_PLATFORMS, normalizeDJLink } from '../../utils/communityLinks';
+import { cityLabel } from '../../utils/cities';
 import { useCommunityColors } from './CommunityUI';
 import type { ReactNode } from 'react';
 
@@ -149,7 +150,10 @@ export function DJProfileHero({
                                         flex: 1,
                                     }}
                                 >
-                                    {person.city}
+                                    {cityLabel(
+                                        person.city,
+                                        person.city_location,
+                                    )}
                                 </Text>
                             </View>
                         )}

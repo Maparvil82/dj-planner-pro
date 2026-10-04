@@ -1,4 +1,5 @@
 import { DJProfileEditor } from '../src/components/profile/DJProfileEditor';
+import type { CityLocation } from '../src/utils/cities';
 import {
     canUseDJProfile,
     isDJProfileComplete,
@@ -140,6 +141,7 @@ export default function ProfileScreen({
     const [notice, setNotice] = useState('');
     const [artistName, setArtistName] = useState(profile?.artist_name || '');
     const [city, setCity] = useState('');
+    const [cityLocation, setCityLocation] = useState<CityLocation | null>(null);
     const [genres, setGenres] = useState('');
     const [bio, setBio] = useState('');
     const [cover, setCover] = useState<string | null>(null);
@@ -167,6 +169,7 @@ export default function ProfileScreen({
                 '',
         );
         setCity(social.data?.city || '');
+        setCityLocation(social.data?.city_location || null);
         setGenres(
             serializeMusicGenres(parseMusicGenres(social.data?.genres || '')),
         );
@@ -259,6 +262,7 @@ export default function ProfileScreen({
                     artist_name: artistName.trim(),
                     avatar_url: savedAvatar,
                     city: city.trim(),
+                    city_location: cityLocation,
                     genres: genres.trim(),
                     bio: bio.trim(),
                     is_visible: communitySetup || visible,
@@ -478,6 +482,7 @@ export default function ProfileScreen({
             <DJProfileEditor
                 artistName={artistName}
                 city={city}
+                cityLocation={cityLocation}
                 genres={genres}
                 bio={bio}
                 avatar={avatar}
@@ -490,6 +495,7 @@ export default function ProfileScreen({
                 error={saveError}
                 onName={setArtistName}
                 onCity={setCity}
+                onCityLocation={setCityLocation}
                 onGenres={setGenres}
                 onBio={setBio}
                 onLinks={setLinks}

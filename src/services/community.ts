@@ -1,10 +1,11 @@
 import type { UserProfile } from './profile';
 import { supabase } from '../lib/supabase';
-import { normalizeCity } from '../utils/cities';
+import { cityKey, normalizeCity, type CityLocation } from '../utils/cities';
 export interface CommunityProfile {
     user_id: string;
     artist_name: string;
     city: string;
+    city_location?: CityLocation | null;
     bio: string;
     genres: string;
     avatar_url: string | null;
@@ -19,6 +20,7 @@ export type CommunityProfileInput = Pick<
     CommunityProfile,
     | 'artist_name'
     | 'city'
+    | 'city_location'
     | 'bio'
     | 'genres'
     | 'avatar_url'
@@ -66,8 +68,19 @@ export const communityService = {
         _id: string,
         input: CommunityProfileInput,
     ): Promise<{ profile: UserProfile; community: CommunityProfile }> {
+        const location =
+            input.city_location &&
+            cityKey(input.city_location.name) === cityKey(input.city)
+                ? input.city_location
+                : null;
         const { data, error } = await supabase.rpc('save_unified_profile', {
-            input: { ...input, city: normalizeCity(input.city) },
+            input: {
+                ...input,
+                city: location?.name || normalizeCity(input.city),
+                ...(input.city_location !== undefined
+                    ? { city_location: location }
+                    : {}),
+            },
         });
         if (error) throw error;
         return data;

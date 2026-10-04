@@ -132,7 +132,21 @@ const errors = [];
         let body = [];
         if (url.pathname.includes('/auth/v1/user')) body = user;
         else if (url.pathname.includes('/auth/v1/token')) body = session;
-        else if (url.pathname.includes('/rpc/community_filter_options')) {
+        else if (url.pathname.includes('/rpc/community_city_suggestions')) {
+            const q = req.postDataJSON().search_city.toLowerCase();
+            body = [
+                { city: 'Sevilla', city_location: null },
+                { city: 'Barcelona', city_location: null },
+                ...(current.is_visible
+                    ? [
+                          {
+                              city: current.city,
+                              city_location: current.city_location || null,
+                          },
+                      ]
+                    : []),
+            ].filter((x) => x.city.toLowerCase().includes(q));
+        } else if (url.pathname.includes('/rpc/community_filter_options')) {
             body = {
                 cities: [
                     'SEvilla',
@@ -199,6 +213,53 @@ const errors = [];
             body: '<html><body style="font:16px sans-serif;background:#f0edfc;color:#6554df"><p>Mixcloud · Test player</p><button>Play</button></body></html>',
         }),
     );
+    await context.route('https://photon.komoot.io/api/**', async (route) => {
+        const q = new URL(route.request().url()).searchParams
+            .get('q')
+            .toLowerCase();
+        const city = (id, name, region, country, code) => ({
+            properties: {
+                osm_type: 'R',
+                osm_id: id,
+                osm_key: 'place',
+                osm_value: 'city',
+                name,
+                state: region,
+                country,
+                countrycode: code,
+            },
+        });
+        if (q.includes('cord'))
+            return route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    features: [
+                        city(1, 'Córdoba', 'Andalucía', 'España', 'ES'),
+                        city(2, 'Córdoba', 'Córdoba', 'Argentina', 'AR'),
+                    ],
+                }),
+            });
+        if (q.includes('madr'))
+            return route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    features: [
+                        city(
+                            3,
+                            'Madrid',
+                            'Comunidad de Madrid',
+                            'España',
+                            'ES',
+                        ),
+                    ],
+                }),
+            });
+        return route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: '{}',
+        });
+    });
     await page.goto('http://localhost:8081/community');
     await page
         .getByRole('button', { name: 'Completar perfil', exact: true })
@@ -249,11 +310,54 @@ const errors = [];
     await page.getByRole('button', { name: 'Sevilla', exact: true }).click();
     assert.equal(await cityInput.inputValue(), 'Sevilla');
     await cityInput.fill('  SÃO   PAULO  ');
-    await genre.click();
+    await page
+        .getByRole('button', {
+            name: 'Usar «São Paulo» manualmente',
+            exact: true,
+        })
+        .click();
     assert.equal(
         await cityInput.inputValue(),
         'São Paulo',
         'Unknown worldwide city can be entered manually',
+    );
+    await cityInput.fill('cord');
+    await page
+        .getByRole('button', {
+            name: 'Córdoba · Andalucía · España',
+            exact: true,
+        })
+        .waitFor();
+    await page
+        .getByRole('button', {
+            name: 'Córdoba · Córdoba · Argentina',
+            exact: true,
+        })
+        .waitFor();
+    await page
+        .getByRole('button', {
+            name: 'Córdoba · Andalucía · España',
+            exact: true,
+        })
+        .click();
+    assert.equal(await cityInput.inputValue(), 'Córdoba');
+    await cityInput.fill('Unknown Town');
+    await page
+        .getByText(
+            'No pudimos cargar las sugerencias. Puedes escribir y guardar tu ciudad.',
+            { exact: true },
+        )
+        .waitFor();
+    await page
+        .getByRole('button', {
+            name: 'Usar «Unknown Town» manualmente',
+            exact: true,
+        })
+        .click();
+    assert.equal(
+        await cityInput.inputValue(),
+        'Unknown Town',
+        'Provider failure leaves manual selection available',
     );
     assert.equal(
         await page.getByText('House', { exact: true }).count(),
@@ -291,13 +395,24 @@ const errors = [];
     await page.goto('http://localhost:8081/edit-dj-profile?edit=1&setup=1');
     await page
         .getByRole('textbox', { name: 'Ciudad *', exact: true })
-        .fill('  MaDRID  ');
+        .fill('madr');
+    await page
+        .getByRole('button', {
+            name: 'Madrid · Comunidad de Madrid · España',
+            exact: true,
+        })
+        .click();
     await page
         .getByRole('button', { name: 'Publicar perfil y entrar', exact: true })
         .click();
     await page.waitForURL('**/community');
     await page.getByText('Sesiones', { exact: true }).waitFor();
     assert.equal(current.city, 'Madrid', 'Saving normalizes the city');
+    assert.equal(
+        current.city_location.id,
+        'photon:R:3',
+        'Selected provider identity is saved with the profile',
+    );
     assert.equal(
         current.is_visible,
         true,
@@ -321,7 +436,12 @@ const errors = [];
     await page
         .getByRole('textbox', { name: 'Ciudad *', exact: true })
         .fill('ma');
-    await page.getByRole('button', { name: 'Madrid', exact: true }).click();
+    await page
+        .getByRole('button', {
+            name: 'Madrid · Comunidad de Madrid · España',
+            exact: true,
+        })
+        .click();
     assert.equal(
         await page
             .getByRole('textbox', { name: 'Ciudad *', exact: true })

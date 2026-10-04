@@ -578,7 +578,12 @@
         "legacyGenres": "Vos anciens styles sont conservés. Vous pouvez les remplacer par les suggestions.",
         "noGenres": "Aucun style trouvé. Essayez un autre nom.",
         "cityHint": "Saisissez votre ville ou choisissez une suggestion. Si elle manque, vous pouvez quand même l’enregistrer.",
-        "cityUnavailable": "Les suggestions n’ont pas pu être chargées. Vous pouvez saisir et enregistrer votre ville."
+        "cityUnavailable": "Les suggestions n’ont pas pu être chargées. Vous pouvez saisir et enregistrer votre ville.",
+        "cityHybridHint": "Les villes de la communauté apparaissent en premier, puis les résultats de recherche. Vous pouvez aussi saisir votre ville manuellement.",
+        "cityCommunity": "Dans la communauté",
+        "cityExternal": "Résultat de recherche",
+        "citySearching": "Recherche de villes…",
+        "cityUseManual": "Utiliser « {{city}} » manuellement"
     },
     "collaboration": {
         "pickerHint": "Recherchez des profils publics pour inviter des DJs. Vous pouvez aussi saisir des noms.",
