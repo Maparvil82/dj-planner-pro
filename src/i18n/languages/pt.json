@@ -897,7 +897,8 @@
         "proHint": "Expande a tua agenda e descobre as vantagens Pro.",
         "discoverPro": "Descobrir Pro",
         "planHint": "A tua subscrição e a utilização da agenda.",
-        "profileHint": "A tua identidade DJ e a tua presença na comunidade."
+        "profileHint": "A tua identidade DJ e a tua presença na comunidade.",
+        "savedMixes": "Mixes guardados"
     },
     "proPage": {
         "title": "A tua próxima etapa como DJ",
@@ -1105,5 +1106,16 @@
         "archivedLabel": "Arquivado",
         "djStyles": "Estilos dos DJs",
         "activityCityHint": "Nas atuações, a cidade é a do evento; nos mixes, é a cidade do DJ."
+    },
+    "savedMixes": {
+        "title": "Mixes guardados",
+        "private": "Só tu podes ver esta coleção.",
+        "save": "Guardar para depois",
+        "remove": "Remover dos guardados",
+        "error": "Não foi possível guardar. Tenta novamente.",
+        "empty": "A tua próxima escuta começa aqui",
+        "emptyHint": "Guarda mixes que descobres na Comunidade ou nos perfis dos DJs para ouvir mais tarde.",
+        "discover": "Explorar a Comunidade",
+        "availability": "Os mixes removidos ou de perfis privados ficam ocultos enquanto estiverem indisponíveis."
     }
 }

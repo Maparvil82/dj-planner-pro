@@ -899,7 +899,8 @@
         "proHint": "Erweitere deinen Kalender und entdecke Pro.",
         "discoverPro": "Pro entdecken",
         "planHint": "Dein Abonnement und deine Kalendernutzung.",
-        "profileHint": "Deine DJ-Identität und dein Auftritt in der Community."
+        "profileHint": "Deine DJ-Identität und dein Auftritt in der Community.",
+        "savedMixes": "Gespeicherte Mixe"
     },
     "proPage": {
         "title": "Dein nächstes Kapitel als DJ",
@@ -1107,5 +1108,16 @@
         "archivedLabel": "Archiviert",
         "djStyles": "DJ-Stile",
         "activityCityHint": "Bei Auftritten ist es die Stadt der Veranstaltung, bei Mixes die Stadt des DJs."
+    },
+    "savedMixes": {
+        "title": "Gespeicherte Mixe",
+        "private": "Nur du kannst diese Sammlung sehen.",
+        "save": "Für später speichern",
+        "remove": "Aus gespeicherten Mixen entfernen",
+        "error": "Speichern fehlgeschlagen. Versuche es erneut.",
+        "empty": "Dein nächster Mix wartet hier",
+        "emptyHint": "Speichere Mixe aus der Community oder von DJ-Profilen, um sie später anzuhören.",
+        "discover": "Community entdecken",
+        "availability": "Entfernte Mixe und Mixe privater Profile bleiben verborgen, solange sie nicht verfügbar sind."
     }
 }

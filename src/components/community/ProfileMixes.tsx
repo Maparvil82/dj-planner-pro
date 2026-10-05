@@ -21,6 +21,7 @@ import {
 } from './CommunityUI';
 import { MixPlayer } from './MixPlayer';
 import { MixListItem } from './MixListItem';
+import { useSavedMixFlags } from '../../hooks/useSavedMixes';
 
 export function ProfileMixes({
     userId,
@@ -106,6 +107,7 @@ export function ProfileMixes({
     }
     const allRows = mixes.data?.pages.flat() || [];
     const rows = previewLimit ? allRows.slice(0, previewLimit) : allRows;
+    const saved = useSavedMixFlags(rows.map((mix) => mix.id));
     const hasMore =
         !!previewLimit && (allRows.length > previewLimit || mixes.hasNextPage);
     const start = (mix?: ProfileMix) => {
@@ -316,6 +318,14 @@ export function ProfileMixes({
                 >
                     <MixListItem
                         mix={mix}
+                        saveState={{
+                            saved: !!saved.data?.[mix.id],
+                            loading: saved.isPending,
+                            error: saved.isError,
+                            retry: () => {
+                                void saved.refetch();
+                            },
+                        }}
                         active={active === mix.id && focused}
                         focused={focused}
                         onPress={() => {

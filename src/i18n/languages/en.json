@@ -903,7 +903,8 @@
         "proHint": "Grow your schedule and discover Pro benefits.",
         "discoverPro": "Discover Pro",
         "planHint": "Your subscription and schedule usage.",
-        "profileHint": "Your DJ identity and presence in the community."
+        "profileHint": "Your DJ identity and presence in the community.",
+        "savedMixes": "Saved mixes"
     },
     "proPage": {
         "title": "Your next chapter as a DJ",
@@ -1111,5 +1112,16 @@
         "archivedLabel": "Archived",
         "djStyles": "DJ styles",
         "activityCityHint": "For performances, city means the event location; for mixes, it means the DJ’s city."
+    },
+    "savedMixes": {
+        "title": "Saved mixes",
+        "private": "Only you can see this collection.",
+        "save": "Save for later",
+        "remove": "Remove from saved mixes",
+        "error": "Could not save. Please try again.",
+        "empty": "Your next listen starts here",
+        "emptyHint": "Save mixes you discover in Community or DJ profiles to listen to them later.",
+        "discover": "Explore Community",
+        "availability": "Removed mixes and mixes from private profiles stay hidden while unavailable."
     }
 }

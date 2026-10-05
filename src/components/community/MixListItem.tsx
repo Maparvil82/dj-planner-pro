@@ -12,17 +12,20 @@ import type { ProfileMix } from '../../services/profileMixes';
 import { fetchMixMetadata, mixDuration } from '../../services/mixMetadata';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useCommunityColors } from './CommunityUI';
+import { SaveMixButton, type MixSaveState } from './SaveMixButton';
 
 export function MixListItem({
     mix,
     active,
     focused,
     onPress,
+    saveState,
 }: {
     mix: ProfileMix;
     active: boolean;
     focused: boolean;
     onPress: () => void;
+    saveState?: MixSaveState;
 }) {
     const c = useCommunityColors();
     const { t, currentLanguage } = useTranslation();
@@ -161,6 +164,9 @@ export function MixListItem({
                             </Text>
                         )}
                     </View>
+                    {saveState && (
+                        <SaveMixButton id={mix.id} state={saveState} />
+                    )}
                     <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityLabel={t(

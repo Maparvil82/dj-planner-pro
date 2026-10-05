@@ -7,6 +7,7 @@ import { Avatar } from '../ui/Avatar';
 import { CommunitySessionCard, useCommunityColors } from './CommunityUI';
 import { MixListItem } from './MixListItem';
 import { MixPlayer } from './MixPlayer';
+import { useSavedMixFlags } from '../../hooks/useSavedMixes';
 export function CommunityActivityFeed({
     items,
 }: {
@@ -17,6 +18,9 @@ export function CommunityActivityFeed({
     const router = useRouter();
     const [focused, setFocused] = useState(false);
     const [active, setActive] = useState<string | null>(null);
+    const saved = useSavedMixFlags(
+        items.filter((item) => item.kind === 'mix').map((item) => item.id),
+    );
     useFocusEffect(
         useCallback(() => {
             setFocused(true);
@@ -94,6 +98,14 @@ export function CommunityActivityFeed({
                         </TouchableOpacity>
                         <MixListItem
                             mix={mix}
+                            saveState={{
+                                saved: !!saved.data?.[mix.id],
+                                loading: saved.isPending,
+                                error: saved.isError,
+                                retry: () => {
+                                    void saved.refetch();
+                                },
+                            }}
                             focused={focused}
                             active={playing}
                             onPress={() => setActive(playing ? null : item.id)}

@@ -163,6 +163,8 @@ const errors = [];
         genres: 'Techno',
     };
     const follows = new Set();
+    const bookmarks = new Set();
+    let failSave = true;
     await context.route('https://fixture.example/avatar.jpg', (route) =>
         route.fulfill({
             contentType: 'image/jpeg',
@@ -178,7 +180,47 @@ const errors = [];
         const req = route.request(),
             url = new URL(req.url());
         let body;
-        if (url.pathname.endsWith('/rpc/community_filter_options'))
+        if (url.pathname.endsWith('/saved_mixes')) {
+            if (req.method() === 'POST') {
+                assert.equal(req.postDataJSON().owner_id, user.id);
+                if (failSave) {
+                    failSave = false;
+                    await route.fulfill({
+                        status: 503,
+                        contentType: 'application/json',
+                        body: JSON.stringify({
+                            code: 'fixture',
+                            message: 'Save unavailable',
+                        }),
+                    });
+                    return;
+                }
+                bookmarks.add(req.postDataJSON().mix_id);
+                body = null;
+            } else if (req.method() === 'DELETE') {
+                assert.equal(url.searchParams.get('owner_id'), 'eq.' + user.id);
+                bookmarks.delete(
+                    url.searchParams.get('mix_id').replace('eq.', ''),
+                );
+                body = null;
+            } else body = [...bookmarks].map((mix_id) => ({ mix_id }));
+        } else if (url.pathname.endsWith('/rpc/saved_mix_list')) {
+            body = bookmarks.has('fixture-mix')
+                ? [
+                      {
+                          id: 'fixture-mix',
+                          user_id: dj.user_id,
+                          title: 'Jazz in Sevilla',
+                          source_url: 'https://www.mixcloud.com/pepe/jazz/',
+                          platform: 'mixcloud',
+                          artist_name: dj.artist_name,
+                          avatar_url: dj.avatar_url,
+                          created_at: '2026-10-05T12:00:00Z',
+                          saved_at: '2026-10-06T00:00:00Z',
+                      },
+                  ]
+                : [];
+        } else if (url.pathname.endsWith('/rpc/community_filter_options'))
             body = {
                 cities:
                     req.postDataJSON().mode === 'djs'
@@ -493,6 +535,63 @@ const errors = [];
         'Newest publication appears first',
     );
     await page
+        .getByRole('button', { name: labels.savedMixes.save, exact: true })
+        .click();
+    await page.getByText(labels.savedMixes.error, { exact: true }).waitFor();
+    assert.equal(bookmarks.size, 0, 'Failed writes must not look saved');
+    await page
+        .getByRole('button', { name: labels.savedMixes.save, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: labels.savedMixes.remove, exact: true })
+        .waitFor();
+    assert.equal(bookmarks.size, 1);
+    await page
+        .getByRole('button', { name: labels.accountMenu.open, exact: false })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.accountMenu.savedMixes,
+            exact: true,
+        })
+        .click();
+    await page
+        .getByRole('button', { name: labels.accountMenu.close, exact: true })
+        .first()
+        .waitFor({ state: 'hidden' });
+    await page.getByText(labels.savedMixes.private, { exact: true }).waitFor();
+    await page.getByText('Jazz in Sevilla', { exact: true }).last().waitFor();
+    await page
+        .getByRole('button', { name: labels.profileMixes.listen, exact: true })
+        .click();
+    await page.locator('iframe[title="Jazz in Sevilla"]').waitFor();
+    await page.screenshot({ path: '/private/tmp/djplanner-saved-mixes.png' });
+    await page.reload();
+    await page.getByText('Jazz in Sevilla', { exact: true }).waitFor();
+    await page
+        .getByRole('button', { name: labels.savedMixes.remove, exact: true })
+        .click();
+    await page.getByText(labels.savedMixes.empty, { exact: true }).waitFor();
+    assert.equal(bookmarks.size, 0);
+    await page
+        .getByRole('button', { name: labels.savedMixes.discover, exact: true })
+        .click();
+    await openFilters();
+    await pick('Ciudad', 'Málaga');
+    await pick('Estilos de los DJs', 'House');
+    await apply();
+    await page
+        .getByRole('textbox', {
+            name: labels.community.searchSessions,
+            exact: true,
+        })
+        .fill('Club A');
+    await page.waitForResponse(
+        (r) =>
+            r.url().includes('community_session_shelf') &&
+            r.request().postDataJSON().search_text === 'Club A',
+    );
+    await page
         .getByRole('button', { name: labels.community.djs, exact: true })
         .click();
     const switchingTabs = await page
@@ -600,7 +699,7 @@ const errors = [];
     await context.close();
     await browser.close();
     console.log(
-        'PASS: two-column DJ cards at 320px, direct following activity, newest-first updates, stable controls during loading, follow/unfollow updates, filters inside search, combined search, cancel and independent tab state. Mock APIs.',
+        'PASS: two-column DJ cards at 320px, private saved mixes, failed save recovery, persistence, menu access, playback and removal, direct following activity, newest-first updates, stable controls during loading, follow/unfollow updates, filters inside search, combined search, cancel and independent tab state. Mock APIs.',
     );
 })().catch(async (e) => {
     console.error(e);

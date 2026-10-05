@@ -103,6 +103,13 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
     const c = useCommunityColors();
     const { t } = useTranslation();
     const router = useRouter();
+    const pendingRoute = useRef<Href | null>(null);
+    useEffect(() => {
+        if (open || !pendingRoute.current) return;
+        const destination = pendingRoute.current;
+        pendingRoute.current = null;
+        router.push(destination);
+    }, [open, router]);
     const unread = useUnreadNotifications();
     const usage = useSessionUsage();
     const close = () => setOpen(false);
@@ -124,8 +131,9 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
         void usage.refetch();
     };
     const navigate = (href: Href) => {
+        // Commit the closed Modal before navigating, so a frozen previous screen cannot keep it open.
+        pendingRoute.current = href;
         close();
-        router.push(href);
     };
     const rows: { key: string; href: Href; count?: number }[] = [
         {
@@ -134,6 +142,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
             count: unread.data || 0,
         },
         { key: 'history', href: '/(tabs)/history' },
+        { key: 'savedMixes', href: '/saved-mixes' },
         ...(FEATURES.bookings
             ? [{ key: 'bookings', href: '/bookings' as Href }]
             : []),
