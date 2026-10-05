@@ -27,11 +27,15 @@ export function ProfileMixes({
     editable = false,
     canAdd = false,
     bare = false,
+    previewLimit,
+    onViewAll,
 }: {
     userId: string;
     editable?: boolean;
     canAdd?: boolean;
     bare?: boolean;
+    previewLimit?: number;
+    onViewAll?: () => void;
 }) {
     const { t } = useTranslation(),
         c = useCommunityColors(),
@@ -93,7 +97,10 @@ export function ProfileMixes({
     } catch {
         /* Inline validation. */
     }
-    const rows = mixes.data?.pages.flat() || [];
+    const allRows = mixes.data?.pages.flat() || [];
+    const rows = previewLimit ? allRows.slice(0, previewLimit) : allRows;
+    const hasMore =
+        !!previewLimit && (allRows.length > previewLimit || mixes.hasNextPage);
     const start = (mix?: ProfileMix) => {
         mutation.reset();
         setActive(null);
@@ -125,9 +132,26 @@ export function ProfileMixes({
                 borderRadius: 24,
             }}
         >
-            <Text style={{ color: c.fg, fontSize: 21, fontWeight: '800' }}>
-                {t('profileMixes.title')}
-            </Text>
+            <View
+                style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                }}
+            >
+                <Text style={{ color: c.fg, fontSize: 21, fontWeight: '800' }}>
+                    {t('profileMixes.title')}
+                </Text>
+                {hasMore && onViewAll && (
+                    <CommunityButton
+                        compact
+                        secondary
+                        label={t('profileMixes.viewAll')}
+                        onPress={onViewAll}
+                    />
+                )}
+            </View>
             <Text style={{ color: c.muted, fontSize: 13, lineHeight: 20 }}>
                 {t(
                     owner
@@ -348,7 +372,7 @@ export function ProfileMixes({
                     )}
                 </View>
             ))}
-            {mixes.hasNextPage && (
+            {!previewLimit && mixes.hasNextPage && (
                 <CommunityButton
                     label={t('community.loadMore')}
                     secondary

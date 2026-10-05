@@ -157,3 +157,18 @@ test('play actions start the official widget after readiness; previews stay sile
         'true',
     );
 });
+
+test('shared DJ login destinations accept only a profile UUID', () => {
+    const { sharedDJDestination } = load('../src/utils/communityNavigation.ts');
+    const id = '00000000-0000-4000-8000-000000000902';
+    assert.equal(sharedDJDestination(id), `/community/${id}`);
+    for (const invalid of [
+        null,
+        undefined,
+        [id],
+        'https://evil.test',
+        '../profile',
+        id + '/edit',
+    ])
+        assert.equal(sharedDJDestination(invalid), null);
+});

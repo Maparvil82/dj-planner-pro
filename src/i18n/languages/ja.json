@@ -1016,6 +1016,8 @@
         "missing": "未完了"
     },
     "profileMixes": {
+        "viewAll": "すべて見る",
+        "allTitle": "すべてのミックス",
         "plays": "回再生",
         "title": "ミックス",
         "ownerHint": "自分のサウンドをプロフィールに。MixcloudやSoundCloudの個別の録音を制限なく追加できます。",
@@ -1052,5 +1054,20 @@
         "photoButton": "プロフィール写真",
         "coverButton": "カバー",
         "setupHint": "プロフィール写真、名前、都市、1つ以上のジャンルは必須です。カバーと自己紹介は任意です。"
+    },
+    "profilePosters": {
+        "title": "ポスター",
+        "empty": "過去の出演の公開ポスターはまだありません。",
+        "open": "ポスターを見る"
+    },
+    "profileShare": {
+        "close": "閉じる",
+        "title": "プロフィールを共有",
+        "copy": "リンクをコピー",
+        "more": "その他",
+        "copied": "リンクをコピーしました",
+        "error": "共有できませんでした。もう一度お試しください。",
+        "appHint": "リンクはDJ Plannerを開きます。アプリとアカウントが必要です。",
+        "expoHint": "テスト中のリンクにはExpo Goと実行中の開発サーバーが必要です。"
     }
 }

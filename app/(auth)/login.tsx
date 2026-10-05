@@ -1,5 +1,6 @@
+import { sharedDJDestination } from '../../src/utils/communityNavigation';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { supabase } from '../../src/lib/supabase';
@@ -17,6 +18,8 @@ import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function LoginScreen() {
     const { t } = useTranslation();
     const router = useRouter();
+    const { dj } = useLocalSearchParams<{ dj?: string }>();
+    const destination = sharedDJDestination(dj);
     const c = useCommunityColors();
     const passwordRef = useRef<TextInput>(null);
     const submitting = useRef(false);
@@ -46,7 +49,7 @@ export default function LoginScreen() {
                 return;
             }
             useAuthStore.getState().setSession(data.session);
-            router.replace('/(tabs)/home');
+            router.replace(destination || '/(tabs)/home');
         } catch {
             setError(t('authExperience.connectionError'));
         } finally {
@@ -137,7 +140,14 @@ export default function LoginScreen() {
                 <Text style={{ color: c.muted, fontSize: 14 }}>
                     {t('no_account')}
                 </Text>
-                <Link href="/(auth)/register" asChild>
+                <Link
+                    href={
+                        destination
+                            ? { pathname: '/(auth)/register', params: { dj } }
+                            : '/(auth)/register'
+                    }
+                    asChild
+                >
                     <TouchableOpacity
                         accessibilityRole="link"
                         disabled={loading}

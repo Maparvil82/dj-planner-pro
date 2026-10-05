@@ -1015,6 +1015,8 @@
         "missing": "À compléter"
     },
     "profileMixes": {
+        "viewAll": "Tout voir",
+        "allTitle": "Tous les mixes",
         "plays": "écoutes",
         "title": "Mixes",
         "ownerHint": "Ton son, sur ton profil. Ajoute des enregistrements précis de Mixcloud ou SoundCloud, sans limite.",
@@ -1051,5 +1053,20 @@
         "photoButton": "Photo de profil",
         "coverButton": "Couverture",
         "setupHint": "Photo de profil, nom, ville et au moins un style sont obligatoires. La couverture et la biographie sont facultatives."
+    },
+    "profilePosters": {
+        "title": "Affiches",
+        "empty": "Aucune affiche de prestation passée partagée pour le moment.",
+        "open": "Voir l’affiche"
+    },
+    "profileShare": {
+        "close": "Fermer",
+        "title": "Partager le profil",
+        "copy": "Copier le lien",
+        "more": "Plus d’options",
+        "copied": "Lien copié",
+        "error": "Impossible de partager. Réessayez.",
+        "appHint": "Ce lien ouvre DJ Planner. L’application et un compte sont nécessaires.",
+        "expoHint": "En test, ce lien ouvre Expo Go et nécessite un serveur de développement actif."
     }
 }

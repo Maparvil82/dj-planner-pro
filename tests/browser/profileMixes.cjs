@@ -78,6 +78,7 @@ const errors = [];
             },
             { lang, dark, session, profile },
         );
+        await context.grantPermissions(['clipboard-read', 'clipboard-write']);
         await context.route('**/*.supabase.co/**', async (route) => {
             const req = route.request(),
                 url = new URL(req.url());
@@ -132,6 +133,7 @@ const errors = [];
     };
     let recordings = [];
     const followed = [];
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await context.route('**/*.supabase.co/**', async (route) => {
         const req = route.request(),
             url = new URL(req.url()),
@@ -163,6 +165,15 @@ const errors = [];
                 ],
                 genres: ['Jazz', 'House'],
             };
+        } else if (url.pathname.includes('/rpc/community_profile_posters')) {
+            body = [1, 2].map((i) => ({
+                session_id: `poster-${i}`,
+                title: `Night poster ${i}`,
+                date: '2026-09-20',
+                venue: 'Sala Jazz',
+                city: 'Sevilla',
+                poster_url: 'https://thumbnailer.mixcloud.com/fixture.jpg',
+            }));
         } else if (url.pathname.includes('/rpc/save_unified_profile')) {
             const input = req.postDataJSON().input;
             current = { ...current, ...input };
@@ -171,7 +182,12 @@ const errors = [];
             url.pathname.includes('/community_profiles') ||
             url.pathname.includes('/users_profile')
         ) {
-            body = current;
+            body = {
+                ...current,
+                user_id: (
+                    url.searchParams.get('user_id') || `eq.${current.user_id}`
+                ).replace(/^eq\./, ''),
+            };
             if (url.searchParams.get('is_visible') === 'eq.true')
                 body = [
                     {
@@ -228,7 +244,7 @@ const errors = [];
         route.fulfill({
             contentType: 'application/json',
             body: JSON.stringify({
-                key: '/spartacus/party-time/',
+                key: new URL(route.request().url()).pathname,
                 user: { name: 'Spartacus' },
                 pictures: {
                     large: 'https://thumbnailer.mixcloud.com/fixture.jpg',
@@ -551,6 +567,7 @@ const errors = [];
 
     await page
         .getByRole('button', { name: 'Abrir reproductor', exact: true })
+        .first()
         .click();
     await page.locator('iframe[title="Late Night Jazz"]').waitFor();
     await page.waitForFunction(() => window.__mixcloudPlayRequests === 1);
@@ -565,6 +582,16 @@ const errors = [];
         .getByText('Late Night Jazz', { exact: true })
         .scrollIntoViewIfNeeded();
     await page.screenshot({ path: '/private/tmp/djplanner-profile-mixes.png' });
+    const originalRecording = recordings[0];
+    recordings = [
+        originalRecording,
+        ...[2, 3, 4, 5, 6].map((i) => ({
+            ...originalRecording,
+            id: `00000000-0000-4000-8000-00000000099${i}`,
+            title: `Recorded set ${i}`,
+            source_url: `https://www.mixcloud.com/spartacus/set-${i}/`,
+        })),
+    ];
     // A visitor sees an embedded recording and cannot manage another DJ's mixes.
     await page.goto(
         'http://localhost:8081/community/00000000-0000-4000-8000-000000000902',
@@ -581,6 +608,7 @@ const errors = [];
     );
     await page
         .getByRole('button', { name: 'Abrir reproductor', exact: true })
+        .first()
         .click();
     await page.locator('iframe[title="Late Night Jazz"]').waitFor();
     await page
@@ -594,6 +622,49 @@ const errors = [];
     await page.screenshot({
         path: '/private/tmp/djplanner-suno-profile-dark.png',
     });
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Abrir reproductor', exact: true })
+            .count(),
+        5,
+    );
+    assert.equal(
+        await page.getByText('Recorded set 6', { exact: true }).count(),
+        0,
+    );
+    await page.getByRole('button', { name: 'Ver todos', exact: true }).click();
+    await page.getByText('Todos los mixes', { exact: true }).waitFor();
+    await page.getByText('Recorded set 6', { exact: true }).waitFor();
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Abrir reproductor', exact: true })
+            .count(),
+        6,
+    );
+    await page.screenshot({ path: '/private/tmp/djplanner-all-mixes.png' });
+    await page.goBack();
+    await page
+        .getByRole('button', {
+            name: 'Ver cartel: Night poster 1',
+            exact: true,
+        })
+        .click();
+    await page.getByText('Sala Jazz · Sevilla', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Compartir perfil', exact: true })
+        .click();
+    await page.getByText('Compartir perfil', { exact: true }).waitFor();
+    await page
+        .getByRole('button', { name: 'Copiar enlace', exact: true })
+        .click();
+    await page.getByText('Enlace copiado', { exact: true }).waitFor();
+    await page.screenshot({ path: '/private/tmp/djplanner-share-profile.png' });
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    assert.ok(
+        copied.endsWith('/community/00000000-0000-4000-8000-000000000902'),
+    );
+    recordings = [originalRecording];
     await page.goto('http://localhost:8081/profile');
     await page.getByRole('button', { name: 'Editar mix', exact: true }).click();
     await page

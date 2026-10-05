@@ -177,3 +177,15 @@ export function useCommunitySessionCounts(ids: string[], enabled = true) {
         staleTime: 60000,
     });
 }
+
+export function useCommunityPosters(author: string) {
+    const viewer = useAuthStore((state) => state.session?.user.id);
+    return useInfiniteQuery({
+        queryKey: ['community', 'posters', viewer, author],
+        enabled: !!viewer && !!author,
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) => communityService.posters(author, pageParam),
+        getNextPageParam: (last, pages) =>
+            last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
+    });
+}

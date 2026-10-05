@@ -55,6 +55,14 @@ export type CommunityFilters = { city: string; genre: string };
 export type CommunityFilterOptions = { cities: string[]; genres: string[] };
 const PAGE_SIZE = 20;
 export const communityService = {
+    async posters(author: string, offset: number): Promise<CommunitySession[]> {
+        const { data, error } = await supabase.rpc(
+            'community_profile_posters',
+            { author, page_offset: offset, page_size: PAGE_SIZE },
+        );
+        if (error) throw error;
+        return data || [];
+    },
     async sessionCounts(ids: string[]): Promise<Record<string, number>> {
         const batches = await Promise.all(
             Array.from({ length: Math.ceil(ids.length / 50) }, (_, index) =>

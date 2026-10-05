@@ -1,5 +1,6 @@
+import { sharedDJDestination } from '../../src/utils/communityNavigation';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { supabase } from '../../src/lib/supabase';
@@ -18,6 +19,8 @@ import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function RegisterScreen() {
     const { t } = useTranslation();
     const router = useRouter();
+    const { dj } = useLocalSearchParams<{ dj?: string }>();
+    const destination = sharedDJDestination(dj);
     const c = useCommunityColors();
     const emailRef = useRef<TextInput>(null),
         passwordRef = useRef<TextInput>(null);
@@ -61,7 +64,7 @@ export default function RegisterScreen() {
             await profileService.updateProfile(data.session.user.id, {
                 artist_name: name.trim(),
             });
-            router.replace('/(tabs)/home');
+            router.replace(destination || '/(tabs)/home');
         } catch {
             setError(t('authExperience.connectionError'));
         } finally {
@@ -82,7 +85,13 @@ export default function RegisterScreen() {
                     ? 'authExperience.confirmHint'
                     : 'authExperience.registerHint',
             )}
-            onBack={() => router.replace('/(auth)/login')}
+            onBack={() =>
+                router.replace(
+                    destination
+                        ? { pathname: '/(auth)/login', params: { dj } }
+                        : '/(auth)/login',
+                )
+            }
         >
             {confirmed ? (
                 <>
@@ -118,7 +127,16 @@ export default function RegisterScreen() {
                     </View>
                     <CommunityButton
                         label={t('authExperience.returnLogin')}
-                        onPress={() => router.replace('/(auth)/login')}
+                        onPress={() =>
+                            router.replace(
+                                destination
+                                    ? {
+                                          pathname: '/(auth)/login',
+                                          params: { dj },
+                                      }
+                                    : '/(auth)/login',
+                            )
+                        }
                     />
                     <CommunityButton
                         secondary
@@ -218,7 +236,17 @@ export default function RegisterScreen() {
                         <Text style={{ color: c.muted, fontSize: 14 }}>
                             {t('already_have_account')}
                         </Text>
-                        <Link href="/(auth)/login" asChild>
+                        <Link
+                            href={
+                                destination
+                                    ? {
+                                          pathname: '/(auth)/login',
+                                          params: { dj },
+                                      }
+                                    : '/(auth)/login'
+                            }
+                            asChild
+                        >
                             <TouchableOpacity
                                 accessibilityRole="link"
                                 disabled={loading}

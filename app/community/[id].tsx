@@ -1,3 +1,5 @@
+import { ProfilePosters } from '../../src/components/community/ProfilePosters';
+import { ProfileShareSheet } from '../../src/components/community/ProfileShareSheet';
 import { ProfileMixes } from '../../src/components/community/ProfileMixes';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
 import { useCallback, useState } from 'react';
@@ -21,7 +23,7 @@ import {
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Share2 } from 'lucide-react-native';
 import {
     DJProfileHero,
     DJProfileDetails,
@@ -45,9 +47,13 @@ export default function CommunityProfileScreen() {
     const c = useCommunityColors();
     const insets = useSafeAreaInsets();
     const [scrolled, setScrolled] = useState(false);
+    const [sharing, setSharing] = useState(false);
     const { t } = useTranslation();
     const router = useRouter();
     const userId = useAuthStore((state) => state.session?.user.id);
+    const authReady = useAuthStore(
+        (state) => state.hasHydrated && state.initialized,
+    );
     const own = userId === id;
     const profile = useCommunityProfile(id);
     const viewer = useCommunityProfile(userId);
@@ -67,7 +73,13 @@ export default function CommunityProfileScreen() {
             refresh();
         }, [refresh]),
     );
-    if (!userId) return <Redirect href="/(auth)/login" />;
+    if (!authReady) return null;
+    if (!userId)
+        return (
+            <Redirect
+                href={{ pathname: '/(auth)/login', params: { dj: id } }}
+            />
+        );
     if (own && params.preview !== '1') return <Redirect href="/profile" />;
     const person = profile.data;
     return (
@@ -138,7 +150,33 @@ export default function CommunityProfileScreen() {
                                   : 'community.djProfile',
                           )}
                 </Text>
+                {person?.is_visible && (
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profileShare.title')}
+                        onPress={() => setSharing(true)}
+                        style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 22,
+                            backgroundColor: scrolled
+                                ? c.card
+                                : 'rgba(13,18,32,0.45)',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Share2 size={20} color={scrolled ? c.fg : '#fff'} />
+                    </TouchableOpacity>
+                )}
             </View>
+            {person?.is_visible && (
+                <ProfileShareSheet
+                    person={person}
+                    visible={sharing}
+                    onClose={() => setSharing(false)}
+                />
+            )}
             <ScrollView
                 onScroll={(event) => {
                     const next = event.nativeEvent.contentOffset.y > 220;
@@ -260,7 +298,15 @@ export default function CommunityProfileScreen() {
                                     }}
                                 />
                             )}
-                            <ProfileMixes userId={id} bare />
+                            <ProfileMixes
+                                userId={id}
+                                bare
+                                previewLimit={5}
+                                onViewAll={() =>
+                                    router.push(`/community/mixes/${id}`)
+                                }
+                            />
+                            <ProfilePosters userId={id} />
                             <DJProfileDetails person={person} />
                             <Text
                                 style={{

@@ -293,6 +293,60 @@ const discover = async (
         3,
         'All other public DJs can be paginated without gaps',
     );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005002722_community_profile_posters.sql',
+            'utf8',
+        ),
+    );
+    // Public past posters, private/cancelled/unshared/future exclusions, accepted guests.
+    await db.query(
+        "update sessions set date=current_date-1,poster_url='https://fixture.example/poster.jpg' where id=any($1::uuid[])",
+        [[uid(201), uid(202), uid(203), uid(204), uid(205)]],
+    );
+    await db.query(
+        "update sessions set poster_url='https://fixture.example/future.jpg' where id=$1",
+        [uid(326)],
+    );
+    await role('authenticated', uid(1));
+    const posters = async (author, offset = 0, size = 20) =>
+        (
+            await db.query(
+                'select * from community_profile_posters($1,$2,$3)',
+                [author, offset, size],
+            )
+        ).rows;
+    assert.deepEqual(
+        (await posters(uid(2))).map((row) => row.session_id).sort(),
+        [uid(201), uid(205)],
+        'Only public confirmed past sessions with posters',
+    );
+    assert.deepEqual(
+        (await posters(uid(5))).map((row) => row.session_id),
+        [uid(201)],
+        'Accepted participation appears; pending invitations stay hidden',
+    );
+    assert.equal(
+        (await posters(uid(4))).length,
+        0,
+        'Hidden profiles expose no posters',
+    );
+    assert.equal(
+        (await posters(null)).length,
+        0,
+        'No accidental all-author feed',
+    );
+    assert.notEqual(
+        (await posters(uid(2), 0, 1))[0].session_id,
+        (await posters(uid(2), 1, 1))[0].session_id,
+        'Poster pagination is stable',
+    );
+    await role('authenticated');
+    assert.equal((await posters(uid(2))).length, 0);
+    await role('anon');
+    await assert.rejects(() => posters(uid(2)), /permission denied/);
+    await role('authenticated', uid(1));
     const counts = async () =>
         (
             await db.query(
