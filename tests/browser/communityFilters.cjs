@@ -375,7 +375,7 @@ const errors = [];
     );
     await openFilters();
     await pick('Ciudad', 'Málaga');
-    await pick('Estilo', 'House');
+    await pick('Estilos de los DJs', 'House');
     await apply();
     await page.getByText('House Málaga', { exact: true }).waitFor();
     assert.equal(

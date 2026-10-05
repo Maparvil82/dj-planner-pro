@@ -45,7 +45,7 @@ export function CommunityFiltersBar({
 }: {
     value: CommunityFilters;
     onChange: (v: CommunityFilters) => void;
-    mode: 'sessions' | 'djs';
+    mode: 'sessions' | 'djs' | 'activity';
     options?: CommunityFilterOptions;
     loading: boolean;
     error: boolean;
@@ -287,7 +287,9 @@ export function CommunityFiltersBar({
                                             ? 'communityFilters.title'
                                             : panel === 'city'
                                               ? 'communityFilters.city'
-                                              : 'communityFilters.genre',
+                                              : mode !== 'djs'
+                                                ? 'location.djStyles'
+                                                : 'communityFilters.genre',
                                     )}
                                 </Text>
                                 <Pressable
@@ -314,9 +316,11 @@ export function CommunityFiltersBar({
                                     >
                                         {t(
                                             panel === 'city'
-                                                ? mode === 'sessions'
-                                                    ? 'communityFilters.sessionCityHint'
-                                                    : 'communityFilters.djCityHint'
+                                                ? mode === 'activity'
+                                                    ? 'location.activityCityHint'
+                                                    : mode === 'sessions'
+                                                      ? 'communityFilters.sessionCityHint'
+                                                      : 'communityFilters.djCityHint'
                                                 : 'communityFilters.genreHint',
                                         )}
                                     </Text>
@@ -358,7 +362,9 @@ export function CommunityFiltersBar({
                                         key={kind}
                                         accessibilityRole="button"
                                         accessibilityLabel={t(
-                                            'communityFilters.' + kind,
+                                            kind === 'genre' && mode !== 'djs'
+                                                ? 'location.djStyles'
+                                                : 'communityFilters.' + kind,
                                         )}
                                         onPress={() => {
                                             setQuery('');
@@ -381,7 +387,13 @@ export function CommunityFiltersBar({
                                                     fontSize: 12,
                                                 }}
                                             >
-                                                {t('communityFilters.' + kind)}
+                                                {t(
+                                                    kind === 'genre' &&
+                                                        mode !== 'djs'
+                                                        ? 'location.djStyles'
+                                                        : 'communityFilters.' +
+                                                              kind,
+                                                )}
                                             </Text>
                                             <Text
                                                 numberOfLines={2}

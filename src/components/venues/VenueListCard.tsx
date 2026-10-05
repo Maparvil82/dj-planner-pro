@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n/useTranslation';
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
@@ -11,6 +12,7 @@ export function VenueListCard({
     venue: Venue;
     onPress: () => void;
 }) {
+    const { t } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
     const [failedImage, setFailedImage] = useState<string | null>(null);
@@ -54,6 +56,17 @@ export function VenueListCard({
                 >
                     {venue.name}
                 </Text>
+                {!!venue.archived_at && (
+                    <Text
+                        style={{
+                            color: '#8270e4',
+                            fontSize: 11,
+                            fontWeight: '700',
+                        }}
+                    >
+                        {t('location.archivedLabel')}
+                    </Text>
+                )}
                 {venue.city ? (
                     <Text
                         numberOfLines={1}

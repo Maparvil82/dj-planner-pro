@@ -1,9 +1,11 @@
+import type { CityLocation } from '../utils/cities';
 export interface Venue {
     id: string; // uuid
     user_id: string; // uuid
     name: string;
     address?: string;
     city?: string;
+    city_location?: CityLocation | null;
     contact_info?: string;
     notes?: string;
     color?: string;
@@ -13,13 +15,16 @@ export interface Venue {
     equipment?: Array<{ name: string; quantity: number }>;
     images?: string[];
     created_at: string; // timestamptz
+    archived_at?: string | null;
     updated_at: string; // timestamptz
 }
 
 export interface CreateVenueInput {
+    archived_at?: string | null;
     name: string;
     address?: string;
     city?: string;
+    city_location?: CityLocation | null;
     contact_info?: string;
     notes?: string;
     color?: string;

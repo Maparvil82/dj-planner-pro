@@ -3,15 +3,15 @@ import { venueService } from '../services/venues';
 import { useAuthStore } from '../store/useAuthStore';
 import { CreateVenueInput } from '../types/venue';
 
-export const useVenuesQuery = () => {
+export const useVenuesQuery = (includeArchived = false) => {
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
     return useQuery({
-        queryKey: ['venues', userId],
+        queryKey: ['venues', userId, includeArchived],
         queryFn: () => {
             if (!userId) return [];
-            return venueService.getAllVenues(userId);
+            return venueService.getAllVenues(userId, includeArchived);
         },
         enabled: !!userId && initialized,
         staleTime: 1000 * 60 * 10, // 10 minutes cache
@@ -21,13 +21,15 @@ export const useVenuesQuery = () => {
 export const useVenueByIdQuery = (venueId: string | undefined | string[]) => {
     const id = Array.isArray(venueId) ? venueId[0] : venueId;
 
+    const { session, initialized } = useAuthStore();
+    const viewer = session?.user.id;
     return useQuery({
-        queryKey: ['venue', id],
+        queryKey: ['venue', id, viewer],
         queryFn: () => {
             if (!id) return null;
             return venueService.getVenueById(id);
         },
-        enabled: !!id,
+        enabled: !!id && !!viewer && initialized,
     });
 };
 
@@ -44,6 +46,10 @@ export const useCreateVenueMutation = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
         },
     });
 };
@@ -52,15 +58,24 @@ export const useUpdateVenueMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ venueId, input }: { venueId: string; input: Partial<CreateVenueInput> }) => {
+        mutationFn: ({
+            venueId,
+            input,
+        }: {
+            venueId: string;
+            input: Partial<CreateVenueInput>;
+        }) => {
             return venueService.updateVenue(venueId, input);
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
-            queryClient.invalidateQueries({ queryKey: ['venue', data.id] });
-            // Invalidate sessions and tags to reflect name changes in real-time
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['venue', data.id] });
+            // Refresh saved names after changing a place.
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });
@@ -75,7 +90,12 @@ export const useDeleteVenueMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venue'] });
             queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
         },
     });
 };

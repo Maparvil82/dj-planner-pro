@@ -323,3 +323,30 @@ test('unsettled agreements are not free; settlement and payment remain separate'
         'unpaid',
     );
 });
+
+test('event time zone fixes phases and conflicts independently of the viewer device', () => {
+    const range = sessionRange(
+        session({
+            date: '2026-10-05',
+            start_time: '22:00',
+            end_time: '04:00',
+            booking_timezone: 'Europe/Madrid',
+        }),
+    );
+    assert.equal(range.start.toISOString(), '2026-10-05T20:00:00.000Z');
+    assert.equal(range.end.toISOString(), '2026-10-06T02:00:00.000Z');
+    const tokyo = sessionRange(
+        session({
+            date: '2026-10-05',
+            start_time: '10:00',
+            end_time: '11:00',
+            booking_timezone: 'Asia/Tokyo',
+        }),
+    );
+    assert.equal(tokyo.start.toISOString(), '2026-10-05T01:00:00.000Z');
+});
+
+test('DST gaps and overlaps use the same instant as the database', () => {
+    assert.equal(sessionRange(session({date:'2026-03-29',start_time:'02:30',end_time:'04:00',booking_timezone:'Europe/Madrid'})).start.toISOString(),'2026-03-29T01:30:00.000Z');
+    assert.equal(sessionRange(session({date:'2026-10-25',start_time:'02:30',end_time:'04:00',booking_timezone:'Europe/Madrid'})).start.toISOString(),'2026-10-25T01:30:00.000Z');
+});

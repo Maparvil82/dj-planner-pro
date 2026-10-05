@@ -23,7 +23,7 @@ function withVenueCity(
     row: Session & { place?: { city?: string | null } | null },
 ): Session {
     const { place, ...session } = row;
-    return { ...session, venue_city: place?.city || null };
+    return session;
 }
 
 export const getColorForString = (str: string) => {
@@ -183,7 +183,7 @@ export const sessionService = {
         for (let offset = 0; ; offset += pageSize) {
             const { data, error } = await supabase
                 .from('sessions')
-                .select('*, place:venues(city)')
+                .select('*')
                 .eq('user_id', userId)
                 .order('date', { ascending: false })
                 .order('id')
@@ -221,7 +221,7 @@ export const sessionService = {
 
         const { data, error } = await supabase
             .from('sessions')
-            .select('*, place:venues(city)')
+            .select('*')
             .eq('user_id', userId)
             .gte('date', startPath)
             .lt('date', endPath)
@@ -251,7 +251,7 @@ export const sessionService = {
 
         const { data, error } = await supabase
             .from('sessions')
-            .select('*, place:venues(city)')
+            .select('*')
             .eq('user_id', userId)
             .gte('date', today)
             .or('status.is.null,status.neq.cancelled')
@@ -309,7 +309,7 @@ export const sessionService = {
     async getSessionById(sessionId: string): Promise<Session | null> {
         const { data, error } = await supabase
             .from('sessions')
-            .select('*, place:venues(city)')
+            .select('*')
             .eq('id', sessionId)
             .single();
 
@@ -394,6 +394,7 @@ export const sessionService = {
             'title',
             'venue',
             'venue_id',
+            'booking_timezone',
             'start_time',
             'end_time',
             'is_collective',

@@ -1,3 +1,4 @@
+import { cityLabel } from '../../src/utils/cities';
 import { FeeAgreementCard } from '../../src/components/sessions/FeeAgreementCard';
 import { useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
 import { agreementAmount } from '../../src/utils/feeAgreement';
@@ -292,6 +293,29 @@ export default function SessionDetailScreen() {
                         <Text className="text-lg font-bold text-gray-900 dark:text-white">
                             {session.venue}
                         </Text>
+                        {!!session.venue_city && (
+                            <Text
+                                style={{
+                                    color: isDark ? '#a8b2c6' : '#6d7588',
+                                    marginTop: 6,
+                                }}
+                            >
+                                {cityLabel(
+                                    session.venue_city,
+                                    session.venue_city_location,
+                                )}
+                            </Text>
+                        )}
+                        {!!session.venue_address && (
+                            <Text
+                                style={{
+                                    color: isDark ? '#a8b2c6' : '#6d7588',
+                                    marginTop: 4,
+                                }}
+                            >
+                                {session.venue_address}
+                            </Text>
+                        )}
                     </View>
                     {session.venue_id && (
                         <ArrowRight

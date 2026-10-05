@@ -1,3 +1,5 @@
+import { CityInput } from '../../src/components/profile/CityInput';
+import { cityKey, cityLabel, type CityLocation } from '../../src/utils/cities';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import React, { useState, useMemo, useRef, useContext } from 'react';
 import {
@@ -44,19 +46,23 @@ export default function VenuesScreen() {
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
+    const [includeArchived, setIncludeArchived] = useState(false);
     const {
         data: venues = [],
         isLoading,
         isError,
         refetch,
         isRefetching,
-    } = useVenuesQuery();
+    } = useVenuesQuery(includeArchived);
     const createVenueMutation = useCreateVenueMutation();
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
     const [newCity, setNewCity] = useState('');
+    const [newCityLocation, setNewCityLocation] = useState<CityLocation | null>(
+        null,
+    );
     const [newAddress, setNewAddress] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const saving = useRef(false);
@@ -90,12 +96,17 @@ export default function VenuesScreen() {
         );
     }, [filtered]);
     const handleCreateVenue = async () => {
-        if (saving.current || !newName.trim()) return;
+        if (saving.current || !newName.trim() || !newCity.trim()) return;
         saving.current = true;
         setIsSaving(true);
         try {
             const duplicate = venues.find(
-                (venue) => normalized(venue.name) === normalized(newName),
+                (venue) =>
+                    normalized(venue.name) === normalized(newName) &&
+                    cityKey(
+                        cityLabel(venue.city || '', venue.city_location),
+                    ) === cityKey(cityLabel(newCity, newCityLocation)) &&
+                    normalized(venue.address || '') === normalized(newAddress),
             );
             if (duplicate) {
                 if (
@@ -113,12 +124,14 @@ export default function VenuesScreen() {
             }
             await createVenueMutation.mutateAsync({
                 name: newName.trim(),
-                ...(newCity.trim() ? { city: newCity.trim() } : {}),
+                city: newCity.trim(),
+                city_location: newCityLocation,
                 ...(newAddress.trim() ? { address: newAddress.trim() } : {}),
             });
             setIsAddModalVisible(false);
             setNewName('');
             setNewCity('');
+            setNewCityLocation(null);
             setNewAddress('');
         } catch {
             showError(t('error'), t('places.saveError'));
@@ -176,6 +189,25 @@ export default function VenuesScreen() {
                         }}
                     >
                         {t('add_venue')}
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => setIncludeArchived((v) => !v)}
+                    accessibilityRole="button"
+                    style={{ paddingVertical: 12, alignSelf: 'flex-end' }}
+                >
+                    <Text
+                        style={{
+                            color: muted,
+                            fontSize: 13,
+                            fontWeight: '600',
+                        }}
+                    >
+                        {t(
+                            includeArchived
+                                ? 'location.hideArchived'
+                                : 'location.showArchived',
+                        )}
                     </Text>
                 </TouchableOpacity>
                 <View
@@ -444,43 +476,13 @@ export default function VenuesScreen() {
                                     kind="location"
                                     title={t('places.location')}
                                 >
-                                    <View style={{ gap: 8 }}>
-                                        <Text
-                                            style={{
-                                                color: muted,
-                                                fontWeight: '600',
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            {t('venue_city')}
-                                        </Text>
-                                        <TextInput
-                                            accessibilityLabel={t('venue_city')}
-                                            placeholder={t(
-                                                'places.cityPlaceholder',
-                                            )}
-                                            placeholderTextColor={muted}
-                                            className="focus:outline-none"
-                                            selectionColor="#8270e4"
-                                            onFocus={() =>
-                                                setFocusedField('city')
-                                            }
-                                            onBlur={() => setFocusedField(null)}
-                                            value={newCity}
-                                            onChangeText={setNewCity}
-                                            autoCapitalize="words"
-                                            editable={!isSaving}
-                                            style={[
-                                                inputStyle,
-                                                {
-                                                    borderColor:
-                                                        focusedField === 'city'
-                                                            ? '#8270e4'
-                                                            : border,
-                                                },
-                                            ]}
-                                        />
-                                    </View>
+                                    <CityInput
+                                        value={newCity}
+                                        onChange={setNewCity}
+                                        location={newCityLocation}
+                                        onLocation={setNewCityLocation}
+                                        disabled={isSaving}
+                                    />
                                     <View style={{ gap: 8 }}>
                                         <Text
                                             style={{
@@ -534,7 +536,11 @@ export default function VenuesScreen() {
                             </ScrollView>
                             <SessionFormFooter
                                 label={t('save_venue')}
-                                disabled={!newName.trim() || isSaving}
+                                disabled={
+                                    !newName.trim() ||
+                                    !newCity.trim() ||
+                                    isSaving
+                                }
                                 busy={isSaving}
                                 onSave={handleCreateVenue}
                             />

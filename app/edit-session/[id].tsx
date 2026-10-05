@@ -96,6 +96,9 @@ export default function EditSessionScreen() {
     >(null);
     const [title, setTitle] = useState('');
     const [venue, setVenue] = useState('');
+    const [timezone, setTimezone] = useState(
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
     const [venueId, setVenueId] = useState<string | null>(null);
@@ -157,6 +160,10 @@ export default function EditSessionScreen() {
             setInitialSession(remoteSession);
             setTitle(remoteSession.title || '');
             setVenue(remoteSession.venue || '');
+            setTimezone(
+                remoteSession.booking_timezone ||
+                    Intl.DateTimeFormat().resolvedOptions().timeZone,
+            );
             setStartTime(remoteSession.start_time?.slice(0, 5) || '22:00');
             setEndTime(remoteSession.end_time?.slice(0, 5) || '04:00');
             setVenueId(remoteSession.venue_id || null);
@@ -339,6 +346,7 @@ export default function EditSessionScreen() {
             title: title.trim(),
             venue: venue.trim(),
             venue_id: venueId,
+            booking_timezone: timezone,
             start_time: startTime.trim(),
             end_time: endTime.trim(),
             is_collective: isCollective,
@@ -372,6 +380,8 @@ export default function EditSessionScreen() {
         // 2. Diffing logic: only include fields that actually changed
         const getChangedFields = () => {
             const changes: any = {};
+            if (timezone !== initialSession?.booking_timezone)
+                changes.booking_timezone = timezone;
             if (title.trim() !== initialSession?.title)
                 changes.title = title.trim();
             if (venue.trim() !== initialSession?.venue)
@@ -735,8 +745,8 @@ export default function EditSessionScreen() {
                                     setVenueId(selected.id);
                                     setIsVenueModalVisible(false);
                                 }}
-                                onCreate={(name) =>
-                                    createVenueMutation.mutateAsync({ name })
+                                onCreate={(input) =>
+                                    createVenueMutation.mutateAsync(input)
                                 }
                             />
                         </View>
@@ -1002,6 +1012,23 @@ export default function EditSessionScreen() {
                                 {t('workflow.seriesHint')}
                             </Text>
                         ) : null}
+                        <View style={{ gap: 8, marginTop: 16 }}>
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                {t('location.timezone')}
+                            </Text>
+                            <TextInput
+                                value={timezone}
+                                onChangeText={setTimezone}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                maxLength={80}
+                                accessibilityLabel={t('location.timezone')}
+                                className="rounded-2xl p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                            />
+                            <Text className="text-xs text-gray-500">
+                                {t('location.timezoneHint')}
+                            </Text>
+                        </View>
                     </SessionFormSection>
 
                     <SessionFormSection kind="fee" title={t('form.fee')}>

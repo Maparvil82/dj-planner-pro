@@ -455,7 +455,7 @@
         "location": "Posizione",
         "cityPlaceholder": "Es. Milano",
         "addressPlaceholder": "Via e numero",
-        "locationHint": "Città e indirizzo sono facoltativi. La città viene usata nelle statistiche.",
+        "locationHint": "Nome e città per scoprire le tue esibizioni. L’indirizzo è facoltativo.",
         "saveError": "Impossibile salvare il luogo. Riprova.",
         "detailTitle": "Dettagli del luogo",
         "preparation": "Console e capienza",
@@ -534,7 +534,7 @@
         "unpublish": "Interrompi condivisione",
         "publishMessage": "Saranno mostrati titolo, luogo, città, data, orari e poster. Compensi, pagamenti, contatti e note restano privati.",
         "sessionPublic": "Questa sessione è visibile ai DJ della Comunità.",
-        "sessionHidden": "La sessione è condivisa ma nascosta mentre il profilo è inattivo o la prenotazione non confermata.",
+        "sessionHidden": "La sessione è condivisa ma nascosta se il profilo è inattivo o la sessione annullata. Riattivandola torna visibile.",
         "sessionPrivate": "Questa sessione appare solo nell’agenda privata.",
         "confirmFirst": "Puoi pubblicare solo sessioni confermate.",
         "searchSessions": "Cerca sessioni o locali…",
@@ -927,7 +927,7 @@
         "title": "Scegli un luogo",
         "hint": "Cerca tra i tuoi luoghi o aggiungine uno nuovo.",
         "newTitle": "Nuovo luogo",
-        "newHint": "Salvalo tra i tuoi luoghi e usalo per questa sessione.",
+        "newHint": "Nome e città per scoprire le tue esibizioni. L’indirizzo è facoltativo.",
         "back": "Torna ai miei luoghi",
         "empty": "Nessun luogo corrispondente.",
         "saveError": "Impossibile salvare il luogo. Riprova."
@@ -1087,5 +1087,24 @@
         "city": "In programma a {{city}}",
         "rest": "Altre sessioni",
         "open": "Vedi sessione"
+    },
+    "location": {
+        "addressOptional": "Indirizzo (facoltativo)",
+        "archive": "Archivia luogo",
+        "archiveMessage": "Il luogo non apparirà più nella lista. Le sessioni e le loro ubicazioni saranno conservate.",
+        "futureHint": "Le modifiche si applicano alle sessioni future. Le esibizioni passate conservano il luogo originale. L’indirizzo è facoltativo e non viene pubblicato nella Community.",
+        "completeAction": "Completa il luogo",
+        "completeBeforeSharing": "Aggiungi la città dell’evento per condividere questa sessione. Non usiamo la città del tuo profilo.",
+        "repairError": "Impossibile salvare il luogo. Riprova.",
+        "createHint": "Nome e città per scoprire le tue esibizioni. L’indirizzo è facoltativo.",
+        "timezone": "Fuso orario dell’evento",
+        "timezoneHint": "Utilizzato per gli orari e le sessioni dopo mezzanotte. Esempio: Europe/Rome.",
+        "invalidTimezone": "Scegli un fuso orario valido, come Europe/Rome.",
+        "showArchived": "Mostra luoghi archiviati",
+        "hideArchived": "Nascondi luoghi archiviati",
+        "restore": "Ripristina luogo",
+        "archivedLabel": "Archiviato",
+        "djStyles": "Stili dei DJ",
+        "activityCityHint": "Per le esibizioni, la città è quella dell’evento; per i mix, quella del DJ."
     }
 }

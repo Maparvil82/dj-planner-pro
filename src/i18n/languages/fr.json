@@ -453,7 +453,7 @@
         "location": "Emplacement",
         "cityPlaceholder": "Ex. Paris",
         "addressPlaceholder": "Rue et numéro",
-        "locationHint": "Ville et adresse facultatives. La ville est utilisée dans vos statistiques.",
+        "locationHint": "Nom et ville pour découvrir vos prestations. L’adresse est facultative.",
         "saveError": "Impossible d’enregistrer le lieu. Réessayez.",
         "detailTitle": "Détails du lieu",
         "preparation": "Cabine et capacité",
@@ -532,7 +532,7 @@
         "unpublish": "Ne plus partager",
         "publishMessage": "Le titre, lieu, ville, date, horaires et affiche seront affichés. Cachets, paiements, contacts et notes restent privés.",
         "sessionPublic": "Cette session est visible aux DJs de la Communauté.",
-        "sessionHidden": "Cette session est partagée mais masquée tant que le profil est inactif ou la réservation non confirmée.",
+        "sessionHidden": "Cette session est partagée mais masquée tant que votre profil est inactif ou la session annulée. Elle redevient visible après réactivation.",
         "sessionPrivate": "Cette session apparaît uniquement dans votre agenda privé.",
         "confirmFirst": "Seules les sessions confirmées peuvent être publiées.",
         "searchSessions": "Rechercher des sessions ou des lieux…",
@@ -925,7 +925,7 @@
         "title": "Choisir un lieu",
         "hint": "Recherchez parmi vos lieux ou ajoutez-en un nouveau.",
         "newTitle": "Nouveau lieu",
-        "newHint": "Enregistrez-le dans vos lieux pour cette session.",
+        "newHint": "Nom et ville pour découvrir vos prestations. L’adresse est facultative.",
         "back": "Retour à mes lieux",
         "empty": "Aucun lieu correspondant.",
         "saveError": "Impossible d’enregistrer le lieu. Réessayez."
@@ -1085,5 +1085,24 @@
         "city": "À venir à {{city}}",
         "rest": "Autres sessions",
         "open": "Voir la session"
+    },
+    "location": {
+        "addressOptional": "Adresse (facultative)",
+        "archive": "Archiver le lieu",
+        "archiveMessage": "Le lieu sera retiré de votre liste. Ses sessions et leurs lieux seront conservés.",
+        "futureHint": "Les changements de lieu concernent les sessions futures. Les prestations passées conservent leur lieu. L’adresse est facultative et n’est pas publiée dans la Communauté.",
+        "completeAction": "Compléter le lieu",
+        "completeBeforeSharing": "Ajoutez la ville de l’événement pour partager cette session. Nous n’utilisons pas la ville de votre profil.",
+        "repairError": "Impossible d’enregistrer le lieu. Réessayez.",
+        "createHint": "Nom et ville pour découvrir vos prestations. L’adresse est facultative.",
+        "timezone": "Fuseau horaire de l’événement",
+        "timezoneHint": "Utilisé pour les horaires et les sessions après minuit. Exemple : Europe/Paris.",
+        "invalidTimezone": "Choisissez un fuseau horaire valide, comme Europe/Paris.",
+        "showArchived": "Afficher les lieux archivés",
+        "hideArchived": "Masquer les lieux archivés",
+        "restore": "Restaurer le lieu",
+        "archivedLabel": "Archivé",
+        "djStyles": "Styles des DJs",
+        "activityCityHint": "Pour les prestations, la ville est celle de l’événement ; pour les mixes, celle du DJ."
     }
 }

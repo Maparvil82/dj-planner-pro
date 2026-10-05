@@ -2,7 +2,7 @@ import type { CreateSessionInput, Session } from '../types/session';
 
 type SessionTiming = Pick<
     CreateSessionInput,
-    'date' | 'start_time' | 'end_time'
+    'date' | 'start_time' | 'end_time' | 'booking_timezone'
 >;
 
 export function localDateString(date = new Date()): string {
@@ -24,7 +24,57 @@ export function sessionRange(session: SessionTiming): {
     const end = new Date(year, month - 1, day, endHour, endMinute);
     if (endHour * 60 + endMinute <= startHour * 60 + startMinute)
         end.setDate(end.getDate() + 1);
-    return { start, end };
+    if (!session.booking_timezone) return { start, end };
+    const inZone = (wall: number) => {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: session.booking_timezone!,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+        });
+        let instant = wall;
+        const seen = new Set<number>();
+        for (let i = 0; i < 4; i++) {
+            const parts = Object.fromEntries(
+                formatter
+                    .formatToParts(new Date(instant))
+                    .map((p) => [p.type, p.value]),
+            );
+            const displayed = Date.UTC(
+                Number(parts.year),
+                Number(parts.month) - 1,
+                Number(parts.day),
+                Number(parts.hour),
+                Number(parts.minute),
+            );
+            const next = instant + wall - displayed;
+            if (next === instant) break;
+            // Match Postgres: nonexistent spring-forward times advance past the gap.
+            if (seen.has(next)) {
+                instant = Math.max(instant, next);
+                break;
+            }
+            seen.add(instant);
+            instant = next;
+        }
+        return new Date(instant);
+    };
+    const overnight = endHour * 60 + endMinute <= startHour * 60 + startMinute;
+    return {
+        start: inZone(Date.UTC(year, month - 1, day, startHour, startMinute)),
+        end: inZone(
+            Date.UTC(
+                year,
+                month - 1,
+                day + (overnight ? 1 : 0),
+                endHour,
+                endMinute,
+            ),
+        ),
+    };
 }
 
 // Fees use wall-clock hours, including nights that cross midnight.

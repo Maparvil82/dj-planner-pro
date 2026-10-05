@@ -1,3 +1,11 @@
+import { CityInput } from '../profile/CityInput';
+import {
+    cityKey,
+    cityLabel,
+    normalizeCity,
+    type CityLocation,
+} from '../../utils/cities';
+import type { CreateVenueInput } from '../../types/venue';
 import { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -29,8 +37,8 @@ export function SessionVenueSheet({
     venues: Venue[];
     selectedId: string | null;
     onClose: () => void;
-    onSelect: (venue: Venue) => void;
-    onCreate: (name: string) => Promise<Venue>;
+    onSelect: (venue: Venue) => void | Promise<void>;
+    onCreate: (input: CreateVenueInput) => Promise<Venue>;
 }) {
     const { t } = useTranslation();
     const c = useCommunityColors();
@@ -38,12 +46,18 @@ export function SessionVenueSheet({
     const { height } = useWindowDimensions();
     const [query, setQuery] = useState('');
     const [creating, setCreating] = useState(false);
+    const [city, setCity] = useState('');
+    const [cityLocation, setCityLocation] = useState<CityLocation | null>(null);
+    const [address, setAddress] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(false);
     const saving = useRef(false);
     useEffect(() => {
         if (visible) {
             setQuery('');
+            setCity('');
+            setCityLocation(null);
+            setAddress('');
             setCreating(false);
             setError(false);
         }
@@ -62,6 +76,20 @@ export function SessionVenueSheet({
     const close = () => {
         if (!saving.current) onClose();
     };
+    const select = async (place: Venue) => {
+        if (saving.current) return;
+        saving.current = true;
+        setBusy(true);
+        setError(false);
+        try {
+            await onSelect(place);
+        } catch {
+            setError(true);
+        } finally {
+            saving.current = false;
+            setBusy(false);
+        }
+    };
     const add = async () => {
         if (!creating) {
             setCreating(true);
@@ -69,19 +97,30 @@ export function SessionVenueSheet({
             return;
         }
         const name = query.trim();
-        if (!name || saving.current) return;
+        if (!name || !city.trim() || saving.current) return;
         const existing = venues.find(
-            (v) => normalize(v.name) === normalize(name),
+            (v) =>
+                normalize(v.name) === normalize(name) &&
+                cityKey(cityLabel(v.city || '', v.city_location)) ===
+                    cityKey(cityLabel(city, cityLocation)) &&
+                normalize(v.address || '') === normalize(address),
         );
         if (existing) {
-            onSelect(existing);
+            await select(existing);
             return;
         }
         saving.current = true;
         setBusy(true);
         setError(false);
         try {
-            onSelect(await onCreate(name));
+            await onSelect(
+                await onCreate({
+                    name,
+                    city: normalizeCity(city),
+                    city_location: cityLocation,
+                    address: address.trim(),
+                }),
+            );
         } catch {
             setError(true);
         } finally {
@@ -117,7 +156,7 @@ export function SessionVenueSheet({
                         maxHeight: height * 0.8,
                         flexShrink: 1,
                         height: creating
-                            ? Math.min(height * 0.65, 430)
+                            ? Math.min(height * 0.8, 650)
                             : Math.min(height * 0.72, 600),
                         paddingHorizontal: 20,
                         paddingTop: 12,
@@ -240,6 +279,39 @@ export function SessionVenueSheet({
                                 marginBottom: 6,
                             }}
                         />
+                        {creating && (
+                            <>
+                                <CityInput
+                                    value={city}
+                                    onChange={setCity}
+                                    location={cityLocation}
+                                    onLocation={setCityLocation}
+                                    disabled={busy}
+                                />
+                                <Text style={{ color: c.muted, fontSize: 12 }}>
+                                    {t('location.addressOptional')}
+                                </Text>
+                                <TextInput
+                                    value={address}
+                                    onChangeText={setAddress}
+                                    editable={!busy}
+                                    maxLength={500}
+                                    accessibilityLabel={t('venue_address')}
+                                    placeholder={t('places.addressPlaceholder')}
+                                    placeholderTextColor={c.muted}
+                                    style={{
+                                        minHeight: 52,
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: c.border,
+                                        backgroundColor: c.bg,
+                                        color: c.fg,
+                                        paddingHorizontal: 16,
+                                        fontSize: 15,
+                                    }}
+                                />
+                            </>
+                        )}
                         {error && (
                             <Text
                                 accessibilityRole="alert"
@@ -257,7 +329,8 @@ export function SessionVenueSheet({
                                         accessibilityState={{
                                             selected: selectedId === v.id,
                                         }}
-                                        onPress={() => onSelect(v)}
+                                        disabled={busy}
+                                        onPress={() => void select(v)}
                                         style={{
                                             borderWidth: 1,
                                             borderColor:
@@ -292,7 +365,13 @@ export function SessionVenueSheet({
                                                     lineHeight: 18,
                                                 }}
                                             >
-                                                {[v.city, v.address]
+                                                {[
+                                                    cityLabel(
+                                                        v.city || '',
+                                                        v.city_location,
+                                                    ),
+                                                    v.address,
+                                                ]
                                                     .filter(Boolean)
                                                     .join(' · ')}
                                             </Text>
@@ -327,7 +406,10 @@ export function SessionVenueSheet({
                     >
                         <Pressable
                             accessibilityRole="button"
-                            disabled={busy || (creating && !query.trim())}
+                            disabled={
+                                busy ||
+                                (creating && (!query.trim() || !city.trim()))
+                            }
                             onPress={() => void add()}
                             style={{
                                 minHeight: 54,
@@ -338,7 +420,9 @@ export function SessionVenueSheet({
                                 justifyContent: 'center',
                                 backgroundColor: c.accent,
                                 opacity:
-                                    busy || (creating && !query.trim())
+                                    busy ||
+                                    (creating &&
+                                        (!query.trim() || !city.trim()))
                                         ? 0.5
                                         : 1,
                             }}

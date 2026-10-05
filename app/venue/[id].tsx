@@ -1,3 +1,5 @@
+import { CityInput } from '../../src/components/profile/CityInput';
+import { normalizeCity, type CityLocation } from '../../src/utils/cities';
 import { FEATURES } from '../../src/config/features';
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
@@ -53,6 +55,7 @@ export default function VenueDetailScreen() {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [city, setCity] = useState('');
+    const [cityLocation, setCityLocation] = useState<CityLocation | null>(null);
     const [contact, setContact] = useState('');
     const [notes, setNotes] = useState('');
     const [soundQuality, setSoundQuality] = useState(0);
@@ -81,7 +84,8 @@ export default function VenueDetailScreen() {
     const input: CreateVenueInput = {
         name: name.trim(),
         address: address.trim(),
-        city: city.trim(),
+        city: normalizeCity(city),
+        city_location: cityLocation,
         contact_info: contact.trim(),
         notes: notes.trim(),
         capacity: capacity.trim() ? Number(capacity) : null,
@@ -116,6 +120,7 @@ export default function VenueDetailScreen() {
         setName(venue.name || '');
         setAddress(venue.address || '');
         setCity(venue.city || '');
+        setCityLocation(venue.city_location || null);
         setContact(venue.contact_info || '');
         setNotes(venue.notes || '');
         setCapacity(venue.capacity?.toString() || '');
@@ -126,7 +131,8 @@ export default function VenueDetailScreen() {
         baseline.current = {
             name: venue.name.trim(),
             address: (venue.address || '').trim(),
-            city: (venue.city || '').trim(),
+            city: normalizeCity(venue.city || ''),
+            city_location: venue.city_location || null,
             contact_info: (venue.contact_info || '').trim(),
             notes: (venue.notes || '').trim(),
             capacity: venue.capacity ?? null,
@@ -191,6 +197,7 @@ export default function VenueDetailScreen() {
         name,
         address,
         city,
+        cityLocation,
         contact,
         notes,
         soundQuality,
@@ -210,13 +217,25 @@ export default function VenueDetailScreen() {
         if (!hasChanges || (await save())) router.back();
     };
     const handleDelete = async () => {
+        if (venue?.archived_at) {
+            try {
+                await updateVenueMutation.mutateAsync({
+                    venueId: venue.id,
+                    input: { archived_at: null },
+                });
+                router.back();
+            } catch {
+                Alert.alert(t('error'), t('places.saveError'));
+            }
+            return;
+        }
         if (
             !venue ||
             !(await confirmAction(
-                t('delete_venue'),
-                t('places.deleteMessage'),
+                t(venue?.archived_at ? 'location.restore' : 'location.archive'),
+                t('location.archiveMessage'),
                 t('cancel'),
-                t('delete'),
+                t(venue?.archived_at ? 'location.restore' : 'location.archive'),
             ))
         )
             return;
@@ -356,9 +375,7 @@ export default function VenueDetailScreen() {
                                       ? '#111625'
                                       : '#f8f9fd',
                         }}
-                    >
-
-                    </TouchableOpacity>
+                    ></TouchableOpacity>
                 ))}
             </View>
         </View>
@@ -510,9 +527,19 @@ export default function VenueDetailScreen() {
                             title={t('places.location')}
                             kind="location"
                         >
-                            {field(t('venue_city'), city, setCity, {
-                                placeholder: t('places.cityPlaceholder'),
-                            })}
+                            <CityInput
+                                value={city}
+                                onChange={(value) => {
+                                    setCity(value);
+                                    changed();
+                                }}
+                                location={cityLocation}
+                                onLocation={(value) => {
+                                    setCityLocation(value);
+                                    changed();
+                                }}
+                                disabled={isSaving}
+                            />
                             {field(t('venue_address'), address, setAddress, {
                                 placeholder: t('places.addressPlaceholder'),
                                 multiline: true,
@@ -524,7 +551,7 @@ export default function VenueDetailScreen() {
                                     lineHeight: 18,
                                 }}
                             >
-                                {t('places.locationHint')}
+                                {t('location.futureHint')}
                             </Text>
                         </SessionFormSection>
                         <SessionFormSection
@@ -834,9 +861,14 @@ export default function VenueDetailScreen() {
                         </SessionFormSection>
                         <TouchableOpacity
                             accessibilityRole="button"
-                            accessibilityLabel={t('delete_venue')}
+                            accessibilityLabel={t(
+                                venue?.archived_at
+                                    ? 'location.restore'
+                                    : 'location.archive',
+                            )}
                             disabled={
                                 deleteVenueMutation.isPending ||
+                                updateVenueMutation.isPending ||
                                 hasChanges ||
                                 isSaving ||
                                 saveStatus === 'saving'
@@ -864,7 +896,11 @@ export default function VenueDetailScreen() {
                                     fontSize: 13,
                                 }}
                             >
-                                {t('delete_venue')}
+                                {t(
+                                    venue?.archived_at
+                                        ? 'location.restore'
+                                        : 'location.archive',
+                                )}
                             </Text>
                         </TouchableOpacity>
                     </View>

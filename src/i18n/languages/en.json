@@ -459,7 +459,7 @@
         "location": "Location",
         "cityPlaceholder": "e.g. London",
         "addressPlaceholder": "Street and number",
-        "locationHint": "City and address are optional. The city is used in your metrics.",
+        "locationHint": "Name and city help people discover your performances. The address is optional.",
         "saveError": "Could not save the venue. Please try again.",
         "detailTitle": "Venue details",
         "preparation": "Booth and capacity",
@@ -538,7 +538,7 @@
         "unpublish": "Stop sharing",
         "publishMessage": "The title, venue, city, date, schedule and poster will be shown. Fees, payments, contacts and notes will not be shared.",
         "sessionPublic": "This session is visible to DJs in Community.",
-        "sessionHidden": "This session is shared but hidden while your profile is inactive or the booking is unconfirmed.",
+        "sessionHidden": "This session is shared but temporarily hidden while your profile is inactive or the session is cancelled. Reactivating it makes it visible again.",
         "sessionPrivate": "This session only appears in your private agenda.",
         "confirmFirst": "You can only publish confirmed sessions.",
         "searchSessions": "Search sessions or venues…",
@@ -931,7 +931,7 @@
         "title": "Choose a venue",
         "hint": "Search your venues or add a new one.",
         "newTitle": "New venue",
-        "newHint": "Save it to your venues and use it for this session.",
+        "newHint": "Name and city help people discover your performances. The address is optional.",
         "back": "Back to my venues",
         "empty": "No matching venues.",
         "saveError": "Could not save the venue. Please try again."
@@ -1091,5 +1091,24 @@
         "city": "Upcoming in {{city}}",
         "rest": "More sessions",
         "open": "View session"
+    },
+    "location": {
+        "addressOptional": "Address (optional)",
+        "archive": "Archive venue",
+        "archiveMessage": "The venue will leave your list. Its sessions and locations will be preserved.",
+        "futureHint": "Location changes apply to future sessions. Past performances retain their location. The address is optional and is not published in Community.",
+        "completeAction": "Complete location",
+        "completeBeforeSharing": "Add the event city to share this session. We do not use your profile city.",
+        "repairError": "Could not save the location. Please try again.",
+        "createHint": "Name and city help people discover your performances. The address is optional.",
+        "timezone": "Event time zone",
+        "timezoneHint": "Used for schedules and sessions across midnight. Example: Europe/Madrid.",
+        "invalidTimezone": "Choose a valid time zone, such as Europe/Madrid.",
+        "showArchived": "Show archived venues",
+        "hideArchived": "Hide archived venues",
+        "restore": "Restore venue",
+        "archivedLabel": "Archived",
+        "djStyles": "DJ styles",
+        "activityCityHint": "For performances, city means the event location; for mixes, it means the DJ’s city."
     }
 }

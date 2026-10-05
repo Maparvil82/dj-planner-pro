@@ -1,3 +1,4 @@
+import { cityLabel } from './cities';
 import type { Session } from '../types/session';
 import type { Expense } from '../types/expense';
 import {
@@ -178,17 +179,8 @@ export function dashboardInsights(
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase();
     const byId = new Map(venues.map((v) => [v.id, v]));
-    const byName = new Map<string, import('../types/venue').Venue[]>();
-    venues.forEach((v) => {
-        const key = normalize(v.name);
-        byName.set(key, [...(byName.get(key) || []), v]);
-    });
     const resolveVenue = (s: Session) =>
-        s.venue_id
-            ? byId.get(s.venue_id)
-            : byName.get(normalize(s.venue || ''))?.length === 1
-              ? byName.get(normalize(s.venue || ''))![0]
-              : undefined;
+        s.venue_id && !s.is_guest ? byId.get(s.venue_id) : undefined;
     const venueKey = (s: Session) =>
         resolveVenue(s)?.id || s.venue_id || normalize(s.venue || '');
     const firstCompleted = new Map<string, number>();
@@ -222,7 +214,10 @@ export function dashboardInsights(
     const weekdays = Array.from({ length: 7 }, (_, day) => ({ day, count: 0 }));
     for (const s of summary.active) {
         weekdays[sessionRange(s).start.getDay()].count++;
-        const city = resolveVenue(s)?.city?.trim().replace(/\s+/g, ' ');
+        const city = cityLabel(
+            s.venue_city?.trim() || '',
+            s.venue_city_location,
+        );
         if (!city) {
             unknownCity++;
             continue;

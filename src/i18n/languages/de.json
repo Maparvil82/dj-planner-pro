@@ -455,7 +455,7 @@
         "location": "Standort",
         "cityPlaceholder": "z. B. Berlin",
         "addressPlaceholder": "Straße und Hausnummer",
-        "locationHint": "Stadt und Adresse sind optional. Die Stadt wird für deine Statistiken verwendet.",
+        "locationHint": "Name und Stadt helfen, deine Auftritte zu entdecken. Die Adresse ist optional.",
         "saveError": "Der Ort konnte nicht gespeichert werden. Versuche es erneut.",
         "detailTitle": "Details zum Ort",
         "preparation": "DJ-Pult und Kapazität",
@@ -534,7 +534,7 @@
         "unpublish": "Nicht mehr teilen",
         "publishMessage": "Titel, Ort, Stadt, Datum, Zeiten und Poster werden gezeigt. Honorare, Zahlungen, Kontakte und Notizen bleiben privat.",
         "sessionPublic": "Diese Session ist für DJs in der Community sichtbar.",
-        "sessionHidden": "Diese Session ist geteilt, aber ausgeblendet, solange dein Profil inaktiv oder die Buchung unbestätigt ist.",
+        "sessionHidden": "Diese Session ist geteilt, aber bei inaktivem Profil oder Absage ausgeblendet. Nach der Reaktivierung ist sie wieder sichtbar.",
         "sessionPrivate": "Diese Session erscheint nur in deinem privaten Kalender.",
         "confirmFirst": "Nur bestätigte Sessions können veröffentlicht werden.",
         "searchSessions": "Sessions oder Orte suchen…",
@@ -927,7 +927,7 @@
         "title": "Ort auswählen",
         "hint": "Suche in deinen Orten oder füge einen neuen hinzu.",
         "newTitle": "Neuer Ort",
-        "newHint": "Speichere ihn in deinen Orten und nutze ihn für diese Session.",
+        "newHint": "Name und Stadt helfen, deine Auftritte zu entdecken. Die Adresse ist optional.",
         "back": "Zurück zu meinen Orten",
         "empty": "Keine passenden Orte.",
         "saveError": "Der Ort konnte nicht gespeichert werden. Versuche es erneut."
@@ -1087,5 +1087,24 @@
         "city": "Demnächst in {{city}}",
         "rest": "Weitere Sessions",
         "open": "Session ansehen"
+    },
+    "location": {
+        "addressOptional": "Adresse (optional)",
+        "archive": "Ort archivieren",
+        "archiveMessage": "Der Ort verschwindet aus deiner Liste. Seine Sessions und Veranstaltungsorte bleiben erhalten.",
+        "futureHint": "Änderungen gelten für zukünftige Sessions. Vergangene Auftritte behalten ihren Ort. Die Adresse ist optional und wird nicht in der Community veröffentlicht.",
+        "completeAction": "Ort vervollständigen",
+        "completeBeforeSharing": "Ergänze die Stadt der Veranstaltung, um diese Session zu teilen. Wir verwenden nicht die Stadt deines Profils.",
+        "repairError": "Der Ort konnte nicht gespeichert werden. Bitte versuche es erneut.",
+        "createHint": "Name und Stadt helfen, deine Auftritte zu entdecken. Die Adresse ist optional.",
+        "timezone": "Zeitzone der Veranstaltung",
+        "timezoneHint": "Für Uhrzeiten und Sessions nach Mitternacht. Beispiel: Europe/Berlin.",
+        "invalidTimezone": "Wähle eine gültige Zeitzone, etwa Europe/Berlin.",
+        "showArchived": "Archivierte Orte anzeigen",
+        "hideArchived": "Archivierte Orte ausblenden",
+        "restore": "Ort wiederherstellen",
+        "archivedLabel": "Archiviert",
+        "djStyles": "DJ-Stile",
+        "activityCityHint": "Bei Auftritten ist es die Stadt der Veranstaltung, bei Mixes die Stadt des DJs."
     }
 }

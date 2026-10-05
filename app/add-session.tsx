@@ -54,7 +54,7 @@ import {
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { setupCalendarLocales } from '../src/i18n/calendarLocales';
 import { confirmAction } from '../src/utils/confirmAction';
-import { localDateString } from '../src/utils/sessionPlanning';
+import { localDateString, sessionRange } from '../src/utils/sessionPlanning';
 import { pickSessionPoster } from '../src/services/sessionPoster';
 import { SessionLimitError } from '../src/utils/sessionLimit';
 import { sessionService } from '../src/services/sessions';
@@ -78,6 +78,9 @@ export default function AddSessionScreen() {
     const [title, setTitle] = useState('');
     const status: BookingStatus = 'confirmed';
     const [venue, setVenue] = useState('');
+    const [timezone, setTimezone] = useState(
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
     const [startTime, setStartTime] = useState('22:00');
     const [endTime, setEndTime] = useState('04:00');
     const [venueId, setVenueId] = useState<string | null>(null);
@@ -281,6 +284,7 @@ export default function AddSessionScreen() {
         )
             finalDjs.push(djInput.trim());
         const input = {
+            booking_timezone: timezone,
             date: sessionDate,
             title: title.trim(),
             venue: venue.trim(),
@@ -343,7 +347,7 @@ export default function AddSessionScreen() {
             )
                 return;
             if (
-                new Date(`${sessionDate}T${startTime}:00`) < new Date() &&
+                sessionRange(input).start < new Date() &&
                 !(await confirmAction(
                     t('past_date_warning_title'),
                     t('past_date_warning_message'),
@@ -893,6 +897,23 @@ export default function AddSessionScreen() {
                                     ))}
                             </View>
                         </View>
+                        <View style={{ gap: 8, marginTop: 16 }}>
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                {t('location.timezone')}
+                            </Text>
+                            <TextInput
+                                value={timezone}
+                                onChangeText={setTimezone}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                maxLength={80}
+                                accessibilityLabel={t('location.timezone')}
+                                className="rounded-2xl p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                            />
+                            <Text className="text-xs text-gray-500">
+                                {t('location.timezoneHint')}
+                            </Text>
+                        </View>
                     </SessionFormSection>
 
                     <SessionFormSection kind="fee" title={t('form.fee')}>
@@ -1338,7 +1359,7 @@ export default function AddSessionScreen() {
                     setVenueId(selected.id);
                     setIsVenueModalVisible(false);
                 }}
-                onCreate={(name) => createVenueMutation.mutateAsync({ name })}
+                onCreate={(input) => createVenueMutation.mutateAsync(input)}
             />
         </SafeAreaView>
     );

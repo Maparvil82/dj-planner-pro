@@ -1,3 +1,4 @@
+import type { CityLocation } from '../utils/cities';
 import type { FeeAgreement } from '../utils/feeAgreement';
 import { UserProfile } from '../services/profile';
 
@@ -7,7 +8,9 @@ export interface Session {
     date: string; // date 'YYYY-MM-DD'
     title: string;
     venue: string;
-    venue_city?: string | null; // Display metadata from the linked place.
+    venue_city?: string | null; // Event location snapshot, independent of the place record.
+    venue_city_location?: CityLocation | null;
+    venue_address?: string | null;
     start_time: string; // e.g., '22:00'
     end_time: string; // e.g., '04:00'
     booking_timezone?: string | null;
@@ -42,6 +45,7 @@ export interface Session {
 }
 
 export interface CreateSessionInput {
+    booking_timezone?: string | null;
     date: string;
     title: string;
     venue: string;

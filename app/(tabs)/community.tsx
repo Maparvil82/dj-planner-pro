@@ -1,3 +1,4 @@
+import { cityLabel } from '../../src/utils/cities';
 import { CommunitySessionShelves } from '../../src/components/community/CommunitySessionShelves';
 import { CommunityActivityFeed } from '../../src/components/community/CommunityActivityFeed';
 import { CommunityWelcome } from '../../src/components/community/CommunityWelcome';
@@ -81,7 +82,9 @@ export default function CommunityScreen() {
         return () => clearTimeout(timer);
     }, [search]);
     const following = useCommunityFollowing(socialReady);
-    const shelfCity = own.data?.city || '';
+    const shelfCity =
+        sessionFilters.city ||
+        cityLabel(own.data?.city || '', own.data?.city_location);
     const shelvesEnabled = socialReady && tab === 'sessions';
     const followedSessions = useCommunitySessionShelf(
         'following',
@@ -346,7 +349,7 @@ export default function CommunityScreen() {
                             <CommunityFiltersBar
                                 value={activeFilters}
                                 onChange={setFilters}
-                                mode={listView ? 'djs' : 'sessions'}
+                                mode={activityView ? 'activity' : listView ? 'djs' : 'sessions'}
                                 options={filterOptions.data}
                                 loading={filterOptions.isPending}
                                 error={filterOptions.isError}

@@ -30,6 +30,17 @@ export function validateSessionInput(
     input: CreateSessionInput,
 ): CreateSessionInput {
     if (!input.venue.trim()) throw new Error('missing_fields');
+    if (input.booking_timezone !== undefined && !input.booking_timezone?.trim())
+        throw new Error('location.invalidTimezone');
+    if (input.booking_timezone) {
+        try {
+            new Intl.DateTimeFormat('en', {
+                timeZone: input.booking_timezone,
+            }).format();
+        } catch {
+            throw new Error('location.invalidTimezone');
+        }
+    }
     if (!validSessionDate(input.date)) throw new Error('workflow.invalidDate');
     if (
         ![input.start_time, input.end_time].every((time) =>

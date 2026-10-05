@@ -1,20 +1,28 @@
+import { normalizeCity } from '../utils/cities';
 import { supabase } from '../lib/supabase';
 import { Venue, CreateVenueInput } from '../types/venue';
 import { decode } from 'base64-arraybuffer';
 import * as ImageManipulator from 'expo-image-manipulator';
 
 export const venueService = {
-    async uploadVenueImage(userId: string, imageUri: string): Promise<string | null> {
+    async uploadVenueImage(
+        userId: string,
+        imageUri: string,
+    ): Promise<string | null> {
         try {
             // 1. Compress & format image
             const manipulatedImage = await ImageManipulator.manipulateAsync(
                 imageUri,
                 [{ resize: { width: 1200 } }], // Larger than profile but still optimized
-                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                {
+                    compress: 0.8,
+                    format: ImageManipulator.SaveFormat.JPEG,
+                    base64: true,
+                },
             );
 
             if (!manipulatedImage.base64) {
-                throw new Error("Failed to get base64 string from image");
+                throw new Error('Failed to get base64 string from image');
             }
 
             const filePath = `${userId}/venue_${Date.now()}.jpg`;
@@ -43,12 +51,13 @@ export const venueService = {
             return null;
         }
     },
-    async getAllVenues(userId: string): Promise<Venue[]> {
-        const { data, error } = await supabase
-            .from('venues')
-            .select('*')
-            .eq('user_id', userId)
-            .order('name', { ascending: true });
+    async getAllVenues(
+        userId: string,
+        includeArchived = false,
+    ): Promise<Venue[]> {
+        let query = supabase.from('venues').select('*').eq('user_id', userId);
+        if (!includeArchived) query = query.is('archived_at', null);
+        const { data, error } = await query.order('name', { ascending: true });
 
         if (error) {
             console.error('Error fetching venues:', error);
@@ -74,11 +83,17 @@ export const venueService = {
     },
 
     async createVenue(input: CreateVenueInput, userId: string): Promise<Venue> {
+        if (!input.city?.trim()) throw new Error('location.cityRequired');
+        input = {
+            ...input,
+            city: normalizeCity(input.city),
+            name: input.name.trim(),
+        };
         const { data, error } = await supabase
             .from('venues')
             .insert({
                 ...input,
-                user_id: userId
+                user_id: userId,
             })
             .select()
             .single();
@@ -91,12 +106,17 @@ export const venueService = {
         return data;
     },
 
-    async updateVenue(venueId: string, input: Partial<CreateVenueInput>): Promise<Venue> {
+    async updateVenue(
+        venueId: string,
+        input: Partial<CreateVenueInput>,
+    ): Promise<Venue> {
+        if (input.city !== undefined)
+            input = { ...input, city: normalizeCity(input.city) };
         const { data, error } = await supabase
             .from('venues')
             .update({
                 ...input,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
             })
             .eq('id', venueId)
             .select()
@@ -107,27 +127,13 @@ export const venueService = {
             throw new Error(error.message);
         }
 
-        // SIDE EFFECT: If name changed, update all sessions that reference this venue_id
-        if (input.name) {
-            const { error: sessionUpdateError } = await supabase
-                .from('sessions')
-                .update({ venue: input.name.trim() })
-                .eq('venue_id', venueId);
-
-            if (sessionUpdateError) {
-                console.warn('Failed to sync venue name to sessions:', sessionUpdateError);
-                // We don't throw here to not block the venue update itself, 
-                // but we warn in console.
-            }
-        }
-
         return data;
     },
 
     async deleteVenue(venueId: string): Promise<void> {
         const { error } = await supabase
             .from('venues')
-            .delete()
+            .update({ archived_at: new Date().toISOString() })
             .eq('id', venueId);
 
         if (error) {
@@ -151,5 +157,5 @@ export const venueService = {
         } catch (error) {
             console.error('Delete Venue Image Error:', error);
         }
-    }
+    },
 };

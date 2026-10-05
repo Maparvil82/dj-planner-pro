@@ -453,7 +453,7 @@
         "location": "Localização",
         "cityPlaceholder": "Ex.: Lisboa",
         "addressPlaceholder": "Rua e número",
-        "locationHint": "Cidade e endereço são opcionais. A cidade é usada nas tuas métricas.",
+        "locationHint": "Nome e cidade para descobrir as suas atuações. A morada é opcional.",
         "saveError": "Não foi possível guardar o local. Tenta novamente.",
         "detailTitle": "Detalhes do local",
         "preparation": "Cabine e lotação",
@@ -532,7 +532,7 @@
         "unpublish": "Deixar de partilhar",
         "publishMessage": "Serão mostrados título, local, cidade, data, horário e cartaz. Cachês, pagamentos, contactos e notas ficam privados.",
         "sessionPublic": "Esta sessão é visível aos DJs da Comunidade.",
-        "sessionHidden": "Esta sessão está partilhada mas oculta enquanto o perfil estiver inativo ou a reserva não confirmada.",
+        "sessionHidden": "Esta sessão está partilhada mas oculta enquanto o perfil estiver inativo ou a sessão cancelada. Ao reativar, volta a ficar visível.",
         "sessionPrivate": "Esta sessão aparece apenas na tua agenda privada.",
         "confirmFirst": "Só podes publicar sessões confirmadas.",
         "searchSessions": "Pesquisar sessões ou locais…",
@@ -925,7 +925,7 @@
         "title": "Escolher local",
         "hint": "Pesquisa nos teus locais ou adiciona um novo.",
         "newTitle": "Novo local",
-        "newHint": "Guarda-o nos teus locais e usa-o nesta sessão.",
+        "newHint": "Nome e cidade para descobrir as suas atuações. A morada é opcional.",
         "back": "Voltar aos meus locais",
         "empty": "Nenhum local correspondente.",
         "saveError": "Não foi possível guardar o local. Tenta novamente."
@@ -1085,5 +1085,24 @@
         "city": "Em breve em {{city}}",
         "rest": "Mais sessões",
         "open": "Ver sessão"
+    },
+    "location": {
+        "addressOptional": "Morada (opcional)",
+        "archive": "Arquivar local",
+        "archiveMessage": "O local sairá da sua lista. As sessões e localizações serão preservadas.",
+        "futureHint": "As alterações aplicam-se às sessões futuras. As atuações passadas mantêm a localização. A morada é opcional e não é publicada na Comunidade.",
+        "completeAction": "Completar localização",
+        "completeBeforeSharing": "Adicione a cidade do evento para partilhar esta sessão. Não usamos a cidade do seu perfil.",
+        "repairError": "Não foi possível guardar a localização. Tente novamente.",
+        "createHint": "Nome e cidade para descobrir as suas atuações. A morada é opcional.",
+        "timezone": "Fuso horário do evento",
+        "timezoneHint": "Usado nos horários e sessões após a meia-noite. Exemplo: Europe/Lisbon.",
+        "invalidTimezone": "Escolha um fuso horário válido, como Europe/Lisbon.",
+        "showArchived": "Mostrar locais arquivados",
+        "hideArchived": "Ocultar locais arquivados",
+        "restore": "Restaurar local",
+        "archivedLabel": "Arquivado",
+        "djStyles": "Estilos dos DJs",
+        "activityCityHint": "Nas atuações, a cidade é a do evento; nos mixes, é a cidade do DJ."
     }
 }
