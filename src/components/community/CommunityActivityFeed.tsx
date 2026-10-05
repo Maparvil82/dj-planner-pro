@@ -34,6 +34,7 @@ export function CommunityActivityFeed({
                         <CommunitySessionCard
                             key={`session-${item.id}`}
                             item={item.payload}
+                            activityLabel={`${t('communityActivity.publishedSession')} · ${new Date(item.published_at).toLocaleDateString(currentLanguage, { day: 'numeric', month: 'short' })}`}
                         />
                     );
                 const mix = item.payload;

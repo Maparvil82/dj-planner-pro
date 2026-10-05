@@ -1083,7 +1083,8 @@
         "search": "Search DJs, mixes or performances",
         "empty": "Your scene starts here",
         "emptyHint": "Follow DJs to see their mixes and performances. If you already follow them, their posts will appear here.",
-        "sharedMix": "Added a mix",
+        "sharedMix": "Added a new mix",
+        "publishedSession": "Published a new session",
         "openDJ": "View {{name}}’s profile"
     },
     "sessionShelves": {

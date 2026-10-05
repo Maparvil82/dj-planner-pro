@@ -1077,7 +1077,8 @@
         "search": "Procurar DJ, mix ou atuação",
         "empty": "A tua cena começa aqui",
         "emptyHint": "Segue DJs para ver os seus mixes e atuações. As suas publicações aparecerão aqui.",
-        "sharedMix": "Adicionou um mix",
+        "sharedMix": "Adicionou um novo mix",
+        "publishedSession": "Publicou uma nova sessão",
         "openDJ": "Ver perfil de {{name}}"
     },
     "sessionShelves": {

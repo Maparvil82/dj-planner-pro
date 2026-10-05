@@ -364,9 +364,11 @@ export function CommunityProfileCard({
 export function CommunitySessionCard({
     item,
     showAuthor = true,
+    activityLabel,
 }: {
     item: CommunitySession;
     showAuthor?: boolean;
+    activityLabel?: string;
 }) {
     const c = useCommunityColors();
     const { t, currentLanguage } = useTranslation();
@@ -420,7 +422,7 @@ export function CommunitySessionCard({
                                 marginTop: 3,
                             }}
                         >
-                            {t('community.sharedSession')}
+                            {activityLabel || t('community.sharedSession')}
                         </Text>
                     </View>
                     <ChevronRight size={17} color={c.muted} />

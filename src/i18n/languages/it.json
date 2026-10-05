@@ -1079,7 +1079,8 @@
         "search": "Cerca DJ, mix o performance",
         "empty": "La tua scena inizia qui",
         "emptyHint": "Segui i DJ per scoprire i loro mix e performance. Le loro pubblicazioni appariranno qui.",
-        "sharedMix": "Ha aggiunto un mix",
+        "sharedMix": "Ha aggiunto un nuovo mix",
+        "publishedSession": "Ha pubblicato una nuova sessione",
         "openDJ": "Vedi il profilo di {{name}}"
     },
     "sessionShelves": {

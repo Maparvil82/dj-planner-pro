@@ -466,9 +466,41 @@ const errors = [];
     await page.screenshot({
         path: '/private/tmp/djplanner-following-activity.png',
     });
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'Actividad', exact: true })
+            .count(),
+        0,
+    );
+    assert.equal(
+        await page
+            .getByRole('button', { name: 'DJs que sigo', exact: true })
+            .count(),
+        0,
+    );
+    await page.getByText('Ha subido un nuevo mix', { exact: false }).waitFor();
     await page
-        .getByRole('button', { name: 'DJs que sigo', exact: true })
+        .getByText('Ha publicado una nueva sesión', { exact: false })
+        .waitFor();
+    const activityCards = await page
+        .getByText('Jazz in Sevilla', { exact: true })
+        .boundingBox();
+    const sessionCards = await page
+        .getByText(fixtures[0].title, { exact: true })
+        .boundingBox();
+    assert(
+        activityCards.y < sessionCards.y,
+        'Newest publication appears first',
+    );
+    await page
+        .getByRole('button', { name: labels.community.djs, exact: true })
         .click();
+    const switchingTabs = await page
+        .getByRole('button', { name: labels.community.following, exact: true })
+        .boundingBox();
+    const switchingSearch = await page
+        .getByRole('textbox', { name: labels.community.search, exact: true })
+        .boundingBox();
     assert.equal(
         await page.locator('iframe[title="Jazz in Sevilla"]').count(),
         0,
@@ -476,23 +508,31 @@ const errors = [];
     await page
         .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
         .waitFor();
+    const loadedTabs = await page
+        .getByRole('button', { name: labels.community.following, exact: true })
+        .boundingBox();
+    const loadedSearch = await page
+        .getByRole('textbox', { name: labels.community.search, exact: true })
+        .boundingBox();
     assert.equal(
-        await page
-            .getByRole('button', { name: 'Ver perfil: Luna', exact: true })
-            .count(),
-        0,
-        'Only followed DJs appear, regardless of any session feed',
+        switchingTabs.y,
+        loadedTabs.y,
+        'Loading must not push the tabs down',
     );
-    await page.screenshot({
-        path: '/private/tmp/djplanner-community-following.png',
-    });
+    assert.equal(
+        switchingSearch.y,
+        loadedSearch.y,
+        'Loading must not push the search down',
+    );
     await page
         .getByRole('button', { name: 'Dejar de seguir Pepe', exact: true })
         .click();
     await page
-        .getByText(labels.community.noFollowingDjs, { exact: true })
+        .getByRole('button', { name: 'Seguir Pepe', exact: true })
         .waitFor();
-    await page.getByRole('button', { name: 'Actividad', exact: true }).click();
+    await page
+        .getByRole('button', { name: labels.community.following, exact: true })
+        .click();
     await page.getByText('Tu escena empieza aquí', { exact: true }).waitFor();
     assert.equal(
         await page.getByText('Jazz in Sevilla', { exact: true }).count(),
@@ -560,7 +600,7 @@ const errors = [];
     await context.close();
     await browser.close();
     console.log(
-        'PASS: two-column DJ cards at 320px, follow/unfollow list updates, filters inside search, combined search, cancel and independent tab state. Mock APIs.',
+        'PASS: two-column DJ cards at 320px, direct following activity, newest-first updates, stable controls during loading, follow/unfollow updates, filters inside search, combined search, cancel and independent tab state. Mock APIs.',
     );
 })().catch(async (e) => {
     console.error(e);

@@ -1078,7 +1078,8 @@
         "search": "DJ・ミックス・出演を検索",
         "empty": "ここからシーンにつながろう",
         "emptyHint": "DJをフォローすると、公開されたミックスや出演情報がここに表示されます。",
-        "sharedMix": "ミックスを追加しました",
+        "sharedMix": "新しいミックスを追加しました",
+        "publishedSession": "新しいセッションを公開しました",
         "openDJ": "{{name}}のプロフィールを見る"
     },
     "sessionShelves": {
