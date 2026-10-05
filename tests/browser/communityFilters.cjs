@@ -387,6 +387,32 @@ const errors = [];
             .getByRole('button', { name: 'Aplicar filtros', exact: true })
             .click();
     await page.goto('http://localhost:8081/community');
+    await page
+        .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
+        .waitFor();
+    assert.equal(
+        await page.getByText('House Málaga', { exact: true }).count(),
+        0,
+        'Community initially shows DJs, not sessions',
+    );
+    const tabPositions = await Promise.all(
+        [
+            labels.community.djs,
+            labels.community.sessions,
+            labels.community.following,
+        ].map((name) =>
+            page.getByRole('button', { name, exact: true }).boundingBox(),
+        ),
+    );
+    assert(
+        tabPositions[0].x < tabPositions[1].x &&
+            tabPositions[1].x < tabPositions[2].x,
+        'Community tabs are DJs, Sessions, Following',
+    );
+    await page
+        .getByRole('button', { name: labels.community.sessions, exact: true })
+        .click();
+
     await page.getByText('Techno Madrid', { exact: true }).waitFor();
     const square = await page
         .getByRole('button', { name: 'Ver sesión: Techno Madrid', exact: true })
@@ -575,6 +601,9 @@ const errors = [];
     assert.equal(bookmarks.size, 0);
     await page
         .getByRole('button', { name: labels.savedMixes.discover, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: labels.community.sessions, exact: true })
         .click();
     await openFilters();
     await pick('Ciudad', 'Málaga');

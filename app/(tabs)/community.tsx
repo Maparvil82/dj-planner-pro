@@ -42,9 +42,7 @@ export default function CommunityScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const userId = useAuthStore((state) => state.session?.user.id);
-    const [tab, setTab] = useState<'sessions' | 'following' | 'djs'>(
-        'sessions',
-    );
+    const [tab, setTab] = useState<'sessions' | 'following' | 'djs'>('djs');
     const [sessionFilters, setSessionFilters] = useState<CommunityFilters>({
         city: '',
         genre: '',
@@ -263,7 +261,7 @@ export default function CommunityScreen() {
                                 }}
                             >
                                 {(
-                                    ['sessions', 'following', 'djs'] as const
+                                    ['djs', 'sessions', 'following'] as const
                                 ).map((value) => (
                                     <TouchableOpacity
                                         key={value}
