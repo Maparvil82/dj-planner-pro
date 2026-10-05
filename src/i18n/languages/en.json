@@ -1123,5 +1123,19 @@
         "emptyHint": "Save mixes you discover in Community or DJ profiles to listen to them later.",
         "discover": "Explore Community",
         "availability": "Removed mixes and mixes from private profiles stay hidden while unavailable."
+    },
+    "createMenu": {
+        "title": "Create",
+        "intro": "What would you like to add?",
+        "session": "Simple session",
+        "sessionHint": "A new performance in your calendar",
+        "conditional": "Conditional session",
+        "soon": "Coming soon",
+        "mix": "Mix",
+        "mixHint": "Share a recording on your profile",
+        "venue": "Venue",
+        "venueHint": "Save a place to perform",
+        "profileRequired": "Complete your DJ profile to publish a mix.",
+        "upcoming": "Upcoming and live sessions"
     }
 }

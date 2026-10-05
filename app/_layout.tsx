@@ -35,6 +35,15 @@ export default function RootLayout() {
                     }}
                 />
                 <Stack.Screen
+                    name="add-mix"
+                    options={{
+                        presentation: 'transparentModal',
+                        animation: 'slide_from_bottom',
+                        gestureEnabled: false,
+                        contentStyle: { backgroundColor: 'transparent' },
+                    }}
+                />
+                <Stack.Screen
                     name="add-session"
                     options={{ headerShown: false }}
                 />

@@ -1119,5 +1119,19 @@
         "emptyHint": "Speichere Mixe aus der Community oder von DJ-Profilen, um sie später anzuhören.",
         "discover": "Community entdecken",
         "availability": "Entfernte Mixe und Mixe privater Profile bleiben verborgen, solange sie nicht verfügbar sind."
+    },
+    "createMenu": {
+        "title": "Erstellen",
+        "intro": "Was möchtest du hinzufügen?",
+        "session": "Einfache Session",
+        "sessionHint": "Ein neuer Auftritt in deinem Kalender",
+        "conditional": "Bedingte Session",
+        "soon": "Demnächst",
+        "mix": "Mix",
+        "mixHint": "Teile eine Aufnahme in deinem Profil",
+        "venue": "Location",
+        "venueHint": "Speichere einen Auftrittsort",
+        "profileRequired": "Vervollständige dein DJ-Profil, um einen Mix zu veröffentlichen.",
+        "upcoming": "Anstehende und laufende Sessions"
     }
 }

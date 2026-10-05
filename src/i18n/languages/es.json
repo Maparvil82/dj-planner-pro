@@ -1119,5 +1119,19 @@
         "emptyHint": "Guarda los mixes que descubras en Comunidad o en los perfiles de DJs para escucharlos más tarde.",
         "discover": "Explorar Comunidad",
         "availability": "Los mixes retirados o de perfiles privados no aparecerán mientras no estén disponibles."
+    },
+    "createMenu": {
+        "title": "Crear",
+        "intro": "¿Qué quieres añadir?",
+        "session": "Sesión simple",
+        "sessionHint": "Una nueva actuación en tu agenda",
+        "conditional": "Sesión condicional",
+        "soon": "Próximamente",
+        "mix": "Mix",
+        "mixHint": "Comparte una grabación en tu perfil",
+        "venue": "Lugar",
+        "venueHint": "Guarda un sitio donde pinchar",
+        "profileRequired": "Completa tu perfil de DJ para publicar un mix.",
+        "upcoming": "Sesiones próximas y en curso"
     }
 }

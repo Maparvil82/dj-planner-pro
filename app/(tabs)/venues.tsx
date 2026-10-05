@@ -15,8 +15,9 @@ import {
     Platform,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Search, X } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { Search, X, ChevronLeft } from 'lucide-react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import {
     useVenuesQuery,
@@ -46,6 +47,13 @@ export default function VenuesScreen() {
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
     const router = useRouter();
+    const params = useLocalSearchParams<{ create?: string }>();
+    useEffect(() => {
+        if (params.create === '1') {
+            setIsAddModalVisible(true);
+            router.setParams({ create: '' });
+        }
+    }, [params.create, router]);
     const [includeArchived, setIncludeArchived] = useState(false);
     const {
         data: venues = [],
@@ -157,6 +165,26 @@ export default function VenuesScreen() {
         >
             <PageHeader
                 title={t('venues_title')}
+                showPlaces={false}
+                leading={
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t('go_back')}
+                        onPress={() =>
+                            router.canGoBack()
+                                ? router.back()
+                                : router.replace('/home')
+                        }
+                        style={{
+                            width: 44,
+                            height: 44,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <ChevronLeft size={22} color={text} />
+                    </TouchableOpacity>
+                }
                 subtitle={t('places.intro')}
             />
             <View

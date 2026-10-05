@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sessionService } from '../services/sessions';
 import { useAuthStore } from '../store/useAuthStore';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { sessionRange } from '../utils/sessionPlanning';
 import { CreateSessionInput } from '../types/session';
 
 export const useSessionsQuery = (year: number, month: number) => {
@@ -19,18 +23,50 @@ export const useSessionsQuery = (year: number, month: number) => {
 };
 
 export const useUpcomingSessionsQuery = () => {
+    const [now, setNow] = useState(() => new Date());
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
-    return useQuery({
+    const selectUpcoming = useCallback(
+        (
+            rows: Awaited<
+                ReturnType<typeof sessionService.getUpcomingSessions>
+            >,
+        ) => rows.filter((row) => sessionRange(row).end > now),
+        [now],
+    );
+    const query = useQuery({
         queryKey: ['sessions', 'upcoming', userId],
+        select: selectUpcoming,
         queryFn: () => {
             if (!userId) return [];
             return sessionService.getUpcomingSessions(userId);
         },
         enabled: !!userId && initialized,
-        staleTime: 1000 * 60 * 5, // 5 minutes cache
+        staleTime: 0,
+        refetchInterval: 60000,
     });
+    const { refetch } = query;
+    useFocusEffect(
+        useCallback(() => {
+            setNow(new Date());
+            if (userId && initialized) void refetch();
+        }, [userId, initialized, refetch]),
+    );
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 60000);
+        const listener = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                setNow(new Date());
+                if (userId && initialized) void refetch();
+            }
+        });
+        return () => {
+            clearInterval(timer);
+            listener.remove();
+        };
+    }, [userId, initialized, refetch]);
+    return query;
 };
 
 export const useCreateSessionMutation = () => {

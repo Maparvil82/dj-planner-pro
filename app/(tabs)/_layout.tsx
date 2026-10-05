@@ -1,5 +1,8 @@
 import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
-import { AccountDrawerProvider } from '../../src/components/navigation/AccountDrawer';
+import {
+    AccountDrawerProvider,
+    AccountAvatarButton,
+} from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
 import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
@@ -94,7 +97,7 @@ function TabLayoutContent() {
             <ExpoTabs.Screen
                 name="create-session"
                 options={{
-                    title: t('insights.add'),
+                    title: t('createMenu.title'),
                     tabBarShowLabel: false,
                     tabBarButton: () => (
                         <View
@@ -133,6 +136,7 @@ function TabLayoutContent() {
             <ExpoTabs.Screen
                 name="venues"
                 options={{
+                    href: null,
                     title: t('venues_title'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
@@ -146,6 +150,24 @@ function TabLayoutContent() {
                     title: t('community.title'),
                     tabBarIcon: ({ color, size }) => (
                         <Users color={color} size={size} />
+                    ),
+                }}
+            />
+            <ExpoTabs.Screen
+                name="account"
+                options={{
+                    title: t('tab_you'),
+                    tabBarButton: () => (
+                        <View
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                paddingBottom: 16,
+                            }}
+                        >
+                            <AccountAvatarButton tab />
+                        </View>
                     ),
                 }}
             />

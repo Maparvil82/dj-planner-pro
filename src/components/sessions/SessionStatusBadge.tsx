@@ -8,16 +8,18 @@ import type { Session } from '../../types/session';
 export function SessionStatusBadge({
     session,
     compact = false,
+    showOngoing = false,
 }: {
     session: Session;
     compact?: boolean;
+    showOngoing?: boolean;
 }) {
     const { t } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
-        if (!session.is_guest) return;
+        if (!session.is_guest && !showOngoing) return;
         const timer = setInterval(() => setNow(new Date()), 60000);
         const listener = AppState.addEventListener('change', (state) => {
             if (state === 'active') setNow(new Date());
@@ -26,9 +28,14 @@ export function SessionStatusBadge({
             clearInterval(timer);
             listener.remove();
         };
-    }, [session.is_guest]);
+    }, [session.is_guest, showOngoing]);
     const payment = sessionPaymentState(session);
-    const phase = payment === 'guest' ? sessionPhase(session, now) : payment;
+    const ongoing = showOngoing && sessionPhase(session, now) === 'ongoing';
+    const phase = ongoing
+        ? 'ongoing'
+        : payment === 'guest'
+          ? sessionPhase(session, now)
+          : payment;
     const color =
         phase === 'unpaid' || phase === 'partial'
             ? dark
@@ -66,7 +73,7 @@ export function SessionStatusBadge({
                 }}
             >
                 {t(
-                    payment === 'guest'
+                    payment === 'guest' || ongoing
                         ? `workflow.${phase}`
                         : `paymentState.${phase}`,
                 )}

@@ -116,7 +116,7 @@ export function UpcomingSessionCard({
                             month: 'short',
                         })}
                     </Text>
-                    <SessionStatusBadge session={session} compact />
+                    <SessionStatusBadge session={session} compact showOngoing />
                 </View>
                 <View style={{ gap: 2 }}>
                     <Text

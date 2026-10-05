@@ -250,7 +250,7 @@ export default function HomeScreen() {
                     <View style={{ paddingHorizontal: 4 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
                             <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                                {t('upcoming_sessions')}
+                                {t('createMenu.upcoming')}
                             </Text>
 
                             <View className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">

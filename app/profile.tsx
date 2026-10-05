@@ -541,7 +541,7 @@ export default function ProfileScreen({
             style={{ flex: 1, backgroundColor: c.bg }}
         >
             <PageHeader
-                showAvatar={false}
+                showPlaces={false}
                 title={t(
                     settingsPage
                         ? 'accountMenu.settings'

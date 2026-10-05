@@ -31,7 +31,7 @@ const DrawerContext = createContext<{
     open: () => void;
     isPro: boolean;
 } | null>(null);
-export function AccountAvatarButton() {
+export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
     const menu = useContext(DrawerContext);
     const { profile, session } = useAuthStore();
     const { t } = useTranslation();
@@ -50,8 +50,8 @@ export function AccountAvatarButton() {
             }
             onPress={menu.open}
             style={{
-                width: 46,
-                height: 46,
+                width: tab ? '100%' : 46,
+                height: tab ? 50 : 46,
                 alignItems: 'center',
                 justifyContent: 'center',
             }}
@@ -59,17 +59,29 @@ export function AccountAvatarButton() {
             <TabProfileIcon
                 url={profile?.avatar_url}
                 name={profile?.artist_name || session.user.email}
-                size={36}
+                size={tab ? 25 : 36}
                 color={c.fg}
                 focused={false}
                 hasUnread={!!unread.data}
             />
+            {tab && (
+                <Text
+                    style={{
+                        color: c.muted,
+                        fontSize: 10,
+                        fontWeight: '600',
+                        marginTop: 5,
+                    }}
+                >
+                    {t('tab_you')}
+                </Text>
+            )}
             {menu.isPro && (
                 <View
                     pointerEvents="none"
                     style={{
                         position: 'absolute',
-                        bottom: 0,
+                        bottom: tab ? 14 : 0,
                         paddingHorizontal: 5,
                         paddingVertical: 1,
                         borderRadius: 5,

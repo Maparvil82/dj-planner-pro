@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
+import { MapPin } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useTranslation } from '../../i18n/useTranslation';
 import { useTheme } from '../../contexts/ThemeContext';
-import { AccountAvatarButton } from '../navigation/AccountDrawer';
 
 export function PageHeader({
     title,
@@ -9,17 +11,19 @@ export function PageHeader({
     children,
     leading,
     action,
-    showAvatar = true,
+    showPlaces = true,
 }: {
     title: string;
     subtitle: string;
     children?: ReactNode;
     leading?: ReactNode;
     action?: ReactNode;
-    showAvatar?: boolean;
+    showPlaces?: boolean;
 }) {
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
+    const router = useRouter();
+    const { t } = useTranslation();
     return (
         <View
             style={{
@@ -67,7 +71,26 @@ export function PageHeader({
                 </View>
                 {children}
                 {action}
-                {showAvatar && <AccountAvatarButton />}
+                {showPlaces && (
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t('venues_title')}
+                        onPress={() => router.push('/venues')}
+                        style={{
+                            width: 46,
+                            height: 46,
+                            borderRadius: 16,
+                            backgroundColor: dark ? '#20273b' : '#e9eaf3',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <MapPin
+                            size={20}
+                            color={dark ? '#f3f4f8' : '#202538'}
+                        />
+                    </Pressable>
+                )}
             </View>
         </View>
     );
