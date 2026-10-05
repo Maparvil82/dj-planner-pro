@@ -63,6 +63,12 @@ GRANT SELECT ON public.community_profiles,public.session_collaborators TO authen
         'utf8',
     );
     await db.exec(migration);
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005211300_exclude_own_sessions_from_discovery.sql',
+            'utf8',
+        ),
+    );
     assert.equal(
         (
             await db.query(
@@ -265,6 +271,48 @@ GRANT SELECT ON public.community_profiles,public.session_collaborators TO authen
                 s.venue_city === 'Lisboa' &&
                 s.booking_timezone === 'Europe/Lisbon',
         ),
+    );
+    // Discovery excludes the viewer's own agenda before pagination, not just after rendering.
+    await role(id(2));
+    await db.query(
+        "insert into public.sessions(id,user_id,date,venue,start_time,end_time,status,venue_city) values($1,$2,current_date+20,'Other DJ event','22:00','04:00','confirmed','Sevilla')",
+        [id(210), id(2)],
+    );
+    await db.query(
+        'insert into public.community_session_shares(session_id,user_id) values($1,$2)',
+        [id(210), id(2)],
+    );
+    await role(id(1));
+    let discovery = (
+        await db.query(
+            "select * from community_private.session_shelf('rest','',current_date,'','','',0,1)",
+        )
+    ).rows;
+    assert.equal(discovery.length, 1);
+    assert.equal(discovery[0].author_id, id(2));
+    assert.equal(
+        (
+            await db.query(
+                "select count(*)::int n from community_private.session_shelf('rest','',current_date,'','','',1,20)",
+            )
+        ).rows[0].n,
+        0,
+    );
+    await db.exec('reset role');
+    await db.query(
+        "insert into public.session_collaborators(session_id,dj_id,inviter_id,status) values($1,$2,$3,'accepted')",
+        [id(210), id(1), id(2)],
+    );
+    await role(id(1));
+    discovery = (
+        await db.query(
+            "select * from community_private.session_shelf('rest','',current_date,'','','',0,20)",
+        )
+    ).rows;
+    assert.equal(
+        discovery.length,
+        0,
+        'Accepted guest sessions also belong to the viewer',
     );
     await db.exec('reset role;set role anon');
     await assert.rejects(
