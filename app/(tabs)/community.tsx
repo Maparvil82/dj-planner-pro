@@ -1,3 +1,4 @@
+import { CommunityActivityFeed } from '../../src/components/community/CommunityActivityFeed';
 import { CommunityWelcome } from '../../src/components/community/CommunityWelcome';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
 import { CommunityFiltersBar } from '../../src/components/community/CommunityFiltersBar';
@@ -26,6 +27,7 @@ import {
 } from '../../src/components/community/CommunityUI';
 import {
     useCommunityDiscover,
+    useCommunityActivity,
     useCommunitySessionCounts,
     useCommunityFollowedDjs,
     useCommunityFilterOptions,
@@ -51,10 +53,16 @@ export default function CommunityScreen() {
         city: '',
         genre: '',
     });
+    const [followingMode, setFollowingMode] = useState<'activity' | 'djs'>(
+        'activity',
+    );
+    const activityView = tab === 'following' && followingMode === 'activity';
+    const listView =
+        tab === 'djs' || (tab === 'following' && followingMode === 'djs');
     const own = useCommunityProfile(userId);
     const socialReady = !own.isError && canUseDJProfile(own.data);
     const filterOptions = useCommunityFilterOptions(
-        tab === 'sessions' ? 'sessions' : 'djs',
+        activityView ? 'activity' : tab === 'sessions' ? 'sessions' : 'djs',
         socialReady,
     );
     const [searches, setSearches] = useState({
@@ -88,14 +96,21 @@ export default function CommunityScreen() {
     const followedDjs = useCommunityFollowedDjs(
         debounced,
         followingFilters,
-        socialReady && tab === 'following',
+        socialReady && tab === 'following' && followingMode === 'djs',
+    );
+    const activity = useCommunityActivity(
+        debounced,
+        followingFilters,
+        socialReady && activityView,
     );
     const mutation = useCommunityMutation();
     const active =
         tab === 'sessions'
             ? feed
             : tab === 'following'
-              ? followedDjs
+              ? activityView
+                  ? activity
+                  : followedDjs
               : discover;
     const activeFilters =
         tab === 'sessions'
@@ -139,11 +154,11 @@ export default function CommunityScreen() {
             .filter((profile) => profile.user_id !== userId) || [];
     const counts = useCommunitySessionCounts(
         profiles.map((profile) => profile.user_id),
-        socialReady && tab !== 'sessions',
+        socialReady && listView,
     );
     const sessions = feed.data?.pages.flat() || [];
     const refresh = () => {
-        if (tab !== 'sessions') void counts.refetch();
+        if (listView) void counts.refetch();
         void active.refetch();
         void filterOptions.refetch();
         void own.refetch();
@@ -264,12 +279,39 @@ export default function CommunityScreen() {
                                     marginTop: -6,
                                 }}
                             >
-                                {t(`community.${tab}TabHint`)}
+                                {t(
+                                    activityView
+                                        ? 'communityActivity.hint'
+                                        : `community.${tab}TabHint`,
+                                )}
                             </Text>
+                            {tab === 'following' && (
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    {(['activity', 'djs'] as const).map(
+                                        (mode) => (
+                                            <CommunityButton
+                                                key={mode}
+                                                compact
+                                                secondary={
+                                                    followingMode !== mode
+                                                }
+                                                label={t(
+                                                    mode === 'activity'
+                                                        ? 'communityActivity.activity'
+                                                        : 'communityActivity.people',
+                                                )}
+                                                onPress={() =>
+                                                    setFollowingMode(mode)
+                                                }
+                                            />
+                                        ),
+                                    )}
+                                </View>
+                            )}
                             <CommunityFiltersBar
                                 value={activeFilters}
                                 onChange={setFilters}
-                                mode={tab === 'sessions' ? 'sessions' : 'djs'}
+                                mode={listView ? 'djs' : 'sessions'}
                                 options={filterOptions.data}
                                 loading={filterOptions.isPending}
                                 error={filterOptions.isError}
@@ -281,9 +323,11 @@ export default function CommunityScreen() {
                                     setSearches({ ...searches, [tab]: text })
                                 }
                                 placeholder={t(
-                                    tab === 'sessions'
-                                        ? 'community.searchSessions'
-                                        : 'community.search',
+                                    activityView
+                                        ? 'communityActivity.search'
+                                        : tab === 'sessions'
+                                          ? 'community.searchSessions'
+                                          : 'community.search',
                                 )}
                             />
                             {error && (
@@ -297,7 +341,32 @@ export default function CommunityScreen() {
                                     title={t('community.loading')}
                                     loading
                                 />
-                            ) : tab !== 'sessions' ? (
+                            ) : activityView ? (
+                                activity.data?.pages.flat().length ? (
+                                    <CommunityActivityFeed
+                                        items={activity.data.pages.flat()}
+                                    />
+                                ) : (
+                                    !activity.isError && (
+                                        <CommunityMessage
+                                            title={t(
+                                                activeFilters.city ||
+                                                    activeFilters.genre ||
+                                                    search.trim()
+                                                    ? 'communityFilters.noResults'
+                                                    : 'communityActivity.empty',
+                                            )}
+                                            hint={t(
+                                                activeFilters.city ||
+                                                    activeFilters.genre ||
+                                                    search.trim()
+                                                    ? 'communityFilters.noResultsHint'
+                                                    : 'communityActivity.emptyHint',
+                                            )}
+                                        />
+                                    )
+                                )
+                            ) : listView ? (
                                 profiles.length ? (
                                     <View style={{ gap: 12 }}>
                                         {Array.from(
@@ -453,7 +522,9 @@ export default function CommunityScreen() {
                                 )
                             )}
                             {tab === 'following' &&
-                                !profiles.length &&
+                                (activityView
+                                    ? !activity.data?.pages.flat().length
+                                    : !profiles.length) &&
                                 !search.trim() &&
                                 !followingFilters.city &&
                                 !followingFilters.genre &&

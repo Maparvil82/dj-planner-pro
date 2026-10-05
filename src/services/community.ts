@@ -1,3 +1,4 @@
+import type { ProfileMix } from './profileMixes';
 import type { UserProfile } from './profile';
 import { supabase } from '../lib/supabase';
 import { cityKey, normalizeCity, type CityLocation } from '../utils/cities';
@@ -51,10 +52,45 @@ export interface CommunitySession {
         avatar_url: string | null;
     }[];
 }
+export type CommunityActivity =
+    | {
+          kind: 'session';
+          id: string;
+          published_at: string;
+          payload: CommunitySession;
+      }
+    | {
+          kind: 'mix';
+          id: string;
+          published_at: string;
+          payload: ProfileMix & {
+              artist_name: string;
+              avatar_url: string | null;
+              city: string;
+          };
+      };
 export type CommunityFilters = { city: string; genre: string };
 export type CommunityFilterOptions = { cities: string[]; genres: string[] };
 const PAGE_SIZE = 20;
 export const communityService = {
+    async activity(
+        search: string,
+        offset: number,
+        filters?: CommunityFilters,
+    ): Promise<CommunityActivity[]> {
+        const { data, error } = await supabase.rpc(
+            'community_following_activity',
+            {
+                search_text: search.trim(),
+                filter_city: filters?.city || '',
+                filter_genre: filters?.genre || '',
+                page_offset: offset,
+                page_size: PAGE_SIZE,
+            },
+        );
+        if (error) throw error;
+        return data || [];
+    },
     async posters(author: string, offset: number): Promise<CommunitySession[]> {
         const { data, error } = await supabase.rpc(
             'community_profile_posters',
@@ -128,8 +164,18 @@ export const communityService = {
         return data || [];
     },
     async filterOptions(
-        mode: 'sessions' | 'djs',
+        mode: 'sessions' | 'djs' | 'activity',
     ): Promise<CommunityFilterOptions> {
+        if (mode === 'activity') {
+            const [sessions, djs] = await Promise.all([
+                communityService.filterOptions('sessions'),
+                communityService.filterOptions('djs'),
+            ]);
+            return {
+                cities: [...new Set([...sessions.cities, ...djs.cities])],
+                genres: [...new Set([...sessions.genres, ...djs.genres])],
+            };
+        }
         const { data, error } = await supabase.rpc('community_filter_options', {
             mode,
         });

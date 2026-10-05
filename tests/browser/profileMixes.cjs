@@ -132,6 +132,7 @@ const errors = [];
         is_visible: false,
     };
     let recordings = [];
+    let postersVisible = true;
     const followed = [];
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await context.route('**/*.supabase.co/**', async (route) => {
@@ -166,7 +167,7 @@ const errors = [];
                 genres: ['Jazz', 'House'],
             };
         } else if (url.pathname.includes('/rpc/community_profile_posters')) {
-            body = [1, 2].map((i) => ({
+            body = (postersVisible ? [1, 2] : []).map((i) => ({
                 session_id: `poster-${i}`,
                 title: `Night poster ${i}`,
                 date: '2026-09-20',
@@ -664,6 +665,30 @@ const errors = [];
     assert.ok(
         copied.endsWith('/community/00000000-0000-4000-8000-000000000902'),
     );
+    recordings = [];
+    postersVisible = false;
+    const emptyMixesLoaded = page.waitForResponse((r) =>
+        r.url().includes('community_profile_mixes'),
+    );
+    await page.goto(
+        'http://localhost:8081/community/00000000-0000-4000-8000-000000000902',
+    );
+    await page.getByText('Music first', { exact: true }).waitFor();
+    await emptyMixesLoaded;
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByText('Mixes', { exact: true }).count(), 0);
+    assert.equal(await page.getByText('Cartel', { exact: true }).count(), 0);
+    assert.equal(
+        await page.getByText('Sesiones publicadas', { exact: true }).count(),
+        0,
+    );
+    assert.equal(
+        await page.getByText('Todavía no hay mixes', { exact: true }).count(),
+        0,
+    );
+    await page.screenshot({
+        path: '/private/tmp/djplanner-empty-dj-profile.png',
+    });
     recordings = [originalRecording];
     await page.goto('http://localhost:8081/profile');
     await page.getByRole('button', { name: 'Editar mix', exact: true }).click();

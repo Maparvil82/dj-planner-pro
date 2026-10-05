@@ -23,6 +23,7 @@ export function ProfilePosters({ userId }: { userId: string }) {
     const [selected, setSelected] = useState<CommunitySession | null>(null);
     const [failed, setFailed] = useState<Record<string, boolean>>({});
     const rows = query.data?.pages.flat() || [];
+    if (query.isSuccess && !rows.length) return null;
     return (
         <View style={{ gap: 12 }}>
             <Text style={{ color: c.fg, fontSize: 21, fontWeight: '800' }}>

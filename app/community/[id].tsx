@@ -179,7 +179,7 @@ export default function CommunityProfileScreen() {
             )}
             <ScrollView
                 onScroll={(event) => {
-                    const next = event.nativeEvent.contentOffset.y > 220;
+                    const next = event.nativeEvent.contentOffset.y > 170;
                     setScrolled((previous) =>
                         previous === next ? previous : next,
                     );
@@ -298,26 +298,29 @@ export default function CommunityProfileScreen() {
                                     }}
                                 />
                             )}
+                            <DJProfileDetails person={person} />
                             <ProfileMixes
                                 userId={id}
                                 bare
+                                hideWhenEmpty
                                 previewLimit={5}
                                 onViewAll={() =>
                                     router.push(`/community/mixes/${id}`)
                                 }
                             />
                             <ProfilePosters userId={id} />
-                            <DJProfileDetails person={person} />
-                            <Text
-                                style={{
-                                    color: c.fg,
-                                    fontWeight: '800',
-                                    fontSize: 18,
-                                    paddingHorizontal: 4,
-                                }}
-                            >
-                                {t('djPage.publishedSessions')}
-                            </Text>
+                            {!!feed.data?.pages.flat().length && (
+                                <Text
+                                    style={{
+                                        color: c.fg,
+                                        fontWeight: '800',
+                                        fontSize: 18,
+                                        paddingHorizontal: 4,
+                                    }}
+                                >
+                                    {t('djPage.publishedSessions')}
+                                </Text>
+                            )}
                             {feed.isPending ? (
                                 <CommunityMessage
                                     title={t('community.loading')}
@@ -340,7 +343,7 @@ export default function CommunityProfileScreen() {
                                             showAuthor={item.author_id !== id}
                                         />
                                     ))
-                            ) : (
+                            ) : own ? (
                                 <CommunityMessage
                                     title={t('community.noProfileSessions')}
                                     hint={t(
@@ -349,7 +352,7 @@ export default function CommunityProfileScreen() {
                                             : 'community.noProfileSessionsHint',
                                     )}
                                 />
-                            )}
+                            ) : null}
                             {feed.hasNextPage && (
                                 <CommunityButton
                                     label={t('community.loadMore')}

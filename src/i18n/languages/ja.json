@@ -566,7 +566,8 @@
         "openLink": "{{platform}}を開く",
         "linkError": "リンクを開けませんでした。再試行してください。",
         "cover": "カバー写真",
-        "back": "コミュニティに戻る"
+        "back": "コミュニティに戻る",
+        "publishedSession": "公開セッション"
     },
     "profileUX": {
         "manageAccount": "メールとパスワード",
@@ -1069,5 +1070,15 @@
         "error": "共有できませんでした。もう一度お試しください。",
         "appHint": "リンクはDJ Plannerを開きます。アプリとアカウントが必要です。",
         "expoHint": "テスト中のリンクにはExpo Goと実行中の開発サーバーが必要です。"
+    },
+    "communityActivity": {
+        "activity": "アクティビティ",
+        "people": "フォロー中のDJ",
+        "hint": "フォロー中のDJが公開したミックスや出演情報。",
+        "search": "DJ・ミックス・出演を検索",
+        "empty": "ここからシーンにつながろう",
+        "emptyHint": "DJをフォローすると、公開されたミックスや出演情報がここに表示されます。",
+        "sharedMix": "ミックスを追加しました",
+        "openDJ": "{{name}}のプロフィールを見る"
     }
 }

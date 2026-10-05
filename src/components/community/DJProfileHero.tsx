@@ -40,7 +40,7 @@ export function DJProfileHero({
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: 340,
+                    height: 285,
                     backgroundColor: '#302765',
                 }}
             >
@@ -67,17 +67,17 @@ export function DJProfileHero({
             </View>
             <View
                 style={{
-                    paddingTop: 235,
+                    paddingTop: 180,
                     paddingHorizontal: 20,
                     paddingBottom: 12,
-                    gap: 14,
+                    gap: 12,
                 }}
             >
                 <View
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 14,
+                        gap: 12,
                     }}
                 >
                     <View
@@ -141,9 +141,14 @@ export function DJProfileHero({
                         </Text>
                     </View>
                 </View>
-                {sessionCount !== undefined && (
+                {sessionCount !== undefined && sessionCount > 0 && (
                     <Text style={{ color: c.muted, fontSize: 12 }}>
-                        {sessionCount} {t('djPage.publishedSessions')}
+                        {sessionCount}{' '}
+                        {t(
+                            sessionCount === 1
+                                ? 'djPage.publishedSession'
+                                : 'djPage.publishedSessions',
+                        )}
                     </Text>
                 )}
                 {action}
@@ -181,17 +186,17 @@ export function DJProfileDetails({ person }: { person: CommunityProfile }) {
     const c = useCommunityColors();
     const { t } = useTranslation();
     const [linkError, setLinkError] = useState(false);
+    if (
+        !person.bio &&
+        !DJ_PLATFORMS.some((platform) => person[`${platform}_url`])
+    )
+        return null;
     return (
         <View style={{ gap: 18 }}>
             {!!person.bio && (
                 <View
                     style={{
-                        borderRadius: 24,
-                        backgroundColor: c.card,
-                        padding: 22,
-                        gap: 12,
-                        borderWidth: 1,
-                        borderColor: c.border,
+                        gap: 8,
                     }}
                 >
                     <Text
@@ -200,7 +205,7 @@ export function DJProfileDetails({ person }: { person: CommunityProfile }) {
                         {t('djPage.about')}
                     </Text>
                     <Text
-                        style={{ color: c.muted, fontSize: 15, lineHeight: 24 }}
+                        style={{ color: c.muted, fontSize: 14, lineHeight: 22 }}
                     >
                         {person.bio}
                     </Text>

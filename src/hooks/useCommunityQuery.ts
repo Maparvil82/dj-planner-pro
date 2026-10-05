@@ -113,7 +113,7 @@ export function useCommunityFollowedDjs(
     });
 }
 export function useCommunityFilterOptions(
-    mode: 'sessions' | 'djs',
+    mode: 'sessions' | 'djs' | 'activity',
     enabled = true,
 ) {
     const userId = useAuthStore((state) => state.session?.user.id);
@@ -185,6 +185,30 @@ export function useCommunityPosters(author: string) {
         enabled: !!viewer && !!author,
         initialPageParam: 0,
         queryFn: ({ pageParam }) => communityService.posters(author, pageParam),
+        getNextPageParam: (last, pages) =>
+            last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
+    });
+}
+
+export function useCommunityActivity(
+    search: string,
+    filters: CommunityFilters,
+    enabled: boolean,
+) {
+    const viewer = useAuthStore((state) => state.session?.user.id);
+    return useInfiniteQuery({
+        queryKey: [
+            'community',
+            'activity',
+            viewer,
+            search,
+            filters.city,
+            filters.genre,
+        ],
+        enabled: enabled && !!viewer,
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) =>
+            communityService.activity(search, pageParam, filters),
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
     });

@@ -383,6 +383,85 @@ const discover = async (
     );
     await role('authenticated');
     assert.equal((await followed()).length, 0);
+    await role('postgres');
+    await db.exec(
+        `create table public.community_profile_mixes(id uuid primary key,user_id uuid,title text,source_url text,platform text,created_at timestamptz);`,
+    );
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005173137_community_following_activity.sql',
+            'utf8',
+        ),
+    );
+    for (const [n, owner, title, created] of [
+        [501, 5, 'Jazz special', '2029-01-01'],
+        [502, 4, 'Private mix', '2029-01-02'],
+        [503, 3, 'Not followed', '2029-01-03'],
+        [504, 5, 'Older mix', '2020-01-01'],
+    ])
+        await db.query(
+            "insert into community_profile_mixes values($1,$2,$3,'https://www.mixcloud.com/dj/set/','mixcloud',$4)",
+            [uid(n), uid(owner), title, created],
+        );
+    const activity = async (
+        search = '',
+        city = '',
+        genre = '',
+        offset = 0,
+        size = 20,
+    ) =>
+        (
+            await db.query(
+                'select * from community_following_activity($1,$2,$3,$4,$5)',
+                [search, city, genre, offset, size],
+            )
+        ).rows;
+    await role('authenticated', uid(1));
+    const timeline = await activity();
+    assert.deepEqual(
+        timeline.map((x) => x.id),
+        [uid(501), uid(201), uid(504)],
+        'Only followed public mixes and accepted public collaborations appear, newest publication first',
+    );
+    assert.equal(timeline[0].kind, 'mix');
+    assert.equal(timeline[1].kind, 'session');
+    assert.ok(!JSON.stringify(timeline).includes('Private mix'));
+    assert.ok(!('earning_amount' in timeline[1].payload));
+    assert.deepEqual(
+        (await activity('jazz', 'barcelona', 'house')).map((x) => x.id),
+        [uid(501)],
+    );
+    assert.equal((await activity('jazz', 'madrid')).length, 0);
+    assert.equal((await activity('jazz', '', 'Deep House')).length, 0);
+    const paged = [];
+    for (let i = 0; i < timeline.length; i++)
+        paged.push((await activity('', '', '', i, 1))[0].id);
+    assert.deepEqual(
+        paged,
+        timeline.map((x) => x.id),
+        'Pagination preserves mixed chronology',
+    );
+    await role('authenticated', uid(3));
+    assert.equal(
+        (await activity()).length,
+        0,
+        'Another user does not inherit follows',
+    );
+    await role('authenticated');
+    assert.equal((await activity()).length, 0);
+    await role('anon');
+    await assert.rejects(() => activity(), /permission denied/);
+    await role('postgres');
+    await db.query(
+        'delete from community_follows where follower_id=$1 and following_id=$2',
+        [uid(1), uid(5)],
+    );
+    await role('authenticated', uid(1));
+    assert.equal(
+        (await activity()).length,
+        0,
+        'Unfollowing removes all of that DJ’s content immediately',
+    );
     console.log(
         'PASS combined filters, exact genres, accent/case city matching, accepted collaborators, pagination, name search, private data exclusion and authenticated-only access.',
     );

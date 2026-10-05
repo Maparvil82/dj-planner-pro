@@ -565,7 +565,8 @@
         "openLink": "Abrir {{platform}}",
         "linkError": "Não foi possível abrir o link. Tenta novamente.",
         "cover": "Foto de capa",
-        "back": "Voltar à comunidade"
+        "back": "Voltar à comunidade",
+        "publishedSession": "Sessão publicada"
     },
     "profileUX": {
         "manageAccount": "Email e palavra-passe",
@@ -1068,5 +1069,15 @@
         "error": "Não foi possível partilhar. Tenta novamente.",
         "appHint": "A ligação abre DJ Planner. É necessária a app e uma conta.",
         "expoHint": "Nos testes, a ligação abre Expo Go e requer o servidor de desenvolvimento ativo."
+    },
+    "communityActivity": {
+        "activity": "Atividade",
+        "people": "DJs que sigo",
+        "hint": "Mixes e atuações publicados pelos DJs que segues.",
+        "search": "Procurar DJ, mix ou atuação",
+        "empty": "A tua cena começa aqui",
+        "emptyHint": "Segue DJs para ver os seus mixes e atuações. As suas publicações aparecerão aqui.",
+        "sharedMix": "Adicionou um mix",
+        "openDJ": "Ver perfil de {{name}}"
     }
 }

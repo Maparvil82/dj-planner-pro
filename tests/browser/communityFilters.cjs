@@ -191,7 +191,34 @@ const errors = [];
                 user_id,
                 session_count: user_id === dj.user_id ? 27 : 0,
             }));
-        else if (url.pathname.endsWith('/community_follows')) {
+        else if (url.pathname.endsWith('/rpc/community_following_activity')) {
+            body = follows.has(dj.user_id)
+                ? [
+                      {
+                          kind: 'mix',
+                          id: 'fixture-mix',
+                          published_at: '2026-10-05T12:00:00Z',
+                          payload: {
+                              id: 'fixture-mix',
+                              user_id: dj.user_id,
+                              artist_name: dj.artist_name,
+                              avatar_url: dj.avatar_url,
+                              city: dj.city,
+                              title: 'Jazz in Sevilla',
+                              source_url: 'https://www.mixcloud.com/pepe/jazz/',
+                              platform: 'mixcloud',
+                              created_at: '2026-10-05T12:00:00Z',
+                          },
+                      },
+                      {
+                          kind: 'session',
+                          id: fixtures[0].session_id,
+                          published_at: '2026-10-04T12:00:00Z',
+                          payload: fixtures[0],
+                      },
+                  ]
+                : [];
+        } else if (url.pathname.endsWith('/community_follows')) {
             if (req.method() === 'POST') {
                 follows.add(req.postDataJSON().following_id);
                 body = null;
@@ -254,6 +281,31 @@ const errors = [];
             body: JSON.stringify(body),
         });
     });
+    await context.route('https://api.mixcloud.com/**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({
+                key: '/pepe/jazz/',
+                user: { name: 'Pepe' },
+                tags: [],
+                audio_length: 3600,
+            }),
+        }),
+    );
+    await context.route(
+        'https://widget.mixcloud.com/media/js/widgetApi.js',
+        (route) =>
+            route.fulfill({
+                contentType: 'application/javascript',
+                body: 'window.Mixcloud={PlayerWidget:()=>({ready:Promise.resolve(),play:()=>Promise.resolve(true)})};',
+            }),
+    );
+    await context.route('**/widget/iframe/**', (route) =>
+        route.fulfill({
+            contentType: 'text/html',
+            body: '<html>Official player fixture</html>',
+        }),
+    );
     const openFilters = () =>
         page.getByRole('button', { name: 'Filtros', exact: true }).click();
     const pick = async (kind, choice) => {
@@ -343,6 +395,22 @@ const errors = [];
     await page
         .getByRole('button', { name: labels.community.following, exact: true })
         .click();
+    await page.getByText('Jazz in Sevilla', { exact: true }).waitFor();
+    await page.getByText(fixtures[0].title, { exact: true }).waitFor();
+    await page
+        .getByRole('button', { name: 'Abrir reproductor', exact: true })
+        .click();
+    await page.locator('iframe[title="Jazz in Sevilla"]').waitFor();
+    await page.screenshot({
+        path: '/private/tmp/djplanner-following-activity.png',
+    });
+    await page
+        .getByRole('button', { name: 'DJs que sigo', exact: true })
+        .click();
+    assert.equal(
+        await page.locator('iframe[title="Jazz in Sevilla"]').count(),
+        0,
+    );
     await page
         .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
         .waitFor();
@@ -362,6 +430,12 @@ const errors = [];
     await page
         .getByText(labels.community.noFollowingDjs, { exact: true })
         .waitFor();
+    await page.getByRole('button', { name: 'Actividad', exact: true }).click();
+    await page.getByText('Tu escena empieza aquí', { exact: true }).waitFor();
+    assert.equal(
+        await page.getByText('Jazz in Sevilla', { exact: true }).count(),
+        0,
+    );
     await page
         .getByRole('button', { name: labels.community.djs, exact: true })
         .click();

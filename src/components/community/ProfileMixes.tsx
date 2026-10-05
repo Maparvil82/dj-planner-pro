@@ -29,6 +29,7 @@ export function ProfileMixes({
     bare = false,
     previewLimit,
     onViewAll,
+    hideWhenEmpty = false,
 }: {
     userId: string;
     editable?: boolean;
@@ -36,6 +37,7 @@ export function ProfileMixes({
     bare?: boolean;
     previewLimit?: number;
     onViewAll?: () => void;
+    hideWhenEmpty?: boolean;
 }) {
     const { t } = useTranslation(),
         c = useCommunityColors(),
@@ -88,7 +90,12 @@ export function ProfileMixes({
             setPreview(false);
             setConfirmDelete(null);
             setActive(null);
-            await client.invalidateQueries({ queryKey });
+            await Promise.all([
+                client.invalidateQueries({ queryKey }),
+                client.invalidateQueries({
+                    queryKey: ['community', 'activity'],
+                }),
+            ]);
         },
     });
     let source;
@@ -121,6 +128,8 @@ export function ProfileMixes({
         padding: 14,
         minHeight: 48,
     };
+    if (hideWhenEmpty && !owner && mixes.isSuccess && !allRows.length)
+        return null;
     return (
         <View
             style={{
