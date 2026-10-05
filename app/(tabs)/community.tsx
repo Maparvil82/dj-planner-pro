@@ -301,21 +301,6 @@ export default function CommunityScreen() {
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 12,
-                                    lineHeight: 17,
-                                    marginTop: -6,
-                                    minHeight: 34,
-                                }}
-                            >
-                                {t(
-                                    activityView
-                                        ? 'communityActivity.hint'
-                                        : `community.${tab}TabHint`,
-                                )}
-                            </Text>
                             <CommunityFiltersBar
                                 value={activeFilters}
                                 onChange={setFilters}
