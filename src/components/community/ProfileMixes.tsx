@@ -26,10 +26,12 @@ export function ProfileMixes({
     userId,
     editable = false,
     canAdd = false,
+    bare = false,
 }: {
     userId: string;
     editable?: boolean;
     canAdd?: boolean;
+    bare?: boolean;
 }) {
     const { t } = useTranslation(),
         c = useCommunityColors(),
@@ -116,9 +118,9 @@ export function ProfileMixes({
         <View
             style={{
                 gap: 14,
-                padding: 20,
-                backgroundColor: c.card,
-                borderWidth: 1,
+                padding: bare ? 0 : 20,
+                backgroundColor: bare ? 'transparent' : c.card,
+                borderWidth: bare ? 0 : 1,
                 borderColor: c.border,
                 borderRadius: 24,
             }}

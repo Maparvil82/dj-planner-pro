@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronRight, CalendarDays } from 'lucide-react-native';
@@ -43,6 +44,7 @@ export function CommunityButton({
     secondary = false,
     accessibilityLabel,
     compact = false,
+    outlined = false,
 }: {
     label: string;
     onPress: () => void;
@@ -51,6 +53,7 @@ export function CommunityButton({
     secondary?: boolean;
     accessibilityLabel?: string;
     compact?: boolean;
+    outlined?: boolean;
 }) {
     const c = useCommunityColors();
     return (
@@ -65,18 +68,26 @@ export function CommunityButton({
                 paddingHorizontal: compact ? 8 : 16,
                 paddingVertical: compact ? 8 : 12,
                 borderRadius: 14,
-                backgroundColor: secondary ? c.tint : '#6554df',
+                backgroundColor: outlined
+                    ? 'transparent'
+                    : secondary
+                      ? c.tint
+                      : '#6554df',
+                borderWidth: outlined ? 1 : 0,
+                borderColor: c.accent,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: disabled || busy ? 0.5 : 1,
             }}
         >
             {busy ? (
-                <ActivityIndicator color={secondary ? c.accent : '#fff'} />
+                <ActivityIndicator
+                    color={secondary || outlined ? c.accent : '#fff'}
+                />
             ) : (
                 <Text
                     style={{
-                        color: secondary ? c.accent : '#fff',
+                        color: secondary || outlined ? c.accent : '#fff',
                         fontSize: compact ? 12 : 13,
                         fontWeight: '700',
                         textAlign: 'center',
@@ -166,19 +177,16 @@ export function CommunityProfileCard({
     const { t } = useTranslation();
     const router = useRouter();
     const [failedImage, setFailedImage] = useState<string | null>(null);
+    const [failedCover, setFailedCover] = useState<string | null>(null);
     return (
         <View
             style={{
                 flex: 1,
                 backgroundColor: c.card,
-                borderRadius: 22,
-                shadowColor: '#202538',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: c.dark ? 0 : 0.05,
-                shadowRadius: 12,
-                elevation: 2,
+                borderRadius: 18,
                 borderWidth: 1,
                 borderColor: c.border,
+                overflow: 'hidden',
             }}
         >
             <TouchableOpacity
@@ -186,36 +194,20 @@ export function CommunityProfileCard({
                 accessibilityLabel={`${t('community.viewProfile')}: ${profile.artist_name}`}
                 onPress={() => router.push(`/community/${profile.user_id}`)}
             >
-                <View
-                    style={{
-                        aspectRatio: 1.55,
-                        margin: 6,
-                        marginBottom: 0,
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        backgroundColor: c.tint,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    {profile.avatar_url &&
-                    failedImage !== profile.avatar_url ? (
+                <View style={{ height: 56, backgroundColor: c.tint }}>
+                    <LinearGradient
+                        colors={[c.tint, c.dark ? '#463467' : '#dcd5f6']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{ position: 'absolute', inset: 0 }}
+                    />
+                    {profile.cover_url && failedCover !== profile.cover_url && (
                         <Image
-                            source={{ uri: profile.avatar_url }}
+                            source={{ uri: profile.cover_url }}
                             resizeMode="cover"
-                            onError={() => setFailedImage(profile.avatar_url)}
+                            onError={() => setFailedCover(profile.cover_url)}
                             style={{ width: '100%', height: '100%' }}
                         />
-                    ) : (
-                        <Text
-                            style={{
-                                color: c.accent,
-                                fontWeight: '700',
-                                fontSize: 38,
-                            }}
-                        >
-                            {profile.artist_name.trim().charAt(0).toUpperCase()}
-                        </Text>
                     )}
                     <View
                         accessible
@@ -226,22 +218,22 @@ export function CommunityProfileCard({
                         }
                         style={{
                             position: 'absolute',
-                            top: 9,
-                            right: 9,
+                            top: 7,
+                            right: 7,
                             flexDirection: 'row',
                             alignItems: 'center',
-                            gap: 5,
+                            gap: 4,
                             backgroundColor: 'rgba(16,18,28,0.62)',
-                            borderRadius: 20,
-                            paddingHorizontal: 8,
-                            paddingVertical: 5,
+                            borderRadius: 16,
+                            paddingHorizontal: 7,
+                            paddingVertical: 4,
                         }}
                     >
-                        <CalendarDays size={12} color="#fff" />
+                        <CalendarDays size={11} color="#fff" />
                         <Text
                             style={{
                                 color: '#fff',
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: '700',
                             }}
                         >
@@ -249,14 +241,63 @@ export function CommunityProfileCard({
                         </Text>
                     </View>
                 </View>
-                <View style={{ padding: 10, paddingBottom: 8, gap: 3 }}>
+                <View
+                    style={{
+                        alignItems: 'center',
+                        paddingHorizontal: 10,
+                        gap: 3,
+                        paddingBottom: 10,
+                    }}
+                >
+                    <View
+                        style={{
+                            width: 64,
+                            height: 64,
+                            marginTop: -32,
+                            marginBottom: 5,
+                            borderRadius: 32,
+                            borderWidth: 3,
+                            borderColor: c.card,
+                            backgroundColor: c.tint,
+                            overflow: 'hidden',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        {profile.avatar_url &&
+                        failedImage !== profile.avatar_url ? (
+                            <Image
+                                source={{ uri: profile.avatar_url }}
+                                resizeMode="cover"
+                                onError={() =>
+                                    setFailedImage(profile.avatar_url)
+                                }
+                                style={{ width: '100%', height: '100%' }}
+                            />
+                        ) : (
+                            <Text
+                                style={{
+                                    color: c.accent,
+                                    fontSize: 24,
+                                    fontWeight: '700',
+                                }}
+                            >
+                                {profile.artist_name
+                                    .trim()
+                                    .charAt(0)
+                                    .toUpperCase()}
+                            </Text>
+                        )}
+                    </View>
                     <Text
-                        numberOfLines={1}
+                        numberOfLines={2}
                         style={{
                             color: c.fg,
                             fontSize: 14,
                             lineHeight: 18,
+                            minHeight: 36,
                             fontWeight: '700',
+                            textAlign: 'center',
                         }}
                     >
                         {profile.artist_name}
@@ -265,8 +306,9 @@ export function CommunityProfileCard({
                         numberOfLines={1}
                         style={{
                             color: c.muted,
-                            fontSize: 12,
-                            lineHeight: 16,
+                            fontSize: 11,
+                            lineHeight: 15,
+                            textAlign: 'center',
                         }}
                     >
                         {[profile.city, profile.city_location?.country]
@@ -277,8 +319,9 @@ export function CommunityProfileCard({
                         numberOfLines={1}
                         style={{
                             color: c.accent,
-                            fontSize: 12,
-                            lineHeight: 16,
+                            fontSize: 11,
+                            lineHeight: 15,
+                            textAlign: 'center',
                         }}
                     >
                         {profile.genres}
@@ -289,6 +332,7 @@ export function CommunityProfileCard({
                 {!own ? (
                     <CommunityButton
                         compact
+                        outlined={!following}
                         label={t(
                             following
                                 ? 'community.unfollow'
@@ -301,17 +345,16 @@ export function CommunityProfileCard({
                         secondary={following}
                     />
                 ) : (
-                    <View
+                    <Text
                         style={{
-                            minHeight: 46,
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            color: c.muted,
+                            fontSize: 12,
+                            textAlign: 'center',
+                            paddingVertical: 14,
                         }}
                     >
-                        <Text style={{ color: c.muted, fontSize: 12 }}>
-                            {t('community.myProfile')}
-                        </Text>
-                    </View>
+                        {t('community.myProfile')}
+                    </Text>
                 )}
             </View>
         </View>

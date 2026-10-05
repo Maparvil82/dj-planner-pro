@@ -17,83 +17,77 @@ import type { ReactNode } from 'react';
 export function DJProfileHero({
     person,
     action,
+    sessionCount,
 }: {
     person: CommunityProfile;
     action: ReactNode;
+    sessionCount?: number;
 }) {
     const c = useCommunityColors();
     const { t } = useTranslation();
     const [failedCover, setFailedCover] = useState<string | null>(null);
+    const cover = person.cover_url || person.avatar_url;
     const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
-    const [linkError, setLinkError] = useState(false);
     const genres = person.genres
         .split(/[,·;|]/)
         .map((value) => value.trim())
         .filter(Boolean);
     return (
-        <View style={{ gap: 18 }}>
+        <View style={{ backgroundColor: c.bg }}>
             <View
                 style={{
-                    backgroundColor: c.card,
-                    borderRadius: 28,
-                    overflow: 'hidden',
-                    borderWidth: 1,
-                    borderColor: c.border,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 340,
+                    backgroundColor: '#302765',
                 }}
             >
-                <View style={{ height: 220, backgroundColor: '#241d4a' }}>
-                    <LinearGradient
-                        colors={['#302765', '#6554df', '#c07fa6']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={{ position: 'absolute', inset: 0 }}
+                <LinearGradient
+                    colors={['#302765', '#6554df', '#906aad']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ position: 'absolute', inset: 0 }}
+                />
+                {cover && failedCover !== cover && (
+                    <Image
+                        source={{ uri: cover }}
+                        onError={() => setFailedCover(cover)}
+                        accessibilityLabel={t('djPage.cover')}
+                        resizeMode="cover"
+                        style={{ width: '100%', height: '100%' }}
                     />
-                    {person.cover_url && failedCover !== person.cover_url ? (
-                        <Image
-                            source={{ uri: person.cover_url }}
-                            onError={() => setFailedCover(person.cover_url)}
-                            accessibilityLabel={t('djPage.cover')}
-                            resizeMode="cover"
-                            style={{ width: '100%', height: '100%' }}
-                        />
-                    ) : null}
-                    <LinearGradient
-                        colors={['transparent', 'rgba(13,18,32,0.55)']}
-                        style={{ position: 'absolute', inset: 0 }}
-                    />
+                )}
+                <LinearGradient
+                    colors={['rgba(0,0,0,0.22)', 'transparent', c.bg]}
+                    locations={[0, 0.3, 1]}
+                    style={{ position: 'absolute', inset: 0 }}
+                />
+            </View>
+            <View
+                style={{
+                    paddingTop: 235,
+                    paddingHorizontal: 20,
+                    paddingBottom: 12,
+                    gap: 14,
+                }}
+            >
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 14,
+                    }}
+                >
                     <View
                         style={{
-                            position: 'absolute',
-                            top: 18,
-                            left: 18,
-                            backgroundColor: 'rgba(13,18,32,0.45)',
-                            borderRadius: 20,
-                            paddingHorizontal: 12,
-                            paddingVertical: 7,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                color: '#fff',
-                                fontWeight: '700',
-                                fontSize: 11,
-                                letterSpacing: 1.4,
-                            }}
-                        >
-                            DJ PLANNER PRO
-                        </Text>
-                    </View>
-                </View>
-                <View style={{ padding: 22, paddingTop: 0, gap: 16 }}>
-                    <View
-                        style={{
-                            marginTop: -46,
-                            width: 96,
-                            height: 96,
-                            borderRadius: 30,
-                            borderWidth: 5,
-                            borderColor: c.card,
+                            width: 76,
+                            height: 76,
+                            borderRadius: 38,
                             backgroundColor: c.tint,
+                            borderWidth: 2,
+                            borderColor: c.card,
                             overflow: 'hidden',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -112,9 +106,9 @@ export function DJProfileHero({
                         ) : (
                             <Text
                                 style={{
-                                    fontSize: 32,
-                                    fontWeight: '800',
                                     color: c.accent,
+                                    fontSize: 30,
+                                    fontWeight: '700',
                                 }}
                             >
                                 {person.artist_name
@@ -124,74 +118,71 @@ export function DJProfileHero({
                             </Text>
                         )}
                     </View>
-                    <View style={{ gap: 9 }}>
+                    <View style={{ flex: 1, gap: 5 }}>
                         <Text
                             style={{
                                 color: c.fg,
-                                fontSize: 32,
+                                fontSize: 30,
+                                lineHeight: 35,
                                 fontWeight: '800',
-                                letterSpacing: -1,
+                                letterSpacing: -0.8,
                             }}
                         >
                             {person.artist_name}
                         </Text>
-                        {!!person.city && (
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    gap: 6,
-                                    alignItems: 'center',
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        color: c.muted,
-                                        fontSize: 14,
-                                        flex: 1,
-                                    }}
-                                >
-                                    {cityLabel(
-                                        person.city,
-                                        person.city_location,
-                                    )}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                    {genres.length > 0 && (
-                        <View
+                        <Text
                             style={{
-                                flexDirection: 'row',
-                                flexWrap: 'wrap',
-                                gap: 7,
+                                color: c.muted,
+                                fontSize: 12,
+                                lineHeight: 17,
                             }}
                         >
-                            {genres.map((genre, index) => (
-                                <View
-                                    key={`${genre}-${index}`}
-                                    style={{
-                                        backgroundColor: c.tint,
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 7,
-                                        borderRadius: 20,
-                                    }}
-                                >
-                                    <Text
-                                        style={{
-                                            color: c.accent,
-                                            fontSize: 12,
-                                            fontWeight: '600',
-                                        }}
-                                    >
-                                        {genre}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-                    {action}
+                            {cityLabel(person.city, person.city_location)}
+                        </Text>
+                    </View>
                 </View>
+                {sessionCount !== undefined && (
+                    <Text style={{ color: c.muted, fontSize: 12 }}>
+                        {sessionCount} {t('djPage.publishedSessions')}
+                    </Text>
+                )}
+                {action}
+                {!!genres.length && (
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                        }}
+                    >
+                        {genres.map((genre, index) => (
+                            <View
+                                key={`${genre}-${index}`}
+                                style={{
+                                    backgroundColor: c.tint,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 6,
+                                    borderRadius: 18,
+                                }}
+                            >
+                                <Text style={{ color: c.accent, fontSize: 11 }}>
+                                    {genre}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </View>
+        </View>
+    );
+}
+
+export function DJProfileDetails({ person }: { person: CommunityProfile }) {
+    const c = useCommunityColors();
+    const { t } = useTranslation();
+    const [linkError, setLinkError] = useState(false);
+    return (
+        <View style={{ gap: 18 }}>
             {!!person.bio && (
                 <View
                     style={{

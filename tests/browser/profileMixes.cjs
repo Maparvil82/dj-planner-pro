@@ -51,7 +51,14 @@ const errors = [];
                 Object.defineProperty(navigator, 'languages', {
                     get: () => [lang],
                 });
-                localStorage.setItem('@theme', dark ? 'dark' : 'light');
+                localStorage.setItem(
+                    '@theme',
+                    location.search.includes('testTheme=dark')
+                        ? 'dark'
+                        : dark
+                          ? 'dark'
+                          : 'light',
+                );
                 localStorage.setItem(
                     'sb-voyurnwckmateohuzbab-auth-token',
                     JSON.stringify(session),
@@ -206,6 +213,17 @@ const errors = [];
             body: JSON.stringify(body),
         });
     });
+    await context.route('https://example.invalid/avatar.jpg', (route) =>
+        route.fulfill({
+            contentType: 'image/jpeg',
+            body: fs.readFileSync(
+                require('node:path').join(
+                    __dirname,
+                    '../../assets/community/dj-welcome.jpg',
+                ),
+            ),
+        }),
+    );
     await context.route('https://api.mixcloud.com/**', (route) =>
         route.fulfill({
             contentType: 'application/json',
@@ -536,6 +554,9 @@ const errors = [];
         'http://localhost:8081/community/00000000-0000-4000-8000-000000000902',
     );
     await page.getByText('Late Night Jazz', { exact: true }).waitFor();
+    await page.screenshot({
+        path: '/private/tmp/djplanner-suno-profile-top.png',
+    });
     assert.equal(
         await page
             .getByRole('button', { name: 'Editar mix', exact: true })
@@ -550,6 +571,13 @@ const errors = [];
         .getByText('Late Night Jazz', { exact: true })
         .scrollIntoViewIfNeeded();
     await page.screenshot({ path: '/private/tmp/djplanner-public-mixes.png' });
+    await page.goto(
+        'http://localhost:8081/community/00000000-0000-4000-8000-000000000902?testTheme=dark',
+    );
+    await page.getByText('Late Night Jazz', { exact: true }).waitFor();
+    await page.screenshot({
+        path: '/private/tmp/djplanner-suno-profile-dark.png',
+    });
     await page.goto('http://localhost:8081/profile');
     await page.getByRole('button', { name: 'Editar mix', exact: true }).click();
     await page
