@@ -462,6 +462,77 @@ const discover = async (
         0,
         'Unfollowing removes all of that DJ’s content immediately',
     );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005182846_community_session_shelves.sql',
+            'utf8',
+        ),
+    );
+    await db.query('insert into community_follows values($1,$2)', [
+        uid(1),
+        uid(5),
+    ]);
+    const shelf = async (
+        name,
+        city = 'malaga',
+        offset = 0,
+        size = 50,
+        genre = '',
+        search = '',
+    ) =>
+        (
+            await db.query(
+                "select * from community_session_shelf($1,$2,'2026-10-05',$3,'',$4,$5,$6)",
+                [name, city, search, genre, offset, size],
+            )
+        ).rows;
+    await role('authenticated', uid(1));
+    const a = await shelf('following'),
+        b = await shelf('city'),
+        c = await shelf('rest');
+    assert.deepEqual(
+        a.map((x) => x.session_id),
+        [uid(201)],
+        'Accepted followed guests appear in the first shelf',
+    );
+    assert.ok(
+        b.some((x) => x.session_id === uid(326)),
+        'Future events in the normalized profile city appear',
+    );
+    assert.ok(
+        !b.some((x) => x.session_id === uid(205)),
+        'Past local events stay in the rest',
+    );
+    const all = [...a, ...b, ...c].map((x) => x.session_id);
+    assert.equal(new Set(all).size, all.length, 'No duplicates across shelves');
+    assert.ok(
+        !all.some((id) => [uid(202), uid(203), uid(204)].includes(id)),
+        'Private, cancelled and hidden excluded',
+    );
+    assert.equal((await shelf('city', 'Madrid')).length, 0);
+    assert.equal(
+        (await shelf('following', 'malaga', 0, 50, 'Techno')).length,
+        0,
+    );
+    assert.equal(
+        (await shelf('city', 'malaga', 0, 1, '', 'Unique Night'))[0].session_id,
+        uid(326),
+        'Search before pagination',
+    );
+    const shelfPages = [
+        ...(await shelf('city', 'malaga', 0, 1)),
+        ...(await shelf('city', 'malaga', 1, 1)),
+    ];
+    assert.deepEqual(
+        shelfPages.map((x) => x.session_id),
+        b.slice(0, 2).map((x) => x.session_id),
+    );
+    assert.equal((await shelf('not-a-shelf')).length, 0);
+    await role('authenticated');
+    assert.equal((await shelf('city')).length, 0);
+    await role('anon');
+    await assert.rejects(() => shelf('city'), /permission denied/);
     console.log(
         'PASS combined filters, exact genres, accent/case city matching, accepted collaborators, pagination, name search, private data exclusion and authenticated-only access.',
     );

@@ -17,6 +17,7 @@ import {
 
 export function PosterFrameImage({
     uri,
+    aspectRatio = POSTER_CARD_ASPECT,
     x = 0.5,
     y = 0.5,
     onChange,
@@ -24,6 +25,7 @@ export function PosterFrameImage({
     onError,
 }: {
     uri: string;
+    aspectRatio?: number;
     x?: number;
     y?: number;
     onChange?: (position: PosterPosition) => void;
@@ -159,7 +161,7 @@ export function PosterFrameImage({
             }}
             style={{
                 width: '100%',
-                aspectRatio: POSTER_CARD_ASPECT,
+                aspectRatio,
                 overflow: 'hidden',
                 backgroundColor: '#151c30',
                 ...(onChange ? ({ touchAction: 'none' } as ViewStyle) : {}),

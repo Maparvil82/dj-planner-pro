@@ -1080,5 +1080,11 @@
         "emptyHint": "DJをフォローすると、公開されたミックスや出演情報がここに表示されます。",
         "sharedMix": "ミックスを追加しました",
         "openDJ": "{{name}}のプロフィールを見る"
+    },
+    "sessionShelves": {
+        "following": "フォロー中のDJの出演",
+        "city": "{{city}}の今後の出演",
+        "rest": "その他の出演",
+        "open": "出演を見る"
     }
 }

@@ -213,3 +213,41 @@ export function useCommunityActivity(
             last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
     });
 }
+
+export function useCommunitySessionShelf(
+    shelf: 'following' | 'city' | 'rest',
+    city: string,
+    filters: CommunityFilters,
+    search: string,
+    enabled: boolean,
+) {
+    const viewer = useAuthStore((state) => state.session?.user.id);
+    const date = new Date();
+    const today = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return useInfiniteQuery({
+        queryKey: [
+            'community',
+            'shelf',
+            viewer,
+            shelf,
+            city,
+            today,
+            filters.city,
+            filters.genre,
+            search,
+        ],
+        enabled: enabled && !!viewer,
+        initialPageParam: 0,
+        queryFn: ({ pageParam }) =>
+            communityService.shelf(
+                shelf,
+                city,
+                today,
+                pageParam,
+                filters,
+                search,
+            ),
+        getNextPageParam: (last, pages) =>
+            last.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
+    });
+}

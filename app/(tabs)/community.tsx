@@ -1,3 +1,4 @@
+import { CommunitySessionShelves } from '../../src/components/community/CommunitySessionShelves';
 import { CommunityActivityFeed } from '../../src/components/community/CommunityActivityFeed';
 import { CommunityWelcome } from '../../src/components/community/CommunityWelcome';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
@@ -22,7 +23,6 @@ import {
     CommunityButton,
     CommunityMessage,
     CommunityProfileCard,
-    CommunitySessionCard,
     useCommunityColors,
 } from '../../src/components/community/CommunityUI';
 import {
@@ -31,7 +31,7 @@ import {
     useCommunitySessionCounts,
     useCommunityFollowedDjs,
     useCommunityFilterOptions,
-    useCommunityFeed,
+    useCommunitySessionShelf,
     useCommunityFollowing,
     useCommunityMutation,
     useCommunityProfile,
@@ -81,12 +81,28 @@ export default function CommunityScreen() {
         return () => clearTimeout(timer);
     }, [search]);
     const following = useCommunityFollowing(socialReady);
-    const feed = useCommunityFeed(
-        false,
-        null,
+    const shelfCity = own.data?.city || '';
+    const shelvesEnabled = socialReady && tab === 'sessions';
+    const followedSessions = useCommunitySessionShelf(
+        'following',
+        shelfCity,
         sessionFilters,
-        socialReady && tab === 'sessions',
         debounced,
+        shelvesEnabled,
+    );
+    const citySessions = useCommunitySessionShelf(
+        'city',
+        shelfCity,
+        sessionFilters,
+        debounced,
+        shelvesEnabled,
+    );
+    const feed = useCommunitySessionShelf(
+        'rest',
+        shelfCity,
+        sessionFilters,
+        debounced,
+        shelvesEnabled,
     );
     const discover = useCommunityDiscover(
         debounced,
@@ -130,12 +146,19 @@ export default function CommunityScreen() {
             if (!socialReady) return;
             void following.refetch();
             void active.refetch();
+            if (tab === 'sessions') {
+                void followedSessions.refetch();
+                void citySessions.refetch();
+            }
             void filterOptions.refetch();
         }, [
             socialReady,
             own.refetch,
             following.refetch,
             active.refetch,
+            followedSessions.refetch,
+            citySessions.refetch,
+            tab,
             filterOptions.refetch,
         ]),
     );
@@ -143,6 +166,10 @@ export default function CommunityScreen() {
         mutation.isError || active.isError || own.isError || following.isError;
     const retry = () => {
         mutation.reset();
+        if (tab === 'sessions') {
+            void followedSessions.refetch();
+            void citySessions.refetch();
+        }
         void active.refetch();
         void filterOptions.refetch();
         void own.refetch();
@@ -156,10 +183,13 @@ export default function CommunityScreen() {
         profiles.map((profile) => profile.user_id),
         socialReady && listView,
     );
-    const sessions = feed.data?.pages.flat() || [];
     const refresh = () => {
         if (listView) void counts.refetch();
         void active.refetch();
+        if (tab === 'sessions') {
+            void followedSessions.refetch();
+            void citySessions.refetch();
+        }
         void filterOptions.refetch();
         void own.refetch();
         void following.refetch();
@@ -203,7 +233,12 @@ export default function CommunityScreen() {
                         keyboardShouldPersistTaps="handled"
                         refreshControl={
                             <RefreshControl
-                                refreshing={active.isRefetching}
+                                refreshing={
+                                    active.isRefetching ||
+                                    (tab === 'sessions' &&
+                                        (followedSessions.isRefetching ||
+                                            citySessions.isRefetching))
+                                }
                                 onRefresh={refresh}
                                 tintColor={c.accent}
                             />
@@ -492,34 +527,20 @@ export default function CommunityScreen() {
                                         />
                                     )
                                 )
-                            ) : sessions.length ? (
-                                sessions.map((item) => (
-                                    <CommunitySessionCard
-                                        key={item.session_id}
-                                        item={item}
-                                    />
-                                ))
                             ) : (
-                                !active.isError && (
-                                    <CommunityMessage
-                                        title={t(
-                                            tab === 'sessions' &&
-                                                (sessionFilters.city ||
-                                                    sessionFilters.genre ||
-                                                    search.trim())
-                                                ? 'communityFilters.noResults'
-                                                : 'community.noSessions',
-                                        )}
-                                        hint={t(
-                                            tab === 'sessions' &&
-                                                (sessionFilters.city ||
-                                                    sessionFilters.genre ||
-                                                    search.trim())
-                                                ? 'communityFilters.noResultsHint'
-                                                : 'community.noSessionsHint',
-                                        )}
-                                    />
-                                )
+                                <CommunitySessionShelves
+                                    following={followedSessions}
+                                    city={citySessions}
+                                    rest={feed}
+                                    homeCity={shelfCity}
+                                    filtered={
+                                        !!(
+                                            sessionFilters.city ||
+                                            sessionFilters.genre ||
+                                            search.trim()
+                                        )
+                                    }
+                                />
                             )}
                             {tab === 'following' &&
                                 (activityView
@@ -539,7 +560,7 @@ export default function CommunityScreen() {
                                         }}
                                     />
                                 )}
-                            {active.hasNextPage && (
+                            {tab !== 'sessions' && active.hasNextPage && (
                                 <CommunityButton
                                     label={t('community.loadMore')}
                                     secondary

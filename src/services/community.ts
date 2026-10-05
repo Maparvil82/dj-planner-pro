@@ -73,6 +73,27 @@ export type CommunityFilters = { city: string; genre: string };
 export type CommunityFilterOptions = { cities: string[]; genres: string[] };
 const PAGE_SIZE = 20;
 export const communityService = {
+    async shelf(
+        shelf: 'following' | 'city' | 'rest',
+        city: string,
+        today: string,
+        offset: number,
+        filters: CommunityFilters,
+        search: string,
+    ): Promise<CommunitySession[]> {
+        const { data, error } = await supabase.rpc('community_session_shelf', {
+            shelf,
+            home_city: city,
+            from_date: today,
+            page_offset: offset,
+            page_size: PAGE_SIZE,
+            search_text: search.trim(),
+            filter_city: filters.city,
+            filter_genre: filters.genre,
+        });
+        if (error) throw error;
+        return data || [];
+    },
     async activity(
         search: string,
         offset: number,

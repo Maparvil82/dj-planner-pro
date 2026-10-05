@@ -1081,5 +1081,11 @@
         "emptyHint": "Folge DJs, um ihre Mixes und Auftritte zu sehen. Ihre Beiträge erscheinen hier.",
         "sharedMix": "Hat einen Mix hinzugefügt",
         "openDJ": "Profil von {{name}} ansehen"
+    },
+    "sessionShelves": {
+        "following": "Von gefolgten DJs",
+        "city": "Demnächst in {{city}}",
+        "rest": "Weitere Sessions",
+        "open": "Session ansehen"
     }
 }

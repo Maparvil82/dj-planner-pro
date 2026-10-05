@@ -130,7 +130,7 @@ const errors = [];
             date: '2027-01-01',
             start_time: '22:00',
             end_time: '04:00',
-            poster_url: null,
+            poster_url: 'https://fixture.example/avatar.jpg',
             collaborators: [],
         },
         {
@@ -143,7 +143,7 @@ const errors = [];
             date: '2027-01-02',
             start_time: '22:00',
             end_time: '04:00',
-            poster_url: null,
+            poster_url: 'https://fixture.example/avatar.jpg',
             collaborators: [],
         },
     ];
@@ -186,7 +186,35 @@ const errors = [];
                         : ['Madrid', 'Málaga'],
                 genres: ['House', 'Techno'],
             };
-        else if (url.pathname.endsWith('/rpc/community_profile_session_counts'))
+        else if (url.pathname.endsWith('/rpc/community_session_shelf')) {
+            const args = req.postDataJSON();
+            filters.push(args);
+            body = fixtures.filter((x) => {
+                const followed = follows.has(x.author_id);
+                const nearby =
+                    x.city === args.home_city && x.date >= args.from_date;
+                const group =
+                    args.shelf === 'following'
+                        ? followed
+                        : args.shelf === 'city'
+                          ? nearby && !followed
+                          : !followed && !nearby;
+                return (
+                    group &&
+                    (!args.filter_city || args.filter_city === x.city) &&
+                    (!args.filter_genre ||
+                        x.title
+                            .toLowerCase()
+                            .includes(args.filter_genre.toLowerCase())) &&
+                    (!args.search_text ||
+                        (x.title + ' ' + x.venue)
+                            .toLowerCase()
+                            .includes(args.search_text.toLowerCase()))
+                );
+            });
+        } else if (
+            url.pathname.endsWith('/rpc/community_profile_session_counts')
+        )
             body = req.postDataJSON().author_ids.map((user_id) => ({
                 user_id,
                 session_count: user_id === dj.user_id ? 27 : 0,
@@ -318,6 +346,28 @@ const errors = [];
             .click();
     await page.goto('http://localhost:8081/community');
     await page.getByText('Techno Madrid', { exact: true }).waitFor();
+    const square = await page
+        .getByRole('button', { name: 'Ver sesión: Techno Madrid', exact: true })
+        .boundingBox();
+    const compact = await page
+        .getByRole('button', { name: 'Ver sesión: House Málaga', exact: true })
+        .boundingBox();
+    assert.ok(
+        Math.abs(square.width - square.height) < 1 && square.height === 200,
+    );
+    assert.ok(compact.height === 112 && compact.width > compact.height);
+    await page.screenshot({
+        path: '/private/tmp/djplanner-session-shelves.png',
+    });
+    await page
+        .getByRole('button', { name: 'Ver sesión: House Málaga', exact: true })
+        .click();
+    await page.getByRole('button', { name: 'Pepe', exact: true }).waitFor();
+    await page
+        .getByRole('img', { name: 'House Málaga', exact: true })
+        .waitFor();
+    await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+
     assert.equal(
         await page.getByRole('button', { name: 'Ciudad', exact: true }).count(),
         0,
@@ -340,7 +390,7 @@ const errors = [];
         .fill('Club A');
     await page.waitForResponse(
         (r) =>
-            r.url().includes('community_feed_search') &&
+            r.url().includes('community_session_shelf') &&
             r.request().postDataJSON().search_text === 'Club A',
     );
     assert.ok(
@@ -392,6 +442,18 @@ const errors = [];
     await page
         .getByRole('button', { name: 'Dejar de seguir Pepe', exact: true })
         .waitFor();
+    await page
+        .getByRole('button', { name: labels.community.sessions, exact: true })
+        .click();
+    await page.getByText('De DJs que sigues', { exact: true }).waitFor();
+    const followedSquare = await page
+        .getByRole('button', { name: 'Ver sesión: House Málaga', exact: true })
+        .boundingBox();
+    assert.equal(followedSquare.height, 200);
+    assert.equal(
+        await page.getByText('House Málaga', { exact: true }).count(),
+        1,
+    );
     await page
         .getByRole('button', { name: labels.community.following, exact: true })
         .click();
