@@ -256,6 +256,14 @@ const errors = [];
                 ),
             }),
     );
+    await context.route(
+        'https://widget.mixcloud.com/media/js/widgetApi.js',
+        (route) =>
+            route.fulfill({
+                contentType: 'application/javascript',
+                body: `window.Mixcloud={PlayerWidget:function(frame){return {ready:Promise.resolve(),play:function(){window.__mixcloudPlayRequests=(window.__mixcloudPlayRequests||0)+1;return Promise.resolve(true);}};}};`,
+            }),
+    );
     await context.route('**/widget/iframe/**', (route) =>
         route.fulfill({
             status: 200,
@@ -545,6 +553,14 @@ const errors = [];
         .getByRole('button', { name: 'Abrir reproductor', exact: true })
         .click();
     await page.locator('iframe[title="Late Night Jazz"]').waitFor();
+    await page.waitForFunction(() => window.__mixcloudPlayRequests === 1);
+    assert.equal(
+        await page
+            .locator('iframe[title="Late Night Jazz"]')
+            .getAttribute('height'),
+        '60',
+    );
+
     await page
         .getByText('Late Night Jazz', { exact: true })
         .scrollIntoViewIfNeeded();

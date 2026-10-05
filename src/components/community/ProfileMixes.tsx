@@ -293,6 +293,7 @@ export function ProfileMixes({
                     {active === mix.id && focused && (
                         <MixPlayer
                             key={mix.id}
+                            autoPlay
                             source={mix}
                             title={mix.title}
                         />

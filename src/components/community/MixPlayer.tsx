@@ -5,6 +5,7 @@ import * as Linking from 'expo-linking';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
     mixEmbedUrl,
+    mixPlayerDocument,
     isMixPlayerNavigation,
     MixSource,
 } from '../../utils/profileMixes';
@@ -12,17 +13,20 @@ import { CommunityButton, CommunityMessage } from './CommunityUI';
 export function MixPlayer({
     source,
     title,
+    autoPlay = false,
 }: {
     source: MixSource;
     title: string;
+    autoPlay?: boolean;
 }) {
     const { t } = useTranslation();
     const [failed, setFailed] = useState(false);
-    const uri = mixEmbedUrl(source);
+    const uri = mixEmbedUrl(source, autoPlay);
+    const compact = source.platform === 'mixcloud';
     return (
         <View
             style={{
-                height: failed ? undefined : 180,
+                height: failed ? undefined : compact ? 60 : 180,
                 borderRadius: 14,
                 overflow: 'hidden',
                 backgroundColor: '#fff',
@@ -44,12 +48,16 @@ export function MixPlayer({
             ) : (
                 <WebView
                     accessibilityLabel={title}
-                    source={{ uri }}
+                    source={
+                        compact
+                            ? { html: mixPlayerDocument(source, autoPlay) }
+                            : { uri }
+                    }
                     scrollEnabled={false}
                     allowsInlineMediaPlayback
-                    mediaPlaybackRequiresUserAction
+                    mediaPlaybackRequiresUserAction={!autoPlay}
                     javaScriptEnabled
-                    originWhitelist={['https://*']}
+                    originWhitelist={['*']}
                     setSupportMultipleWindows={false}
                     onError={() => setFailed(true)}
                     onHttpError={(event) => {

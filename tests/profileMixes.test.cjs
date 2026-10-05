@@ -117,3 +117,43 @@ test('official player redirects stay embedded and external navigation does not',
     const sc = parseMixSource('https://soundcloud.com/dj/my-mix');
     assert.equal(isMixPlayerNavigation(mixEmbedUrl(sc), sc), true);
 });
+
+test('play actions start the official widget after readiness; previews stay silent', async () => {
+    const { mixPlayerDocument } = load('../src/utils/profileMixes.ts');
+    const source = parseMixSource('https://mixcloud.com/dj/set-one/');
+    const preview = mixPlayerDocument(source);
+    assert.ok(!preview.includes('player.play()'));
+    assert.ok(preview.includes('mini=1'));
+    const doc = mixPlayerDocument(source, true);
+    const code = doc.match(/<script>([\s\S]*?)<\/script>/)[1];
+    let started = 0,
+        ready;
+    const widget = {
+        ready: new Promise((resolve) => {
+            ready = resolve;
+        }),
+        play: () => {
+            started++;
+            return Promise.resolve(true);
+        },
+    };
+    const api = { PlayerWidget: () => widget };
+    require('node:vm').runInNewContext(code, {
+        window: { Mixcloud: api },
+        Mixcloud: api,
+        document: { getElementById: () => ({}) },
+    });
+    assert.equal(started, 0, 'Waits until widget has loaded');
+    ready();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(started, 1);
+    assert.equal(
+        new URL(
+            mixEmbedUrl(
+                parseMixSource('https://soundcloud.com/dj/set-one'),
+                true,
+            ),
+        ).searchParams.get('auto_play'),
+        'true',
+    );
+});
