@@ -13,9 +13,16 @@ import {
     TextInput,
     Modal,
     Platform,
+    Pressable,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Search, X, ChevronLeft } from 'lucide-react-native';
+import {
+    Search,
+    X,
+    ChevronLeft,
+    MoreHorizontal,
+    Check,
+} from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { useTranslation } from '../../src/i18n/useTranslation';
@@ -56,6 +63,10 @@ export default function VenuesScreen() {
         }
     }, [params.create, router]);
     const [includeArchived, setIncludeArchived] = useState(false);
+    const [menuTop, setMenuTop] = useState<number | null>(null);
+    const screenRef = useRef<View>(null);
+    const menuButtonRef =
+        useRef<React.ElementRef<typeof TouchableOpacity>>(null);
     const {
         data: venues = [],
         isLoading,
@@ -163,6 +174,7 @@ export default function VenuesScreen() {
     };
     return (
         <SafeAreaView
+            ref={screenRef}
             style={{ flex: 1, backgroundColor: background }}
             edges={['top', 'left', 'right']}
         >
@@ -189,6 +201,38 @@ export default function VenuesScreen() {
                     </TouchableOpacity>
                 }
                 subtitle={t('places.intro')}
+                action={
+                    <TouchableOpacity
+                        ref={menuButtonRef}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profileShare.more')}
+                        accessibilityState={{ expanded: menuTop !== null }}
+                        onPress={() => {
+                            if (menuTop !== null) {
+                                setMenuTop(null);
+                                return;
+                            }
+                            menuButtonRef.current?.measureInWindow(
+                                (_x, y, _w, height) => {
+                                    screenRef.current?.measureInWindow(
+                                        (_sx, sy) =>
+                                            setMenuTop(y + height - sy + 8),
+                                    );
+                                },
+                            );
+                        }}
+                        style={{
+                            width: 46,
+                            height: 46,
+                            borderRadius: 16,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: surface,
+                        }}
+                    >
+                        <MoreHorizontal size={22} color={text} />
+                    </TouchableOpacity>
+                }
             />
             <View
                 style={{
@@ -198,72 +242,6 @@ export default function VenuesScreen() {
                     alignSelf: 'center',
                 }}
             >
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'flex-end',
-                        alignItems: 'center',
-                        gap: 10,
-                        marginHorizontal: 20,
-                        marginBottom: 14,
-                    }}
-                >
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel={t('add_venue')}
-                        onPress={() => setIsAddModalVisible(true)}
-                        style={{
-                            paddingHorizontal: 16,
-                            minHeight: 44,
-                            justifyContent: 'center',
-                            borderRadius: 14,
-                            backgroundColor: isDark ? '#292743' : '#f0edfc',
-                        }}
-                    >
-                        <Text
-                            style={{
-                                color: isDark ? '#bdb0f5' : '#6554df',
-                                fontSize: 14,
-                                fontWeight: '700',
-                            }}
-                        >
-                            {t('add_venue')}
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => setIncludeArchived((v) => !v)}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('location.archived')}
-                        accessibilityState={{ selected: includeArchived }}
-                        style={{
-                            paddingHorizontal: 16,
-                            minHeight: 44,
-                            justifyContent: 'center',
-                            borderRadius: 14,
-                            borderWidth: 1,
-                            borderColor: includeArchived ? '#8270e4' : border,
-                            backgroundColor: includeArchived
-                                ? isDark
-                                    ? '#292743'
-                                    : '#f0edfc'
-                                : surface,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                color: includeArchived
-                                    ? isDark
-                                        ? '#bdb0f5'
-                                        : '#6554df'
-                                    : muted,
-                                fontSize: 14,
-                                fontWeight: '600',
-                            }}
-                        >
-                            {t('location.archived')}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
                 <View
                     style={{
                         marginHorizontal: 20,
@@ -435,6 +413,90 @@ export default function VenuesScreen() {
                     )}
                 </ScrollView>
             </View>
+            {menuTop !== null && (
+                <View style={{ position: 'absolute', inset: 0, zIndex: 100 }}>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t('accountMenu.close')}
+                        onPress={() => setMenuTop(null)}
+                        style={{ position: 'absolute', inset: 0 }}
+                    />
+                    <View
+                        accessibilityViewIsModal
+                        style={{
+                            position: 'absolute',
+                            top: menuTop,
+                            right: 24,
+                            minWidth: 205,
+                            padding: 6,
+                            borderRadius: 18,
+                            backgroundColor: surface,
+                            borderWidth: 1,
+                            borderColor: border,
+                            boxShadow: '0px 8px 28px rgba(0,0,0,0.14)',
+                        }}
+                    >
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            onPress={() => {
+                                setMenuTop(null);
+                                setIsAddModalVisible(true);
+                            }}
+                            style={{
+                                minHeight: 48,
+                                paddingHorizontal: 14,
+                                justifyContent: 'center',
+                                borderRadius: 12,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: text,
+                                    fontWeight: '600',
+                                    fontSize: 14,
+                                }}
+                            >
+                                {t('add_venue')}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: includeArchived }}
+                            onPress={() => {
+                                setMenuTop(null);
+                                setIncludeArchived((v) => !v);
+                            }}
+                            style={{
+                                minHeight: 48,
+                                paddingHorizontal: 14,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 16,
+                                borderRadius: 12,
+                                backgroundColor: includeArchived
+                                    ? isDark
+                                        ? '#292743'
+                                        : '#f0edfc'
+                                    : 'transparent',
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: text,
+                                    fontWeight: '600',
+                                    fontSize: 14,
+                                }}
+                            >
+                                {t('location.archived')}
+                            </Text>
+                            {includeArchived && (
+                                <Check size={18} color="#8270e4" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
             <Modal
                 visible={isAddModalVisible}
                 animationType="slide"
