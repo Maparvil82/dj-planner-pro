@@ -1122,9 +1122,9 @@
     "createMenu": {
         "title": "作成",
         "intro": "何を追加しますか？",
-        "session": "通常のセッション",
+        "session": "通常",
         "sessionHint": "予定に新しい出演を追加",
-        "conditional": "条件付きセッション",
+        "conditional": "条件付き",
         "soon": "近日公開",
         "mix": "ミックス",
         "mixHint": "プロフィールで録音を共有",

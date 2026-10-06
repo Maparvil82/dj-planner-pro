@@ -1121,9 +1121,9 @@
     "createMenu": {
         "title": "Créer",
         "intro": "Que souhaitez-vous ajouter ?",
-        "session": "Session simple",
+        "session": "Simple",
         "sessionHint": "Une nouvelle prestation dans votre agenda",
-        "conditional": "Session conditionnelle",
+        "conditional": "Conditionnelle",
         "soon": "Bientôt disponible",
         "mix": "Mix",
         "mixHint": "Partagez un enregistrement sur votre profil",

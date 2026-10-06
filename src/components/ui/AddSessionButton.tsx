@@ -1,22 +1,103 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import {
-    Plus,
-    CalendarDays,
-    Clock3,
-    Music2,
-    MapPin,
-} from 'lucide-react-native';
+    Modal,
+    Platform,
+    Pressable,
+    Text,
+    View,
+    useWindowDimensions,
+} from 'react-native';
+import { Plus } from 'lucide-react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useCommunityColors } from '../community/CommunityUI';
+
+function CreationIcon({ kind, color }: { kind: string; color: string }) {
+    return (
+        <Svg width={30} height={30} viewBox="0 0 24 24">
+            {kind === 'session' ? (
+                <>
+                    <Rect
+                        x={3}
+                        y={4}
+                        width={18}
+                        height={18}
+                        rx={4}
+                        fill={color}
+                    />
+                    <Rect
+                        x={7}
+                        y={1}
+                        width={3}
+                        height={7}
+                        rx={1.5}
+                        fill={color}
+                    />
+                    <Rect
+                        x={14}
+                        y={1}
+                        width={3}
+                        height={7}
+                        rx={1.5}
+                        fill={color}
+                    />
+                    <Rect
+                        x={6}
+                        y={9}
+                        width={12}
+                        height={2}
+                        rx={1}
+                        fill="#fff"
+                    />
+                    {[7, 12, 17].map((x) =>
+                        [14, 18].map((y) => (
+                            <Circle
+                                key={`${x}-${y}`}
+                                cx={x}
+                                cy={y}
+                                r={1.2}
+                                fill="#fff"
+                            />
+                        )),
+                    )}
+                </>
+            ) : kind === 'conditional' ? (
+                <>
+                    <Circle cx={12} cy={12} r={10} fill={color} />
+                    <Path
+                        d="M12 6v6h5"
+                        stroke="#fff"
+                        strokeWidth={2.4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                    />
+                </>
+            ) : kind === 'mix' ? (
+                <Path
+                    d="M20 2v14.5a3.5 3.5 0 1 1-2-3.16V6.5l-9 2V19a3.5 3.5 0 1 1-2-3.16V5z"
+                    fill={color}
+                />
+            ) : (
+                <Path
+                    d="M12 1a8 8 0 0 0-8 8c0 5.5 8 14 8 14s8-8.5 8-14a8 8 0 0 0-8-8zm0 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"
+                    fillRule="evenodd"
+                    fill={color}
+                />
+            )}
+        </Svg>
+    );
+}
 
 export function AddSessionButton() {
     const router = useRouter();
     const { t } = useTranslation();
     const c = useCommunityColors();
     const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
+    const columnWidth = (width - 24) / 4;
     const [open, setOpen] = useState(false);
     const destination = useRef<Href | null>(null);
     const finishNavigation = useCallback(() => {
@@ -35,10 +116,10 @@ export function AddSessionButton() {
         setOpen(false);
     };
     const actions = [
-        { key: 'session', Icon: CalendarDays, href: '/add-session' },
-        { key: 'conditional', Icon: Clock3 },
-        { key: 'mix', Icon: Music2, href: '/add-mix' },
-        { key: 'venue', Icon: MapPin, href: '/venues?create=1' },
+        { key: 'session', color: '#2783ef', href: '/add-session' },
+        { key: 'conditional', color: '#ee9b21' },
+        { key: 'mix', color: '#7b50e8', href: '/add-mix' },
+        { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
     ] as const;
     return (
         <>
@@ -101,7 +182,7 @@ export function AddSessionButton() {
                                     <View
                                         key={action.key}
                                         style={{
-                                            width: '25%',
+                                            width: columnWidth,
                                             flexShrink: 0,
                                             paddingHorizontal: 4,
                                         }}
@@ -124,17 +205,11 @@ export function AddSessionButton() {
                                                 if ('href' in action)
                                                     navigate(action.href);
                                             }}
-                                            style={({ pressed }) => ({
+                                            style={{
                                                 width: '100%',
-                                                minWidth: 0,
                                                 alignItems: 'center',
-                                                gap: 10,
-                                                opacity: !enabled
-                                                    ? 0.45
-                                                    : pressed
-                                                      ? 0.7
-                                                      : 1,
-                                            })}
+                                                opacity: enabled ? 1 : 0.6,
+                                            }}
                                         >
                                             <View
                                                 style={{
@@ -146,24 +221,24 @@ export function AddSessionButton() {
                                                     justifyContent: 'center',
                                                 }}
                                             >
-                                                <action.Icon
-                                                    size={27}
-                                                    color={c.accent}
+                                                <CreationIcon
+                                                    kind={action.key}
+                                                    color={action.color}
                                                 />
                                             </View>
                                             <Text
-                                                numberOfLines={2}
+                                                numberOfLines={1}
                                                 adjustsFontSizeToFit
-                                                minimumFontScale={0.85}
+                                                minimumFontScale={0.8}
                                                 style={{
                                                     width: '100%',
-                                                    minHeight: 32,
+                                                    height: 18,
+                                                    marginTop: 10,
                                                     color: c.fg,
                                                     fontWeight: '600',
-                                                    fontSize: 12,
+                                                    fontSize: width < 360 ? 11 : 12,
                                                     lineHeight: 16,
                                                     textAlign: 'center',
-                                                    paddingHorizontal: 2,
                                                 }}
                                             >
                                                 {t(`createMenu.${action.key}`)}

@@ -1123,9 +1123,9 @@
     "createMenu": {
         "title": "Erstellen",
         "intro": "Was möchtest du hinzufügen?",
-        "session": "Einfache Session",
+        "session": "Einfach",
         "sessionHint": "Ein neuer Auftritt in deinem Kalender",
-        "conditional": "Bedingte Session",
+        "conditional": "Bedingt",
         "soon": "Demnächst",
         "mix": "Mix",
         "mixHint": "Teile eine Aufnahme in deinem Profil",

@@ -1121,9 +1121,9 @@
     "createMenu": {
         "title": "Criar",
         "intro": "O que queres adicionar?",
-        "session": "Sessão simples",
+        "session": "Simples",
         "sessionHint": "Uma nova atuação na tua agenda",
-        "conditional": "Sessão condicional",
+        "conditional": "Condicional",
         "soon": "Em breve",
         "mix": "Mix",
         "mixHint": "Partilha uma gravação no teu perfil",

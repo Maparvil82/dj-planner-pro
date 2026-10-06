@@ -1127,9 +1127,9 @@
     "createMenu": {
         "title": "Create",
         "intro": "What would you like to add?",
-        "session": "Simple session",
+        "session": "Simple",
         "sessionHint": "A new performance in your calendar",
-        "conditional": "Conditional session",
+        "conditional": "Conditional",
         "soon": "Coming soon",
         "mix": "Mix",
         "mixHint": "Share a recording on your profile",
