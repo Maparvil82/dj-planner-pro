@@ -1047,7 +1047,11 @@
         "deleteHint": "Remove this mix from your profile? The original recording stays on its platform.",
         "deleteConfirm": "Remove mix",
         "playerError": "The player could not load.",
-        "openSource": "Open on its platform"
+        "openSource": "Open on its platform",
+        "autoHint": "Paste your mix link. We’ll find its title automatically.",
+        "findingTitle": "Finding title…",
+        "manualFallback": "We couldn’t retrieve a valid title. Enter it to save the mix (up to 100 characters).",
+        "editTitle": "Edit title"
     },
     "communityEntry": {
         "title": "Your sound deserves\na community.",

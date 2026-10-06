@@ -1042,7 +1042,11 @@
         "deleteHint": "このミックスをプロフィールから削除しますか？元の録音は配信元に残ります。",
         "deleteConfirm": "ミックスを削除",
         "playerError": "プレーヤーを読み込めませんでした。",
-        "openSource": "配信元で開く"
+        "openSource": "配信元で開く",
+        "autoHint": "ミックスのリンクを貼り付けると、タイトルを自動取得します。",
+        "findingTitle": "タイトルを取得中…",
+        "manualFallback": "タイトルを取得できませんでした。保存するにはタイトルを入力してください（100文字以内）。",
+        "editTitle": "タイトルを編集"
     },
     "communityEntry": {
         "title": "あなたのサウンドを\nコミュニティへ。",

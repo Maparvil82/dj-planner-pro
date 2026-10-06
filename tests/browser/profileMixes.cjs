@@ -530,9 +530,6 @@ const errors = [];
         .click();
     await page.getByRole('button', { name: 'Añadir mix', exact: true }).click();
     await page
-        .getByRole('textbox', { name: 'Título del mix', exact: true })
-        .fill('Late Night Jazz');
-    await page
         .getByRole('textbox', { name: 'Enlace de la grabación', exact: true })
         .fill('https://mixcloud.com/spartacus/');
     assert.equal(
@@ -544,6 +541,10 @@ const errors = [];
     await page
         .getByRole('textbox', { name: 'Enlace de la grabación', exact: true })
         .fill('https://www.mixcloud.com/spartacus/party-time/');
+    await page.getByRole('button', { name: 'Editar título', exact: true }).click();
+    await page
+        .getByRole('textbox', { name: 'Título del mix', exact: true })
+        .fill('Late Night Jazz');
     await page
         .getByRole('button', { name: 'Vista previa', exact: true })
         .click();

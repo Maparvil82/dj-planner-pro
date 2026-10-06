@@ -46,6 +46,7 @@ test('official metadata endpoints, missing data and hostile artwork', async () =
                 ok: true,
                 json: async () => ({
                     key: '/spartacus/party-time/',
+                    name: 'Party Time',
                     pictures: {
                         large: 'https://thumbnailer.mixcloud.com/cover.jpg',
                     },
@@ -57,6 +58,7 @@ test('official metadata endpoints, missing data and hostile artwork', async () =
             };
         };
         const data = await fetchMixMetadata(source);
+        assert.equal(data.title, 'Party Time');
         assert.equal(data.duration, 3840);
         assert.equal(data.plays, 230);
         assert.deepEqual(data.genres, ['Soul']);
@@ -84,6 +86,7 @@ test('official metadata endpoints, missing data and hostile artwork', async () =
             }),
         });
         assert.deepEqual(await fetchMixMetadata(source), {
+            title: null,
             artwork: null,
             author: '',
             genres: [],
@@ -109,6 +112,7 @@ test('official metadata endpoints, missing data and hostile artwork', async () =
                 ok: true,
                 json: async () => ({
                     author_name: 'Artist',
+                    title: 'My mix by Artist',
                     thumbnail_url: 'https://i1.sndcdn.com/cover.jpg',
                     html: '<script>never use me</script>',
                 }),
@@ -120,6 +124,7 @@ test('official metadata endpoints, missing data and hostile artwork', async () =
         });
         assert.equal(soundcloud.artwork, 'https://i1.sndcdn.com/cover.jpg');
         assert.equal(soundcloud.duration, null);
+        assert.equal(soundcloud.title, 'My mix');
         assert.ok(!('html' in soundcloud));
     } finally {
         global.fetch = original;

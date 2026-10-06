@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text } from 'react-native';
 import {
     useInfiniteQuery,
     useMutation,
@@ -19,6 +19,7 @@ import {
     CommunityMessage,
     useCommunityColors,
 } from './CommunityUI';
+import { MixSourceFields } from './MixSourceFields';
 import { MixPlayer } from './MixPlayer';
 import { MixListItem } from './MixListItem';
 import { useSavedMixFlags } from '../../hooks/useSavedMixes';
@@ -121,15 +122,6 @@ export function ProfileMixes({
                 : { title: '', url: '' },
         );
     };
-    const fieldStyle = {
-        color: c.fg,
-        backgroundColor: c.field,
-        borderWidth: 1,
-        borderColor: c.border,
-        borderRadius: 14,
-        padding: 14,
-        minHeight: 48,
-    };
     if (hideWhenEmpty && !owner && mixes.isSuccess && !allRows.length)
         return null;
     return (
@@ -197,49 +189,17 @@ export function ProfileMixes({
                     >
                         {t(draft.id ? 'profileMixes.edit' : 'profileMixes.add')}
                     </Text>
-                    <Text style={{ color: c.muted, fontSize: 12 }}>
-                        {t('profileMixes.name')}
-                    </Text>
-                    <TextInput
-                        accessibilityLabel={t('profileMixes.name')}
-                        value={draft.title}
-                        onChangeText={(title) => setDraft({ ...draft, title })}
-                        maxLength={100}
-                        editable={!mutation.isPending}
-                        style={fieldStyle}
-                    />
-                    <Text style={{ color: c.muted, fontSize: 12 }}>
-                        {t('profileMixes.url')}
-                    </Text>
-                    <TextInput
-                        accessibilityLabel={t('profileMixes.url')}
-                        placeholder="https://www.mixcloud.com/dj/mix/"
-                        placeholderTextColor={c.muted}
-                        value={draft.url}
-                        onChangeText={(url) => {
-                            setDraft({ ...draft, url });
+                    <MixSourceFields
+                        key={draft.id || 'new'}
+                        title={draft.title}
+                        url={draft.url}
+                        editing={!!draft.id}
+                        busy={mutation.isPending}
+                        onChange={(value) => {
+                            setDraft({ ...draft, ...value });
                             setPreview(false);
                         }}
-                        maxLength={500}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        keyboardType="url"
-                        editable={!mutation.isPending}
-                        style={fieldStyle}
                     />
-                    <Text
-                        style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}
-                    >
-                        {t('profileMixes.linkHint')}
-                    </Text>
-                    {!!draft.url && !source && (
-                        <Text
-                            accessibilityRole="alert"
-                            style={{ color: c.fg, fontSize: 12 }}
-                        >
-                            {t('profileMixes.invalidLink')}
-                        </Text>
-                    )}
                     {preview && source && focused && (
                         <MixPlayer
                             key={source.source_url}

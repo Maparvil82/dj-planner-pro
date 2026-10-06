@@ -1043,7 +1043,11 @@
         "deleteHint": "Rimuovere questo mix dal profilo? La registrazione originale resta sulla sua piattaforma.",
         "deleteConfirm": "Rimuovi mix",
         "playerError": "Impossibile caricare il lettore.",
-        "openSource": "Apri sulla piattaforma"
+        "openSource": "Apri sulla piattaforma",
+        "autoHint": "Incolla il link del mix. Troveremo il titolo automaticamente.",
+        "findingTitle": "Ricerca del titolo…",
+        "manualFallback": "Non è stato possibile ottenere un titolo valido. Inseriscilo per salvare il mix (massimo 100 caratteri).",
+        "editTitle": "Modifica titolo"
     },
     "communityEntry": {
         "title": "Il tuo sound merita\nuna community.",

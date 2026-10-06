@@ -1043,7 +1043,11 @@
         "deleteHint": "Diesen Mix aus deinem Profil entfernen? Die Originalaufnahme bleibt auf ihrer Plattform.",
         "deleteConfirm": "Mix entfernen",
         "playerError": "Der Player konnte nicht geladen werden.",
-        "openSource": "Auf der Plattform öffnen"
+        "openSource": "Auf der Plattform öffnen",
+        "autoHint": "Füge den Mix-Link ein. Wir ermitteln den Titel automatisch.",
+        "findingTitle": "Titel wird gesucht…",
+        "manualFallback": "Der Titel konnte nicht geladen werden. Gib ihn zum Speichern ein (maximal 100 Zeichen).",
+        "editTitle": "Titel bearbeiten"
     },
     "communityEntry": {
         "title": "Dein Sound verdient\neine Community.",

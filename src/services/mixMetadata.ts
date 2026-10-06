@@ -1,6 +1,7 @@
 import { parseMixSource, type MixSource } from '../utils/profileMixes';
 
 export interface MixMetadata {
+    title: string | null;
     artwork: string | null;
     author: string;
     genres: string[];
@@ -56,7 +57,22 @@ export async function fetchMixMetadata(
             data.key !== new URL(verified.source_url).pathname
         )
             throw new Error('INVALID_METADATA');
+        const rawTitle =
+            source.platform === 'mixcloud' ? data.name : data.title;
+        let title = typeof rawTitle === 'string' ? rawTitle.trim() : '';
+        // SoundCloud oEmbed appends the author to its title.
+        const attribution =
+            typeof data.author_name === 'string'
+                ? ` by ${data.author_name}`
+                : '';
+        if (
+            source.platform === 'soundcloud' &&
+            attribution &&
+            title.endsWith(attribution)
+        )
+            title = title.slice(0, -attribution.length).trim();
         return {
+            title: title || null,
             artwork: imageUrl(
                 source.platform === 'mixcloud'
                     ? data.pictures?.large

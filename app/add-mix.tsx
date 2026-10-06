@@ -6,7 +6,6 @@ import {
     Pressable,
     ScrollView,
     Text,
-    TextInput,
     View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -17,6 +16,7 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { useCommunityProfile } from '../src/hooks/useCommunityQuery';
 import { isDJProfileComplete } from '../src/utils/communityProfile';
 import { parseMixSource } from '../src/utils/profileMixes';
+import { MixSourceFields } from '../src/components/community/MixSourceFields';
 import { profileMixesService } from '../src/services/profileMixes';
 import {
     CommunityButton,
@@ -56,15 +56,6 @@ export default function AddMixScreen() {
             close();
         },
     });
-    const field = {
-        color: c.fg,
-        backgroundColor: c.field,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: c.border,
-        padding: 16,
-        fontSize: 16,
-    };
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -191,51 +182,15 @@ export default function AddMixScreen() {
                             >
                                 {t('createMenu.mixHint')}
                             </Text>
-                            <Text style={{ color: c.fg, fontWeight: '600' }}>
-                                {t('profileMixes.name')}
-                            </Text>
-                            <TextInput
-                                accessibilityLabel={t('profileMixes.name')}
-                                style={field}
-                                value={title}
-                                onChangeText={setTitle}
-                                maxLength={100}
-                                editable={!mutation.isPending}
-                                returnKeyType="next"
-                            />
-                            <Text style={{ color: c.fg, fontWeight: '600' }}>
-                                {t('profileMixes.url')}
-                            </Text>
-                            <TextInput
-                                accessibilityLabel={t('profileMixes.url')}
-                                style={field}
-                                placeholder="https://www.mixcloud.com/dj/mix/"
-                                placeholderTextColor={c.muted}
-                                value={url}
-                                onChangeText={setUrl}
-                                keyboardType="url"
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                maxLength={500}
-                                editable={!mutation.isPending}
-                            />
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 12,
-                                    lineHeight: 18,
+                            <MixSourceFields
+                                title={title}
+                                url={url}
+                                busy={mutation.isPending}
+                                onChange={(value) => {
+                                    setTitle(value.title);
+                                    setUrl(value.url);
                                 }}
-                            >
-                                {t('profileMixes.linkHint')}
-                            </Text>
-                            {!!url.trim() && !validUrl && (
-                                <Text
-                                    accessibilityRole="alert"
-                                    style={{ color: c.fg, fontSize: 13 }}
-                                >
-                                    {t('profileMixes.invalidLink')}
-                                </Text>
-                            )}
+                            />
                             {mutation.isError && (
                                 <Text
                                     accessibilityRole="alert"
