@@ -90,6 +90,7 @@ export function AddSessionButton() {
                     >
                         <View
                             style={{
+                                width: '100%',
                                 flexDirection: 'row',
                                 alignItems: 'flex-start',
                             }}
@@ -97,65 +98,78 @@ export function AddSessionButton() {
                             {actions.map((action) => {
                                 const enabled = 'href' in action;
                                 return (
-                                    <Pressable
+                                    <View
                                         key={action.key}
-                                        accessibilityRole="button"
-                                        accessibilityLabel={t(
-                                            `createMenu.${action.key}`,
-                                        )}
-                                        accessibilityHint={
-                                            !enabled
-                                                ? t('createMenu.soon')
-                                                : undefined
-                                        }
-                                        accessibilityState={{
-                                            disabled: !enabled,
+                                        style={{
+                                            width: '25%',
+                                            flexShrink: 0,
+                                            paddingHorizontal: 4,
                                         }}
-                                        disabled={!enabled}
-                                        onPress={() => {
-                                            if ('href' in action)
-                                                navigate(action.href);
-                                        }}
-                                        style={({ pressed }) => ({
-                                            flex: 1,
-                                            minWidth: 0,
-                                            alignItems: 'center',
-                                            gap: 10,
-                                            opacity: !enabled
-                                                ? 0.45
-                                                : pressed
-                                                  ? 0.7
-                                                  : 1,
-                                        })}
                                     >
-                                        <View
-                                            style={{
-                                                width: 58,
-                                                height: 58,
-                                                borderRadius: 29,
-                                                backgroundColor: c.card,
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityLabel={t(
+                                                `createMenu.${action.key}`,
+                                            )}
+                                            accessibilityHint={
+                                                !enabled
+                                                    ? t('createMenu.soon')
+                                                    : undefined
+                                            }
+                                            accessibilityState={{
+                                                disabled: !enabled,
+                                            }}
+                                            disabled={!enabled}
+                                            onPress={() => {
+                                                if ('href' in action)
+                                                    navigate(action.href);
+                                            }}
+                                            style={({ pressed }) => ({
+                                                width: '100%',
+                                                minWidth: 0,
                                                 alignItems: 'center',
-                                                justifyContent: 'center',
-                                            }}
+                                                gap: 10,
+                                                opacity: !enabled
+                                                    ? 0.45
+                                                    : pressed
+                                                      ? 0.7
+                                                      : 1,
+                                            })}
                                         >
-                                            <action.Icon
-                                                size={27}
-                                                color={c.accent}
-                                            />
-                                        </View>
-                                        <Text
-                                            style={{
-                                                color: c.fg,
-                                                fontWeight: '600',
-                                                fontSize: 12,
-                                                lineHeight: 16,
-                                                textAlign: 'center',
-                                                paddingHorizontal: 2,
-                                            }}
-                                        >
-                                            {t(`createMenu.${action.key}`)}
-                                        </Text>
-                                    </Pressable>
+                                            <View
+                                                style={{
+                                                    width: 58,
+                                                    height: 58,
+                                                    borderRadius: 29,
+                                                    backgroundColor: c.card,
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
+                                                <action.Icon
+                                                    size={27}
+                                                    color={c.accent}
+                                                />
+                                            </View>
+                                            <Text
+                                                numberOfLines={2}
+                                                adjustsFontSizeToFit
+                                                minimumFontScale={0.85}
+                                                style={{
+                                                    width: '100%',
+                                                    minHeight: 32,
+                                                    color: c.fg,
+                                                    fontWeight: '600',
+                                                    fontSize: 12,
+                                                    lineHeight: 16,
+                                                    textAlign: 'center',
+                                                    paddingHorizontal: 2,
+                                                }}
+                                            >
+                                                {t(`createMenu.${action.key}`)}
+                                            </Text>
+                                        </Pressable>
+                                    </View>
                                 );
                             })}
                         </View>
