@@ -1,4 +1,4 @@
-export type FeeAgreement = {
+export type LegacyFeeAgreement = {
     version: 1;
     timezone: string;
     fixed: number;
@@ -14,7 +14,7 @@ export type FeeAgreement = {
     settled: boolean;
 };
 export type FeeResults = { tickets: number; entries: number; bar: number };
-export const emptyFeeAgreement = (): FeeAgreement => ({
+export const emptyFeeAgreement = (): LegacyFeeAgreement => ({
     version: 1,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     fixed: 0,
@@ -34,7 +34,12 @@ const roundedRatio = (a: number, b: number, denominator: number) =>
     Number(
         (BigInt(a) * BigInt(b) + BigInt(denominator / 2)) / BigInt(denominator),
     );
+export type FeeAgreement = LegacyFeeAgreement | ConditionalAgreement;
 export function validateFeeAgreement(a: FeeAgreement) {
+    if (a?.version === 2) return validateConditionalAgreement(a);
+    return validateLegacyFeeAgreement(a);
+}
+function validateLegacyFeeAgreement(a: LegacyFeeAgreement) {
     if (
         !a ||
         a.version !== 1 ||
@@ -105,7 +110,8 @@ export function validateFeeAgreement(a: FeeAgreement) {
     return a;
 }
 export function calculateFeeAgreement(a: FeeAgreement, actual = false) {
-    validateFeeAgreement(a);
+    if (a?.version === 2) return calculateConditionalAgreement(a, actual);
+    validateLegacyFeeAgreement(a);
     const r = actual ? a.actual : a.estimate;
     const fixed = cents(a.fixed),
         tickets = cents(a.perTicket) * r.tickets,
@@ -146,4 +152,283 @@ export function calculateFeeAgreement(a: FeeAgreement, actual = false) {
 }
 export function agreementAmount(a?: FeeAgreement | null) {
     return a?.settled ? calculateFeeAgreement(a, true).owner : 0;
+}
+
+/** Versioned private agreement. Money is rounded in cents, never in display units. */
+export type ConditionalResults = {
+    ticketDeductions: number;
+    bar: number;
+    barDeductions: number;
+    expenses: number;
+};
+export type ConditionalAgreement = {
+    version: 2;
+    timezone: string;
+    settled: boolean;
+    fixed: number;
+    fixedMode: 'add' | 'versus';
+    minimum: number;
+    maximum: number; // zero means no ceiling
+    ticketMode: 'none' | 'dj_fixed' | 'venue_fixed' | 'percent';
+    ticketValue: number;
+    ticketBasis: 'gross' | 'net';
+    barPercent: number;
+    barBasis: 'gross' | 'net';
+    bonusThreshold: number;
+    bonusAmount: number;
+    tickets: {
+        name: string;
+        price: number;
+        estimate: number;
+        sold: number;
+        refunded: number;
+        invited: number;
+    }[];
+    split: 'equal' | 'percent' | 'fixed';
+    participants: { name: string; share: number }[]; // owner is always index zero
+    estimate: ConditionalResults;
+    actual: ConditionalResults;
+    notes: string;
+};
+export const emptyConditionalAgreement = (): ConditionalAgreement => ({
+    version: 2,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    settled: false,
+    fixed: 0,
+    fixedMode: 'add',
+    minimum: 0,
+    maximum: 0,
+    ticketMode: 'venue_fixed',
+    ticketValue: 3,
+    ticketBasis: 'gross',
+    barPercent: 0,
+    barBasis: 'gross',
+    bonusThreshold: 0,
+    bonusAmount: 0,
+    tickets: [
+        { name: '', price: 10, estimate: 0, sold: 0, refunded: 0, invited: 0 },
+    ],
+    split: 'equal',
+    participants: [{ name: '', share: 0 }],
+    estimate: { ticketDeductions: 0, bar: 0, barDeductions: 0, expenses: 0 },
+    actual: { ticketDeductions: 0, bar: 0, barDeductions: 0, expenses: 0 },
+    notes: '',
+});
+export function validateConditionalAgreement(a: ConditionalAgreement) {
+    const fail = (key = 'agreement.invalid'): never => {
+        throw new Error(key);
+    };
+    const numeric = (n: unknown, integer = false) => {
+        if (
+            typeof n !== 'number' ||
+            !Number.isFinite(n) ||
+            n < 0 ||
+            n > (integer ? 1000000 : 999999999) ||
+            (integer
+                ? !Number.isInteger(n)
+                : Math.abs(cents(n) / 100 - n) > 0.000001)
+        )
+            fail();
+    };
+    if (
+        !a ||
+        a.version !== 2 ||
+        typeof a.settled !== 'boolean' ||
+        typeof a.timezone !== 'string' ||
+        !['add', 'versus'].includes(a.fixedMode) ||
+        !['none', 'dj_fixed', 'venue_fixed', 'percent'].includes(
+            a.ticketMode,
+        ) ||
+        !['gross', 'net'].includes(a.ticketBasis) ||
+        !['gross', 'net'].includes(a.barBasis) ||
+        !['equal', 'percent', 'fixed'].includes(a.split) ||
+        typeof a.notes !== 'string' ||
+        a.notes.length > 2000 ||
+        !Array.isArray(a.tickets) ||
+        a.tickets.length > 30 ||
+        !Array.isArray(a.participants) ||
+        a.participants.length < 1 ||
+        a.participants.length > 20
+    )
+        fail();
+    try {
+        new Intl.DateTimeFormat('en', { timeZone: a.timezone }).format();
+    } catch {
+        fail();
+    }
+    for (const n of [
+        a.fixed,
+        a.minimum,
+        a.maximum,
+        a.ticketValue,
+        a.barPercent,
+        a.bonusAmount,
+    ])
+        numeric(n);
+    numeric(a.bonusThreshold, true);
+    if (
+        a.barPercent > 100 ||
+        (a.ticketMode === 'percent' && a.ticketValue > 100) ||
+        (a.maximum > 0 && a.maximum < a.minimum) ||
+        (a.bonusAmount > 0 && !a.bonusThreshold)
+    )
+        fail();
+    if (
+        !a.fixed &&
+        !a.minimum &&
+        !(a.ticketMode !== 'none' && a.ticketValue > 0) &&
+        a.ticketMode !== 'venue_fixed' &&
+        !a.barPercent &&
+        !a.bonusAmount
+    )
+        fail('agreement.noTerms');
+    if (a.ticketMode !== 'none' && !a.tickets.length) fail();
+    for (const row of a.tickets) {
+        if (
+            !row ||
+            typeof row.name !== 'string' ||
+            !row.name.trim() ||
+            row.name.length > 80
+        )
+            fail();
+        numeric(row.price);
+        for (const n of [row.estimate, row.sold, row.refunded, row.invited])
+            numeric(n, true);
+        if (
+            row.refunded > row.sold ||
+            (a.ticketMode === 'venue_fixed' &&
+                row.price > 0 &&
+                a.ticketValue > row.price)
+        )
+            fail('conditional.invalidTickets');
+    }
+    for (const data of [a.estimate, a.actual]) {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) fail();
+        for (const key of [
+            'ticketDeductions',
+            'bar',
+            'barDeductions',
+            'expenses',
+        ] as const)
+            numeric(data[key]);
+    }
+    for (const [i, p] of a.participants.entries()) {
+        if (
+            !p ||
+            typeof p.name !== 'string' ||
+            p.name.length > 100 ||
+            (i > 0 && !p.name.trim())
+        )
+            fail();
+        numeric(p.share);
+    }
+    if (
+        a.split === 'percent' &&
+        cents(a.participants.reduce((sum, p) => sum + p.share, 0)) !== 10000
+    )
+        fail('agreement.invalidSplit');
+    return a;
+}
+export function calculateConditionalAgreement(
+    a: ConditionalAgreement,
+    actual = false,
+) {
+    validateConditionalAgreement(a);
+    const data = actual ? a.actual : a.estimate;
+    let count = 0,
+        gross = 0;
+    for (const row of a.tickets) {
+        const quantity = actual ? row.sold - row.refunded : row.estimate;
+        if (row.price > 0) count += quantity; // guests and free tickets never generate a fee
+        gross += cents(row.price) * quantity;
+    }
+    const check = (n: number) => {
+        if (!Number.isSafeInteger(n) || n > 99999999900 || n < 0)
+            throw new Error('agreement.invalid');
+        return n;
+    };
+    check(gross);
+    const net = gross - cents(data.ticketDeductions);
+    const barNet = cents(data.bar) - cents(data.barDeductions);
+    if (net < 0 || barNet < 0) throw new Error('conditional.deductionsTooHigh');
+    const ticketBase = a.ticketBasis === 'net' ? net : gross;
+    let ticketFee = 0;
+    if (a.ticketMode === 'dj_fixed')
+        ticketFee = check(cents(a.ticketValue) * count);
+    if (a.ticketMode === 'venue_fixed') {
+        ticketFee = ticketBase - check(cents(a.ticketValue) * count);
+        if (ticketFee < 0) throw new Error('conditional.deductionsTooHigh');
+    }
+    if (a.ticketMode === 'percent')
+        ticketFee = roundedRatio(ticketBase, cents(a.ticketValue), 10000);
+    const barFee = roundedRatio(
+        a.barBasis === 'net' ? barNet : cents(data.bar),
+        cents(a.barPercent),
+        10000,
+    );
+    const bonus =
+        a.bonusThreshold > 0 && count >= a.bonusThreshold
+            ? cents(a.bonusAmount)
+            : 0;
+    const variable = Math.max(
+        0,
+        check(ticketFee + barFee + bonus) - cents(data.expenses),
+    );
+    const fixed = cents(a.fixed);
+    const beforeMinimum =
+        a.fixedMode === 'versus'
+            ? Math.max(fixed, variable)
+            : check(fixed + variable);
+    const withMinimum = Math.max(beforeMinimum, cents(a.minimum));
+    const total = check(
+        a.maximum > 0 ? Math.min(withMinimum, cents(a.maximum)) : withMinimum,
+    );
+    let shares: number[];
+    if (a.split === 'fixed') {
+        shares = a.participants.map((p, i) => (i === 0 ? 0 : cents(p.share)));
+        shares[0] = total - shares.reduce((sum, n) => sum + n, 0);
+        if (shares[0] < 0) throw new Error('agreement.invalidSplit');
+    } else {
+        const weights = a.participants.map((p) =>
+            a.split === 'equal' ? 1 : cents(p.share),
+        );
+        const denominator = a.split === 'equal' ? weights.length : 10000;
+        const fractions = weights.map((weight, i) => ({
+            i,
+            remainder: (BigInt(total) * BigInt(weight)) % BigInt(denominator),
+        }));
+        shares = weights.map((weight) =>
+            Number((BigInt(total) * BigInt(weight)) / BigInt(denominator)),
+        );
+        fractions.sort((x, y) =>
+            x.remainder === y.remainder
+                ? x.i - y.i
+                : x.remainder > y.remainder
+                  ? -1
+                  : 1,
+        );
+        const left = total - shares.reduce((sum, n) => sum + n, 0);
+        for (let i = 0; i < left; i++) shares[fractions[i].i]++;
+    }
+    return {
+        total: total / 100,
+        distributable: total / 100,
+        owner: shares[0] / 100,
+        shares: shares.map((n) => n / 100),
+        fixed: fixed / 100,
+        tickets: ticketFee / 100,
+        entries: 0,
+        bar: barFee / 100,
+        minimumAdjustment: (withMinimum - beforeMinimum) / 100,
+        paidTickets: count,
+        ticketGross: gross / 100,
+        ticketNet: net / 100,
+        bonus: bonus / 100,
+        expenses: data.expenses,
+        venueRetention:
+            a.ticketMode === 'venue_fixed' || a.ticketMode === 'percent'
+                ? (ticketBase - ticketFee) / 100
+                : 0,
+        capAdjustment: (withMinimum - total) / 100,
+    };
 }

@@ -381,7 +381,8 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
 
-                {FEATURES.feeAgreements &&
+                {(FEATURES.feeAgreements ||
+                    session.fee_agreement?.version === 2) &&
                     !session.is_guest &&
                     session.fee_agreement && (
                         <View style={{ marginTop: 24 }}>

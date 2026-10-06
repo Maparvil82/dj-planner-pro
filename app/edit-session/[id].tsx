@@ -1033,114 +1033,127 @@ export default function EditSessionScreen() {
 
                     <SessionFormSection kind="fee" title={t('form.fee')}>
                         <View>
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
-                                {t('earning_type')}
-                            </Text>
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    backgroundColor: isDark
-                                        ? '#252d40'
-                                        : '#e9ecf3',
-                                    borderRadius: 12,
-                                    padding: 4,
-                                    marginBottom: 16,
-                                }}
-                            >
-                                <TouchableOpacity
-                                    style={{
-                                        flex: 1,
-                                        paddingVertical: 8,
-                                        borderRadius: 8,
-                                        alignItems: 'center',
-                                        backgroundColor:
-                                            earningType === 'free'
-                                                ? isDark
-                                                    ? '#292743'
-                                                    : '#f0edfc'
-                                                : 'transparent',
-                                    }}
-                                    onPress={() => setEarningType('free')}
-                                >
-                                    <Text
+                            {!(
+                                earningType === 'agreement' &&
+                                feeAgreement?.version === 2
+                            ) && (
+                                <>
+                                    <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                                        {t('earning_type')}
+                                    </Text>
+                                    <View
                                         style={{
-                                            fontWeight: '600',
-                                            color:
-                                                earningType === 'free'
-                                                    ? isDark
-                                                        ? '#bdb0f5'
-                                                        : '#6554df'
-                                                    : isDark
-                                                      ? '#9CA3AF'
-                                                      : '#6B7280',
+                                            flexDirection: 'row',
+                                            backgroundColor: isDark
+                                                ? '#252d40'
+                                                : '#e9ecf3',
+                                            borderRadius: 12,
+                                            padding: 4,
+                                            marginBottom: 16,
                                         }}
                                     >
-                                        {t('earning_free')}
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{
-                                        flex: 1,
-                                        paddingVertical: 8,
-                                        borderRadius: 8,
-                                        alignItems: 'center',
-                                        backgroundColor:
-                                            earningType === 'hourly'
-                                                ? isDark
-                                                    ? '#292743'
-                                                    : '#f0edfc'
-                                                : 'transparent',
-                                    }}
-                                    onPress={() => setEarningType('hourly')}
-                                >
-                                    <Text
-                                        style={{
-                                            fontWeight: '600',
-                                            color:
-                                                earningType === 'hourly'
-                                                    ? isDark
-                                                        ? '#bdb0f5'
-                                                        : '#6554df'
-                                                    : isDark
-                                                      ? '#9CA3AF'
-                                                      : '#6B7280',
-                                        }}
-                                    >
-                                        {t('earning_hourly')}
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{
-                                        flex: 1,
-                                        paddingVertical: 8,
-                                        borderRadius: 8,
-                                        alignItems: 'center',
-                                        backgroundColor:
-                                            earningType === 'fixed'
-                                                ? isDark
-                                                    ? '#292743'
-                                                    : '#f0edfc'
-                                                : 'transparent',
-                                    }}
-                                    onPress={() => setEarningType('fixed')}
-                                >
-                                    <Text
-                                        style={{
-                                            fontWeight: '600',
-                                            color:
-                                                earningType === 'fixed'
-                                                    ? isDark
-                                                        ? '#bdb0f5'
-                                                        : '#6554df'
-                                                    : isDark
-                                                      ? '#9CA3AF'
-                                                      : '#6B7280',
-                                        }}
-                                    >
-                                        {t('earning_fixed')}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
+                                        <TouchableOpacity
+                                            style={{
+                                                flex: 1,
+                                                paddingVertical: 8,
+                                                borderRadius: 8,
+                                                alignItems: 'center',
+                                                backgroundColor:
+                                                    earningType === 'free'
+                                                        ? isDark
+                                                            ? '#292743'
+                                                            : '#f0edfc'
+                                                        : 'transparent',
+                                            }}
+                                            onPress={() =>
+                                                setEarningType('free')
+                                            }
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontWeight: '600',
+                                                    color:
+                                                        earningType === 'free'
+                                                            ? isDark
+                                                                ? '#bdb0f5'
+                                                                : '#6554df'
+                                                            : isDark
+                                                              ? '#9CA3AF'
+                                                              : '#6B7280',
+                                                }}
+                                            >
+                                                {t('earning_free')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={{
+                                                flex: 1,
+                                                paddingVertical: 8,
+                                                borderRadius: 8,
+                                                alignItems: 'center',
+                                                backgroundColor:
+                                                    earningType === 'hourly'
+                                                        ? isDark
+                                                            ? '#292743'
+                                                            : '#f0edfc'
+                                                        : 'transparent',
+                                            }}
+                                            onPress={() =>
+                                                setEarningType('hourly')
+                                            }
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontWeight: '600',
+                                                    color:
+                                                        earningType === 'hourly'
+                                                            ? isDark
+                                                                ? '#bdb0f5'
+                                                                : '#6554df'
+                                                            : isDark
+                                                              ? '#9CA3AF'
+                                                              : '#6B7280',
+                                                }}
+                                            >
+                                                {t('earning_hourly')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={{
+                                                flex: 1,
+                                                paddingVertical: 8,
+                                                borderRadius: 8,
+                                                alignItems: 'center',
+                                                backgroundColor:
+                                                    earningType === 'fixed'
+                                                        ? isDark
+                                                            ? '#292743'
+                                                            : '#f0edfc'
+                                                        : 'transparent',
+                                            }}
+                                            onPress={() =>
+                                                setEarningType('fixed')
+                                            }
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontWeight: '600',
+                                                    color:
+                                                        earningType === 'fixed'
+                                                            ? isDark
+                                                                ? '#bdb0f5'
+                                                                : '#6554df'
+                                                            : isDark
+                                                              ? '#9CA3AF'
+                                                              : '#6B7280',
+                                                }}
+                                            >
+                                                {t('earning_fixed')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
                             {FEATURES.feeAgreements && (
                                 <TouchableOpacity
                                     accessibilityRole="button"
@@ -1194,7 +1207,8 @@ export default function EditSessionScreen() {
                                     <ProLabel />
                                 </TouchableOpacity>
                             )}
-                            {FEATURES.feeAgreements &&
+                            {(FEATURES.feeAgreements ||
+                                feeAgreement?.version === 2) &&
                                 earningType === 'agreement' && (
                                     <FeeAgreementCard
                                         value={feeAgreement}

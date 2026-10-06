@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../i18n/useTranslation';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
 import {
-    FeeAgreement,
+    LegacyFeeAgreement,
     FeeResults,
     emptyFeeAgreement,
     calculateFeeAgreement,
@@ -28,10 +28,10 @@ export function FeeAgreementEditor({
     onClose,
     names = [],
 }: {
-    value: FeeAgreement | null;
+    value: LegacyFeeAgreement | null;
     currency: string;
     canSettle?: boolean;
-    onSave: (a: FeeAgreement) => void | Promise<unknown>;
+    onSave: (a: LegacyFeeAgreement) => void | Promise<unknown>;
     onClose: () => void;
     names?: string[];
 }) {

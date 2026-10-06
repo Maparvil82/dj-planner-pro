@@ -4,6 +4,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSessionUsage } from '../../hooks/useSessionUsage';
 import { useTranslation } from '../../i18n/useTranslation';
+import { ConditionalAgreementEditor } from './ConditionalAgreementEditor';
 import { FeeAgreementEditor } from './FeeAgreementEditor';
 import { FeeAgreement, calculateFeeAgreement } from '../../utils/feeAgreement';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
@@ -32,6 +33,7 @@ export function FeeAgreementCard({
     names = [],
     canSettle = false,
     onCurrency,
+    conditional = false,
 }: {
     value: FeeAgreement | null;
     onChange: (a: FeeAgreement) => void | Promise<unknown>;
@@ -39,6 +41,7 @@ export function FeeAgreementCard({
     names?: string[];
     canSettle?: boolean;
     onCurrency?: (s: string) => void;
+    conditional?: boolean;
 }) {
     const { t, currentLanguage } = useTranslation();
     const c = useCommunityColors();
@@ -46,7 +49,8 @@ export function FeeAgreementCard({
     const usage = useSessionUsage();
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
-    if (!FEATURES.feeAgreements) return null;
+    if (!FEATURES.feeAgreements && !conditional && value?.version !== 2)
+        return null;
     let amount: number | null = null;
     try {
         if (value) amount = calculateFeeAgreement(value, value.settled).owner;
@@ -65,7 +69,11 @@ export function FeeAgreementCard({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
             >
                 <Text style={{ color: c.fg, fontWeight: '800', fontSize: 17 }}>
-                    {t('agreement.title')}
+                    {t(
+                        conditional || value?.version === 2
+                            ? 'conditional.title'
+                            : 'agreement.title',
+                    )}
                 </Text>
                 <ProLabel />
             </View>
@@ -78,7 +86,7 @@ export function FeeAgreementCard({
                           : 'agreement.configureHint',
                 )}
             </Text>
-            {value && (
+            {value?.version === 1 && (
                 <Text style={{ color: c.fg, lineHeight: 21 }}>
                     {t('agreement.fixed')}: {value.fixed} {currency} ·{' '}
                     {value.perTicket} {currency} / {t('agreement.tickets')} ·{' '}
@@ -152,7 +160,20 @@ export function FeeAgreementCard({
                     else router.push('/paywall?reason=agreement');
                 }}
             />
-            {editing && (
+            {editing && (conditional || value?.version === 2) && (
+                <ConditionalAgreementEditor
+                    value={value?.version === 2 ? value : null}
+                    names={names}
+                    currency={currency}
+                    canSettle={canSettle}
+                    onClose={() => setEditing(false)}
+                    onSave={async (a) => {
+                        await onChange(a);
+                        setEditing(false);
+                    }}
+                />
+            )}
+            {editing && !conditional && value?.version !== 2 && (
                 <FeeAgreementEditor
                     value={value}
                     names={names}

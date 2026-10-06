@@ -221,7 +221,7 @@ export default function PaywallScreen() {
                         {t('billing.benefit')}
                     </Text>
                 </View>
-                {FEATURES.feeAgreements && (
+                {(FEATURES.feeAgreements || FEATURES.conditionalSessions) && (
                     <View
                         style={{
                             backgroundColor: c.tint,
@@ -237,10 +237,10 @@ export default function PaywallScreen() {
                                 fontSize: 20,
                             }}
                         >
-                            {t('agreement.title')} · PRO
+                            {t('conditional.title')} · PRO
                         </Text>
                         <Text style={{ color: c.muted, lineHeight: 21 }}>
-                            {t('agreement.proBenefit')}
+                            {t('conditional.proBenefit')}
                         </Text>
                     </View>
                 )}

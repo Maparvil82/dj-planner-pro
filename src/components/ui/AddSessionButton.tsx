@@ -106,6 +106,7 @@ export function AddSessionButton() {
             router.prefetch('/add-session');
             router.prefetch('/add-mix');
             router.prefetch('/venues');
+            router.prefetch('/conditional-session');
         }
     }, [open, router]);
     const finishNavigation = useCallback(() => {
@@ -126,12 +127,13 @@ export function AddSessionButton() {
         // Push a normal screen while the menu closes, instead of chaining
         // two animations. Modal destinations dismiss the menu without animation
         // before presentation, avoiding overlapping native sheets.
-        if (href === '/add-session') router.push(href);
+        if (href === '/add-session' || href === '/conditional-session')
+            router.push(href);
         else destination.current = href;
     };
     const actions = [
         { key: 'session', color: '#2783ef', href: '/add-session' },
-        { key: 'conditional', color: '#ee9b21' },
+        { key: 'conditional', color: '#ee9b21', href: '/conditional-session' },
         { key: 'mix', color: '#7b50e8', href: '/add-mix' },
         { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
     ] as const;
@@ -243,6 +245,23 @@ export function AddSessionButton() {
                                                     color={action.color}
                                                 />
                                             </View>
+                                            {action.key === 'conditional' && (
+                                                <Text
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 46,
+                                                        backgroundColor:
+                                                            '#ee9b21',
+                                                        color: '#fff',
+                                                        borderRadius: 5,
+                                                        paddingHorizontal: 4,
+                                                        fontSize: 8,
+                                                        fontWeight: '800',
+                                                    }}
+                                                >
+                                                    PRO
+                                                </Text>
+                                            )}
                                             <Text
                                                 numberOfLines={1}
                                                 adjustsFontSizeToFit

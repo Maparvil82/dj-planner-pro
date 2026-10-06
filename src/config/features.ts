@@ -3,4 +3,5 @@ export const FEATURES = {
     documents: false,
     bookings: false,
     feeAgreements: false,
+    conditionalSessions: true,
 };

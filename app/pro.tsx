@@ -166,7 +166,8 @@ export default function ProScreen() {
                             {t('proPage.unlimitedHint')}
                         </Text>
                     </View>
-                    {FEATURES.feeAgreements && (
+                    {(FEATURES.feeAgreements ||
+                        FEATURES.conditionalSessions) && (
                         <View
                             style={{
                                 backgroundColor: c.card,
@@ -184,10 +185,10 @@ export default function ProScreen() {
                                     fontSize: 19,
                                 }}
                             >
-                                {t('agreement.title')} · PRO
+                                {t('conditional.title')} · PRO
                             </Text>
                             <Text style={{ color: c.muted, lineHeight: 22 }}>
-                                {t('agreement.proBenefit')}
+                                {t('conditional.proBenefit')}
                             </Text>
                         </View>
                     )}

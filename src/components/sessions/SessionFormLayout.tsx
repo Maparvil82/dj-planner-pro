@@ -8,10 +8,12 @@ export function SessionFormHeader({
     title,
     subtitle,
     onClose,
+    badge,
 }: {
     title: string;
     subtitle: string;
     onClose: () => void;
+    badge?: string;
 }) {
     const { activeTheme } = useTheme();
     const { t } = useTranslation();
@@ -29,12 +31,12 @@ export function SessionFormHeader({
         >
             <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
-                    numberOfLines={1}
+                    numberOfLines={badge ? 2 : 1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.7}
                     style={{
                         color: dark ? '#f3f4f8' : '#202538',
-                        fontSize: 29,
+                        fontSize: badge ? 25 : 29,
                         lineHeight: 36,
                         fontWeight: '800',
                         letterSpacing: -0.9,
@@ -42,6 +44,18 @@ export function SessionFormHeader({
                 >
                     {title}
                 </Text>
+                {badge && (
+                    <Text
+                        style={{
+                            color: dark ? '#c7baff' : '#6554df',
+                            fontSize: 10,
+                            fontWeight: '800',
+                            marginTop: 3,
+                        }}
+                    >
+                        {badge}
+                    </Text>
+                )}
                 <Text
                     numberOfLines={1}
                     style={{
