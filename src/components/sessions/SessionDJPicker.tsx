@@ -20,6 +20,7 @@ export function SessionDJPicker({
     query,
     onQueryChange,
     suggestions,
+    recentSuggestions,
     disabled = false,
 }: {
     names: string[];
@@ -28,6 +29,7 @@ export function SessionDJPicker({
     query: string;
     onQueryChange: (value: string) => void;
     suggestions: { name: string }[];
+    recentSuggestions?: { name: string; id?: string }[];
     disabled?: boolean;
 }) {
     const c = useCommunityColors();
@@ -65,6 +67,17 @@ export function SessionDJPicker({
                       !Object.values(linked).includes(person.user_id),
               )
             : [];
+    const recent = (recentSuggestions || [])
+        .filter(
+            (person) =>
+                !names.some(
+                    (name) =>
+                        name.toLocaleLowerCase() ===
+                        person.name.toLocaleLowerCase(),
+                ) &&
+                (!person.id || !Object.values(linked).includes(person.id)),
+        )
+        .slice(0, 3);
     return (
         <View style={{ gap: 12 }}>
             <Text style={{ color: c.muted, fontSize: 13, lineHeight: 20 }}>
@@ -92,6 +105,54 @@ export function SessionDJPicker({
                     borderRadius: 14,
                 }}
             />
+            {!query.trim() && recent.length > 0 && (
+                <View style={{ gap: 8 }}>
+                    <Text style={{ color: c.muted, fontSize: 12 }}>
+                        {t('simpleForm.recentDjs')}
+                    </Text>
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                        }}
+                    >
+                        {recent.map((person) => (
+                            <TouchableOpacity
+                                key={person.id || person.name}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(
+                                    'simpleForm.addRecentDJ',
+                                    { name: person.name },
+                                )}
+                                disabled={
+                                    disabled ||
+                                    (!!person.id &&
+                                        Object.keys(linked).length >= 20)
+                                }
+                                onPress={() => add(person.name, person.id)}
+                                style={{
+                                    minHeight: 44,
+                                    justifyContent: 'center',
+                                    paddingHorizontal: 14,
+                                    backgroundColor: c.tint,
+                                    borderRadius: 14,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: c.accent,
+                                        fontSize: 13,
+                                        fontWeight: '600',
+                                    }}
+                                >
+                                    {person.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            )}
             {query.trim().length >= 2 && results.isFetching && (
                 <ActivityIndicator color={c.accent} />
             )}
@@ -174,6 +235,7 @@ export function SessionDJPicker({
                 </TouchableOpacity>
             )}
             {!query.trim() &&
+                recentSuggestions === undefined &&
                 suggestions
                     .filter(
                         (item) =>

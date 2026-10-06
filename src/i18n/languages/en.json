@@ -1137,6 +1137,16 @@
         "venueHint": "Save a place to perform",
         "profileRequired": "Complete your DJ profile to publish a mix.",
         "upcoming": "Upcoming and live sessions",
-        "addSimple": "Add simple session"
+        "addSimple": "Simple session"
+    },
+    "simpleForm": {
+        "title": "Simple session",
+        "change": "Change",
+        "done": "Done",
+        "changeTimezone": "Change time zone",
+        "timezoneHelp": "Your device time zone is used initially. Only change it if the performance is in a different time zone.",
+        "timezoneFormat": "Use a valid time zone, such as Europe/Madrid or America/New_York.",
+        "recentDjs": "You have played with",
+        "addRecentDJ": "Add {{name}}"
     }
 }

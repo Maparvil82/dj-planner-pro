@@ -1132,6 +1132,16 @@
         "venueHint": "出演する会場を保存",
         "profileRequired": "ミックスを公開するにはDJプロフィールを完成させてください。",
         "upcoming": "今後・開催中のセッション",
-        "addSimple": "通常のセッションを追加"
+        "addSimple": "通常のセッション"
+    },
+    "simpleForm": {
+        "title": "通常のセッション",
+        "change": "変更",
+        "done": "完了",
+        "changeTimezone": "タイムゾーンを変更",
+        "timezoneHelp": "最初は端末のタイムゾーンを使用します。出演先が別のタイムゾーンの場合のみ変更してください。",
+        "timezoneFormat": "Europe/MadridやAmerica/New_Yorkなど、有効なタイムゾーンを入力してください。",
+        "recentDjs": "共演したDJ",
+        "addRecentDJ": "{{name}}を追加"
     }
 }

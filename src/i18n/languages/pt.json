@@ -1131,6 +1131,16 @@
         "venueHint": "Guarda um local onde tocar",
         "profileRequired": "Completa o teu perfil de DJ para publicar um mix.",
         "upcoming": "Sessões próximas e em curso",
-        "addSimple": "Adicionar sessão simples"
+        "addSimple": "Sessão simples"
+    },
+    "simpleForm": {
+        "title": "Sessão simples",
+        "change": "Alterar",
+        "done": "Concluído",
+        "changeTimezone": "Alterar fuso horário",
+        "timezoneHelp": "Inicialmente é usado o fuso do dispositivo. Altera-o apenas se a atuação for noutro fuso horário.",
+        "timezoneFormat": "Usa um fuso válido, como Europe/Lisbon ou America/New_York.",
+        "recentDjs": "Já tocaste com",
+        "addRecentDJ": "Adicionar {{name}}"
     }
 }

@@ -1133,6 +1133,16 @@
         "venueHint": "Guarda un sitio donde pinchar",
         "profileRequired": "Completa tu perfil de DJ para publicar un mix.",
         "upcoming": "Sesiones próximas y en curso",
-        "addSimple": "Añadir sesión simple"
+        "addSimple": "Sesión simple"
+    },
+    "simpleForm": {
+        "title": "Sesión simple",
+        "change": "Cambiar",
+        "done": "Listo",
+        "changeTimezone": "Cambiar zona horaria",
+        "timezoneHelp": "Se usa inicialmente el horario de tu dispositivo. Solo cámbialo si la actuación es en otra zona horaria.",
+        "timezoneFormat": "Usa una zona válida, por ejemplo Europe/Madrid o America/New_York.",
+        "recentDjs": "Has pinchado con",
+        "addRecentDJ": "Añadir a {{name}}"
     }
 }

@@ -1131,6 +1131,16 @@
         "venueHint": "Enregistrez un lieu où jouer",
         "profileRequired": "Complétez votre profil DJ pour publier un mix.",
         "upcoming": "Sessions à venir et en cours",
-        "addSimple": "Ajouter une session simple"
+        "addSimple": "Session simple"
+    },
+    "simpleForm": {
+        "title": "Session simple",
+        "change": "Modifier",
+        "done": "Terminé",
+        "changeTimezone": "Modifier le fuseau horaire",
+        "timezoneHelp": "Le fuseau de votre appareil est utilisé au départ. Modifiez-le uniquement si la prestation a lieu dans un autre fuseau.",
+        "timezoneFormat": "Utilisez un fuseau valide, comme Europe/Paris ou America/New_York.",
+        "recentDjs": "Vous avez joué avec",
+        "addRecentDJ": "Ajouter {{name}}"
     }
 }

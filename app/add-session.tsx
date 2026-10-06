@@ -1,3 +1,5 @@
+import { useRecentCollaborators } from '../src/hooks/useRecentCollaborators';
+import { SessionTimezoneField } from '../src/components/sessions/SessionTimezoneField';
 import { FEATURES } from '../src/config/features';
 import {
     FeeAgreementCard,
@@ -119,6 +121,7 @@ export default function AddSessionScreen() {
     const [isColorModalVisible, setIsColorModalVisible] = useState(false);
     const [isCollective, setIsCollective] = useState(false);
     const [djInput, setDjInput] = useState('');
+    const recentDjs = useRecentCollaborators(isCollective);
     const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
     const [linkedDjs, setLinkedDjs] = useState<Record<string, string>>({});
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
@@ -177,7 +180,6 @@ export default function AddSessionScreen() {
 
     const { data: titleTags = [] } = useTagsQuery('title');
     const { data: venues = [] } = useVenuesQuery();
-    const { data: djTags = [] } = useTagsQuery('dj');
 
     const filteredTitleTags =
         focusedInput === 'title'
@@ -186,19 +188,6 @@ export default function AddSessionScreen() {
                       (t) =>
                           t.name.toLowerCase().includes(title.toLowerCase()) &&
                           t.name.toLowerCase() !== title.toLowerCase(),
-                  )
-                  .slice(0, 10)
-            : [];
-
-    const filteredDjTags =
-        focusedInput === 'dj'
-            ? djTags
-                  .filter(
-                      (d) =>
-                          d.name
-                              .toLowerCase()
-                              .includes(djInput.toLowerCase()) &&
-                          !selectedDjs.includes(d.name),
                   )
                   .slice(0, 10)
             : [];
@@ -672,60 +661,6 @@ export default function AddSessionScreen() {
                                     </View>
                                 </>
                             )}
-
-                            <TouchableOpacity
-                                activeOpacity={0.8}
-                                onPress={() => {
-                                    Keyboard.dismiss();
-                                    setIsColorModalVisible(true);
-                                }}
-                                className="flex-row items-center bg-[#f8f9fd] dark:bg-[#111625] border border-[#e9ecf3] dark:border-[#252d40] rounded-xl px-4 py-3.5 mt-4"
-                            >
-                                {!selectedColor ? (
-                                    <View
-                                        className="w-5 h-5 rounded-full mr-3"
-                                        style={{ backgroundColor: '#262626' }}
-                                    />
-                                ) : (
-                                    <View
-                                        className="w-5 h-5 rounded-full mr-3"
-                                        style={{
-                                            backgroundColor: selectedColor,
-                                        }}
-                                    />
-                                )}
-                                <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
-                                    {!selectedColor &&
-                                        (t('color_default') ||
-                                            'Color predeterminado')}
-                                    {selectedColor === '#EF4444' &&
-                                        t('color_tomato')}
-                                    {selectedColor === '#F97316' &&
-                                        t('color_tangerine')}
-                                    {selectedColor === '#FBBF24' &&
-                                        t('color_banana')}
-                                    {selectedColor === '#10B981' &&
-                                        t('color_basil')}
-                                    {selectedColor === '#34D399' &&
-                                        t('color_sage')}
-                                    {selectedColor === '#0EA5E9' &&
-                                        t('color_peacock')}
-                                    {selectedColor === '#3B82F6' &&
-                                        t('color_blueberry')}
-                                    {selectedColor === '#8B5CF6' &&
-                                        t('color_lavender')}
-                                    {selectedColor === '#9333EA' &&
-                                        t('color_grape')}
-                                    {selectedColor === '#F43F5E' &&
-                                        t('color_flamingo')}
-                                    {selectedColor === '#6B7280' &&
-                                        t('color_graphite')}
-                                </Text>
-                                <ChevronRight
-                                    size={20}
-                                    color={isDark ? '#4B5563' : '#D1D5DB'}
-                                />
-                            </TouchableOpacity>
                         </View>
                         <View className="flex-row space-x-4 mb-4">
                             <View className="flex-1 mr-2">
@@ -897,23 +832,63 @@ export default function AddSessionScreen() {
                                     ))}
                             </View>
                         </View>
-                        <View style={{ gap: 8, marginTop: 16 }}>
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                {t('location.timezone')}
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setIsColorModalVisible(true);
+                            }}
+                            className="flex-row items-center bg-[#f8f9fd] dark:bg-[#111625] border border-[#e9ecf3] dark:border-[#252d40] rounded-xl px-4 py-3.5 mt-4"
+                        >
+                            {!selectedColor ? (
+                                <View
+                                    className="w-5 h-5 rounded-full mr-3"
+                                    style={{ backgroundColor: '#262626' }}
+                                />
+                            ) : (
+                                <View
+                                    className="w-5 h-5 rounded-full mr-3"
+                                    style={{
+                                        backgroundColor: selectedColor,
+                                    }}
+                                />
+                            )}
+                            <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
+                                {!selectedColor &&
+                                    (t('color_default') ||
+                                        'Color predeterminado')}
+                                {selectedColor === '#EF4444' &&
+                                    t('color_tomato')}
+                                {selectedColor === '#F97316' &&
+                                    t('color_tangerine')}
+                                {selectedColor === '#FBBF24' &&
+                                    t('color_banana')}
+                                {selectedColor === '#10B981' &&
+                                    t('color_basil')}
+                                {selectedColor === '#34D399' && t('color_sage')}
+                                {selectedColor === '#0EA5E9' &&
+                                    t('color_peacock')}
+                                {selectedColor === '#3B82F6' &&
+                                    t('color_blueberry')}
+                                {selectedColor === '#8B5CF6' &&
+                                    t('color_lavender')}
+                                {selectedColor === '#9333EA' &&
+                                    t('color_grape')}
+                                {selectedColor === '#F43F5E' &&
+                                    t('color_flamingo')}
+                                {selectedColor === '#6B7280' &&
+                                    t('color_graphite')}
                             </Text>
-                            <TextInput
-                                value={timezone}
-                                onChangeText={setTimezone}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                maxLength={80}
-                                accessibilityLabel={t('location.timezone')}
-                                className="rounded-2xl p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                            <ChevronRight
+                                size={20}
+                                color={isDark ? '#4B5563' : '#D1D5DB'}
                             />
-                            <Text className="text-xs text-gray-500">
-                                {t('location.timezoneHint')}
-                            </Text>
-                        </View>
+                        </TouchableOpacity>
+                        <SessionTimezoneField
+                            value={timezone}
+                            onChange={setTimezone}
+                            date={sessionDate}
+                        />
                     </SessionFormSection>
 
                     <SessionFormSection kind="fee" title={t('form.fee')}>
@@ -1176,7 +1151,8 @@ export default function AddSessionScreen() {
                                 linked={linkedDjs}
                                 query={djInput}
                                 onQueryChange={setDjInput}
-                                suggestions={djTags}
+                                suggestions={[]}
+                                recentSuggestions={recentDjs.data || []}
                                 onChange={(names, refs) => {
                                     setSelectedDjs(names);
                                     setLinkedDjs(refs);

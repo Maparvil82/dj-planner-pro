@@ -1133,6 +1133,16 @@
         "venueHint": "Speichere einen Auftrittsort",
         "profileRequired": "Vervollständige dein DJ-Profil, um einen Mix zu veröffentlichen.",
         "upcoming": "Anstehende und laufende Sessions",
-        "addSimple": "Einfache Session hinzufügen"
+        "addSimple": "Einfache Session"
+    },
+    "simpleForm": {
+        "title": "Einfache Session",
+        "change": "Ändern",
+        "done": "Fertig",
+        "changeTimezone": "Zeitzone ändern",
+        "timezoneHelp": "Zunächst gilt die Zeitzone deines Geräts. Ändere sie nur bei einem Auftritt in einer anderen Zeitzone.",
+        "timezoneFormat": "Nutze eine gültige Zeitzone wie Europe/Berlin oder America/New_York.",
+        "recentDjs": "Du hast aufgelegt mit",
+        "addRecentDJ": "{{name}} hinzufügen"
     }
 }

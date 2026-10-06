@@ -1133,6 +1133,16 @@
         "venueHint": "Salva un luogo dove suonare",
         "profileRequired": "Completa il tuo profilo DJ per pubblicare un mix.",
         "upcoming": "Sessioni imminenti e in corso",
-        "addSimple": "Aggiungi sessione semplice"
+        "addSimple": "Sessione semplice"
+    },
+    "simpleForm": {
+        "title": "Sessione semplice",
+        "change": "Cambia",
+        "done": "Fatto",
+        "changeTimezone": "Cambia fuso orario",
+        "timezoneHelp": "Inizialmente si usa il fuso del dispositivo. Cambialo solo se suoni in un altro fuso orario.",
+        "timezoneFormat": "Usa un fuso valido, ad esempio Europe/Rome o America/New_York.",
+        "recentDjs": "Hai suonato con",
+        "addRecentDJ": "Aggiungi {{name}}"
     }
 }
