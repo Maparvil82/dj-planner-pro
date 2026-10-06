@@ -110,8 +110,7 @@ const errors = [];
     }
     let context = await setup();
     await page.goto('http://localhost:8081/community');
-    const open = () =>
-        page.getByRole('button', { name: /^Abrir menú de cuenta/ }).click();
+    const open = () => page.getByLabel(/^Abrir menú de cuenta/).click();
     await open();
     assert.equal(await page.getByText('PRO', { exact: true }).count(), 0);
     await page
@@ -219,11 +218,7 @@ const errors = [];
         );
         context = await setup(lang, 320, true);
         await page.goto('http://localhost:8081/community');
-        await page
-            .getByRole('button', {
-                name: new RegExp('^' + copy.accountMenu.open),
-            })
-            .click();
+        await page.getByLabel(new RegExp('^' + copy.accountMenu.open)).click();
         await page
             .getByRole('button', {
                 name: copy.accountMenu.discoverPro,

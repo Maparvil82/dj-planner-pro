@@ -2,12 +2,18 @@ import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
 import {
     AccountDrawerProvider,
     AccountAvatarButton,
+    useOpenAccountMenu,
 } from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
 import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, MapPin, LayoutDashboard, Users } from 'lucide-react-native';
+import {
+    CalendarDays,
+    MapPin,
+    LayoutDashboard,
+    Users,
+} from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
@@ -27,6 +33,7 @@ export default function TabLayout() {
 
 function TabLayoutContent() {
     const { t } = useTranslation();
+    const openAccountMenu = useOpenAccountMenu();
     const { width } = useWindowDimensions();
     const { session, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
@@ -76,10 +83,10 @@ function TabLayoutContent() {
             <ExpoTabs.Screen
                 name="home"
                 options={{
-                    title: t('home'),
+                    title: t('community.sessions'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
-                        <Home color={color} size={size} />
+                        <CalendarDays color={color} size={size} />
                     ),
                 }}
             />
@@ -155,20 +162,16 @@ function TabLayoutContent() {
             />
             <ExpoTabs.Screen
                 name="account"
+                listeners={{
+                    tabPress: (event) => {
+                        event.preventDefault();
+                        openAccountMenu();
+                    },
+                }}
                 options={{
                     title: t('tab_you'),
-                    tabBarButton: () => (
-                        <View
-                            style={{
-                                flex: 1,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                paddingBottom: 16,
-                            }}
-                        >
-                            <AccountAvatarButton tab />
-                        </View>
-                    ),
+                    tabBarAccessibilityLabel: t('accountMenu.open'),
+                    tabBarIcon: () => <AccountAvatarButton tab />,
                 }}
             />
         </ExpoTabs>

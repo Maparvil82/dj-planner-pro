@@ -572,9 +572,7 @@ const errors = [];
         .getByRole('button', { name: labels.savedMixes.remove, exact: true })
         .waitFor();
     assert.equal(bookmarks.size, 1);
-    await page
-        .getByRole('button', { name: labels.accountMenu.open, exact: false })
-        .click();
+    await page.getByLabel(labels.accountMenu.open, { exact: false }).click();
     await page
         .getByRole('button', {
             name: labels.accountMenu.savedMixes,

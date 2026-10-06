@@ -31,6 +31,10 @@ const DrawerContext = createContext<{
     open: () => void;
     isPro: boolean;
 } | null>(null);
+export function useOpenAccountMenu() {
+    const menu = useContext(DrawerContext);
+    return () => menu?.open();
+}
 export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
     const menu = useContext(DrawerContext);
     const { profile, session } = useAuthStore();
@@ -38,20 +42,23 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
     const c = useCommunityColors();
     const unread = useUnreadNotifications();
     if (!menu || !session) return null;
+    const Container = tab ? View : Pressable;
     return (
-        <Pressable
-            accessibilityRole="button"
+        <Container
+            accessibilityRole={tab ? undefined : 'button'}
             accessibilityLabel={
-                t('accountMenu.open') +
-                (menu.isPro ? `, ${t('billing.proPlan')}` : '') +
-                (unread.data
-                    ? `, ${t('notifications.openUnread', { count: unread.data })}`
-                    : '')
+                tab
+                    ? undefined
+                    : t('accountMenu.open') +
+                      (menu.isPro ? `, ${t('billing.proPlan')}` : '') +
+                      (unread.data
+                          ? `, ${t('notifications.openUnread', { count: unread.data })}`
+                          : '')
             }
-            onPress={menu.open}
+            onPress={tab ? undefined : menu.open}
             style={{
-                width: tab ? '100%' : 46,
-                height: tab ? 50 : 46,
+                width: tab ? 24 : 46,
+                height: tab ? 24 : 46,
                 alignItems: 'center',
                 justifyContent: 'center',
             }}
@@ -59,29 +66,17 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
             <TabProfileIcon
                 url={profile?.avatar_url}
                 name={profile?.artist_name || session.user.email}
-                size={tab ? 25 : 36}
+                size={tab ? 24 : 36}
                 color={c.fg}
                 focused={false}
                 hasUnread={!!unread.data}
             />
-            {tab && (
-                <Text
-                    style={{
-                        color: c.muted,
-                        fontSize: 10,
-                        fontWeight: '600',
-                        marginTop: 5,
-                    }}
-                >
-                    {t('tab_you')}
-                </Text>
-            )}
             {menu.isPro && (
                 <View
                     pointerEvents="none"
                     style={{
                         position: 'absolute',
-                        bottom: tab ? 14 : 0,
+                        bottom: tab ? -4 : 0,
                         paddingHorizontal: 5,
                         paddingVertical: 1,
                         borderRadius: 5,
@@ -103,7 +98,7 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
                     </Text>
                 </View>
             )}
-        </Pressable>
+        </Container>
     );
 }
 export function AccountDrawerProvider({ children }: { children: ReactNode }) {
