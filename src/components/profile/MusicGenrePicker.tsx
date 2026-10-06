@@ -13,10 +13,12 @@ export function MusicGenrePicker({
     value,
     onChange,
     disabled,
+    showHint = true,
 }: {
     value: string;
     onChange: (value: string) => void;
     disabled: boolean;
+    showHint?: boolean;
 }) {
     const c = useCommunityColors();
     const { t } = useTranslation();
@@ -35,9 +37,11 @@ export function MusicGenrePicker({
             <Text style={{ color: c.muted, fontSize: 12, fontWeight: '600' }}>
                 {t('community.genres')} *
             </Text>
-            <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
-                {t('profileUX.genreHint')}
-            </Text>
+            {showHint && (
+                <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
+                    {t('profileUX.genreHint')}
+                </Text>
+            )}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {selected.map((name) => (
                     <TouchableOpacity

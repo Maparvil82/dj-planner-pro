@@ -487,18 +487,15 @@ export default function ProfileScreen({
                 bio={bio}
                 avatar={avatar}
                 cover={cover}
-                links={links}
                 visible={visible}
                 busy={busy}
                 setup={communitySetup}
-                linksEnabled={!communitySetup && canUseDJProfile(social.data)}
                 error={saveError}
                 onName={setArtistName}
                 onCity={setCity}
                 onCityLocation={setCityLocation}
                 onGenres={setGenres}
                 onBio={setBio}
-                onLinks={setLinks}
                 onAvatar={handlePickAvatar}
                 onCover={handlePickCover}
                 onRemoveCover={() => setCover(null)}

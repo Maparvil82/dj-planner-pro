@@ -1,4 +1,3 @@
-import { ProfilePosters } from '../../src/components/community/ProfilePosters';
 import { ProfileShareSheet } from '../../src/components/community/ProfileShareSheet';
 import { ProfileMixes } from '../../src/components/community/ProfileMixes';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
@@ -308,7 +307,6 @@ export default function CommunityProfileScreen() {
                                     router.push(`/community/mixes/${id}`)
                                 }
                             />
-                            <ProfilePosters userId={id} />
                             {!!feed.data?.pages.flat().length && (
                                 <Text
                                     style={{

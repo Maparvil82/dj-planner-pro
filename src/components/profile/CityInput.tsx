@@ -29,12 +29,14 @@ export function CityInput({
     location,
     onLocation,
     disabled,
+    showHint = true,
 }: {
     value: string;
     onChange: (value: string) => void;
     location: CityLocation | null;
     onLocation: (location: CityLocation | null) => void;
     disabled: boolean;
+    showHint?: boolean;
 }) {
     const c = useCommunityColors();
     const { t } = useTranslation();
@@ -113,9 +115,11 @@ export function CityInput({
                     {cityLabel('', location).replace(/^ · /, '')}
                 </Text>
             )}
-            <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
-                {t('profileUX.cityHybridHint')}
-            </Text>
+            {showHint && (
+                <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
+                    {t('profileUX.cityHybridHint')}
+                </Text>
+            )}
             {options.length > 0 && (
                 <View
                     style={{

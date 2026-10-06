@@ -202,7 +202,7 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} edges={['top']}>
-            <PageHeader title={t('community.sessions')} subtitle={t('workflow.homeIntro')}>
+            <PageHeader showPlaces title={t('community.sessions')} subtitle={t('workflow.homeIntro')}>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('history')} onPress={() => router.push('/history')} style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: isDark ? '#20273b' : '#e9eaf3', alignItems: 'center', justifyContent: 'center' }}>
                     <Calendar size={20} color={isDark ? '#f3f4f8' : '#202538'} />
                 </TouchableOpacity>

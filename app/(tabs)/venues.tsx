@@ -64,7 +64,9 @@ export default function VenuesScreen() {
     } = useVenuesQuery(includeArchived);
     const createVenueMutation = useCreateVenueMutation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+    const [isAddModalVisible, setIsAddModalVisible] = useState(
+        params.create === '1',
+    );
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [newName, setNewName] = useState('');
     const [newCity, setNewCity] = useState('');

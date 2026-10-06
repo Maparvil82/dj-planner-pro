@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '../../i18n/useTranslation';
-import { DJ_PLATFORMS } from '../../utils/communityLinks';
 import { isDJProfileComplete } from '../../utils/communityProfile';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
 import { MusicGenrePicker } from './MusicGenrePicker';
@@ -28,18 +27,15 @@ type Props = {
     bio: string;
     avatar: string | null;
     cover: string | null;
-    links: Record<(typeof DJ_PLATFORMS)[number], string>;
     visible: boolean;
     busy: boolean;
     setup: boolean;
-    linksEnabled: boolean;
     error: string;
     onName: (value: string) => void;
     onCity: (value: string) => void;
     onCityLocation: (value: CityLocation | null) => void;
     onGenres: (value: string) => void;
     onBio: (value: string) => void;
-    onLinks: (value: Props['links']) => void;
     onVisible: (value: boolean) => void;
     onAvatar: () => void;
     onCover: () => void;
@@ -342,19 +338,6 @@ export function DJProfileEditor(p: Props) {
                                         onPress={p.onRemoveCover}
                                     />
                                 )}
-                                <Text
-                                    style={{
-                                        color: c.muted,
-                                        fontSize: 13,
-                                        lineHeight: 20,
-                                    }}
-                                >
-                                    {t(
-                                        p.setup
-                                            ? 'communityEntry.setupHint'
-                                            : 'communityEntry.requiredHint',
-                                    )}
-                                </Text>
                                 <View style={fieldGroup}>
                                     {field(
                                         t('artist_name') + ' *',
@@ -363,6 +346,7 @@ export function DJProfileEditor(p: Props) {
                                         80,
                                     )}
                                     <CityInput
+                                        showHint={false}
                                         value={p.city}
                                         onChange={p.onCity}
                                         location={p.cityLocation}
@@ -370,6 +354,7 @@ export function DJProfileEditor(p: Props) {
                                         disabled={p.busy}
                                     />
                                     <MusicGenrePicker
+                                        showHint={false}
                                         value={p.genres}
                                         onChange={p.onGenres}
                                         disabled={p.busy}
@@ -384,40 +369,6 @@ export function DJProfileEditor(p: Props) {
                                         true,
                                     )}
                                 </View>
-                                {p.linksEnabled && (
-                                    <View style={fieldGroup}>
-                                        <Text
-                                            style={{
-                                                color: c.fg,
-                                                fontSize: 16,
-                                                fontWeight: '700',
-                                            }}
-                                        >
-                                            {t('communityEntry.links')}
-                                        </Text>
-                                        {DJ_PLATFORMS.map((platform) => (
-                                            <View key={platform}>
-                                                {field(
-                                                    platform === 'mixcloud'
-                                                        ? 'Mixcloud'
-                                                        : platform ===
-                                                            'soundcloud'
-                                                          ? 'SoundCloud'
-                                                          : 'Instagram',
-                                                    p.links[platform],
-                                                    (value) =>
-                                                        p.onLinks({
-                                                            ...p.links,
-                                                            [platform]: value,
-                                                        }),
-                                                    500,
-                                                    false,
-                                                    true,
-                                                )}
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
                                 {!p.setup && (
                                     <View style={fieldGroup}>
                                         <View
@@ -449,15 +400,6 @@ export function DJProfileEditor(p: Props) {
                                                 }}
                                             />
                                         </View>
-                                        <Text
-                                            style={{
-                                                color: c.muted,
-                                                fontSize: 12,
-                                                lineHeight: 19,
-                                            }}
-                                        >
-                                            {t('community.visibilityHint')}
-                                        </Text>
                                     </View>
                                 )}
                             </View>
@@ -494,19 +436,6 @@ export function DJProfileEditor(p: Props) {
                                     {p.error}
                                 </Text>
                             )}
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 11,
-                                    lineHeight: 16,
-                                }}
-                            >
-                                {t(
-                                    p.setup
-                                        ? 'communityEntry.consent'
-                                        : 'profileUX.saveScope',
-                                )}
-                            </Text>
                             <CommunityButton
                                 label={t(
                                     p.setup

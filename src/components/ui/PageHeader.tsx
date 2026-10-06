@@ -11,7 +11,7 @@ export function PageHeader({
     children,
     leading,
     action,
-    showPlaces = true,
+    showPlaces = false,
 }: {
     title: string;
     subtitle: string;

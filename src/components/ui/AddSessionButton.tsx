@@ -102,7 +102,11 @@ export function AddSessionButton() {
     const destination = useRef<Href | null>(null);
     const selecting = useRef(false);
     useEffect(() => {
-        if (open) router.prefetch('/add-session');
+        if (open) {
+            router.prefetch('/add-session');
+            router.prefetch('/add-mix');
+            router.prefetch('/venues');
+        }
     }, [open, router]);
     const finishNavigation = useCallback(() => {
         if (!destination.current) return;
@@ -120,7 +124,8 @@ export function AddSessionButton() {
         selecting.current = true;
         setOpen(false);
         // Push a normal screen while the menu closes, instead of chaining
-        // two animations. Modal destinations still wait for native dismissal.
+        // two animations. Modal destinations dismiss the menu without animation
+        // before presentation, avoiding overlapping native sheets.
         if (href === '/add-session') router.push(href);
         else destination.current = href;
     };
@@ -154,7 +159,7 @@ export function AddSessionButton() {
                 visible={open}
                 transparent
                 onDismiss={finishNavigation}
-                animationType="slide"
+                animationType={selecting.current ? 'none' : 'slide'}
                 onRequestClose={() => setOpen(false)}
             >
                 <View
