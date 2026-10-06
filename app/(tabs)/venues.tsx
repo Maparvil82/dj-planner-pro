@@ -1,3 +1,4 @@
+import { useKeyboardVisible } from '../../src/hooks/useKeyboardVisible';
 import { CityInput } from '../../src/components/profile/CityInput';
 import { cityKey, cityLabel, type CityLocation } from '../../src/utils/cities';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
@@ -11,7 +12,6 @@ import {
     RefreshControl,
     TextInput,
     Modal,
-    KeyboardAvoidingView,
     Platform,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -43,6 +43,7 @@ const normalized = (value: string) =>
 
 export default function VenuesScreen() {
     const onTabScroll = useTabBarScroll();
+    const keyboardVisible = useKeyboardVisible();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
@@ -422,7 +423,11 @@ export default function VenuesScreen() {
                 <SafeAreaProvider>
                     <SafeAreaView
                         style={{ flex: 1, backgroundColor: background }}
-                        edges={['top', 'bottom', 'left', 'right']}
+                        edges={
+                            keyboardVisible
+                                ? ['top', 'left', 'right']
+                                : ['top', 'bottom', 'left', 'right']
+                        }
                     >
                         <SessionFormHeader
                             title={t('add_venue')}
@@ -431,21 +436,17 @@ export default function VenuesScreen() {
                                 if (!isSaving) setIsAddModalVisible(false);
                             }}
                         />
-                        <KeyboardAvoidingView
-                            style={{ flex: 1 }}
-                            behavior={
-                                Platform.OS === 'ios' ? 'padding' : undefined
-                            }
-                            keyboardVerticalOffset={
-                                Platform.OS === 'ios' ? 90 : 0
-                            }
-                        >
+                        <View style={{ flex: 1 }}>
                             <ScrollView
+                                style={{ flex: 1 }}
+                                automaticallyAdjustKeyboardInsets={
+                                    Platform.OS === 'ios'
+                                }
                                 keyboardShouldPersistTaps="handled"
                                 keyboardDismissMode="on-drag"
                                 contentContainerStyle={{
                                     paddingHorizontal: 20,
-                                    paddingBottom: 130,
+                                    paddingBottom: keyboardVisible ? 24 : 130,
                                     width: '100%',
                                     maxWidth: 900,
                                     alignSelf: 'center',
@@ -564,17 +565,19 @@ export default function VenuesScreen() {
                                     </Text>
                                 </SessionFormSection>
                             </ScrollView>
-                            <SessionFormFooter
-                                label={t('save_venue')}
-                                disabled={
-                                    !newName.trim() ||
-                                    !newCity.trim() ||
-                                    isSaving
-                                }
-                                busy={isSaving}
-                                onSave={handleCreateVenue}
-                            />
-                        </KeyboardAvoidingView>
+                            {!keyboardVisible && (
+                                <SessionFormFooter
+                                    label={t('save_venue')}
+                                    disabled={
+                                        !newName.trim() ||
+                                        !newCity.trim() ||
+                                        isSaving
+                                    }
+                                    busy={isSaving}
+                                    onSave={handleCreateVenue}
+                                />
+                            )}
+                        </View>
                     </SafeAreaView>
                 </SafeAreaProvider>
             </Modal>
