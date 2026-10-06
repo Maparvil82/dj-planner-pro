@@ -402,7 +402,7 @@ export default function AddSessionScreen() {
             }
         >
             <SessionFormHeader
-                title={t('add_session')}
+                title={t('createMenu.addSimple')}
                 subtitle={t('form.addIntro')}
                 onClose={() => router.back()}
             />

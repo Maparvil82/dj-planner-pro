@@ -44,7 +44,7 @@
     "add_poster": "Plakat hinzufügen",
     "error": "Fehler",
     "success": "Erfolg",
-    "upcoming_sessions": "Kommende Sitzungen",
+    "upcoming_sessions": "Anstehende Sessions",
     "sync_calendars_empty_state": "Synchronisieren Sie mit Ihren externen Kalendern, um Ihre nächsten Sets zu sehen.",
     "collective_session": "Kollektive Sitzung",
     "add_djs": "DJs hinzufügen",
@@ -1132,6 +1132,7 @@
         "venue": "Location",
         "venueHint": "Speichere einen Auftrittsort",
         "profileRequired": "Vervollständige dein DJ-Profil, um einen Mix zu veröffentlichen.",
-        "upcoming": "Anstehende und laufende Sessions"
+        "upcoming": "Anstehende und laufende Sessions",
+        "addSimple": "Einfache Session hinzufügen"
     }
 }

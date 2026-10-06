@@ -44,7 +44,7 @@
     "add_poster": "Aggiungi locandina",
     "error": "Errore",
     "success": "Successo",
-    "upcoming_sessions": "Prossime Sessioni",
+    "upcoming_sessions": "Prossime sessioni",
     "sync_calendars_empty_state": "Sincronizza con i tuoi calendari esterni per vedere i prossimi set.",
     "collective_session": "Sessione collettiva",
     "add_djs": "Aggiungi DJ",
@@ -1132,6 +1132,7 @@
         "venue": "Locale",
         "venueHint": "Salva un luogo dove suonare",
         "profileRequired": "Completa il tuo profilo DJ per pubblicare un mix.",
-        "upcoming": "Sessioni imminenti e in corso"
+        "upcoming": "Sessioni imminenti e in corso",
+        "addSimple": "Aggiungi sessione semplice"
     }
 }

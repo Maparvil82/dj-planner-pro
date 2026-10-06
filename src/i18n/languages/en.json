@@ -44,7 +44,7 @@
     "add_poster": "Add poster",
     "error": "Error",
     "success": "Success",
-    "upcoming_sessions": "Upcoming Sessions",
+    "upcoming_sessions": "Upcoming sessions",
     "sync_calendars_empty_state": "Sync with your external calendars to see your upcoming sets.",
     "collective_session": "Collective Session",
     "add_djs": "Add DJs",
@@ -1136,6 +1136,7 @@
         "venue": "Venue",
         "venueHint": "Save a place to perform",
         "profileRequired": "Complete your DJ profile to publish a mix.",
-        "upcoming": "Upcoming and live sessions"
+        "upcoming": "Upcoming and live sessions",
+        "addSimple": "Add simple session"
     }
 }

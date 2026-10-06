@@ -100,6 +100,10 @@ export function AddSessionButton() {
     const columnWidth = (width - 24) / 4;
     const [open, setOpen] = useState(false);
     const destination = useRef<Href | null>(null);
+    const selecting = useRef(false);
+    useEffect(() => {
+        if (open) router.prefetch('/add-session');
+    }, [open, router]);
     const finishNavigation = useCallback(() => {
         if (!destination.current) return;
         const href = destination.current;
@@ -112,8 +116,13 @@ export function AddSessionButton() {
         if (!open && Platform.OS === 'android') finishNavigation();
     }, [open, finishNavigation]);
     const navigate = (href: Href) => {
-        destination.current = href;
+        if (selecting.current) return;
+        selecting.current = true;
         setOpen(false);
+        // Push a normal screen while the menu closes, instead of chaining
+        // two animations. Modal destinations still wait for native dismissal.
+        if (href === '/add-session') router.push(href);
+        else destination.current = href;
     };
     const actions = [
         { key: 'session', color: '#2783ef', href: '/add-session' },
@@ -126,7 +135,10 @@ export function AddSessionButton() {
             <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('createMenu.title')}
-                onPress={() => setOpen(true)}
+                onPress={() => {
+                    selecting.current = false;
+                    setOpen(true);
+                }}
                 style={{
                     height: 46,
                     width: 46,
@@ -236,7 +248,8 @@ export function AddSessionButton() {
                                                     marginTop: 10,
                                                     color: c.fg,
                                                     fontWeight: '600',
-                                                    fontSize: width < 360 ? 11 : 12,
+                                                    fontSize:
+                                                        width < 360 ? 11 : 12,
                                                     lineHeight: 16,
                                                     textAlign: 'center',
                                                 }}

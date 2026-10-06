@@ -248,12 +248,12 @@ export default function HomeScreen() {
 
                     {/* UPCOMING SESSIONS */}
                     <View style={{ paddingHorizontal: 4 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                                {t('createMenu.upcoming')}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1, minWidth: 0, fontSize: windowWidth < 360 ? 14 : 17, fontWeight: '700', color: isDark ? '#fff' : '#202538', letterSpacing: -0.3 }}>
+                                {t('upcoming_sessions')}
                             </Text>
 
-                            <View className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
+                            <View style={{ flexShrink: 0 }} className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('all')}
                                     className="px-3 py-1.5 rounded-xl"

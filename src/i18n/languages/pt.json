@@ -44,7 +44,7 @@
     "add_poster": "Adicionar cartaz",
     "error": "Erro",
     "success": "Sucesso",
-    "upcoming_sessions": "Próximas Sessões",
+    "upcoming_sessions": "Próximas sessões",
     "sync_calendars_empty_state": "Sincronize com seus calendários externos para ver seus próximos sets.",
     "collective_session": "Sessão Coletiva",
     "add_djs": "Adicionar DJs",
@@ -1130,6 +1130,7 @@
         "venue": "Local",
         "venueHint": "Guarda um local onde tocar",
         "profileRequired": "Completa o teu perfil de DJ para publicar um mix.",
-        "upcoming": "Sessões próximas e em curso"
+        "upcoming": "Sessões próximas e em curso",
+        "addSimple": "Adicionar sessão simples"
     }
 }
