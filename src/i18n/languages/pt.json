@@ -1109,7 +1109,8 @@
         "restore": "Restaurar local",
         "archivedLabel": "Arquivado",
         "djStyles": "Estilos dos DJs",
-        "activityCityHint": "Nas atuações, a cidade é a do evento; nos mixes, é a cidade do DJ."
+        "activityCityHint": "Nas atuações, a cidade é a do evento; nos mixes, é a cidade do DJ.",
+        "archived": "Arquivados"
     },
     "savedMixes": {
         "title": "Mixes guardados",

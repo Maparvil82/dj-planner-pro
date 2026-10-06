@@ -1111,7 +1111,8 @@
         "restore": "Ort wiederherstellen",
         "archivedLabel": "Archiviert",
         "djStyles": "DJ-Stile",
-        "activityCityHint": "Bei Auftritten ist es die Stadt der Veranstaltung, bei Mixes die Stadt des DJs."
+        "activityCityHint": "Bei Auftritten ist es die Stadt der Veranstaltung, bei Mixes die Stadt des DJs.",
+        "archived": "Archiviert"
     },
     "savedMixes": {
         "title": "Gespeicherte Mixe",

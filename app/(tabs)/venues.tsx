@@ -198,49 +198,72 @@ export default function VenuesScreen() {
                     alignSelf: 'center',
                 }}
             >
-                <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel={t('add_venue')}
-                    onPress={() => setIsAddModalVisible(true)}
+                <View
                     style={{
-                        alignSelf: 'flex-start',
+                        flexDirection: 'row',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        gap: 10,
                         marginHorizontal: 20,
                         marginBottom: 14,
-                        paddingHorizontal: 18,
-                        paddingVertical: 13,
-                        borderRadius: 14,
-                        backgroundColor: isDark ? '#292743' : '#f0edfc',
                     }}
                 >
-                    <Text
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t('add_venue')}
+                        onPress={() => setIsAddModalVisible(true)}
                         style={{
-                            color: isDark ? '#bdb0f5' : '#6554df',
-                            fontSize: 14,
-                            fontWeight: '700',
+                            paddingHorizontal: 16,
+                            minHeight: 44,
+                            justifyContent: 'center',
+                            borderRadius: 14,
+                            backgroundColor: isDark ? '#292743' : '#f0edfc',
                         }}
                     >
-                        {t('add_venue')}
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => setIncludeArchived((v) => !v)}
-                    accessibilityRole="button"
-                    style={{ paddingVertical: 12, alignSelf: 'flex-end' }}
-                >
-                    <Text
+                        <Text
+                            style={{
+                                color: isDark ? '#bdb0f5' : '#6554df',
+                                fontSize: 14,
+                                fontWeight: '700',
+                            }}
+                        >
+                            {t('add_venue')}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setIncludeArchived((v) => !v)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('location.archived')}
+                        accessibilityState={{ selected: includeArchived }}
                         style={{
-                            color: muted,
-                            fontSize: 13,
-                            fontWeight: '600',
+                            paddingHorizontal: 16,
+                            minHeight: 44,
+                            justifyContent: 'center',
+                            borderRadius: 14,
+                            borderWidth: 1,
+                            borderColor: includeArchived ? '#8270e4' : border,
+                            backgroundColor: includeArchived
+                                ? isDark
+                                    ? '#292743'
+                                    : '#f0edfc'
+                                : surface,
                         }}
                     >
-                        {t(
-                            includeArchived
-                                ? 'location.hideArchived'
-                                : 'location.showArchived',
-                        )}
-                    </Text>
-                </TouchableOpacity>
+                        <Text
+                            style={{
+                                color: includeArchived
+                                    ? isDark
+                                        ? '#bdb0f5'
+                                        : '#6554df'
+                                    : muted,
+                                fontSize: 14,
+                                fontWeight: '600',
+                            }}
+                        >
+                            {t('location.archived')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
                 <View
                     style={{
                         marginHorizontal: 20,

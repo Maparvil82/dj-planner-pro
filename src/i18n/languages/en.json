@@ -1115,7 +1115,8 @@
         "restore": "Restore venue",
         "archivedLabel": "Archived",
         "djStyles": "DJ styles",
-        "activityCityHint": "For performances, city means the event location; for mixes, it means the DJ’s city."
+        "activityCityHint": "For performances, city means the event location; for mixes, it means the DJ’s city.",
+        "archived": "Archived"
     },
     "savedMixes": {
         "title": "Saved mixes",

@@ -1111,7 +1111,8 @@
         "restore": "Ripristina luogo",
         "archivedLabel": "Archiviato",
         "djStyles": "Stili dei DJ",
-        "activityCityHint": "Per le esibizioni, la città è quella dell’evento; per i mix, quella del DJ."
+        "activityCityHint": "Per le esibizioni, la città è quella dell’evento; per i mix, quella del DJ.",
+        "archived": "Archiviati"
     },
     "savedMixes": {
         "title": "Mix salvati",

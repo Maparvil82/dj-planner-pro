@@ -1109,7 +1109,8 @@
         "restore": "Restaurer le lieu",
         "archivedLabel": "Archivé",
         "djStyles": "Styles des DJs",
-        "activityCityHint": "Pour les prestations, la ville est celle de l’événement ; pour les mixes, celle du DJ."
+        "activityCityHint": "Pour les prestations, la ville est celle de l’événement ; pour les mixes, celle du DJ.",
+        "archived": "Archivés"
     },
     "savedMixes": {
         "title": "Mixes enregistrés",

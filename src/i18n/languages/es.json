@@ -1111,7 +1111,8 @@
         "restore": "Restaurar lugar",
         "archivedLabel": "Archivado",
         "djStyles": "Estilos de los DJs",
-        "activityCityHint": "En actuaciones, la ciudad es la del evento; en mixes, es la ciudad del DJ."
+        "activityCityHint": "En actuaciones, la ciudad es la del evento; en mixes, es la ciudad del DJ.",
+        "archived": "Archivados"
     },
     "savedMixes": {
         "title": "Mixes guardados",

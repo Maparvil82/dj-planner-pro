@@ -1110,7 +1110,8 @@
         "restore": "会場を復元",
         "archivedLabel": "アーカイブ済み",
         "djStyles": "DJのスタイル",
-        "activityCityHint": "出演ではイベントの都市、ミックスではDJの都市で絞り込みます。"
+        "activityCityHint": "出演ではイベントの都市、ミックスではDJの都市で絞り込みます。",
+        "archived": "アーカイブ済み"
     },
     "savedMixes": {
         "title": "保存したミックス",
