@@ -1254,7 +1254,7 @@
         "value_dj_fixed": "How much do you get per ticket?",
         "value_percent": "What percentage of ticket sales do you get?",
         "price": "How much is a ticket?",
-        "morePrices": "Add another ticket price",
+        "morePrices": "Another ticket type",
         "barQuestion": "Your share of bar sales",
         "barPercent": "What percentage of bar sales do you get?",
         "addCondition": "Add another condition",
@@ -1277,7 +1277,7 @@
         "shareDjs": "Split between DJs",
         "splitHint": "This only calculates shares. It does not invite DJs or send the agreement.",
         "summary": "Your agreement at a glance",
-        "trySales": "Try some sales figures",
+        "trySales": "Run simulation",
         "backAgreement": "Back to agreement",
         "calculate": "Calculate my fee",
         "actualHint": "Enter your actual sales.",
@@ -1313,7 +1313,14 @@
         "summaryBonus": "Selling {{count}} paid tickets adds {{amount}}.",
         "summaryDeductions": "Bases marked “after deductions” subtract charges before sharing.",
         "summaryExpenses": "Agreed costs reduce the sales share, keeping the fixed fee and minimum intact.",
-        "summarySplit": "The total is split between {{count}} DJs."
+        "summarySplit": "The total is split between {{count}} DJs.",
+        "ticketType": "Ticket type {{number}}",
+        "otherDj": "Other DJ",
+        "ownerIncluded": "You are already included in the split. Add only the other DJs.",
+        "ticketNamesRequired": "Name each ticket type before simulating.",
+        "djNamesRequired": "Enter the other DJs’ names before simulating.",
+        "duplicateDj": "Your share is already included. Do not repeat your name or another DJ’s name.",
+        "simulationBlocked": "To show the result, check these details:"
     },
     "conditionalCosts": {
         "concept": "Description",

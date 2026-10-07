@@ -157,7 +157,7 @@ const errors = [];
         currency: '€',
         status: 'confirmed',
         recurrence_type: 'none',
-        djs: [],
+        djs: ['DJ Demo', 'Pepe', 'pepe'],
         color: '#262626',
     };
     let patches = [];
@@ -253,6 +253,137 @@ const errors = [];
         .click();
     await page.getByLabel(flow.price, { exact: true }).fill('10');
     await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('7');
+    assert.equal(
+        await page
+            .getByRole('button', { name: flow.addCondition, exact: true })
+            .count(),
+        0,
+    );
+    assert.equal(
+        await page
+            .getByRole('button', { name: flow.morePrices, exact: true })
+            .count(),
+        1,
+    );
+    await page
+        .getByRole('button', { name: flow.morePrices, exact: true })
+        .click();
+    assert.equal(
+        await page
+            .getByLabel(labels.conditional.ticketName + ' 2', { exact: true })
+            .inputValue(),
+        flow.ticketType.replace('{{number}}', '2'),
+    );
+    await page
+        .getByLabel(
+            labels.conditional.ticketPrice +
+                ' · ' +
+                flow.ticketType.replace('{{number}}', '2'),
+            { exact: true },
+        )
+        .fill('20');
+    await page
+        .getByRole('switch', { name: flow.shareDjs, exact: true })
+        .click();
+    assert.equal(
+        await page
+            .getByLabel(flow.otherDj + ' 1', { exact: true })
+            .inputValue(),
+        'Pepe',
+    );
+    assert.equal(
+        await page.getByLabel(flow.otherDj + ' 2', { exact: true }).count(),
+        0,
+        'Owner and duplicate collaborator excluded',
+    );
+    await page.screenshot({
+        path: '/private/tmp/djplanner-ticket-types.png',
+        fullPage: true,
+    });
+    await page.getByLabel(flow.otherDj + ' 1', { exact: true }).fill('');
+    await page
+        .getByRole('button', { name: flow.trySales, exact: true })
+        .click();
+    await page.getByText(flow.djNamesRequired, { exact: true }).waitFor();
+    assert.equal(
+        await page.getByLabel(flow.expected, { exact: true }).count(),
+        0,
+        'Invalid agreement stays editable',
+    );
+    await page.getByLabel(flow.otherDj + ' 1', { exact: true }).fill('dj demo');
+    await page
+        .getByRole('button', { name: flow.trySales, exact: true })
+        .click();
+    await page.getByText(flow.duplicateDj, { exact: true }).waitFor();
+    await page.getByLabel(flow.otherDj + ' 1', { exact: true }).fill('Pepe');
+    await page
+        .getByRole('button', { name: flow.trySales, exact: true })
+        .click();
+    assert.equal(
+        await page
+            .getByRole('button', { name: flow.backAgreement, exact: true })
+            .count(),
+        1,
+    );
+    await page.getByLabel(flow.expected, { exact: true }).nth(0).fill('100');
+    await page.getByLabel(flow.expected, { exact: true }).nth(1).fill('20');
+    await page
+        .getByText(/420,00/)
+        .first()
+        .waitFor();
+    await page
+        .getByRole('button', { name: flow.backAgreement, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: flow.trySales, exact: true })
+        .click();
+    assert.equal(
+        await page
+            .getByLabel(flow.expected, { exact: true })
+            .nth(0)
+            .inputValue(),
+        '100',
+    );
+    assert.equal(
+        await page
+            .getByLabel(flow.expected, { exact: true })
+            .nth(1)
+            .inputValue(),
+        '20',
+    );
+    await page
+        .getByText(/420,00/)
+        .first()
+        .waitFor();
+    await page
+        .getByRole('button', { name: flow.backAgreement, exact: true })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.conditional.removeTicket,
+            exact: true,
+        })
+        .nth(1)
+        .click();
+    await page
+        .getByRole('switch', { name: flow.shareDjs, exact: true })
+        .click();
+    // Additional conditions remain available in the combined model.
+    await page
+        .getByRole('radio', {
+            name: flow.model_combined + ' ' + flow.example_combined,
+            exact: true,
+        })
+        .click();
+    await page.getByLabel(flow.price, { exact: true }).fill('10');
+    await page
+        .getByRole('radio', {
+            name: labels.conditional.ticketMode_dj_fixed,
+            exact: true,
+        })
+        .click();
+    await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('7');
+    await page.getByLabel(flow.barPercent, { exact: true }).fill('10');
     assert.equal(await page.getByRole('tab').count(), 0);
     assert.equal(
         await page.getByLabel(flow.minimum, { exact: true }).count(),

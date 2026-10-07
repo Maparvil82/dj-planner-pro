@@ -1250,7 +1250,7 @@
         "value_dj_fixed": "¿Cuánto recibes por entrada?",
         "value_percent": "¿Qué porcentaje recibes de la taquilla?",
         "price": "¿Cuánto cuesta la entrada?",
-        "morePrices": "Añadir otro precio de entrada",
+        "morePrices": "Otro tipo de entrada",
         "barQuestion": "Tu parte de la barra",
         "barPercent": "¿Qué porcentaje recibes de la barra?",
         "addCondition": "Añadir otra condición",
@@ -1273,7 +1273,7 @@
         "shareDjs": "Repartir entre DJs",
         "splitHint": "Solo calcula el reparto. No invita ni envía el acuerdo a los DJs.",
         "summary": "Así queda tu acuerdo",
-        "trySales": "Probar con unas ventas",
+        "trySales": "Hacer simulación",
         "backAgreement": "Volver al acuerdo",
         "calculate": "Calcular mi caché",
         "actualHint": "Introduce las ventas reales.",
@@ -1309,7 +1309,14 @@
         "summaryBonus": "Al alcanzar {{count}} entradas pagadas se añaden {{amount}}.",
         "summaryDeductions": "Las bases marcadas «tras deducciones» descuentan los cargos antes del reparto.",
         "summaryExpenses": "Los gastos acordados se restan de la parte por ventas, sin reducir el fijo ni el mínimo.",
-        "summarySplit": "El total se reparte entre {{count}} DJs."
+        "summarySplit": "El total se reparte entre {{count}} DJs.",
+        "ticketType": "Tipo de entrada {{number}}",
+        "otherDj": "Otro DJ",
+        "ownerIncluded": "Tú ya estás incluido en el reparto. Añade solo a los otros DJs.",
+        "ticketNamesRequired": "Pon un nombre a cada tipo de entrada antes de simular.",
+        "djNamesRequired": "Completa el nombre de los otros DJs antes de simular.",
+        "duplicateDj": "Tu parte ya está incluida. No repitas tu nombre ni el de otro DJ.",
+        "simulationBlocked": "Para mostrar el resultado, revisa estos datos:"
     },
     "conditionalCosts": {
         "concept": "Concepto",

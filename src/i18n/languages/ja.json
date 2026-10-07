@@ -1249,7 +1249,7 @@
         "value_dj_fixed": "チケット1枚ごとに受け取る金額は？",
         "value_percent": "チケット売上の何％を受け取りますか？",
         "price": "チケットの価格は？",
-        "morePrices": "別のチケット価格を追加",
+        "morePrices": "別のチケット種別",
         "barQuestion": "バーの取り分",
         "barPercent": "バー売上の何％を受け取りますか？",
         "addCondition": "条件を追加",
@@ -1272,7 +1272,7 @@
         "shareDjs": "DJ間で分配",
         "splitHint": "分配額のみを計算します。DJへの招待や合意の送信は行いません。",
         "summary": "合意のまとめ",
-        "trySales": "売上を試算",
+        "trySales": "シミュレーションする",
         "backAgreement": "合意に戻る",
         "calculate": "報酬を計算",
         "actualHint": "実際の売上を入力してください。",
@@ -1308,7 +1308,14 @@
         "summaryBonus": "有料チケット{{count}}枚で{{amount}}が加算されます。",
         "summaryDeductions": "「控除後」の売上からは分配前に手数料が差し引かれます。",
         "summaryExpenses": "合意した経費は売上の取り分から差し引かれ、固定報酬と最低保証額は減りません。",
-        "summarySplit": "合計を{{count}}人のDJで分配します。"
+        "summarySplit": "合計を{{count}}人のDJで分配します。",
+        "ticketType": "チケット種別 {{number}}",
+        "otherDj": "他のDJ",
+        "ownerIncluded": "あなたはすでに分配に含まれています。他のDJのみ追加してください。",
+        "ticketNamesRequired": "シミュレーション前に各チケット種別に名前を付けてください。",
+        "djNamesRequired": "シミュレーション前に他のDJの名前を入力してください。",
+        "duplicateDj": "あなたの取り分はすでに含まれています。DJの名前を重複させないでください。",
+        "simulationBlocked": "結果を表示するには次の情報を確認してください："
     },
     "conditionalCosts": {
         "concept": "費用名",

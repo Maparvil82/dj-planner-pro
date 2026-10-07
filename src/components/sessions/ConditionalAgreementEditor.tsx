@@ -12,6 +12,7 @@ import {
     type TextStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
@@ -55,6 +56,9 @@ export function ConditionalAgreementEditor({
     const c = useCommunityColors(),
         { t, currentLanguage } = useTranslation(),
         keyboard = useKeyboardVisible();
+    const ownerName = useAuthStore((state) => state.profile?.artist_name || '');
+    const normalizeName = (name: string) =>
+        name.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
     const [a, setA] = useState<ConditionalAgreement>(
         () =>
             value || {
@@ -116,7 +120,10 @@ export function ConditionalAgreementEditor({
             <TextInput
                 accessibilityLabel={label}
                 value={value}
-                onChangeText={change}
+                onChangeText={(next) => {
+                    change(next);
+                    setError('');
+                }}
                 editable={!busy}
                 maxLength={max}
                 placeholder={label}
@@ -298,18 +305,85 @@ export function ConditionalAgreementEditor({
     };
     const toggleSplit = (enabled: boolean) => {
         setDrafts({});
+        setA((current) => {
+            const owner = {
+                ...current.participants[0],
+                name: ownerName || current.participants[0].name,
+                share: 0,
+            };
+            const seen = new Set([
+                normalizeName(ownerName),
+                normalizeName(owner.name),
+            ]);
+            const collaborators = names
+                .filter((name) => {
+                    const key = normalizeName(name);
+                    if (!key || seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                })
+                .slice(0, 19)
+                .map((name) => ({ name: name.trim(), share: 0 }));
+            return {
+                ...current,
+                split: 'equal',
+                participants: enabled
+                    ? [
+                          owner,
+                          ...(collaborators.length
+                              ? collaborators
+                              : [{ name: '', share: 0 }]),
+                      ]
+                    : [owner],
+            };
+        });
+    };
+    const addTicketType = () =>
         setA((current) => ({
             ...current,
-            split: 'equal',
-            participants: enabled
-                ? [
-                      current.participants[0],
-                      ...(names.length
-                          ? names.map((name) => ({ name, share: 0 }))
-                          : [{ name: '', share: 0 }]),
-                  ]
-                : [{ ...current.participants[0], share: 0 }],
+            tickets: [
+                ...current.tickets,
+                {
+                    name: t('conditionalFlow.ticketType', {
+                        number: current.tickets.length + 1,
+                    }),
+                    price: 0,
+                    estimate: 0,
+                    sold: 0,
+                    refunded: 0,
+                    invited: 0,
+                },
+            ],
         }));
+    const readinessError = () => {
+        if (a.tickets.some((ticket) => !ticket.name.trim()))
+            return 'conditionalFlow.ticketNamesRequired';
+        if (a.participants.slice(1).some((person) => !person.name.trim()))
+            return 'conditionalFlow.djNamesRequired';
+        const seen = new Set([
+            normalizeName(ownerName),
+            normalizeName(a.participants[0].name),
+        ]);
+        for (const person of a.participants.slice(1)) {
+            const key = normalizeName(person.name);
+            if (seen.has(key)) return 'conditionalFlow.duplicateDj';
+            seen.add(key);
+        }
+        return '';
+    };
+    const simulate = () => {
+        Keyboard.dismiss();
+        try {
+            const missing = readinessError();
+            if (missing) throw new Error(missing);
+            validateConditionalAgreement(a);
+            navigate('forecast');
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'agreement.invalid');
+            requestAnimationFrame(() =>
+                scroll.current?.scrollToEnd({ animated: true }),
+            );
+        }
     };
     const summary = model ? conditionalSummary(a, t, money) : '';
     let result: ReturnType<typeof calculateConditionalAgreement> | undefined,
@@ -325,6 +399,8 @@ export function ConditionalAgreementEditor({
         if (saving.current) return;
         setError('');
         try {
+            const missing = readinessError();
+            if (missing) throw new Error(missing);
             if (!model) throw new Error('conditionalFlow.chooseModel');
             if (
                 (!value || modelChanged) &&
@@ -633,8 +709,40 @@ export function ConditionalAgreementEditor({
                                                             key={i}
                                                             style={{
                                                                 gap: 12,
+                                                                ...(a.tickets
+                                                                    .length > 1
+                                                                    ? {
+                                                                          padding: 16,
+                                                                          borderRadius: 18,
+                                                                          borderWidth: 1,
+                                                                          borderColor:
+                                                                              c.border,
+                                                                          backgroundColor:
+                                                                              c.field,
+                                                                      }
+                                                                    : {}),
                                                             }}
                                                         >
+                                                            {a.tickets.length >
+                                                                1 && (
+                                                                <Text
+                                                                    style={{
+                                                                        color: c.accent,
+                                                                        fontWeight:
+                                                                            '800',
+                                                                        fontSize: 16,
+                                                                    }}
+                                                                >
+                                                                    {t(
+                                                                        'conditionalFlow.ticketType',
+                                                                        {
+                                                                            number:
+                                                                                i +
+                                                                                1,
+                                                                        },
+                                                                    )}
+                                                                </Text>
+                                                            )}
                                                             {a.tickets.length >
                                                                 1 &&
                                                                 text(
@@ -696,31 +804,13 @@ export function ConditionalAgreementEditor({
                                                                 )}
                                                         </View>
                                                     ))}
-                                                    {a.tickets.length < 30 &&
+                                                    {model !== 'ticket' &&
+                                                        a.tickets.length < 30 &&
                                                         link(
                                                             t(
                                                                 'conditionalFlow.morePrices',
                                                             ),
-                                                            () =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        tickets:
-                                                                            [
-                                                                                ...current.tickets,
-                                                                                {
-                                                                                    name: '',
-                                                                                    price: 0,
-                                                                                    estimate: 0,
-                                                                                    sold: 0,
-                                                                                    refunded: 0,
-                                                                                    invited: 0,
-                                                                                },
-                                                                            ],
-                                                                    }),
-                                                                ),
+                                                            addTicketType,
                                                         )}
                                                     {(model === 'combined' ||
                                                         a.ticketMode ===
@@ -989,10 +1079,20 @@ export function ConditionalAgreementEditor({
                                         </View>,
                                     ),
                                 )}
-                                {link(t('conditionalFlow.addCondition'), () =>
-                                    setChoosingExtra((current) => !current),
-                                )}
-                                {choosingExtra && (
+                                {model === 'ticket'
+                                    ? a.tickets.length < 30 &&
+                                      link(
+                                          t('conditionalFlow.morePrices'),
+                                          addTicketType,
+                                      )
+                                    : link(
+                                          t('conditionalFlow.addCondition'),
+                                          () =>
+                                              setChoosingExtra(
+                                                  (current) => !current,
+                                              ),
+                                      )}
+                                {model !== 'ticket' && choosingExtra && (
                                     <View
                                         style={{
                                             flexDirection: 'row',
@@ -1066,6 +1166,17 @@ export function ConditionalAgreementEditor({
                                     </View>
                                     {a.participants.length > 1 && (
                                         <>
+                                            <Text
+                                                style={{
+                                                    color: c.muted,
+                                                    fontSize: 13,
+                                                    lineHeight: 19,
+                                                }}
+                                            >
+                                                {t(
+                                                    'conditionalFlow.ownerIncluded',
+                                                )}
+                                            </Text>
                                             {choices(
                                                 'split',
                                                 ['equal', 'percent', 'fixed'],
@@ -1092,10 +1203,14 @@ export function ConditionalAgreementEditor({
                                                             }}
                                                         >
                                                             {t('agreement.you')}
+                                                            {ownerName ||
+                                                            person.name
+                                                                ? ` · ${ownerName || person.name}`
+                                                                : ''}
                                                         </Text>
                                                     ) : (
                                                         text(
-                                                            `${t('agreement.djName')} ${i}`,
+                                                            `${t('conditionalFlow.otherDj')} ${i}`,
                                                             person.name,
                                                             (name) =>
                                                                 setA(
@@ -1228,8 +1343,9 @@ export function ConditionalAgreementEditor({
                                     >
                                         {summary || modelLabel}
                                     </Text>
-                                    {link(t('conditionalFlow.trySales'), () =>
-                                        navigate('forecast'),
+                                    {link(
+                                        t('conditionalFlow.trySales'),
+                                        simulate,
                                     )}
                                 </View>
                                 {a.settled && (
@@ -1248,9 +1364,10 @@ export function ConditionalAgreementEditor({
                     </>
                 ) : (
                     <>
-                        {link(t('conditionalFlow.backAgreement'), () =>
-                            navigate('terms'),
-                        )}
+                        {mode === 'actual' &&
+                            link(t('conditionalFlow.backAgreement'), () =>
+                                navigate('terms'),
+                            )}
                         <View
                             style={{
                                 backgroundColor: c.tint,
@@ -1491,8 +1608,10 @@ export function ConditionalAgreementEditor({
                                                         flex: 1,
                                                     }}
                                                 >
-                                                    {a.participants[i].name ||
-                                                        t('agreement.you')}
+                                                    {i === 0
+                                                        ? t('agreement.you')
+                                                        : a.participants[i]
+                                                              .name}
                                                 </Text>
                                                 <Text
                                                     style={{
@@ -1513,6 +1632,7 @@ export function ConditionalAgreementEditor({
                                         lineHeight: 20,
                                     }}
                                 >
+                                    {t('conditionalFlow.simulationBlocked')}{' '}
                                     {t(calculationError)}
                                 </Text>
                             )}

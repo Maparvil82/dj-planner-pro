@@ -1250,7 +1250,7 @@
         "value_dj_fixed": "Wie viel erhältst du pro Ticket?",
         "value_percent": "Wie viel Prozent des Ticketumsatzes erhältst du?",
         "price": "Wie viel kostet ein Ticket?",
-        "morePrices": "Weiteren Ticketpreis hinzufügen",
+        "morePrices": "Weitere Ticketart",
         "barQuestion": "Dein Anteil an der Bar",
         "barPercent": "Wie viel Prozent des Barumsatzes erhältst du?",
         "addCondition": "Weitere Bedingung hinzufügen",
@@ -1273,7 +1273,7 @@
         "shareDjs": "Unter DJs aufteilen",
         "splitHint": "Berechnet nur Anteile. Lädt keine DJs ein und versendet keine Vereinbarung.",
         "summary": "Deine Vereinbarung im Überblick",
-        "trySales": "Verkaufszahlen ausprobieren",
+        "trySales": "Simulation starten",
         "backAgreement": "Zurück zur Vereinbarung",
         "calculate": "Meine Gage berechnen",
         "actualHint": "Trage die tatsächlichen Verkäufe ein.",
@@ -1309,7 +1309,14 @@
         "summaryBonus": "Ab {{count}} bezahlten Tickets kommen {{amount}} hinzu.",
         "summaryDeductions": "Bei „nach Abzügen“ werden Gebühren vor der Aufteilung abgezogen.",
         "summaryExpenses": "Vereinbarte Kosten reduzieren den Verkaufsanteil, nicht den Festbetrag oder das Minimum.",
-        "summarySplit": "Der Gesamtbetrag wird unter {{count}} DJs aufgeteilt."
+        "summarySplit": "Der Gesamtbetrag wird unter {{count}} DJs aufgeteilt.",
+        "ticketType": "Ticketart {{number}}",
+        "otherDj": "Anderer DJ",
+        "ownerIncluded": "Du bist bereits bei der Aufteilung berücksichtigt. Füge nur andere DJs hinzu.",
+        "ticketNamesRequired": "Benenne jede Ticketart vor der Simulation.",
+        "djNamesRequired": "Trage vor der Simulation die Namen der anderen DJs ein.",
+        "duplicateDj": "Dein Anteil ist bereits enthalten. Wiederhole keinen DJ-Namen.",
+        "simulationBlocked": "Prüfe diese Angaben, um das Ergebnis anzuzeigen:"
     },
     "conditionalCosts": {
         "concept": "Bezeichnung",
