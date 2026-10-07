@@ -163,6 +163,11 @@ export type ConditionalResults = {
 };
 export type ConditionalAgreement = {
     version: 2;
+    expenseItems?: {
+        concept: string;
+        type: 'fixed' | 'percent';
+        value: number;
+    }[];
     enabledExtras?: import('./conditionalPresentation').AgreementExtra[];
     timezone: string;
     settled: boolean;
@@ -313,6 +318,24 @@ export function validateConditionalAgreement(a: ConditionalAgreement) {
         ] as const)
             numeric(data[key]);
     }
+    if (a.expenseItems !== undefined) {
+        if (!Array.isArray(a.expenseItems) || a.expenseItems.length > 30)
+            fail();
+        let percent = 0;
+        for (const item of a.expenseItems) {
+            if (
+                !item ||
+                typeof item.concept !== 'string' ||
+                !item.concept.trim() ||
+                item.concept.length > 100 ||
+                !['fixed', 'percent'].includes(item.type)
+            )
+                fail('conditionalCosts.invalid');
+            numeric(item.value);
+            if (item.type === 'percent') percent += cents(item.value);
+        }
+        if (percent > 10000) fail('conditionalCosts.invalidPercent');
+    }
     for (const [i, p] of a.participants.entries()) {
         if (
             !p ||
@@ -371,10 +394,23 @@ export function calculateConditionalAgreement(
         a.bonusThreshold > 0 && count >= a.bonusThreshold
             ? cents(a.bonusAmount)
             : 0;
-    const variable = Math.max(
-        0,
-        check(ticketFee + barFee + bonus) - cents(data.expenses),
+    const variableBeforeExpenses = check(ticketFee + barFee + bonus);
+    const expenseBreakdown = (a.expenseItems || []).map((item) => ({
+        concept: item.concept,
+        amount:
+            (item.type === 'fixed'
+                ? cents(item.value)
+                : roundedRatio(
+                      variableBeforeExpenses,
+                      cents(item.value),
+                      10000,
+                  )) / 100,
+    }));
+    const expenseCents = check(
+        cents(data.expenses) +
+            expenseBreakdown.reduce((sum, item) => sum + cents(item.amount), 0),
     );
+    const variable = Math.max(0, variableBeforeExpenses - expenseCents);
     const fixed = cents(a.fixed);
     const beforeMinimum =
         a.fixedMode === 'versus'
@@ -425,7 +461,8 @@ export function calculateConditionalAgreement(
         ticketGross: gross / 100,
         ticketNet: net / 100,
         bonus: bonus / 100,
-        expenses: data.expenses,
+        expenses: expenseCents / 100,
+        expenseBreakdown,
         venueRetention:
             a.ticketMode === 'venue_fixed' || a.ticketMode === 'percent'
                 ? (ticketBase - ticketFee) / 100

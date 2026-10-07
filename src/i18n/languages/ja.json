@@ -1240,7 +1240,7 @@
         "model_boxOffice": "チケット売上の割合",
         "model_bar": "バー売上の割合",
         "model_combined": "組み合わせ",
-        "example_ticket": "10 €のチケット：会場に3 €、あなたに7 €。",
+        "example_ticket": "チケット1枚ごとの固定報酬。",
         "example_boxOffice": "チケット売上の一部を受け取ります。",
         "example_bar": "バー売上の一部を受け取ります。",
         "example_combined": "チケットとバーを組み合わせます。",
@@ -1309,5 +1309,19 @@
         "summaryDeductions": "「控除後」の売上からは分配前に手数料が差し引かれます。",
         "summaryExpenses": "合意した経費は売上の取り分から差し引かれ、固定報酬と最低保証額は減りません。",
         "summarySplit": "合計を{{count}}人のDJで分配します。"
+    },
+    "conditionalCosts": {
+        "concept": "費用名",
+        "fixed": "固定額",
+        "percent": "割合",
+        "amount": "費用の金額",
+        "percentage": "費用の割合",
+        "basis": "費用控除前のDJのチケット・バーの取り分とボーナスを基準に計算します。固定報酬と最低保証額は含みません。",
+        "add": "費用を追加",
+        "remove": "費用を削除",
+        "invalid": "費用名と金額を確認してください。",
+        "invalidPercent": "費用の割合の合計は100%以下にしてください。",
+        "apply": "条件を適用",
+        "chooseSession": "新しい出演または既存の出演を選んでください。"
     }
 }

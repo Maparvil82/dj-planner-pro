@@ -93,6 +93,7 @@ async function update(id, a) {
         `alter table public.sessions add column booking_timezone text default 'Europe/Madrid'; alter table public.sessions add column amount_paid numeric default 0; create schema community_private; grant usage on schema community_private to authenticated; create function community_private.session_end_at(s public.sessions) returns timestamptz language sql stable as $$ select (s.date+s.end_time::time+case when s.end_time::time<=s.start_time::time then interval '1 day' else interval '0' end) at time zone coalesce(s.booking_timezone,'Europe/Madrid') $$;`,
     );
     await migrate('20261006145027_conditional_sessions_v2.sql');
+    await migrate('20261007094222_conditional_expense_items.sql');
     await db.query('insert into auth.users values($1),($2)', [owner, other]);
     await role('authenticated', owner);
     await assert.rejects(() => create(), /proRequired/);
@@ -166,6 +167,29 @@ async function update(id, a) {
             ],
         }),
     ];
+    variants.push(
+        plan({
+            fixed: 200,
+            expenseItems: [
+                { concept: 'Transport', type: 'fixed', value: 20 },
+                { concept: 'Agent', type: 'percent', value: 10 },
+                { concept: 'Production', type: 'percent', value: 5 },
+            ],
+        }),
+    );
+    variants.push(
+        plan({
+            expenseItems: [
+                { concept: 'Old + new', type: 'percent', value: 33.33 },
+            ],
+            actual: {
+                ticketDeductions: 0,
+                bar: 0,
+                barDeductions: 0,
+                expenses: 15,
+            },
+        }),
+    );
     for (let i = 0; i < 40; i++)
         variants.push(
             plan({
@@ -271,6 +295,26 @@ async function update(id, a) {
         ).rows[0].earning_type,
         'fixed',
     );
+    await assert.rejects(
+        () =>
+            create(
+                plan({
+                    expenseItems: [{ concept: '', type: 'fixed', value: 10 }],
+                }),
+            ),
+        /conditionalCosts.invalid/,
+    );
+    await assert.rejects(
+        () =>
+            create(
+                plan({
+                    expenseItems: [
+                        { concept: 'Agent', type: 'percent', value: 101 },
+                    ],
+                }),
+            ),
+        /invalidPercent/,
+    );
     await role('authenticated', other);
     assert.equal(
         (await db.query('select * from public.sessions')).rows.length,
@@ -290,7 +334,7 @@ async function update(id, a) {
         (await db.query('select * from public.sessions')).rows.length > 0,
     );
     console.log(
-        'PASS: 44 server/client calculations, Pro enforcement, date validation, malicious amounts ignored, refunds, per-occurrence conversion, payments preserved and RLS.',
+        'PASS: 46 server/client calculations, Pro enforcement, date validation, malicious amounts ignored, refunds, per-occurrence conversion, payments preserved and RLS.',
     );
 })()
     .catch((e) => {

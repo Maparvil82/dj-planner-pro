@@ -1239,7 +1239,7 @@
         "model_boxOffice": "% de bilheteira",
         "model_bar": "% de bar",
         "model_combined": "Combinado",
-        "example_ticket": "Entrada de 10 €: 3 € para o local, 7 € para ti.",
+        "example_ticket": "Um valor fixo por cada bilhete vendido.",
         "example_boxOffice": "Uma parte das vendas de entradas.",
         "example_bar": "Uma parte das vendas de bar.",
         "example_combined": "Entradas e bar no mesmo acordo.",
@@ -1308,5 +1308,19 @@
         "summaryDeductions": "As bases « após deduções » descontam encargos antes da divisão.",
         "summaryExpenses": "As despesas acordadas reduzem a parte das vendas sem reduzir o fixo nem o mínimo.",
         "summarySplit": "O total divide-se entre {{count}} DJs."
+    },
+    "conditionalCosts": {
+        "concept": "Conceito",
+        "fixed": "Valor fixo",
+        "percent": "Percentagem",
+        "amount": "Valor da despesa",
+        "percentage": "Percentagem da despesa",
+        "basis": "Calculada sobre a parte dos DJs dos bilhetes, bar e bónus antes das despesas. Exclui valores fixos e garantias.",
+        "add": "Adicionar despesa",
+        "remove": "Remover despesa",
+        "invalid": "Completa o conceito e revê a despesa.",
+        "invalidPercent": "As percentagens das despesas não podem somar mais de 100%.",
+        "apply": "Aplicar acordo",
+        "chooseSession": "Escolhe uma sessão nova ou existente."
     }
 }

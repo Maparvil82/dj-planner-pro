@@ -1239,7 +1239,7 @@
         "model_boxOffice": "% de billetterie",
         "model_bar": "% du bar",
         "model_combined": "Combiné",
-        "example_ticket": "Billet de 10 € : 3 € au lieu, 7 € pour vous.",
+        "example_ticket": "Un montant fixe par billet vendu.",
         "example_boxOffice": "Une part des ventes de billets.",
         "example_bar": "Une part des ventes du bar.",
         "example_combined": "Billets et bar dans le même accord.",
@@ -1308,5 +1308,19 @@
         "summaryDeductions": "Les bases « après déductions » retirent les charges avant le partage.",
         "summaryExpenses": "Les frais convenus réduisent la part des ventes sans réduire le fixe ni le minimum.",
         "summarySplit": "Le total est partagé entre {{count}} DJs."
+    },
+    "conditionalCosts": {
+        "concept": "Libellé",
+        "fixed": "Montant fixe",
+        "percent": "Pourcentage",
+        "amount": "Montant du frais",
+        "percentage": "Pourcentage du frais",
+        "basis": "Calculé sur la part des DJs des billets, du bar et du bonus avant frais. Les forfaits et garanties sont exclus.",
+        "add": "Ajouter un frais",
+        "remove": "Retirer le frais",
+        "invalid": "Complétez le libellé et vérifiez le frais.",
+        "invalidPercent": "Les pourcentages des frais ne peuvent dépasser 100 %.",
+        "apply": "Appliquer l’accord",
+        "chooseSession": "Choisissez une session nouvelle ou existante."
     }
 }

@@ -1241,7 +1241,7 @@
         "model_boxOffice": "% der Ticketumsätze",
         "model_bar": "% der Barumsätze",
         "model_combined": "Kombiniert",
-        "example_ticket": "10 € pro Ticket: 3 € fürs Lokal, 7 € für dich.",
+        "example_ticket": "Ein fester Betrag pro verkauftem Ticket.",
         "example_boxOffice": "Ein Anteil am Ticketumsatz.",
         "example_bar": "Ein Anteil am Barumsatz.",
         "example_combined": "Tickets und Bar in einer Vereinbarung.",
@@ -1310,5 +1310,19 @@
         "summaryDeductions": "Bei „nach Abzügen“ werden Gebühren vor der Aufteilung abgezogen.",
         "summaryExpenses": "Vereinbarte Kosten reduzieren den Verkaufsanteil, nicht den Festbetrag oder das Minimum.",
         "summarySplit": "Der Gesamtbetrag wird unter {{count}} DJs aufgeteilt."
+    },
+    "conditionalCosts": {
+        "concept": "Bezeichnung",
+        "fixed": "Fester Betrag",
+        "percent": "Prozentsatz",
+        "amount": "Ausgabenbetrag",
+        "percentage": "Ausgabenprozentsatz",
+        "basis": "Berechnet auf den DJ-Anteil an Tickets, Bar und Bonus vor Ausgaben. Festhonorare und Garantien sind ausgeschlossen.",
+        "add": "Ausgabe hinzufügen",
+        "remove": "Ausgabe entfernen",
+        "invalid": "Ergänze die Bezeichnung und prüfe die Ausgabe.",
+        "invalidPercent": "Die Ausgabenprozentsätze dürfen insgesamt 100% nicht überschreiten.",
+        "apply": "Vereinbarung anwenden",
+        "chooseSession": "Wähle einen neuen oder vorhandenen Auftritt."
     }
 }

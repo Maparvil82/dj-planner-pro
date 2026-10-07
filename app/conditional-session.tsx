@@ -1,3 +1,5 @@
+import { useConditionalDraft } from '../src/store/useConditionalDraft';
+import type { ConditionalAgreement } from '../src/utils/feeAgreement';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -34,6 +36,8 @@ export default function ConditionalSessionScreen() {
     const userId = useAuthStore((s) => s.session?.user.id);
     const usage = useSessionUsage();
     const mutation = useUpdateSessionMutation();
+    const [draft, setDraft] = useState<ConditionalAgreement | null>(null);
+    const [editing, setEditing] = useState(true);
     const [choosing, setChoosing] = useState(false),
         [search, setSearch] = useState('');
     const [selected, setSelected] = useState<Session | null>(null);
@@ -49,6 +53,8 @@ export default function ConditionalSessionScreen() {
         if (!usage.data?.isPro) router.push('/paywall?reason=conditional');
         else action();
     };
+    if (!usage.isPending && !usage.isError && !usage.data?.isPro)
+        return <Redirect href="/paywall?reason=conditional" />;
     const rows =
         sessions.data
             ?.filter(
@@ -65,9 +71,9 @@ export default function ConditionalSessionScreen() {
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
             <SessionFormHeader
-                title={t('conditional.title')}
+                title={t('conditionalCosts.apply')}
                 badge="PRO"
-                subtitle={t('conditional.intro')}
+                subtitle={t('conditionalCosts.chooseSession')}
                 onClose={() =>
                     router.canGoBack() ? router.back() : router.replace('/home')
                 }
@@ -81,39 +87,6 @@ export default function ConditionalSessionScreen() {
                 }}
                 keyboardShouldPersistTaps="handled"
             >
-                <View
-                    style={{
-                        backgroundColor: c.tint,
-                        borderRadius: 24,
-                        padding: 22,
-                        gap: 12,
-                    }}
-                >
-                    <Text
-                        style={{
-                            color: c.fg,
-                            fontWeight: '800',
-                            fontSize: 24,
-                            lineHeight: 30,
-                        }}
-                    >
-                        {t('conditional.hero')}
-                    </Text>
-                    <Text
-                        style={{ color: c.muted, fontSize: 14, lineHeight: 22 }}
-                    >
-                        {t('conditional.proBenefit')}
-                    </Text>
-                    <Text
-                        style={{
-                            color: c.accent,
-                            fontWeight: '700',
-                            lineHeight: 22,
-                        }}
-                    >
-                        {t('conditional.example')}
-                    </Text>
-                </View>
                 {usage.isPending ? (
                     <ActivityIndicator color={c.accent} />
                 ) : usage.isError ? (
@@ -126,9 +99,12 @@ export default function ConditionalSessionScreen() {
                         <CommunityButton
                             label={t('conditional.newSession')}
                             onPress={() =>
-                                requirePro(() =>
-                                    router.push('/add-session?conditional=1'),
-                                )
+                                requirePro(() => {
+                                    useConditionalDraft.getState().set(draft);
+                                    router.replace(
+                                        '/add-session?conditional=1',
+                                    );
+                                })
                             }
                         />
                         <CommunityButton
@@ -175,6 +151,7 @@ export default function ConditionalSessionScreen() {
                                     accessibilityRole="button"
                                     onPress={() => {
                                         setSelected(s);
+                                        setEditing(true);
                                     }}
                                     style={{
                                         padding: 18,
@@ -218,18 +195,32 @@ export default function ConditionalSessionScreen() {
                     {t('conditional.privateHint')}
                 </Text>
             </ScrollView>
-            {selected && (
+            {editing && !!usage.data?.isPro && !usage.isError && (
                 <ConditionalAgreementEditor
                     value={
-                        selected.fee_agreement?.version === 2
+                        selected?.fee_agreement?.version === 2
                             ? selected.fee_agreement
-                            : null
+                            : draft
                     }
-                    currency={selected.currency}
-                    names={selected.djs || []}
-                    canSettle={sessionPhase(selected) === 'finished'}
-                    onClose={() => setSelected(null)}
+                    currency={selected?.currency || '€'}
+                    names={selected?.djs || []}
+                    canSettle={
+                        !!selected && sessionPhase(selected) === 'finished'
+                    }
+                    onClose={() => {
+                        setSelected(null);
+                        setEditing(false);
+                        if (!draft)
+                            router.canGoBack()
+                                ? router.back()
+                                : router.replace('/home');
+                    }}
                     onSave={async (a) => {
+                        if (!selected) {
+                            setDraft(a);
+                            setEditing(false);
+                            return;
+                        }
                         await mutation.mutateAsync({
                             sessionId: selected.id,
                             input: {
@@ -244,6 +235,7 @@ export default function ConditionalSessionScreen() {
                             updateAll: false,
                         });
                         setSelected(null);
+                        setEditing(false);
                         router.replace(`/session/${selected.id}`);
                     }}
                 />

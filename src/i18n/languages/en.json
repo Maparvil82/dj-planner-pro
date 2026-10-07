@@ -1245,7 +1245,7 @@
         "model_boxOffice": "% of ticket sales",
         "model_bar": "% of bar sales",
         "model_combined": "Combined",
-        "example_ticket": "10 € ticket: 3 € to the venue, 7 € to you.",
+        "example_ticket": "A fixed fee for each ticket sold.",
         "example_boxOffice": "A share of ticket revenue.",
         "example_bar": "A share of bar revenue.",
         "example_combined": "Tickets and bar in one agreement.",
@@ -1314,5 +1314,19 @@
         "summaryDeductions": "Bases marked “after deductions” subtract charges before sharing.",
         "summaryExpenses": "Agreed costs reduce the sales share, keeping the fixed fee and minimum intact.",
         "summarySplit": "The total is split between {{count}} DJs."
+    },
+    "conditionalCosts": {
+        "concept": "Description",
+        "fixed": "Fixed amount",
+        "percent": "Percentage",
+        "amount": "Expense amount",
+        "percentage": "Expense percentage",
+        "basis": "Calculated on the DJs’ ticket share, bar share and bonus before expenses. Fixed fees and guarantees are excluded.",
+        "add": "Add expense",
+        "remove": "Remove expense",
+        "invalid": "Complete the description and check the expense.",
+        "invalidPercent": "Expense percentages cannot total more than 100%.",
+        "apply": "Apply agreement",
+        "chooseSession": "Choose a new or existing session."
     }
 }

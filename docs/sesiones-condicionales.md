@@ -2,7 +2,7 @@
 
 ## Qué resuelve
 
-Un DJ acuerda antes del evento cómo se calculará su caché, puede simular ventas y, al terminar, introducir los resultados reales y revisar el reparto. Funciona desde **+ → Condicional**, creando una actuación nueva o convirtiendo una fecha de una sesión existente.
+Un DJ acuerda antes del evento cómo se calculará su caché, puede simular ventas y, al terminar, introducir los resultados reales y revisar el reparto. Desde **+ → Condicional** se abre directamente la elección del acuerdo. Después se aplica a una actuación nueva o a una fecha de una sesión existente.
 
 La conversión sustituye el caché anterior de esa fecha y conserva los pagos registrados. No modifica el resto de una serie. Una liquidación no significa que se haya cobrado: el control de pagos sigue siendo independiente.
 
@@ -35,7 +35,7 @@ El porcentaje de taquilla y el porcentaje de barra pueden ser distintos. No se a
 
 ## Recorrido
 
-1. **¿Cómo vas a cobrar?** Elegir por entrada, porcentaje de taquilla, porcentaje de barra o combinado. Los importes comienzan vacíos; los ejemplos explican el modelo sin imponer condiciones.
+1. **¿Cómo vas a cobrar?** Elegir importe fijo al DJ por entrada, porcentaje de taquilla, porcentaje de barra o combinado. Los importes comienzan vacíos; los ejemplos explican el modelo sin imponer condiciones.
 2. Introducir los precios y la participación. **Añadir otra condición** muestra fijo, mínimo, máximo, bonus, gastos, deducciones o notas cuando hacen falta. El reparto entre DJs es opcional; por defecto el propietario recibe todo.
 3. Un resumen explica el acuerdo en lenguaje natural. **Probar con unas ventas** abre una calculadora separada; volver conserva las cantidades introducidas. Guardar condiciones no registra ingresos realizados.
 4. Después de la hora de fin, **Calcular mi caché** abre los resultados reales desde el detalle. Solo pide las cajas y cantidades correspondientes al acuerdo; devoluciones, invitados y gastos se despliegan cuando hacen falta. Guardar registra el caché del propietario, manteniendo los pagos independientes.
@@ -60,6 +60,12 @@ Ejemplo: 100 entradas a 10 €, 10 devueltas y 3 € por entrada para el local: 
 
 Los porcentajes se redondean al céntimo. El reparto usa restos mayores para que la suma coincida exactamente con el fondo; los empates se resuelven por orden de participantes. Un DJ con 0 % no recibe céntimos residuales.
 
+## Gastos con concepto
+
+Se pueden añadir hasta 30 gastos, cada uno con concepto y un importe fijo o porcentaje. El porcentaje se aplica a la participación de los DJs en entradas, barra y bonus, antes de descontar ningún gasto. Todos los porcentajes usan esa misma base y no pueden sumar más del 100 %. Se redondea cada línea al céntimo; los importes se pueden introducir como `10` o `10,00`.
+
+El fijo y las garantías quedan fuera de esa base. Los gastos antiguos se conservan como importe adicional en la simulación o resultado que corresponda. El servidor valida el desglose y calcula el caché sin confiar en un total enviado por la app.
+
 ## Pro, persistencia y seguridad
 
 - La entrada tiene etiqueta PRO; un usuario gratuito puede conocer la función y acceder al paywall, pero no guardar condiciones.
@@ -77,7 +83,7 @@ Quedan para futuras versiones porcentajes progresivos por tramos, múltiples bon
 
 ## Verificación
 
-Pruebas de reglas y regresión V1, 44 comparaciones entre calculadora y PostgreSQL, validación de acceso Pro y privacidad, conversión de una fecha conservando pagos, flujos en navegador con datos simulados y compilación para iOS. La reproducción en un iPhone físico requiere la revisión del usuario en Expo.
+Pruebas de reglas y regresión V1, 46 comparaciones entre calculadora y PostgreSQL, validación de acceso Pro y privacidad, conversión de una fecha conservando pagos, flujos en navegador con datos simulados y compilación para iOS. La reproducción en un iPhone físico requiere la revisión del usuario en Expo.
 
 ## Revisión de Supabase
 

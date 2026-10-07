@@ -132,12 +132,6 @@ const errors = [];
     let context = await setup('es', 390, false, false);
     await page.goto('http://localhost:8081/conditional-session');
     await page
-        .getByRole('button', {
-            name: labels.conditional.newSession,
-            exact: true,
-        })
-        .click();
-    await page
         .getByRole('button', { name: 'Restaurar Compras', exact: true })
         .waitFor();
     await page.goto('http://localhost:8081/add-session?conditional=1');
@@ -181,7 +175,32 @@ const errors = [];
                 : [saved],
         });
     });
+    const flow = labels.conditionalFlow;
+    const costs = labels.conditionalCosts;
     await page.goto('http://localhost:8081/conditional-session');
+    const option = page.getByRole('radio', {
+        name: flow.model_ticket + ' ' + flow.example_ticket,
+        exact: true,
+    });
+    await option.waitFor();
+    const rect = await option.boundingBox();
+    assert.ok(Math.abs(rect.width - rect.height) < 2, 'Options are square');
+    await option.click();
+    await page.getByLabel(flow.price, { exact: true }).fill('10');
+    await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('7');
+    const priceRect = await page
+        .getByLabel(flow.price, { exact: true })
+        .boundingBox();
+    const shareRect = await page
+        .getByLabel(flow.value_dj_fixed, { exact: true })
+        .boundingBox();
+    assert.ok(priceRect.y < shareRect.y, 'Ticket price comes before DJ fee');
+    await page
+        .getByRole('button', {
+            name: labels.conditional.saveTerms,
+            exact: true,
+        })
+        .click();
     await page
         .getByRole('button', {
             name: labels.conditional.existingSession,
@@ -189,7 +208,6 @@ const errors = [];
         })
         .click();
     await page.getByText('DJ night', { exact: true }).click();
-    const flow = labels.conditionalFlow;
     await page
         .getByRole('radio', {
             name: flow.model_ticket + ' ' + flow.example_ticket,
@@ -197,7 +215,7 @@ const errors = [];
         })
         .click();
     await page.getByLabel(flow.price, { exact: true }).fill('10');
-    await page.getByLabel(flow.value_venue_fixed, { exact: true }).fill('3');
+    await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('7');
     assert.equal(await page.getByRole('tab').count(), 0);
     assert.equal(
         await page.getByLabel(flow.minimum, { exact: true }).count(),
@@ -214,11 +232,30 @@ const errors = [];
         .getByRole('button', { name: flow.removeCondition, exact: true })
         .click();
     await page
+        .getByRole('button', { name: flow.addCondition, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: flow.extra_expenses, exact: true })
+        .click();
+    await page.getByRole('button', { name: costs.add, exact: true }).click();
+    await page.getByLabel(costs.concept, { exact: true }).fill('Transporte');
+    await page.getByLabel(costs.amount, { exact: true }).fill('20');
+    await page.getByRole('button', { name: costs.add, exact: true }).click();
+    await page
+        .getByLabel(costs.concept, { exact: true })
+        .nth(1)
+        .fill('Agencia');
+    await page
+        .getByRole('radio', { name: costs.percent, exact: true })
+        .nth(1)
+        .click();
+    await page.getByLabel(costs.percentage, { exact: true }).fill('10');
+    await page
         .getByRole('button', { name: flow.trySales, exact: true })
         .click();
     await page.getByLabel(flow.expected, { exact: true }).fill('100');
     await page
-        .getByText(/700,00/)
+        .getByText(/610,00/)
         .first()
         .waitFor();
     await page.screenshot({
@@ -246,6 +283,7 @@ const errors = [];
     assert.equal(saved.fee_agreement.minimum, 0);
     assert.equal(saved.fee_agreement.tickets[0].estimate, 100);
     assert.equal(saved.fee_agreement.participants.length, 1);
+    assert.equal(saved.fee_agreement.expenseItems.length, 2);
     await page
         .getByRole('button', { name: flow.calculate, exact: true })
         .click();
@@ -263,7 +301,7 @@ const errors = [];
         .getByRole('button', { name: flow.adjustResult, exact: true })
         .waitFor();
     assert.equal(patches.length, 2);
-    assert.equal(saved.earning_amount, 630);
+    assert.equal(saved.earning_amount, 547);
     assert.equal(saved.amount_paid, 50);
     assert.equal(saved.fee_agreement.settled, true);
     await page
@@ -271,9 +309,9 @@ const errors = [];
         .click();
     assert.equal(
         await page
-            .getByLabel(flow.value_venue_fixed, { exact: true })
+            .getByLabel(flow.value_dj_fixed, { exact: true })
             .inputValue(),
-        '3',
+        '7',
     );
     await page
         .getByRole('button', {
@@ -285,7 +323,7 @@ const errors = [];
         .getByRole('button', { name: flow.adjustResult, exact: true })
         .waitFor();
     assert.equal(saved.fee_agreement.tickets[0].sold, 100);
-    assert.equal(saved.earning_amount, 630);
+    assert.equal(saved.earning_amount, 547);
     const venue = {
         id: '00000000-0000-4000-8000-000000000912',
         user_id: user.id,
@@ -310,10 +348,7 @@ const errors = [];
             await route.fulfill({ json: saved });
         },
     );
-    await page.goto('http://localhost:8081/add-session?conditional=1');
-    await page
-        .getByRole('button', { name: flow.defineAgreement, exact: true })
-        .click();
+    await page.goto('http://localhost:8081/conditional-session');
     await page
         .getByRole('radio', {
             name: flow.model_combined + ' ' + flow.example_combined,
@@ -336,6 +371,12 @@ const errors = [];
     await page
         .getByRole('button', {
             name: labels.conditional.saveTerms,
+            exact: true,
+        })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.conditional.newSession,
             exact: true,
         })
         .click();

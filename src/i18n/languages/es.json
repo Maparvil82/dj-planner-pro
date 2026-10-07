@@ -1241,7 +1241,7 @@
         "model_boxOffice": "% de taquilla",
         "model_bar": "% de barra",
         "model_combined": "Combinado",
-        "example_ticket": "10 € de entrada: 3 € al local, 7 € para ti.",
+        "example_ticket": "Un importe fijo por cada entrada vendida.",
         "example_boxOffice": "Una parte de lo vendido en entradas.",
         "example_bar": "Una parte de las ventas de barra.",
         "example_combined": "Entradas y barra en el mismo acuerdo.",
@@ -1310,5 +1310,19 @@
         "summaryDeductions": "Las bases marcadas «tras deducciones» descuentan los cargos antes del reparto.",
         "summaryExpenses": "Los gastos acordados se restan de la parte por ventas, sin reducir el fijo ni el mínimo.",
         "summarySplit": "El total se reparte entre {{count}} DJs."
+    },
+    "conditionalCosts": {
+        "concept": "Concepto",
+        "fixed": "Importe fijo",
+        "percent": "Porcentaje",
+        "amount": "Importe del gasto",
+        "percentage": "Porcentaje del gasto",
+        "basis": "Se calcula sobre entradas, barra y bonus que corresponden a los DJs, antes de descontar gastos. No incluye fijo ni garantías.",
+        "add": "Añadir gasto",
+        "remove": "Quitar gasto",
+        "invalid": "Completa el concepto y revisa el gasto.",
+        "invalidPercent": "Los porcentajes de gastos no pueden sumar más del 100 %.",
+        "apply": "Aplicar acuerdo",
+        "chooseSession": "Elige una sesión nueva o existente."
     }
 }

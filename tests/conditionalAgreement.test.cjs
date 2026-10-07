@@ -191,3 +191,77 @@ test('rejects invalid terms, impossible refunds, deductions, percentages and ove
     );
 });
 module.exports = { plan, calc };
+
+test('itemized costs use the same variable base, preserve guarantees and round each line', () => {
+    const a = plan({
+        fixed: 200,
+        minimum: 300,
+        expenseItems: [
+            { concept: 'Transport', type: 'fixed', value: 20 },
+            { concept: 'Agent', type: 'percent', value: 10 },
+            { concept: 'Production', type: 'percent', value: 5 },
+        ],
+    });
+    assert.equal(calc(a).expenses, 125);
+    assert.equal(calc(a).owner, 775);
+    a.tickets[0].sold = 0;
+    assert.equal(calc(a).owner, 300);
+    assert.equal(calc(a).expenses, 20);
+    const b = plan({
+        ticketValue: 9.99,
+        expenseItems: [
+            { concept: 'Commission', type: 'percent', value: 33.33 },
+        ],
+    });
+    b.tickets[0].sold = 1;
+    assert.equal(calc(b).expenseBreakdown[0].amount, 0);
+    assert.equal(calc(b).owner, 0.01);
+});
+test('rejects malformed cost lines and percentages above 100; historical expenses remain valid', () => {
+    assert.throws(() => calc(plan({ expenseItems: null })), /invalid/);
+    assert.throws(
+        () =>
+            calc(
+                plan({
+                    expenseItems: [{ concept: '', type: 'fixed', value: 10 }],
+                }),
+            ),
+        /conditionalCosts.invalid/,
+    );
+    assert.throws(
+        () =>
+            calc(
+                plan({
+                    expenseItems: [
+                        { concept: 'Fee', type: 'percent', value: 101 },
+                    ],
+                }),
+            ),
+        /invalidPercent/,
+    );
+    assert.throws(
+        () =>
+            calc(
+                plan({
+                    expenseItems: [
+                        { concept: 'A', type: 'percent', value: 60 },
+                        { concept: 'B', type: 'percent', value: 50 },
+                    ],
+                }),
+            ),
+        /invalidPercent/,
+    );
+    assert.equal(
+        calc(
+            plan({
+                actual: {
+                    ticketDeductions: 0,
+                    bar: 0,
+                    barDeductions: 0,
+                    expenses: 50,
+                },
+            }),
+        ).owner,
+        650,
+    );
+});

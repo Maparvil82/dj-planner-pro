@@ -1,3 +1,4 @@
+import { useConditionalDraft } from '../src/store/useConditionalDraft';
 import { useRecentCollaborators } from '../src/hooks/useRecentCollaborators';
 import { SessionTimezoneField } from '../src/components/sessions/SessionTimezoneField';
 import { FEATURES } from '../src/config/features';
@@ -94,7 +95,12 @@ export default function AddSessionScreen() {
     const [earningType, setEarningType] = useState<
         'free' | 'hourly' | 'fixed' | 'agreement'
     >(conditionalMode ? 'agreement' : 'free');
-    const [feeAgreement, setFeeAgreement] = useState<FeeAgreement | null>(null);
+    const [feeAgreement, setFeeAgreement] = useState<FeeAgreement | null>(() =>
+        conditionalMode ? useConditionalDraft.getState().pending : null,
+    );
+    useEffect(() => {
+        if (conditionalMode) useConditionalDraft.getState().set(null);
+    }, [conditionalMode]);
     const usage = useSessionUsage();
     const [earningAmount, setEarningAmount] = useState('');
     const [currency, setCurrency] = useState('€');

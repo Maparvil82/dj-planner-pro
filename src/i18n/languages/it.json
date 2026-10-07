@@ -1241,7 +1241,7 @@
         "model_boxOffice": "% degli incassi",
         "model_bar": "% del bar",
         "model_combined": "Combinato",
-        "example_ticket": "Biglietto da 10 €: 3 € al locale, 7 € a te.",
+        "example_ticket": "Un importo fisso per ogni biglietto venduto.",
         "example_boxOffice": "Una quota delle vendite dei biglietti.",
         "example_bar": "Una quota degli incassi del bar.",
         "example_combined": "Biglietti e bar nello stesso accordo.",
@@ -1310,5 +1310,19 @@
         "summaryDeductions": "Le basi « dopo deduzioni » sottraggono gli oneri prima della divisione.",
         "summaryExpenses": "Le spese concordate riducono la quota delle vendite senza ridurre il fisso o il minimo.",
         "summarySplit": "Il totale si divide tra {{count}} DJ."
+    },
+    "conditionalCosts": {
+        "concept": "Descrizione",
+        "fixed": "Importo fisso",
+        "percent": "Percentuale",
+        "amount": "Importo della spesa",
+        "percentage": "Percentuale della spesa",
+        "basis": "Calcolata sulle quote di biglietti, bar e bonus dei DJ prima delle spese. Esclude compensi fissi e garanzie.",
+        "add": "Aggiungi spesa",
+        "remove": "Rimuovi spesa",
+        "invalid": "Completa la descrizione e verifica la spesa.",
+        "invalidPercent": "Le percentuali delle spese non possono superare il 100%.",
+        "apply": "Applica accordo",
+        "chooseSession": "Scegli una sessione nuova o esistente."
     }
 }

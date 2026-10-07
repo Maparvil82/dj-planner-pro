@@ -34,7 +34,10 @@ export function activeAgreementExtras(
                 minimum: a.minimum > 0,
                 maximum: a.maximum > 0,
                 bonus: a.bonusThreshold > 0 || a.bonusAmount > 0,
-                expenses: a.estimate.expenses > 0 || a.actual.expenses > 0,
+                expenses:
+                    a.estimate.expenses > 0 ||
+                    a.actual.expenses > 0 ||
+                    !!a.expenseItems?.length,
                 deductions: a.ticketBasis === 'net' || a.barBasis === 'net',
                 notes: !!a.notes,
             }[key],
