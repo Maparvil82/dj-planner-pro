@@ -118,7 +118,10 @@ const errors = [];
             console.error('PAGE', e.message);
         });
         page.on('console', (msg) => {
-            if (msg.type() === 'error') console.error(msg.text().slice(0, 300));
+            if (msg.type() === 'error') {
+                console.error(msg.text().slice(0, 300));
+                if (/unique.*key/.test(msg.text())) errors.push(msg.text());
+            }
         });
         return context;
     }
@@ -186,18 +189,34 @@ const errors = [];
         })
         .click();
     await page.getByText('DJ night', { exact: true }).click();
+    const flow = labels.conditionalFlow;
     await page
-        .getByRole('button', {
-            name: labels.conditional.template_venue,
+        .getByRole('radio', {
+            name: flow.model_ticket + ' ' + flow.example_ticket,
             exact: true,
         })
         .click();
+    await page.getByLabel(flow.price, { exact: true }).fill('10');
+    await page.getByLabel(flow.value_venue_fixed, { exact: true }).fill('3');
+    assert.equal(await page.getByRole('tab').count(), 0);
+    assert.equal(
+        await page.getByLabel(flow.minimum, { exact: true }).count(),
+        0,
+    );
     await page
-        .getByRole('tab', { name: labels.conditional.forecast, exact: true })
+        .getByRole('button', { name: flow.addCondition, exact: true })
         .click();
     await page
-        .getByLabel(labels.conditional.expected, { exact: true })
-        .fill('100');
+        .getByRole('button', { name: flow.extra_minimum, exact: true })
+        .click();
+    await page.getByLabel(flow.minimum, { exact: true }).fill('200');
+    await page
+        .getByRole('button', { name: flow.removeCondition, exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: flow.trySales, exact: true })
+        .click();
+    await page.getByLabel(flow.expected, { exact: true }).fill('100');
     await page
         .getByText(/700,00/)
         .first()
@@ -207,42 +226,66 @@ const errors = [];
         fullPage: true,
     });
     await page
+        .getByRole('button', { name: flow.backAgreement, exact: true })
+        .last()
+        .click();
+    await page
         .getByRole('button', {
             name: labels.conditional.saveTerms,
             exact: true,
         })
         .click();
     await page
-        .getByRole('button', { name: labels.agreement.calculate, exact: true })
+        .getByRole('button', { name: flow.calculate, exact: true })
         .waitFor();
     assert.equal(patches.length, 1);
     assert.equal(saved.earning_type, 'agreement');
     assert.equal(saved.earning_amount, 0);
     assert.equal(saved.amount_paid, 50);
     assert.equal(saved.fee_agreement.version, 2);
+    assert.equal(saved.fee_agreement.minimum, 0);
+    assert.equal(saved.fee_agreement.tickets[0].estimate, 100);
+    assert.equal(saved.fee_agreement.participants.length, 1);
     await page
-        .getByRole('button', { name: labels.agreement.calculate, exact: true })
+        .getByRole('button', { name: flow.calculate, exact: true })
         .click();
+    await page.getByLabel(flow.sold, { exact: true }).fill('100');
     await page
-        .getByRole('tab', { name: labels.conditional.close, exact: true })
+        .getByRole('button', { name: flow.addRefunds, exact: true })
         .click();
-    await page.getByLabel(labels.conditional.sold, { exact: true }).fill('100');
     await page
         .getByLabel(labels.conditional.refunded, { exact: true })
         .fill('10');
     await page
-        .getByRole('button', { name: labels.conditional.settle, exact: true })
+        .getByRole('button', { name: flow.saveResult, exact: true })
         .click();
     await page
-        .getByRole('tab', { name: labels.conditional.close, exact: true })
-        .waitFor({ state: 'hidden' });
-    await page
-        .getByRole('button', { name: labels.agreement.calculate, exact: true })
+        .getByRole('button', { name: flow.adjustResult, exact: true })
         .waitFor();
     assert.equal(patches.length, 2);
     assert.equal(saved.earning_amount, 630);
     assert.equal(saved.amount_paid, 50);
     assert.equal(saved.fee_agreement.settled, true);
+    await page
+        .getByRole('button', { name: flow.editAgreement, exact: true })
+        .click();
+    assert.equal(
+        await page
+            .getByLabel(flow.value_venue_fixed, { exact: true })
+            .inputValue(),
+        '3',
+    );
+    await page
+        .getByRole('button', {
+            name: labels.conditional.saveTerms,
+            exact: true,
+        })
+        .click();
+    await page
+        .getByRole('button', { name: flow.adjustResult, exact: true })
+        .waitFor();
+    assert.equal(saved.fee_agreement.tickets[0].sold, 100);
+    assert.equal(saved.earning_amount, 630);
     const venue = {
         id: '00000000-0000-4000-8000-000000000912',
         user_id: user.id,
@@ -269,27 +312,27 @@ const errors = [];
     );
     await page.goto('http://localhost:8081/add-session?conditional=1');
     await page
-        .getByRole('button', { name: labels.agreement.configure, exact: true })
+        .getByRole('button', { name: flow.defineAgreement, exact: true })
         .click();
     await page
-        .getByRole('tab', { name: labels.conditional.close, exact: true })
-        .waitFor();
-    assert.equal(
-        await page
-            .getByRole('tab', { name: labels.conditional.close, exact: true })
-            .getAttribute('aria-disabled'),
-        'true',
-    );
-    await page
-        .getByRole('button', {
-            name: labels.conditional.template_combined,
+        .getByRole('radio', {
+            name: flow.model_combined + ' ' + flow.example_combined,
             exact: true,
         })
         .click();
+    await page.getByLabel(flow.price, { exact: true }).fill('10');
+    await page.getByLabel(flow.value_percent, { exact: true }).fill('70');
+    await page.getByLabel(flow.barPercent, { exact: true }).fill('10');
     await page.screenshot({
         path: '/private/tmp/djplanner-conditional-terms.png',
         fullPage: true,
     });
+    assert.equal(
+        await page
+            .getByRole('button', { name: flow.calculate, exact: true })
+            .count(),
+        0,
+    );
     await page
         .getByRole('button', {
             name: labels.conditional.saveTerms,
@@ -297,21 +340,60 @@ const errors = [];
         })
         .click();
     await page
-        .getByRole('tab', { name: labels.conditional.terms, exact: true })
-        .waitFor({ state: 'hidden' });
+        .getByRole('button', { name: flow.editAgreement, exact: true })
+        .waitFor();
     await page.getByText('Ej: Club Amnesia', { exact: true }).click();
     await page.getByText('Sala X', { exact: true }).last().click();
     await page
         .getByRole('button', { name: 'Guardar sesión', exact: true })
         .click();
     await page
-        .getByRole('button', { name: labels.agreement.edit, exact: true })
+        .getByRole('button', { name: flow.editAgreement, exact: true })
         .waitFor();
     await page.waitForURL('**/session/' + id);
     assert.equal(created.earning_type, 'agreement');
     assert.equal(created.earning_amount, 0);
     assert.equal(created.fee_agreement.version, 2);
     assert.equal(created.fee_agreement.barPercent, 10);
+    await context.close();
+    context = await setup('en', 320, true, true);
+    const english = JSON.parse(
+        fs.readFileSync('src/i18n/languages/en.json', 'utf8'),
+    );
+    const en = english.conditionalFlow;
+    await page.goto(
+        'http://localhost:8081/add-session?conditional=1&testTheme=dark',
+    );
+    await page
+        .getByRole('button', { name: en.defineAgreement, exact: true })
+        .click();
+    await page
+        .getByRole('radio', {
+            name: en.model_bar + ' ' + en.example_bar,
+            exact: true,
+        })
+        .click();
+    await page.getByLabel(en.barPercent, { exact: true }).fill('10');
+    await page.getByRole('button', { name: en.trySales, exact: true }).click();
+    await page
+        .getByLabel(english.conditional.barRevenue, { exact: true })
+        .fill('1000');
+    await page
+        .getByText(/100.00/)
+        .first()
+        .waitFor();
+    assert.equal(await page.getByLabel(en.sold, { exact: true }).count(), 0);
+    await page.screenshot({
+        path: '/private/tmp/djplanner-conditional-dark-320.png',
+        fullPage: true,
+    });
+    assert.equal(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+        true,
+    );
+    assert.equal(await page.getByText(/conditionalFlow\./).count(), 0);
     assert.deepEqual(errors, []);
     console.log(
         'PASS: free user paywall, Pro conversion, forecast excluded from income, actual refunds/settlement, payments preserved and future settlement unavailable.',

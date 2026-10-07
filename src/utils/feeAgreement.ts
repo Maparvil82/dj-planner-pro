@@ -163,6 +163,7 @@ export type ConditionalResults = {
 };
 export type ConditionalAgreement = {
     version: 2;
+    enabledExtras?: import('./conditionalPresentation').AgreementExtra[];
     timezone: string;
     settled: boolean;
     fixed: number;

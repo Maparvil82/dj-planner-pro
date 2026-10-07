@@ -35,9 +35,11 @@ El porcentaje de taquilla y el porcentaje de barra pueden ser distintos. No se a
 
 ## Recorrido
 
-1. **Condiciones:** elegir modelo, precios, bases y reparto. Los ejemplos de 3 €/70 %/10 % son editables, no condiciones impuestas.
-2. **Simulación:** cantidades y cajas esperadas, con el desglose del caché. Guardar esta información nunca la convierte en ingreso realizado.
-3. **Liquidación:** se activa después de la hora de fin del evento, incluyendo actuaciones que cruzan medianoche. Introducir vendidos, devueltos, invitados, caja real y gastos. Guardar registra únicamente el caché real del propietario en las métricas.
+1. **¿Cómo vas a cobrar?** Elegir por entrada, porcentaje de taquilla, porcentaje de barra o combinado. Los importes comienzan vacíos; los ejemplos explican el modelo sin imponer condiciones.
+2. Introducir los precios y la participación. **Añadir otra condición** muestra fijo, mínimo, máximo, bonus, gastos, deducciones o notas cuando hacen falta. El reparto entre DJs es opcional; por defecto el propietario recibe todo.
+3. Un resumen explica el acuerdo en lenguaje natural. **Probar con unas ventas** abre una calculadora separada; volver conserva las cantidades introducidas. Guardar condiciones no registra ingresos realizados.
+4. Después de la hora de fin, **Calcular mi caché** abre los resultados reales desde el detalle. Solo pide las cajas y cantidades correspondientes al acuerdo; devoluciones, invitados y gastos se despliegan cuando hacen falta. Guardar registra el caché del propietario, manteniendo los pagos independientes.
+5. **Editar condiciones** y **Revisar resultado** permiten corregir un acuerdo o una liquidación existente. La edición conserva las ventas y los pagos; cambiar condiciones de un acuerdo liquidado recalcula el resultado real.
 
 El acuerdo es privado. Los participantes económicos son nombres para el cálculo: añadirlos no envía invitaciones ni les cambia su agenda. Las invitaciones a DJs siguen estando en el formulario habitual de sesión colaborativa.
 

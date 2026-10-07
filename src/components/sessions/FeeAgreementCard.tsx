@@ -1,3 +1,4 @@
+import { conditionalSummary } from '../../utils/conditionalPresentation';
 import { FEATURES } from '../../config/features';
 import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
@@ -49,6 +50,25 @@ export function FeeAgreementCard({
     const usage = useSessionUsage();
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
+    const [editorMode, setEditorMode] = useState<'terms' | 'actual'>('terms');
+    const modern = conditional || value?.version === 2;
+    const openEditor = async (mode: 'terms' | 'actual') => {
+        setError(false);
+        if (usage.data?.isPro && !usage.isError) {
+            setEditorMode(mode);
+            setEditing(true);
+            return;
+        }
+        const verified = await usage.refetch();
+        if (verified.isError) {
+            setError(true);
+            return;
+        }
+        if (verified.data?.isPro) {
+            setEditorMode(mode);
+            setEditing(true);
+        } else router.push('/paywall?reason=conditional');
+    };
     if (!FEATURES.feeAgreements && !conditional && value?.version !== 2)
         return null;
     let amount: number | null = null;
@@ -86,6 +106,16 @@ export function FeeAgreementCard({
                           : 'agreement.configureHint',
                 )}
             </Text>
+            {value?.version === 2 && (
+                <Text style={{ color: c.fg, lineHeight: 23 }}>
+                    {conditionalSummary(
+                        value,
+                        t,
+                        (n) =>
+                            `${new Intl.NumberFormat(currentLanguage, { maximumFractionDigits: 2 }).format(n)} ${currency}`,
+                    )}
+                </Text>
+            )}
             {value?.version === 1 && (
                 <Text style={{ color: c.fg, lineHeight: 21 }}>
                     {t('agreement.fixed')}: {value.fixed} {currency} ·{' '}
@@ -94,7 +124,7 @@ export function FeeAgreementCard({
                     {value.barPercent}% {t('agreement.bar')}
                 </Text>
             )}
-            {amount !== null && (
+            {amount !== null && (!modern || value?.settled) && (
                 <Text
                     style={{ color: c.accent, fontWeight: '800', fontSize: 21 }}
                 >
@@ -143,27 +173,33 @@ export function FeeAgreementCard({
             <CommunityButton
                 secondary
                 label={t(
-                    canSettle
-                        ? 'agreement.calculate'
-                        : value
-                          ? 'agreement.edit'
-                          : 'agreement.configure',
+                    modern
+                        ? value
+                            ? 'conditionalFlow.editAgreement'
+                            : 'conditionalFlow.defineAgreement'
+                        : canSettle
+                          ? 'agreement.calculate'
+                          : value
+                            ? 'agreement.edit'
+                            : 'agreement.configure',
                 )}
-                onPress={async () => {
-                    const verified = await usage.refetch();
-                    if (verified.isError) {
-                        setError(true);
-                        return;
-                    }
-                    setError(false);
-                    if (verified.data?.isPro) setEditing(true);
-                    else router.push('/paywall?reason=agreement');
-                }}
+                onPress={() => void openEditor('terms')}
             />
+            {modern && value && canSettle && (
+                <CommunityButton
+                    label={t(
+                        value.settled
+                            ? 'conditionalFlow.adjustResult'
+                            : 'conditionalFlow.calculate',
+                    )}
+                    onPress={() => void openEditor('actual')}
+                />
+            )}
             {editing && (conditional || value?.version === 2) && (
                 <ConditionalAgreementEditor
                     value={value?.version === 2 ? value : null}
                     names={names}
+                    initialMode={editorMode}
                     currency={currency}
                     canSettle={canSettle}
                     onClose={() => setEditing(false)}
