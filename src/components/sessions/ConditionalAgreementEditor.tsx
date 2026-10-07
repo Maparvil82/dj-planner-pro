@@ -39,6 +39,7 @@ export function ConditionalAgreementEditor({
     names = [],
     canSettle = false,
     initialMode = 'terms',
+    presentation = 'modal',
     onSave,
     onClose,
 }: {
@@ -47,6 +48,7 @@ export function ConditionalAgreementEditor({
     names?: string[];
     canSettle?: boolean;
     initialMode?: Mode;
+    presentation?: 'modal' | 'screen';
     onSave: (value: ConditionalAgreement) => void | Promise<unknown>;
     onClose: () => void;
 }) {
@@ -498,730 +500,177 @@ export function ConditionalAgreementEditor({
     );
     const ticketsNeeded = a.ticketMode !== 'none' || a.bonusAmount > 0;
     const modelLabel = model ? t(`conditionalFlow.model_${model}`) : '';
-    return (
-        <Modal
-            visible
-            animationType="slide"
-            onRequestClose={() => {
-                if (!busy) onClose();
-            }}
+    const content = (
+        <SafeAreaView
+            edges={
+                keyboard
+                    ? ['top', 'left', 'right']
+                    : ['top', 'bottom', 'left', 'right']
+            }
+            style={{ flex: 1, backgroundColor: c.bg }}
         >
-            <SafeAreaView
-                edges={
-                    keyboard
-                        ? ['top', 'left', 'right']
-                        : ['top', 'bottom', 'left', 'right']
-                }
-                style={{ flex: 1, backgroundColor: c.bg }}
+            <SessionFormHeader
+                title={t(
+                    mode === 'terms'
+                        ? 'conditional.title'
+                        : mode === 'actual'
+                          ? 'conditionalFlow.calculate'
+                          : 'conditionalFlow.trySales',
+                )}
+                badge="PRO"
+                subtitle={t(
+                    mode === 'terms'
+                        ? 'conditionalFlow.intro'
+                        : mode === 'actual'
+                          ? 'conditionalFlow.actualHint'
+                          : 'conditionalFlow.forecastHint',
+                )}
+                onClose={() => {
+                    if (!busy) onClose();
+                }}
+            />
+            <ScrollView
+                ref={scroll}
+                style={{ flex: 1 }}
+                automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                contentContainerStyle={{
+                    paddingHorizontal: 24,
+                    paddingBottom: 24,
+                    gap: 22,
+                }}
             >
-                <SessionFormHeader
-                    title={t(
-                        mode === 'terms'
-                            ? 'conditional.title'
-                            : mode === 'actual'
-                              ? 'conditionalFlow.calculate'
-                              : 'conditionalFlow.trySales',
-                    )}
-                    badge="PRO"
-                    subtitle={t(
-                        mode === 'terms'
-                            ? 'conditionalFlow.intro'
-                            : mode === 'actual'
-                              ? 'conditionalFlow.actualHint'
-                              : 'conditionalFlow.forecastHint',
-                    )}
-                    onClose={() => {
-                        if (!busy) onClose();
-                    }}
-                />
-                <ScrollView
-                    ref={scroll}
-                    style={{ flex: 1 }}
-                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-                    keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="on-drag"
-                    contentContainerStyle={{
-                        paddingHorizontal: 24,
-                        paddingBottom: 24,
-                        gap: 22,
-                    }}
-                >
-                    {mode === 'terms' ? (
-                        <>
-                            {section(
-                                t('conditionalFlow.how'),
-                                <>
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            flexWrap: 'wrap',
-                                            gap: 10,
-                                        }}
-                                    >
-                                        {(
-                                            [
-                                                'ticket',
-                                                'boxOffice',
-                                                'bar',
-                                                'combined',
-                                            ] as const
-                                        ).map((item) => (
-                                            <Pressable
-                                                key={item}
-                                                accessibilityRole="radio"
-                                                accessibilityState={{
-                                                    checked: model === item,
-                                                }}
-                                                disabled={busy}
-                                                onPress={() => {
-                                                    if (model !== item)
-                                                        chooseModel(item);
-                                                }}
-                                                style={{
-                                                    width: '48%',
-                                                    aspectRatio: 1,
-                                                    justifyContent: 'center',
-                                                    padding: 14,
-                                                    borderRadius: 18,
-                                                    borderWidth: 1,
-                                                    borderColor:
-                                                        model === item
-                                                            ? c.accent
-                                                            : c.border,
-                                                    backgroundColor:
-                                                        model === item
-                                                            ? c.tint
-                                                            : c.card,
-                                                    gap: 7,
-                                                }}
-                                            >
-                                                <Text
-                                                    style={{
-                                                        color:
-                                                            model === item
-                                                                ? c.accent
-                                                                : c.fg,
-                                                        fontWeight: '800',
-                                                        fontSize: 15,
-                                                    }}
-                                                >
-                                                    {t(
-                                                        `conditionalFlow.model_${item}`,
-                                                    )}
-                                                </Text>
-                                                <Text
-                                                    style={{
-                                                        color: c.muted,
-                                                        fontSize: 12,
-                                                        lineHeight: 17,
-                                                    }}
-                                                >
-                                                    {t(
-                                                        `conditionalFlow.example_${item}`,
-                                                    )}
-                                                </Text>
-                                            </Pressable>
-                                        ))}
-                                    </View>
-                                </>,
-                            )}
-                            {model && (
-                                <>
-                                    {ticketsNeeded &&
-                                        section(
-                                            t('conditionalFlow.ticketQuestion'),
-                                            <>
-                                                {a.ticketMode !== 'none' && (
-                                                    <>
-                                                        {a.tickets.map(
-                                                            (row, i) => (
-                                                                <View
-                                                                    key={i}
-                                                                    style={{
-                                                                        gap: 12,
-                                                                    }}
-                                                                >
-                                                                    {a.tickets
-                                                                        .length >
-                                                                        1 &&
-                                                                        text(
-                                                                            `${t('conditional.ticketName')} ${i + 1}`,
-                                                                            row.name,
-                                                                            (
-                                                                                name,
-                                                                            ) =>
-                                                                                changeRow(
-                                                                                    i,
-                                                                                    {
-                                                                                        name,
-                                                                                    },
-                                                                                ),
-                                                                            80,
-                                                                        )}
-                                                                    {number(
-                                                                        `price.${i}`,
-                                                                        a
-                                                                            .tickets
-                                                                            .length >
-                                                                            1
-                                                                            ? `${t('conditional.ticketPrice')} · ${row.name || i + 1}`
-                                                                            : t(
-                                                                                  'conditionalFlow.price',
-                                                                              ),
-                                                                        row.price,
-                                                                        (n) =>
-                                                                            changeRow(
-                                                                                i,
-                                                                                {
-                                                                                    price: n,
-                                                                                },
-                                                                            ),
-                                                                    )}
-                                                                    {a.tickets
-                                                                        .length >
-                                                                        1 &&
-                                                                        link(
-                                                                            t(
-                                                                                'conditional.removeTicket',
-                                                                            ),
-                                                                            () => {
-                                                                                setDrafts(
-                                                                                    {},
-                                                                                );
-                                                                                setA(
-                                                                                    (
-                                                                                        current,
-                                                                                    ) => ({
-                                                                                        ...current,
-                                                                                        tickets:
-                                                                                            current.tickets.filter(
-                                                                                                (
-                                                                                                    _,
-                                                                                                    j,
-                                                                                                ) =>
-                                                                                                    i !==
-                                                                                                    j,
-                                                                                            ),
-                                                                                    }),
-                                                                                );
-                                                                            },
-                                                                        )}
-                                                                </View>
-                                                            ),
-                                                        )}
-                                                        {a.tickets.length <
-                                                            30 &&
-                                                            link(
-                                                                t(
-                                                                    'conditionalFlow.morePrices',
-                                                                ),
-                                                                () =>
-                                                                    setA(
-                                                                        (
-                                                                            current,
-                                                                        ) => ({
-                                                                            ...current,
-                                                                            tickets:
-                                                                                [
-                                                                                    ...current.tickets,
-                                                                                    {
-                                                                                        name: '',
-                                                                                        price: 0,
-                                                                                        estimate: 0,
-                                                                                        sold: 0,
-                                                                                        refunded: 0,
-                                                                                        invited: 0,
-                                                                                    },
-                                                                                ],
-                                                                        }),
-                                                                    ),
-                                                            )}
-                                                        {(model ===
-                                                            'combined' ||
-                                                            a.ticketMode ===
-                                                                'venue_fixed') &&
-                                                            choices(
-                                                                'ticketMode',
-                                                                [
-                                                                    ...(a.ticketMode ===
-                                                                        'venue_fixed' ||
-                                                                    value?.ticketMode ===
-                                                                        'venue_fixed'
-                                                                        ? [
-                                                                              'venue_fixed' as const,
-                                                                          ]
-                                                                        : []),
-                                                                    'dj_fixed',
-                                                                    ...(model ===
-                                                                    'combined'
-                                                                        ? [
-                                                                              'percent' as const,
-                                                                          ]
-                                                                        : []),
-                                                                ],
-                                                                a.ticketMode as
-                                                                    | 'venue_fixed'
-                                                                    | 'dj_fixed'
-                                                                    | 'percent',
-                                                                (
-                                                                    ticketMode,
-                                                                ) => {
-                                                                    setDrafts(
-                                                                        {},
-                                                                    );
-                                                                    setA(
-                                                                        (
-                                                                            current,
-                                                                        ) => ({
-                                                                            ...current,
-                                                                            ticketMode,
-                                                                            ticketValue: 0,
-                                                                        }),
-                                                                    );
-                                                                },
-                                                            )}
-                                                        {number(
-                                                            'ticketValue',
-                                                            t(
-                                                                `conditionalFlow.value_${a.ticketMode}`,
-                                                            ),
-                                                            a.ticketValue,
-                                                            (n) =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        ticketValue:
-                                                                            n,
-                                                                    }),
-                                                                ),
-                                                        )}
-                                                    </>
-                                                )}
-                                            </>,
-                                        )}
-                                    {(model === 'bar' ||
-                                        model === 'combined') &&
-                                        section(
-                                            t('conditionalFlow.barQuestion'),
-                                            number(
-                                                'barPercent',
-                                                t('conditionalFlow.barPercent'),
-                                                a.barPercent,
-                                                (n) =>
-                                                    setA((current) => ({
-                                                        ...current,
-                                                        barPercent: n,
-                                                    })),
-                                            ),
-                                        )}
-                                    {extras.map((extra) =>
-                                        section(
-                                            t(`conditionalFlow.extra_${extra}`),
-                                            <View
-                                                key={extra}
-                                                style={{ gap: 12 }}
-                                            >
-                                                {extra === 'fixed' && (
-                                                    <>
-                                                        {number(
-                                                            'fixed',
-                                                            t(
-                                                                'conditionalFlow.fixed',
-                                                            ),
-                                                            a.fixed,
-                                                            (n) =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        fixed: n,
-                                                                    }),
-                                                                ),
-                                                        )}
-                                                        {choices(
-                                                            'fixedMode',
-                                                            ['add', 'versus'],
-                                                            a.fixedMode,
-                                                            (fixedMode) =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        fixedMode,
-                                                                    }),
-                                                                ),
-                                                        )}
-                                                    </>
-                                                )}
-                                                {extra === 'minimum' &&
-                                                    number(
-                                                        'minimum',
-                                                        t(
-                                                            'conditionalFlow.minimum',
-                                                        ),
-                                                        a.minimum,
-                                                        (n) =>
-                                                            setA((current) => ({
-                                                                ...current,
-                                                                minimum: n,
-                                                            })),
-                                                    )}
-                                                {extra === 'maximum' &&
-                                                    number(
-                                                        'maximum',
-                                                        t(
-                                                            'conditionalFlow.maximum',
-                                                        ),
-                                                        a.maximum,
-                                                        (n) =>
-                                                            setA((current) => ({
-                                                                ...current,
-                                                                maximum: n,
-                                                            })),
-                                                    )}
-                                                {extra === 'bonus' && (
-                                                    <>
-                                                        {number(
-                                                            'bonusThreshold',
-                                                            t(
-                                                                'conditionalFlow.bonusThreshold',
-                                                            ),
-                                                            a.bonusThreshold,
-                                                            (n) =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        bonusThreshold:
-                                                                            n,
-                                                                    }),
-                                                                ),
-                                                            true,
-                                                        )}
-                                                        {number(
-                                                            'bonusAmount',
-                                                            t(
-                                                                'conditionalFlow.bonusAmount',
-                                                            ),
-                                                            a.bonusAmount,
-                                                            (n) =>
-                                                                setA(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
-                                                                        ...current,
-                                                                        bonusAmount:
-                                                                            n,
-                                                                    }),
-                                                                ),
-                                                        )}
-                                                    </>
-                                                )}
-                                                {extra === 'expenses' &&
-                                                    expenseFields()}
-                                                {extra === 'deductions' && (
-                                                    <>
-                                                        {a.ticketMode !==
-                                                            'none' &&
-                                                            a.ticketMode !==
-                                                                'dj_fixed' && (
-                                                                <>
-                                                                    <Text
-                                                                        style={{
-                                                                            color: c.fg,
-                                                                        }}
-                                                                    >
-                                                                        {t(
-                                                                            'conditionalFlow.ticketBasis',
-                                                                        )}
-                                                                    </Text>
-                                                                    {choices(
-                                                                        'basis',
-                                                                        [
-                                                                            'gross',
-                                                                            'net',
-                                                                        ],
-                                                                        a.ticketBasis,
-                                                                        (
-                                                                            ticketBasis,
-                                                                        ) =>
-                                                                            setA(
-                                                                                (
-                                                                                    current,
-                                                                                ) => ({
-                                                                                    ...current,
-                                                                                    ticketBasis,
-                                                                                }),
-                                                                            ),
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        {(model === 'bar' ||
-                                                            model ===
-                                                                'combined') && (
-                                                            <>
-                                                                <Text
-                                                                    style={{
-                                                                        color: c.fg,
-                                                                    }}
-                                                                >
-                                                                    {t(
-                                                                        'conditionalFlow.barBasis',
-                                                                    )}
-                                                                </Text>
-                                                                {choices(
-                                                                    'basis',
-                                                                    [
-                                                                        'gross',
-                                                                        'net',
-                                                                    ],
-                                                                    a.barBasis,
-                                                                    (
-                                                                        barBasis,
-                                                                    ) =>
-                                                                        setA(
-                                                                            (
-                                                                                current,
-                                                                            ) => ({
-                                                                                ...current,
-                                                                                barBasis,
-                                                                            }),
-                                                                        ),
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </>
-                                                )}
-                                                {extra === 'notes' && (
-                                                    <TextInput
-                                                        accessibilityLabel={t(
-                                                            'conditional.notes',
-                                                        )}
-                                                        value={a.notes}
-                                                        onChangeText={(notes) =>
-                                                            setA((current) => ({
-                                                                ...current,
-                                                                notes,
-                                                            }))
-                                                        }
-                                                        editable={!busy}
-                                                        multiline
-                                                        maxLength={2000}
-                                                        placeholder={t(
-                                                            'conditional.notes',
-                                                        )}
-                                                        placeholderTextColor={
-                                                            c.muted
-                                                        }
-                                                        style={[
-                                                            field,
-                                                            {
-                                                                minHeight: 90,
-                                                                textAlignVertical:
-                                                                    'top',
-                                                            },
-                                                        ]}
-                                                    />
-                                                )}
-                                                {link(
-                                                    t(
-                                                        'conditionalFlow.removeCondition',
-                                                    ),
-                                                    () => removeExtra(extra),
-                                                )}
-                                            </View>,
-                                        ),
-                                    )}
-                                    {link(
-                                        t('conditionalFlow.addCondition'),
-                                        () =>
-                                            setChoosingExtra(
-                                                (current) => !current,
-                                            ),
-                                    )}
-                                    {choosingExtra && (
-                                        <View
-                                            style={{
-                                                flexDirection: 'row',
-                                                flexWrap: 'wrap',
-                                                gap: 8,
+                {mode === 'terms' ? (
+                    <>
+                        {section(
+                            t('conditionalFlow.how'),
+                            <>
+                                <View
+                                    style={{
+                                        flexDirection: 'row',
+                                        flexWrap: 'wrap',
+                                        gap: 10,
+                                    }}
+                                >
+                                    {(
+                                        [
+                                            'ticket',
+                                            'boxOffice',
+                                            'bar',
+                                            'combined',
+                                        ] as const
+                                    ).map((item) => (
+                                        <Pressable
+                                            key={item}
+                                            accessibilityRole="radio"
+                                            accessibilityState={{
+                                                checked: model === item,
                                             }}
-                                        >
-                                            {agreementExtras
-                                                .filter(
-                                                    (key) =>
-                                                        !extras.includes(key) &&
-                                                        !(
-                                                            key === 'bonus' &&
-                                                            model === 'bar'
-                                                        ),
-                                                )
-                                                .map((key) =>
-                                                    link(
-                                                        t(
-                                                            `conditionalFlow.extra_${key}`,
-                                                        ),
-                                                        () => {
-                                                            setExtras(
-                                                                (current) => [
-                                                                    ...current,
-                                                                    key,
-                                                                ],
-                                                            );
-                                                            setChoosingExtra(
-                                                                false,
-                                                            );
-                                                        },
-                                                    ),
-                                                )}
-                                        </View>
-                                    )}
-                                    <View
-                                        style={{
-                                            borderTopWidth: 1,
-                                            borderColor: c.border,
-                                            paddingTop: 20,
-                                            gap: 16,
-                                        }}
-                                    >
-                                        <View
+                                            disabled={busy}
+                                            onPress={() => {
+                                                if (model !== item)
+                                                    chooseModel(item);
+                                            }}
                                             style={{
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                gap: 12,
+                                                width: '48%',
+                                                aspectRatio: 1,
+                                                justifyContent: 'center',
+                                                padding: 14,
+                                                borderRadius: 18,
+                                                borderWidth: 1,
+                                                borderColor:
+                                                    model === item
+                                                        ? c.accent
+                                                        : c.border,
+                                                backgroundColor:
+                                                    model === item
+                                                        ? c.tint
+                                                        : c.card,
+                                                gap: 7,
                                             }}
                                         >
                                             <Text
                                                 style={{
-                                                    color: c.fg,
-                                                    fontWeight: '700',
-                                                    fontSize: 16,
-                                                    flex: 1,
+                                                    color:
+                                                        model === item
+                                                            ? c.accent
+                                                            : c.fg,
+                                                    fontWeight: '800',
+                                                    fontSize: 15,
                                                 }}
                                             >
-                                                {t('conditionalFlow.shareDjs')}
+                                                {t(
+                                                    `conditionalFlow.model_${item}`,
+                                                )}
                                             </Text>
-                                            <Switch
-                                                accessibilityLabel={t(
-                                                    'conditionalFlow.shareDjs',
-                                                )}
-                                                disabled={busy}
-                                                value={
-                                                    a.participants.length > 1
-                                                }
-                                                onValueChange={toggleSplit}
-                                                trackColor={{
-                                                    false: c.border,
-                                                    true: c.accent,
+                                            <Text
+                                                style={{
+                                                    color: c.muted,
+                                                    fontSize: 12,
+                                                    lineHeight: 17,
                                                 }}
-                                            />
-                                        </View>
-                                        {a.participants.length > 1 && (
-                                            <>
-                                                {choices(
-                                                    'split',
-                                                    [
-                                                        'equal',
-                                                        'percent',
-                                                        'fixed',
-                                                    ],
-                                                    a.split,
-                                                    (split) => {
-                                                        setDrafts({});
-                                                        setA((current) => ({
-                                                            ...current,
-                                                            split,
-                                                        }));
-                                                    },
+                                            >
+                                                {t(
+                                                    `conditionalFlow.example_${item}`,
                                                 )}
-                                                {a.participants.map(
-                                                    (person, i) => (
+                                            </Text>
+                                        </Pressable>
+                                    ))}
+                                </View>
+                            </>,
+                        )}
+                        {model && (
+                            <>
+                                {ticketsNeeded &&
+                                    section(
+                                        t('conditionalFlow.ticketQuestion'),
+                                        <>
+                                            {a.ticketMode !== 'none' && (
+                                                <>
+                                                    {a.tickets.map((row, i) => (
                                                         <View
                                                             key={i}
-                                                            style={{ gap: 10 }}
+                                                            style={{
+                                                                gap: 12,
+                                                            }}
                                                         >
-                                                            {i === 0 ? (
-                                                                <Text
-                                                                    style={{
-                                                                        color: c.fg,
-                                                                        fontWeight:
-                                                                            '700',
-                                                                    }}
-                                                                >
-                                                                    {t(
-                                                                        'agreement.you',
-                                                                    )}
-                                                                </Text>
-                                                            ) : (
+                                                            {a.tickets.length >
+                                                                1 &&
                                                                 text(
-                                                                    `${t('agreement.djName')} ${i}`,
-                                                                    person.name,
+                                                                    `${t('conditional.ticketName')} ${i + 1}`,
+                                                                    row.name,
                                                                     (name) =>
-                                                                        setA(
-                                                                            (
-                                                                                current,
-                                                                            ) => ({
-                                                                                ...current,
-                                                                                participants:
-                                                                                    current.participants.map(
-                                                                                        (
-                                                                                            p,
-                                                                                            j,
-                                                                                        ) =>
-                                                                                            i ===
-                                                                                            j
-                                                                                                ? {
-                                                                                                      ...p,
-                                                                                                      name,
-                                                                                                  }
-                                                                                                : p,
-                                                                                    ),
-                                                                            }),
+                                                                        changeRow(
+                                                                            i,
+                                                                            {
+                                                                                name,
+                                                                            },
                                                                         ),
-                                                                )
-                                                            )}
-                                                            {(a.split ===
-                                                                'percent' ||
-                                                                (a.split ===
-                                                                    'fixed' &&
-                                                                    i > 0)) &&
-                                                                number(
-                                                                    `share.${i}`,
-                                                                    `${t(a.split === 'percent' ? 'agreement.sharePercent' : 'agreement.shareFixed')} · ${person.name || t('agreement.you')}`,
-                                                                    person.share,
-                                                                    (share) =>
-                                                                        setA(
-                                                                            (
-                                                                                current,
-                                                                            ) => ({
-                                                                                ...current,
-                                                                                participants:
-                                                                                    current.participants.map(
-                                                                                        (
-                                                                                            p,
-                                                                                            j,
-                                                                                        ) =>
-                                                                                            i ===
-                                                                                            j
-                                                                                                ? {
-                                                                                                      ...p,
-                                                                                                      share,
-                                                                                                  }
-                                                                                                : p,
-                                                                                    ),
-                                                                            }),
-                                                                        ),
+                                                                    80,
                                                                 )}
-                                                            {i > 0 &&
+                                                            {number(
+                                                                `price.${i}`,
+                                                                a.tickets
+                                                                    .length > 1
+                                                                    ? `${t('conditional.ticketPrice')} · ${row.name || i + 1}`
+                                                                    : t(
+                                                                          'conditionalFlow.price',
+                                                                      ),
+                                                                row.price,
+                                                                (n) =>
+                                                                    changeRow(
+                                                                        i,
+                                                                        {
+                                                                            price: n,
+                                                                        },
+                                                                    ),
+                                                            )}
+                                                            {a.tickets.length >
+                                                                1 &&
                                                                 link(
                                                                     t(
-                                                                        'agreement.removeDj',
+                                                                        'conditional.removeTicket',
                                                                     ),
                                                                     () => {
                                                                         setDrafts(
@@ -1232,8 +681,8 @@ export function ConditionalAgreementEditor({
                                                                                 current,
                                                                             ) => ({
                                                                                 ...current,
-                                                                                participants:
-                                                                                    current.participants.filter(
+                                                                                tickets:
+                                                                                    current.tickets.filter(
                                                                                         (
                                                                                             _,
                                                                                             j,
@@ -1246,191 +695,502 @@ export function ConditionalAgreementEditor({
                                                                     },
                                                                 )}
                                                         </View>
-                                                    ),
-                                                )}
-                                                {a.participants.length < 20 &&
-                                                    link(
-                                                        t('agreement.addDj'),
-                                                        () =>
+                                                    ))}
+                                                    {a.tickets.length < 30 &&
+                                                        link(
+                                                            t(
+                                                                'conditionalFlow.morePrices',
+                                                            ),
+                                                            () =>
+                                                                setA(
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
+                                                                        ...current,
+                                                                        tickets:
+                                                                            [
+                                                                                ...current.tickets,
+                                                                                {
+                                                                                    name: '',
+                                                                                    price: 0,
+                                                                                    estimate: 0,
+                                                                                    sold: 0,
+                                                                                    refunded: 0,
+                                                                                    invited: 0,
+                                                                                },
+                                                                            ],
+                                                                    }),
+                                                                ),
+                                                        )}
+                                                    {(model === 'combined' ||
+                                                        a.ticketMode ===
+                                                            'venue_fixed') &&
+                                                        choices(
+                                                            'ticketMode',
+                                                            [
+                                                                ...(a.ticketMode ===
+                                                                    'venue_fixed' ||
+                                                                value?.ticketMode ===
+                                                                    'venue_fixed'
+                                                                    ? [
+                                                                          'venue_fixed' as const,
+                                                                      ]
+                                                                    : []),
+                                                                'dj_fixed',
+                                                                ...(model ===
+                                                                'combined'
+                                                                    ? [
+                                                                          'percent' as const,
+                                                                      ]
+                                                                    : []),
+                                                            ],
+                                                            a.ticketMode as
+                                                                | 'venue_fixed'
+                                                                | 'dj_fixed'
+                                                                | 'percent',
+                                                            (ticketMode) => {
+                                                                setDrafts({});
+                                                                setA(
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
+                                                                        ...current,
+                                                                        ticketMode,
+                                                                        ticketValue: 0,
+                                                                    }),
+                                                                );
+                                                            },
+                                                        )}
+                                                    {number(
+                                                        'ticketValue',
+                                                        t(
+                                                            `conditionalFlow.value_${a.ticketMode}`,
+                                                        ),
+                                                        a.ticketValue,
+                                                        (n) =>
                                                             setA((current) => ({
                                                                 ...current,
-                                                                participants: [
-                                                                    ...current.participants,
-                                                                    {
-                                                                        name: '',
-                                                                        share: 0,
-                                                                    },
-                                                                ],
+                                                                ticketValue: n,
                                                             })),
                                                     )}
-                                                <Text
-                                                    style={{
-                                                        color: c.muted,
-                                                        fontSize: 12,
-                                                        lineHeight: 18,
-                                                    }}
-                                                >
-                                                    {t(
-                                                        'conditionalFlow.splitHint',
+                                                </>
+                                            )}
+                                        </>,
+                                    )}
+                                {(model === 'bar' || model === 'combined') &&
+                                    section(
+                                        t('conditionalFlow.barQuestion'),
+                                        number(
+                                            'barPercent',
+                                            t('conditionalFlow.barPercent'),
+                                            a.barPercent,
+                                            (n) =>
+                                                setA((current) => ({
+                                                    ...current,
+                                                    barPercent: n,
+                                                })),
+                                        ),
+                                    )}
+                                {extras.map((extra) =>
+                                    section(
+                                        t(`conditionalFlow.extra_${extra}`),
+                                        <View key={extra} style={{ gap: 12 }}>
+                                            {extra === 'fixed' && (
+                                                <>
+                                                    {number(
+                                                        'fixed',
+                                                        t(
+                                                            'conditionalFlow.fixed',
+                                                        ),
+                                                        a.fixed,
+                                                        (n) =>
+                                                            setA((current) => ({
+                                                                ...current,
+                                                                fixed: n,
+                                                            })),
                                                     )}
-                                                </Text>
-                                            </>
-                                        )}
-                                    </View>
+                                                    {choices(
+                                                        'fixedMode',
+                                                        ['add', 'versus'],
+                                                        a.fixedMode,
+                                                        (fixedMode) =>
+                                                            setA((current) => ({
+                                                                ...current,
+                                                                fixedMode,
+                                                            })),
+                                                    )}
+                                                </>
+                                            )}
+                                            {extra === 'minimum' &&
+                                                number(
+                                                    'minimum',
+                                                    t(
+                                                        'conditionalFlow.minimum',
+                                                    ),
+                                                    a.minimum,
+                                                    (n) =>
+                                                        setA((current) => ({
+                                                            ...current,
+                                                            minimum: n,
+                                                        })),
+                                                )}
+                                            {extra === 'maximum' &&
+                                                number(
+                                                    'maximum',
+                                                    t(
+                                                        'conditionalFlow.maximum',
+                                                    ),
+                                                    a.maximum,
+                                                    (n) =>
+                                                        setA((current) => ({
+                                                            ...current,
+                                                            maximum: n,
+                                                        })),
+                                                )}
+                                            {extra === 'bonus' && (
+                                                <>
+                                                    {number(
+                                                        'bonusThreshold',
+                                                        t(
+                                                            'conditionalFlow.bonusThreshold',
+                                                        ),
+                                                        a.bonusThreshold,
+                                                        (n) =>
+                                                            setA((current) => ({
+                                                                ...current,
+                                                                bonusThreshold:
+                                                                    n,
+                                                            })),
+                                                        true,
+                                                    )}
+                                                    {number(
+                                                        'bonusAmount',
+                                                        t(
+                                                            'conditionalFlow.bonusAmount',
+                                                        ),
+                                                        a.bonusAmount,
+                                                        (n) =>
+                                                            setA((current) => ({
+                                                                ...current,
+                                                                bonusAmount: n,
+                                                            })),
+                                                    )}
+                                                </>
+                                            )}
+                                            {extra === 'expenses' &&
+                                                expenseFields()}
+                                            {extra === 'deductions' && (
+                                                <>
+                                                    {a.ticketMode !== 'none' &&
+                                                        a.ticketMode !==
+                                                            'dj_fixed' && (
+                                                            <>
+                                                                <Text
+                                                                    style={{
+                                                                        color: c.fg,
+                                                                    }}
+                                                                >
+                                                                    {t(
+                                                                        'conditionalFlow.ticketBasis',
+                                                                    )}
+                                                                </Text>
+                                                                {choices(
+                                                                    'basis',
+                                                                    [
+                                                                        'gross',
+                                                                        'net',
+                                                                    ],
+                                                                    a.ticketBasis,
+                                                                    (
+                                                                        ticketBasis,
+                                                                    ) =>
+                                                                        setA(
+                                                                            (
+                                                                                current,
+                                                                            ) => ({
+                                                                                ...current,
+                                                                                ticketBasis,
+                                                                            }),
+                                                                        ),
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    {(model === 'bar' ||
+                                                        model ===
+                                                            'combined') && (
+                                                        <>
+                                                            <Text
+                                                                style={{
+                                                                    color: c.fg,
+                                                                }}
+                                                            >
+                                                                {t(
+                                                                    'conditionalFlow.barBasis',
+                                                                )}
+                                                            </Text>
+                                                            {choices(
+                                                                'basis',
+                                                                [
+                                                                    'gross',
+                                                                    'net',
+                                                                ],
+                                                                a.barBasis,
+                                                                (barBasis) =>
+                                                                    setA(
+                                                                        (
+                                                                            current,
+                                                                        ) => ({
+                                                                            ...current,
+                                                                            barBasis,
+                                                                        }),
+                                                                    ),
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
+                                            {extra === 'notes' && (
+                                                <TextInput
+                                                    accessibilityLabel={t(
+                                                        'conditional.notes',
+                                                    )}
+                                                    value={a.notes}
+                                                    onChangeText={(notes) =>
+                                                        setA((current) => ({
+                                                            ...current,
+                                                            notes,
+                                                        }))
+                                                    }
+                                                    editable={!busy}
+                                                    multiline
+                                                    maxLength={2000}
+                                                    placeholder={t(
+                                                        'conditional.notes',
+                                                    )}
+                                                    placeholderTextColor={
+                                                        c.muted
+                                                    }
+                                                    style={[
+                                                        field,
+                                                        {
+                                                            minHeight: 90,
+                                                            textAlignVertical:
+                                                                'top',
+                                                        },
+                                                    ]}
+                                                />
+                                            )}
+                                            {link(
+                                                t(
+                                                    'conditionalFlow.removeCondition',
+                                                ),
+                                                () => removeExtra(extra),
+                                            )}
+                                        </View>,
+                                    ),
+                                )}
+                                {link(t('conditionalFlow.addCondition'), () =>
+                                    setChoosingExtra((current) => !current),
+                                )}
+                                {choosingExtra && (
                                     <View
                                         style={{
-                                            padding: 20,
-                                            borderRadius: 20,
-                                            backgroundColor: c.tint,
+                                            flexDirection: 'row',
+                                            flexWrap: 'wrap',
+                                            gap: 8,
+                                        }}
+                                    >
+                                        {agreementExtras
+                                            .filter(
+                                                (key) =>
+                                                    !extras.includes(key) &&
+                                                    !(
+                                                        key === 'bonus' &&
+                                                        model === 'bar'
+                                                    ),
+                                            )
+                                            .map((key) =>
+                                                link(
+                                                    t(
+                                                        `conditionalFlow.extra_${key}`,
+                                                    ),
+                                                    () => {
+                                                        setExtras((current) => [
+                                                            ...current,
+                                                            key,
+                                                        ]);
+                                                        setChoosingExtra(false);
+                                                    },
+                                                ),
+                                            )}
+                                    </View>
+                                )}
+                                <View
+                                    style={{
+                                        borderTopWidth: 1,
+                                        borderColor: c.border,
+                                        paddingTop: 20,
+                                        gap: 16,
+                                    }}
+                                >
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
                                             gap: 12,
                                         }}
                                     >
                                         <Text
                                             style={{
                                                 color: c.fg,
-                                                fontWeight: '800',
-                                                fontSize: 17,
+                                                fontWeight: '700',
+                                                fontSize: 16,
+                                                flex: 1,
                                             }}
                                         >
-                                            {t('conditionalFlow.summary')}
+                                            {t('conditionalFlow.shareDjs')}
                                         </Text>
-                                        <Text
-                                            style={{
-                                                color: c.fg,
-                                                lineHeight: 23,
+                                        <Switch
+                                            accessibilityLabel={t(
+                                                'conditionalFlow.shareDjs',
+                                            )}
+                                            disabled={busy}
+                                            value={a.participants.length > 1}
+                                            onValueChange={toggleSplit}
+                                            trackColor={{
+                                                false: c.border,
+                                                true: c.accent,
                                             }}
-                                        >
-                                            {summary || modelLabel}
-                                        </Text>
-                                        {link(
-                                            t('conditionalFlow.trySales'),
-                                            () => navigate('forecast'),
-                                        )}
+                                        />
                                     </View>
-                                    {a.settled && (
-                                        <Text
-                                            style={{
-                                                color: c.muted,
-                                                lineHeight: 19,
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            {t(
-                                                'conditionalFlow.editSettledHint',
+                                    {a.participants.length > 1 && (
+                                        <>
+                                            {choices(
+                                                'split',
+                                                ['equal', 'percent', 'fixed'],
+                                                a.split,
+                                                (split) => {
+                                                    setDrafts({});
+                                                    setA((current) => ({
+                                                        ...current,
+                                                        split,
+                                                    }));
+                                                },
                                             )}
-                                        </Text>
-                                    )}
-                                </>
-                            )}
-                        </>
-                    ) : (
-                        <>
-                            {link(t('conditionalFlow.backAgreement'), () =>
-                                navigate('terms'),
-                            )}
-                            <View
-                                style={{
-                                    backgroundColor: c.tint,
-                                    borderRadius: 18,
-                                    padding: 16,
-                                    gap: 8,
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        color: c.accent,
-                                        fontWeight: '800',
-                                    }}
-                                >
-                                    {modelLabel}
-                                </Text>
-                                <Text style={{ color: c.fg, lineHeight: 22 }}>
-                                    {summary}
-                                </Text>
-                            </View>
-                            {ticketsNeeded &&
-                                section(
-                                    t('conditional.ticketSales'),
-                                    <>
-                                        {a.tickets.map((row, i) => (
-                                            <View key={i} style={{ gap: 12 }}>
-                                                <Text
-                                                    style={{
-                                                        color: c.fg,
-                                                        fontWeight: '700',
-                                                    }}
+                                            {a.participants.map((person, i) => (
+                                                <View
+                                                    key={i}
+                                                    style={{ gap: 10 }}
                                                 >
-                                                    {row.name} ·{' '}
-                                                    {money(row.price)}
-                                                </Text>
-                                                {number(
-                                                    `${dataKey}.qty.${i}`,
-                                                    t(
-                                                        mode === 'actual'
-                                                            ? 'conditionalFlow.sold'
-                                                            : 'conditionalFlow.expected',
-                                                    ),
-                                                    mode === 'actual'
-                                                        ? row.sold
-                                                        : row.estimate,
-                                                    (n) =>
-                                                        changeRow(
-                                                            i,
-                                                            mode === 'actual'
-                                                                ? { sold: n }
-                                                                : {
-                                                                      estimate:
-                                                                          n,
-                                                                  },
-                                                        ),
-                                                    true,
-                                                )}
-                                                {mode === 'actual' &&
-                                                    adjustments && (
-                                                        <>
-                                                            {number(
-                                                                `refund.${i}`,
-                                                                t(
-                                                                    'conditional.refunded',
+                                                    {i === 0 ? (
+                                                        <Text
+                                                            style={{
+                                                                color: c.fg,
+                                                                fontWeight:
+                                                                    '700',
+                                                            }}
+                                                        >
+                                                            {t('agreement.you')}
+                                                        </Text>
+                                                    ) : (
+                                                        text(
+                                                            `${t('agreement.djName')} ${i}`,
+                                                            person.name,
+                                                            (name) =>
+                                                                setA(
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
+                                                                        ...current,
+                                                                        participants:
+                                                                            current.participants.map(
+                                                                                (
+                                                                                    p,
+                                                                                    j,
+                                                                                ) =>
+                                                                                    i ===
+                                                                                    j
+                                                                                        ? {
+                                                                                              ...p,
+                                                                                              name,
+                                                                                          }
+                                                                                        : p,
+                                                                            ),
+                                                                    }),
                                                                 ),
-                                                                row.refunded,
-                                                                (n) =>
-                                                                    changeRow(
-                                                                        i,
-                                                                        {
-                                                                            refunded:
-                                                                                n,
-                                                                        },
-                                                                    ),
-                                                                true,
-                                                            )}
-                                                            {number(
-                                                                `invited.${i}`,
-                                                                t(
-                                                                    'conditional.invited',
-                                                                ),
-                                                                row.invited,
-                                                                (n) =>
-                                                                    changeRow(
-                                                                        i,
-                                                                        {
-                                                                            invited:
-                                                                                n,
-                                                                        },
-                                                                    ),
-                                                                true,
-                                                            )}
-                                                        </>
+                                                        )
                                                     )}
-                                            </View>
-                                        ))}
-                                        {mode === 'actual' &&
-                                            !adjustments &&
-                                            link(
-                                                t('conditionalFlow.addRefunds'),
-                                                () => setAdjustments(true),
-                                            )}
-                                        {mode === 'actual' && (
+                                                    {(a.split === 'percent' ||
+                                                        (a.split === 'fixed' &&
+                                                            i > 0)) &&
+                                                        number(
+                                                            `share.${i}`,
+                                                            `${t(a.split === 'percent' ? 'agreement.sharePercent' : 'agreement.shareFixed')} · ${person.name || t('agreement.you')}`,
+                                                            person.share,
+                                                            (share) =>
+                                                                setA(
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
+                                                                        ...current,
+                                                                        participants:
+                                                                            current.participants.map(
+                                                                                (
+                                                                                    p,
+                                                                                    j,
+                                                                                ) =>
+                                                                                    i ===
+                                                                                    j
+                                                                                        ? {
+                                                                                              ...p,
+                                                                                              share,
+                                                                                          }
+                                                                                        : p,
+                                                                            ),
+                                                                    }),
+                                                                ),
+                                                        )}
+                                                    {i > 0 &&
+                                                        link(
+                                                            t(
+                                                                'agreement.removeDj',
+                                                            ),
+                                                            () => {
+                                                                setDrafts({});
+                                                                setA(
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
+                                                                        ...current,
+                                                                        participants:
+                                                                            current.participants.filter(
+                                                                                (
+                                                                                    _,
+                                                                                    j,
+                                                                                ) =>
+                                                                                    i !==
+                                                                                    j,
+                                                                            ),
+                                                                    }),
+                                                                );
+                                                            },
+                                                        )}
+                                                </View>
+                                            ))}
+                                            {a.participants.length < 20 &&
+                                                link(t('agreement.addDj'), () =>
+                                                    setA((current) => ({
+                                                        ...current,
+                                                        participants: [
+                                                            ...current.participants,
+                                                            {
+                                                                name: '',
+                                                                share: 0,
+                                                            },
+                                                        ],
+                                                    })),
+                                                )}
                                             <Text
                                                 style={{
                                                     color: c.muted,
@@ -1438,23 +1198,152 @@ export function ConditionalAgreementEditor({
                                                     lineHeight: 18,
                                                 }}
                                             >
-                                                {t(
-                                                    'conditionalFlow.refundHint',
-                                                )}
+                                                {t('conditionalFlow.splitHint')}
                                             </Text>
-                                        )}
-                                        {a.ticketBasis === 'net' &&
-                                            a.ticketMode !== 'dj_fixed' &&
-                                            dataField('ticketDeductions')}
-                                    </>,
+                                        </>
+                                    )}
+                                </View>
+                                <View
+                                    style={{
+                                        padding: 20,
+                                        borderRadius: 20,
+                                        backgroundColor: c.tint,
+                                        gap: 12,
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: c.fg,
+                                            fontWeight: '800',
+                                            fontSize: 17,
+                                        }}
+                                    >
+                                        {t('conditionalFlow.summary')}
+                                    </Text>
+                                    <Text
+                                        style={{
+                                            color: c.fg,
+                                            lineHeight: 23,
+                                        }}
+                                    >
+                                        {summary || modelLabel}
+                                    </Text>
+                                    {link(t('conditionalFlow.trySales'), () =>
+                                        navigate('forecast'),
+                                    )}
+                                </View>
+                                {a.settled && (
+                                    <Text
+                                        style={{
+                                            color: c.muted,
+                                            lineHeight: 19,
+                                            fontSize: 12,
+                                        }}
+                                    >
+                                        {t('conditionalFlow.editSettledHint')}
+                                    </Text>
                                 )}
-                            {a.barPercent > 0 &&
-                                section(
-                                    t('conditionalFlow.barQuestion'),
-                                    <>
-                                        {dataField('bar')}
-                                        {a.barBasis === 'net' &&
-                                            dataField('barDeductions')}
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {link(t('conditionalFlow.backAgreement'), () =>
+                            navigate('terms'),
+                        )}
+                        <View
+                            style={{
+                                backgroundColor: c.tint,
+                                borderRadius: 18,
+                                padding: 16,
+                                gap: 8,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: c.accent,
+                                    fontWeight: '800',
+                                }}
+                            >
+                                {modelLabel}
+                            </Text>
+                            <Text style={{ color: c.fg, lineHeight: 22 }}>
+                                {summary}
+                            </Text>
+                        </View>
+                        {ticketsNeeded &&
+                            section(
+                                t('conditional.ticketSales'),
+                                <>
+                                    {a.tickets.map((row, i) => (
+                                        <View key={i} style={{ gap: 12 }}>
+                                            <Text
+                                                style={{
+                                                    color: c.fg,
+                                                    fontWeight: '700',
+                                                }}
+                                            >
+                                                {row.name} · {money(row.price)}
+                                            </Text>
+                                            {number(
+                                                `${dataKey}.qty.${i}`,
+                                                t(
+                                                    mode === 'actual'
+                                                        ? 'conditionalFlow.sold'
+                                                        : 'conditionalFlow.expected',
+                                                ),
+                                                mode === 'actual'
+                                                    ? row.sold
+                                                    : row.estimate,
+                                                (n) =>
+                                                    changeRow(
+                                                        i,
+                                                        mode === 'actual'
+                                                            ? { sold: n }
+                                                            : {
+                                                                  estimate: n,
+                                                              },
+                                                    ),
+                                                true,
+                                            )}
+                                            {mode === 'actual' &&
+                                                adjustments && (
+                                                    <>
+                                                        {number(
+                                                            `refund.${i}`,
+                                                            t(
+                                                                'conditional.refunded',
+                                                            ),
+                                                            row.refunded,
+                                                            (n) =>
+                                                                changeRow(i, {
+                                                                    refunded: n,
+                                                                }),
+                                                            true,
+                                                        )}
+                                                        {number(
+                                                            `invited.${i}`,
+                                                            t(
+                                                                'conditional.invited',
+                                                            ),
+                                                            row.invited,
+                                                            (n) =>
+                                                                changeRow(i, {
+                                                                    invited: n,
+                                                                }),
+                                                            true,
+                                                        )}
+                                                    </>
+                                                )}
+                                        </View>
+                                    ))}
+                                    {mode === 'actual' &&
+                                        !adjustments &&
+                                        link(
+                                            t('conditionalFlow.addRefunds'),
+                                            () => setAdjustments(true),
+                                        )}
+                                    {mode === 'actual' && (
                                         <Text
                                             style={{
                                                 color: c.muted,
@@ -1462,209 +1351,232 @@ export function ConditionalAgreementEditor({
                                                 lineHeight: 18,
                                             }}
                                         >
-                                            {t('conditional.barHint')}
+                                            {t('conditionalFlow.refundHint')}
                                         </Text>
-                                    </>,
-                                )}
-                            {extras.includes('expenses')
-                                ? section(
-                                      t('conditional.costs'),
-                                      expenseFields(),
-                                  )
-                                : link(t('conditionalFlow.addExpenses'), () =>
-                                      setExtras((current) => [
-                                          ...current,
-                                          'expenses',
-                                      ]),
-                                  )}
-                            <View
-                                style={{
-                                    padding: 20,
-                                    borderRadius: 22,
-                                    backgroundColor: c.card,
-                                    borderWidth: 1,
-                                    borderColor: c.border,
-                                    gap: 14,
-                                }}
-                            >
-                                <Text style={{ color: c.muted, fontSize: 13 }}>
-                                    {t(
-                                        mode === 'actual'
-                                            ? 'conditionalFlow.yourResult'
-                                            : 'conditionalFlow.yourEstimate',
                                     )}
-                                </Text>
-                                {result ? (
-                                    <>
-                                        <Text
-                                            style={{
-                                                color: c.accent,
-                                                fontSize: 36,
-                                                fontWeight: '800',
-                                            }}
-                                        >
-                                            {money(result.owner)}
-                                        </Text>
-                                        {[
-                                            ['ticketGross', result.ticketGross],
-                                            [
-                                                'venueRetention',
-                                                result.venueRetention,
-                                            ],
-                                            [
-                                                'ticketDeductions',
-                                                a.ticketBasis === 'net'
-                                                    ? data.ticketDeductions
-                                                    : 0,
-                                            ],
-                                            ['ticketsFee', result.tickets],
-                                            [
-                                                'barDeductions',
-                                                a.barBasis === 'net'
-                                                    ? data.barDeductions
-                                                    : 0,
-                                            ],
-                                            ['barFee', result.bar],
-                                            ['fixed', result.fixed],
-                                            ['bonusAmount', result.bonus],
-                                            ['expenses', result.expenses],
-                                            [
-                                                'minimumApplied',
-                                                result.minimumAdjustment,
-                                            ],
-                                            [
-                                                'capApplied',
-                                                result.capAdjustment,
-                                            ],
-                                            ['pool', result.total],
-                                        ]
-                                            .filter(
-                                                ([, amount]) =>
-                                                    Number(amount) > 0,
-                                            )
-                                            .map(([key, amount]) => (
-                                                <View
-                                                    key={String(key)}
-                                                    style={{
-                                                        flexDirection: 'row',
-                                                        justifyContent:
-                                                            'space-between',
-                                                        gap: 12,
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            color: c.muted,
-                                                            flex: 1,
-                                                        }}
-                                                    >
-                                                        {t(
-                                                            `conditional.${key}`,
-                                                        )}
-                                                    </Text>
-                                                    <Text
-                                                        style={{
-                                                            color: c.fg,
-                                                            fontWeight: '600',
-                                                        }}
-                                                    >
-                                                        {money(Number(amount))}
-                                                    </Text>
-                                                </View>
-                                            ))}
-                                        {a.participants.length > 1 &&
-                                            result.shares.map((share, i) => (
-                                                <View
-                                                    key={i}
-                                                    style={{
-                                                        flexDirection: 'row',
-                                                        gap: 12,
-                                                        justifyContent:
-                                                            'space-between',
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            color: c.fg,
-                                                            flex: 1,
-                                                        }}
-                                                    >
-                                                        {a.participants[i]
-                                                            .name ||
-                                                            t('agreement.you')}
-                                                    </Text>
-                                                    <Text
-                                                        style={{
-                                                            color: c.fg,
-                                                            fontWeight: '800',
-                                                        }}
-                                                    >
-                                                        {money(share)}
-                                                    </Text>
-                                                </View>
-                                            ))}
-                                    </>
-                                ) : (
+                                    {a.ticketBasis === 'net' &&
+                                        a.ticketMode !== 'dj_fixed' &&
+                                        dataField('ticketDeductions')}
+                                </>,
+                            )}
+                        {a.barPercent > 0 &&
+                            section(
+                                t('conditionalFlow.barQuestion'),
+                                <>
+                                    {dataField('bar')}
+                                    {a.barBasis === 'net' &&
+                                        dataField('barDeductions')}
                                     <Text
-                                        accessibilityRole="alert"
                                         style={{
                                             color: c.muted,
-                                            lineHeight: 20,
+                                            fontSize: 12,
+                                            lineHeight: 18,
                                         }}
                                     >
-                                        {t(calculationError)}
+                                        {t('conditional.barHint')}
                                     </Text>
+                                </>,
+                            )}
+                        {extras.includes('expenses')
+                            ? section(t('conditional.costs'), expenseFields())
+                            : link(t('conditionalFlow.addExpenses'), () =>
+                                  setExtras((current) => [
+                                      ...current,
+                                      'expenses',
+                                  ]),
+                              )}
+                        <View
+                            style={{
+                                padding: 20,
+                                borderRadius: 22,
+                                backgroundColor: c.card,
+                                borderWidth: 1,
+                                borderColor: c.border,
+                                gap: 14,
+                            }}
+                        >
+                            <Text style={{ color: c.muted, fontSize: 13 }}>
+                                {t(
+                                    mode === 'actual'
+                                        ? 'conditionalFlow.yourResult'
+                                        : 'conditionalFlow.yourEstimate',
                                 )}
-                            </View>
-                            {mode === 'actual' && (
+                            </Text>
+                            {result ? (
+                                <>
+                                    <Text
+                                        style={{
+                                            color: c.accent,
+                                            fontSize: 36,
+                                            fontWeight: '800',
+                                        }}
+                                    >
+                                        {money(result.owner)}
+                                    </Text>
+                                    {[
+                                        ['ticketGross', result.ticketGross],
+                                        [
+                                            'venueRetention',
+                                            result.venueRetention,
+                                        ],
+                                        [
+                                            'ticketDeductions',
+                                            a.ticketBasis === 'net'
+                                                ? data.ticketDeductions
+                                                : 0,
+                                        ],
+                                        ['ticketsFee', result.tickets],
+                                        [
+                                            'barDeductions',
+                                            a.barBasis === 'net'
+                                                ? data.barDeductions
+                                                : 0,
+                                        ],
+                                        ['barFee', result.bar],
+                                        ['fixed', result.fixed],
+                                        ['bonusAmount', result.bonus],
+                                        ['expenses', result.expenses],
+                                        [
+                                            'minimumApplied',
+                                            result.minimumAdjustment,
+                                        ],
+                                        ['capApplied', result.capAdjustment],
+                                        ['pool', result.total],
+                                    ]
+                                        .filter(
+                                            ([, amount]) => Number(amount) > 0,
+                                        )
+                                        .map(([key, amount]) => (
+                                            <View
+                                                key={String(key)}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    justifyContent:
+                                                        'space-between',
+                                                    gap: 12,
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        color: c.muted,
+                                                        flex: 1,
+                                                    }}
+                                                >
+                                                    {t(`conditional.${key}`)}
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        color: c.fg,
+                                                        fontWeight: '600',
+                                                    }}
+                                                >
+                                                    {money(Number(amount))}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                    {a.participants.length > 1 &&
+                                        result.shares.map((share, i) => (
+                                            <View
+                                                key={i}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    gap: 12,
+                                                    justifyContent:
+                                                        'space-between',
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        color: c.fg,
+                                                        flex: 1,
+                                                    }}
+                                                >
+                                                    {a.participants[i].name ||
+                                                        t('agreement.you')}
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        color: c.fg,
+                                                        fontWeight: '800',
+                                                    }}
+                                                >
+                                                    {money(share)}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                </>
+                            ) : (
                                 <Text
+                                    accessibilityRole="alert"
                                     style={{
                                         color: c.muted,
-                                        fontSize: 12,
-                                        lineHeight: 18,
+                                        lineHeight: 20,
                                     }}
                                 >
-                                    {t('conditionalFlow.notPaid')}
+                                    {t(calculationError)}
                                 </Text>
                             )}
-                        </>
-                    )}
-                    {!!error && (
-                        <Text
-                            accessibilityRole="alert"
-                            style={{ color: '#dc4545', lineHeight: 20 }}
-                        >
-                            {t(error)}
-                        </Text>
-                    )}
-                </ScrollView>
-                {!keyboard && (
-                    <View
-                        style={{
-                            padding: 20,
-                            paddingTop: 12,
-                            borderTopWidth: 1,
-                            borderColor: c.border,
-                        }}
-                    >
-                        <CommunityButton
-                            busy={busy}
-                            disabled={busy || (!model && mode === 'terms')}
-                            label={t(
-                                mode === 'actual'
-                                    ? 'conditionalFlow.saveResult'
-                                    : mode === 'forecast'
-                                      ? 'conditionalFlow.backAgreement'
-                                      : 'conditional.saveTerms',
-                            )}
-                            onPress={() => {
-                                if (mode === 'forecast') navigate('terms');
-                                else void save();
-                            }}
-                        />
-                    </View>
+                        </View>
+                        {mode === 'actual' && (
+                            <Text
+                                style={{
+                                    color: c.muted,
+                                    fontSize: 12,
+                                    lineHeight: 18,
+                                }}
+                            >
+                                {t('conditionalFlow.notPaid')}
+                            </Text>
+                        )}
+                    </>
                 )}
-            </SafeAreaView>
+                {!!error && (
+                    <Text
+                        accessibilityRole="alert"
+                        style={{ color: '#dc4545', lineHeight: 20 }}
+                    >
+                        {t(error)}
+                    </Text>
+                )}
+            </ScrollView>
+            {!keyboard && (
+                <View
+                    style={{
+                        padding: 20,
+                        paddingTop: 12,
+                        borderTopWidth: 1,
+                        borderColor: c.border,
+                    }}
+                >
+                    <CommunityButton
+                        busy={busy}
+                        disabled={busy || (!model && mode === 'terms')}
+                        label={t(
+                            mode === 'actual'
+                                ? 'conditionalFlow.saveResult'
+                                : mode === 'forecast'
+                                  ? 'conditionalFlow.backAgreement'
+                                  : 'conditional.saveTerms',
+                        )}
+                        onPress={() => {
+                            if (mode === 'forecast') navigate('terms');
+                            else void save();
+                        }}
+                    />
+                </View>
+            )}
+        </SafeAreaView>
+    );
+    if (presentation === 'screen') return content;
+    return (
+        <Modal
+            visible
+            animationType="slide"
+            onRequestClose={() => {
+                if (!busy) onClose();
+            }}
+        >
+            {content}
         </Modal>
     );
 }

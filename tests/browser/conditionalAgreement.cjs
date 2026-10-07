@@ -177,7 +177,44 @@ const errors = [];
     });
     const flow = labels.conditionalFlow;
     const costs = labels.conditionalCosts;
-    await page.goto('http://localhost:8081/conditional-session');
+    // Exercise the real + menu entry, including closing and reopening it.
+    await page.goto('http://localhost:8081/home');
+    await page
+        .getByRole('button', { name: labels.createMenu.title, exact: true })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.createMenu.conditional,
+            exact: true,
+        })
+        .click();
+    await page
+        .getByRole('radio', {
+            name: flow.model_ticket + ' ' + flow.example_ticket,
+            exact: true,
+        })
+        .waitFor();
+    assert.equal(
+        await page
+            .getByRole('button', {
+                name: labels.conditional.newSession,
+                exact: true,
+            })
+            .count(),
+        0,
+        'No target selection before the agreement',
+    );
+    await page.getByRole('button', { name: labels.back, exact: true }).click();
+    await page.waitForURL('**/home');
+    await page
+        .getByRole('button', { name: labels.createMenu.title, exact: true })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.createMenu.conditional,
+            exact: true,
+        })
+        .click();
     const option = page.getByRole('radio', {
         name: flow.model_ticket + ' ' + flow.example_ticket,
         exact: true,

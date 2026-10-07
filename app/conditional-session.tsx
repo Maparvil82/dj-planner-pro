@@ -68,6 +68,76 @@ export default function ConditionalSessionScreen() {
                         .includes(search.toLocaleLowerCase()),
             )
             .sort((a, b) => b.date.localeCompare(a.date)) || [];
+    // Render a single screen: presenting a native Modal while the + menu
+    // dismisses can leave an invisible touch-blocking window on iOS.
+    if (usage.isPending || usage.isError)
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
+                <SessionFormHeader
+                    title={t('conditional.title')}
+                    badge="PRO"
+                    subtitle={t('conditionalFlow.intro')}
+                    onClose={() =>
+                        router.canGoBack()
+                            ? router.back()
+                            : router.replace('/home')
+                    }
+                />
+                {usage.isPending ? (
+                    <ActivityIndicator color={c.accent} />
+                ) : (
+                    <CommunityMessage
+                        title={t('billing.verificationError')}
+                        retry={() => void usage.refetch()}
+                    />
+                )}
+            </SafeAreaView>
+        );
+    if (editing)
+        return (
+            <ConditionalAgreementEditor
+                presentation="screen"
+                value={
+                    selected?.fee_agreement?.version === 2
+                        ? selected.fee_agreement
+                        : draft
+                }
+                currency={selected?.currency || '€'}
+                names={selected?.djs || []}
+                canSettle={!!selected && sessionPhase(selected) === 'finished'}
+                onClose={() => {
+                    setSelected(null);
+                    setEditing(false);
+                    if (!draft)
+                        router.canGoBack()
+                            ? router.back()
+                            : router.replace('/home');
+                }}
+                onSave={async (a) => {
+                    if (!selected) {
+                        setDraft(a);
+                        setEditing(false);
+                        return;
+                    }
+                    await mutation.mutateAsync({
+                        sessionId: selected.id,
+                        input: {
+                            earning_type: 'agreement',
+                            fee_agreement: {
+                                ...a,
+                                timezone:
+                                    selected.booking_timezone || a.timezone,
+                            },
+                            earning_amount: agreementAmount(a),
+                        },
+                        updateAll: false,
+                    });
+                    setSelected(null);
+                    setEditing(false);
+                    router.replace(`/session/${selected.id}`);
+                }}
+            />
+        );
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
             <SessionFormHeader
@@ -87,33 +157,20 @@ export default function ConditionalSessionScreen() {
                 }}
                 keyboardShouldPersistTaps="handled"
             >
-                {usage.isPending ? (
-                    <ActivityIndicator color={c.accent} />
-                ) : usage.isError ? (
-                    <CommunityMessage
-                        title={t('billing.verificationError')}
-                        retry={() => void usage.refetch()}
-                    />
-                ) : (
-                    <>
-                        <CommunityButton
-                            label={t('conditional.newSession')}
-                            onPress={() =>
-                                requirePro(() => {
-                                    useConditionalDraft.getState().set(draft);
-                                    router.replace(
-                                        '/add-session?conditional=1',
-                                    );
-                                })
-                            }
-                        />
-                        <CommunityButton
-                            secondary
-                            label={t('conditional.existingSession')}
-                            onPress={() => requirePro(() => setChoosing(true))}
-                        />
-                    </>
-                )}
+                <CommunityButton
+                    label={t('conditional.newSession')}
+                    onPress={() =>
+                        requirePro(() => {
+                            useConditionalDraft.getState().set(draft);
+                            router.replace('/add-session?conditional=1');
+                        })
+                    }
+                />
+                <CommunityButton
+                    secondary
+                    label={t('conditional.existingSession')}
+                    onPress={() => requirePro(() => setChoosing(true))}
+                />
                 {choosing && (
                     <>
                         <TextInput
@@ -195,51 +252,6 @@ export default function ConditionalSessionScreen() {
                     {t('conditional.privateHint')}
                 </Text>
             </ScrollView>
-            {editing && !!usage.data?.isPro && !usage.isError && (
-                <ConditionalAgreementEditor
-                    value={
-                        selected?.fee_agreement?.version === 2
-                            ? selected.fee_agreement
-                            : draft
-                    }
-                    currency={selected?.currency || '€'}
-                    names={selected?.djs || []}
-                    canSettle={
-                        !!selected && sessionPhase(selected) === 'finished'
-                    }
-                    onClose={() => {
-                        setSelected(null);
-                        setEditing(false);
-                        if (!draft)
-                            router.canGoBack()
-                                ? router.back()
-                                : router.replace('/home');
-                    }}
-                    onSave={async (a) => {
-                        if (!selected) {
-                            setDraft(a);
-                            setEditing(false);
-                            return;
-                        }
-                        await mutation.mutateAsync({
-                            sessionId: selected.id,
-                            input: {
-                                earning_type: 'agreement',
-                                fee_agreement: {
-                                    ...a,
-                                    timezone:
-                                        selected.booking_timezone || a.timezone,
-                                },
-                                earning_amount: agreementAmount(a),
-                            },
-                            updateAll: false,
-                        });
-                        setSelected(null);
-                        setEditing(false);
-                        router.replace(`/session/${selected.id}`);
-                    }}
-                />
-            )}
         </SafeAreaView>
     );
 }
