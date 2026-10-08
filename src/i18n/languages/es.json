@@ -1316,7 +1316,12 @@
         "ticketNamesRequired": "Pon un nombre a cada tipo de entrada antes de simular.",
         "djNamesRequired": "Completa el nombre de los otros DJs antes de simular.",
         "duplicateDj": "Tu parte ya está incluida. No repitas tu nombre ni el de otro DJ.",
-        "simulationBlocked": "Para mostrar el resultado, revisa estos datos:"
+        "simulationBlocked": "Para mostrar el resultado, revisa estos datos:",
+        "feeExceedsPrice": "Lo que reciben los DJs por entrada no puede superar el precio de ningún tipo de entrada. Revisa los precios o el importe para los DJs.",
+        "draftHint": "Estas condiciones aún no están guardadas. Crea una sesión o elige una existente para aplicarlas.",
+        "applyAndSave": "Aplicar y guardar en esta sesión",
+        "applyHint": "Este acuerdo sustituirá el caché de esta sesión. Solo se aplica a esta fecha; los pagos registrados se conservan. Después podrás descargar el PDF.",
+        "replaceHint": "Esta sesión ya tiene un acuerdo: al guardar se sustituirán sus condiciones y su liquidación anterior."
     },
     "conditionalCosts": {
         "concept": "Concepto",

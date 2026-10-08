@@ -298,6 +298,8 @@ export function validateConditionalAgreement(a: ConditionalAgreement) {
         )
             fail();
         numeric(row.price);
+        if (a.ticketMode === 'dj_fixed' && a.ticketValue > row.price)
+            fail('conditionalFlow.feeExceedsPrice');
         for (const n of [row.estimate, row.sold, row.refunded, row.invited])
             numeric(n, true);
         if (

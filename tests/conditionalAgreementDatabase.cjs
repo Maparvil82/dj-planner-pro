@@ -94,6 +94,7 @@ async function update(id, a) {
     );
     await migrate('20261006145027_conditional_sessions_v2.sql');
     await migrate('20261007094222_conditional_expense_items.sql');
+    await migrate('20261008011500_ticket_fee_price_limit.sql');
     await db.query('insert into auth.users values($1),($2)', [owner, other]);
     await role('authenticated', owner);
     await assert.rejects(() => create(), /proRequired/);
@@ -228,6 +229,13 @@ async function update(id, a) {
             calculateConditionalAgreement(a, true).owner,
         );
     }
+    await assert.rejects(
+        () => create(plan({ ticketMode: 'dj_fixed', ticketValue: 11 })),
+        /feeExceedsPrice/,
+    );
+    const tooHigh = plan({ ticketMode: 'dj_fixed', ticketValue: 6 });
+    tooHigh.tickets.push({ ...tooHigh.tickets[0], name: 'Early', price: 5 });
+    await assert.rejects(() => create(tooHigh), /feeExceedsPrice/);
     const future = await create(plan(), '2099-01-01');
     await assert.rejects(
         () => update(future.id, { ...plan(), settled: true }),

@@ -1316,7 +1316,12 @@
         "ticketNamesRequired": "Assegna un nome a ogni tipo di biglietto prima di simulare.",
         "djNamesRequired": "Inserisci i nomi degli altri DJ prima di simulare.",
         "duplicateDj": "La tua quota è già inclusa. Non ripetere nessun nome di DJ.",
-        "simulationBlocked": "Per mostrare il risultato, controlla questi dati:"
+        "simulationBlocked": "Per mostrare il risultato, controlla questi dati:",
+        "feeExceedsPrice": "La quota dei DJ per biglietto non può superare il prezzo di nessun tipo di biglietto. Controlla prezzi o quota DJ.",
+        "draftHint": "Queste condizioni non sono ancora salvate. Crea una sessione o scegli una esistente.",
+        "applyAndSave": "Applica e salva in questa sessione",
+        "applyHint": "L’accordo sostituisce il cachet solo per questa data. I pagamenti registrati vengono conservati. Poi potrai scaricare il PDF.",
+        "replaceHint": "Questa sessione ha già un accordo: salvando sostituirai le condizioni e la liquidazione precedente."
     },
     "conditionalCosts": {
         "concept": "Descrizione",

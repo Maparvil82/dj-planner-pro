@@ -87,13 +87,14 @@ test('net ticket and bar bases, itemized costs, guarantees and DJ splits reconci
     assert.equal(amount(guarantee, 'fixedTopUp'), 201);
     assert.equal(guarantee.result.total, 900);
 });
-test('fixed ticket fees exceeding revenue show required funding, not negative venue profit', () => {
+test('DJ ticket fees above any ticket price are rejected instead of requiring extra funding', () => {
     const a = plan();
-    a.ticketValue = 10;
-    const b = conditionalBreakdown(a, false);
-    assert.equal(amount(b, 'ticketTopUp'), 250);
-    assert.equal(amount(b, 'remainder'), undefined);
+    a.ticketValue = 6;
+    assert.throws(() => conditionalBreakdown(a, false), /feeExceedsPrice/);
+    a.ticketValue = 5;
+    assert.equal(conditionalBreakdown(a, false).result.owner, 750);
 });
+
 test('agreement document has terms and signature blanks, escapes content, excludes forecast sales and resolves every language', async () => {
     const resources = Object.fromEntries(
         fs

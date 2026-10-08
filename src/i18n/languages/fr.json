@@ -1314,7 +1314,12 @@
         "ticketNamesRequired": "Nommez chaque type de billet avant la simulation.",
         "djNamesRequired": "Renseignez le nom des autres DJs avant la simulation.",
         "duplicateDj": "Votre part est déjà incluse. Ne répétez aucun nom de DJ.",
-        "simulationBlocked": "Pour afficher le résultat, vérifiez ces données :"
+        "simulationBlocked": "Pour afficher le résultat, vérifiez ces données :",
+        "feeExceedsPrice": "La part des DJs par billet ne peut dépasser le prix d’aucun type de billet. Vérifiez les prix ou la part des DJs.",
+        "draftHint": "Ces conditions ne sont pas encore enregistrées. Créez une session ou choisissez une session existante.",
+        "applyAndSave": "Appliquer et enregistrer dans cette session",
+        "applyHint": "Cet accord remplace le cachet de cette session, uniquement pour cette date. Les paiements enregistrés sont conservés. Vous pourrez ensuite télécharger le PDF.",
+        "replaceHint": "Cette session a déjà un accord : l’enregistrement remplacera ses conditions et son décompte précédent."
     },
     "conditionalCosts": {
         "concept": "Libellé",

@@ -1,6 +1,6 @@
 import { useConditionalDraft } from '../src/store/useConditionalDraft';
 import type { ConditionalAgreement } from '../src/utils/feeAgreement';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -19,7 +19,7 @@ import { sessionService } from '../src/services/sessions';
 import { type Session } from '../src/types/session';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import { sessionPhase } from '../src/utils/sessionWorkflow';
-import { agreementAmount } from '../src/utils/feeAgreement';
+import { conditionalSummary } from '../src/utils/conditionalPresentation';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { SessionFormHeader } from '../src/components/sessions/SessionFormLayout';
 import {
@@ -40,6 +40,9 @@ export default function ConditionalSessionScreen() {
     const [editing, setEditing] = useState(true);
     const [choosing, setChoosing] = useState(false),
         [search, setSearch] = useState('');
+    const [applyError, setApplyError] = useState('');
+    const applying = useRef(false);
+    const scroll = useRef<ScrollView>(null);
     const [selected, setSelected] = useState<Session | null>(null);
     const sessions = useQuery({
         queryKey: ['sessions', 'all', userId],
@@ -49,7 +52,7 @@ export default function ConditionalSessionScreen() {
     });
     if (!userId) return <Redirect href="/(auth)/login" />;
     const requirePro = (action: () => void) => {
-        if (usage.isError || usage.isPending) return;
+        if (usage.isError || usage.isPending || mutation.isPending) return;
         if (!usage.data?.isPro) router.push('/paywall?reason=conditional');
         else action();
     };
@@ -97,11 +100,8 @@ export default function ConditionalSessionScreen() {
         return (
             <ConditionalAgreementEditor
                 presentation="screen"
-                value={
-                    selected?.fee_agreement?.version === 2
-                        ? selected.fee_agreement
-                        : draft
-                }
+                value={draft}
+                termsActionLabel={t('continue')}
                 currency={selected?.currency || '€'}
                 names={selected?.djs || []}
                 canSettle={!!selected && sessionPhase(selected) === 'finished'}
@@ -113,42 +113,58 @@ export default function ConditionalSessionScreen() {
                             ? router.back()
                             : router.replace('/home');
                 }}
-                onSave={async (a) => {
-                    if (!selected) {
-                        setDraft(a);
-                        setEditing(false);
-                        return;
-                    }
-                    await mutation.mutateAsync({
-                        sessionId: selected.id,
-                        input: {
-                            earning_type: 'agreement',
-                            fee_agreement: {
-                                ...a,
-                                timezone:
-                                    selected.booking_timezone || a.timezone,
-                            },
-                            earning_amount: agreementAmount(a),
-                        },
-                        updateAll: false,
-                    });
+                onSave={(a) => {
+                    setDraft(a);
                     setSelected(null);
                     setEditing(false);
-                    router.replace(`/session/${selected.id}`);
                 }}
             />
         );
+    const apply = async () => {
+        if (!draft || !selected || applying.current) return;
+        applying.current = true;
+        setApplyError('');
+        try {
+            await mutation.mutateAsync({
+                sessionId: selected.id,
+                input: {
+                    earning_type: 'agreement',
+                    fee_agreement: {
+                        ...draft,
+                        settled: false,
+                        timezone: selected.booking_timezone || draft.timezone,
+                    },
+                    earning_amount: 0,
+                },
+                updateAll: false,
+            });
+            router.replace(`/session/${selected.id}`);
+        } catch (e) {
+            const key =
+                e instanceof Error
+                    ? e.message
+                    : (e as { message?: string })?.message;
+            setApplyError(
+                key?.startsWith('conditional') || key?.startsWith('agreement.')
+                    ? key
+                    : 'error_saving_session',
+            );
+        } finally {
+            applying.current = false;
+        }
+    };
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
             <SessionFormHeader
                 title={t('conditionalCosts.apply')}
                 badge="PRO"
-                subtitle={t('conditionalCosts.chooseSession')}
+                subtitle={t('conditionalFlow.draftHint')}
                 onClose={() =>
                     router.canGoBack() ? router.back() : router.replace('/home')
                 }
             />
             <ScrollView
+                ref={scroll}
                 contentContainerStyle={{
                     padding: 20,
                     paddingTop: 0,
@@ -157,6 +173,33 @@ export default function ConditionalSessionScreen() {
                 }}
                 keyboardShouldPersistTaps="handled"
             >
+                {draft && (
+                    <View
+                        style={{
+                            padding: 18,
+                            borderRadius: 18,
+                            backgroundColor: c.tint,
+                            gap: 10,
+                        }}
+                    >
+                        <Text style={{ color: c.fg, lineHeight: 23 }}>
+                            {conditionalSummary(
+                                draft,
+                                t,
+                                (n) => `${n} ${selected?.currency || '€'}`,
+                            )}
+                        </Text>
+                        <CommunityButton
+                            secondary
+                            compact
+                            label={t('conditionalFlow.editAgreement')}
+                            onPress={() => {
+                                setSelected(null);
+                                setEditing(true);
+                            }}
+                        />
+                    </View>
+                )}
                 <CommunityButton
                     label={t('conditional.newSession')}
                     onPress={() =>
@@ -206,9 +249,15 @@ export default function ConditionalSessionScreen() {
                                 <TouchableOpacity
                                     key={s.id}
                                     accessibilityRole="button"
+                                    disabled={mutation.isPending}
                                     onPress={() => {
                                         setSelected(s);
-                                        setEditing(true);
+                                        setApplyError('');
+                                        requestAnimationFrame(() =>
+                                            scroll.current?.scrollToEnd({
+                                                animated: true,
+                                            }),
+                                        );
                                     }}
                                     style={{
                                         padding: 18,
@@ -247,6 +296,53 @@ export default function ConditionalSessionScreen() {
                             ))
                         )}
                     </>
+                )}
+                {selected && draft && (
+                    <View
+                        style={{
+                            borderWidth: 1,
+                            borderColor: c.accent,
+                            backgroundColor: c.card,
+                            borderRadius: 18,
+                            padding: 18,
+                            gap: 12,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: c.fg,
+                                fontWeight: '800',
+                                fontSize: 18,
+                            }}
+                        >
+                            {sessionDisplayTitle(selected, t)}
+                        </Text>
+                        <Text style={{ color: c.muted }}>
+                            {selected.date} · {selected.venue}
+                        </Text>
+                        <Text style={{ color: c.muted, lineHeight: 21 }}>
+                            {t('conditionalFlow.applyHint')}
+                        </Text>
+                        {selected.fee_agreement && (
+                            <Text style={{ color: c.fg, lineHeight: 21 }}>
+                                {t('conditionalFlow.replaceHint')}
+                            </Text>
+                        )}
+                        {!!applyError && (
+                            <Text
+                                accessibilityRole="alert"
+                                style={{ color: '#dc4545' }}
+                            >
+                                {t(applyError)}
+                            </Text>
+                        )}
+                        <CommunityButton
+                            label={t('conditionalFlow.applyAndSave')}
+                            busy={mutation.isPending}
+                            disabled={mutation.isPending}
+                            onPress={() => void apply()}
+                        />
+                    </View>
                 )}
                 <Text style={{ color: c.muted, fontSize: 12, lineHeight: 18 }}>
                     {t('conditional.privateHint')}

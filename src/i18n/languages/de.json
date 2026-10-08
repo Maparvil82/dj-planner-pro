@@ -1316,7 +1316,12 @@
         "ticketNamesRequired": "Benenne jede Ticketart vor der Simulation.",
         "djNamesRequired": "Trage vor der Simulation die Namen der anderen DJs ein.",
         "duplicateDj": "Dein Anteil ist bereits enthalten. Wiederhole keinen DJ-Namen.",
-        "simulationBlocked": "Prüfe diese Angaben, um das Ergebnis anzuzeigen:"
+        "simulationBlocked": "Prüfe diese Angaben, um das Ergebnis anzuzeigen:",
+        "feeExceedsPrice": "Die DJ-Gage pro Ticket darf den Preis keiner Ticketart übersteigen. Prüfe Preise oder DJ-Gage.",
+        "draftHint": "Diese Bedingungen sind noch nicht gespeichert. Erstelle eine Session oder wähle eine bestehende.",
+        "applyAndSave": "Auf diese Session anwenden und speichern",
+        "applyHint": "Die Vereinbarung ersetzt die Gage nur für dieses Datum. Erfasste Zahlungen bleiben erhalten. Danach kannst du das PDF herunterladen.",
+        "replaceHint": "Diese Session hat bereits eine Vereinbarung. Das Speichern ersetzt ihre Bedingungen und bisherige Abrechnung."
     },
     "conditionalCosts": {
         "concept": "Bezeichnung",

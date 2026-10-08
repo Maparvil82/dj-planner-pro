@@ -1320,7 +1320,12 @@
         "ticketNamesRequired": "Name each ticket type before simulating.",
         "djNamesRequired": "Enter the other DJs’ names before simulating.",
         "duplicateDj": "Your share is already included. Do not repeat your name or another DJ’s name.",
-        "simulationBlocked": "To show the result, check these details:"
+        "simulationBlocked": "To show the result, check these details:",
+        "feeExceedsPrice": "The DJ fee per ticket cannot exceed the price of any ticket type. Check the prices or DJ fee.",
+        "draftHint": "These terms are not saved yet. Create a session or choose an existing one to apply them.",
+        "applyAndSave": "Apply and save to this session",
+        "applyHint": "This agreement replaces this session’s fee. It applies only to this date; recorded payments are preserved. You can then download the PDF.",
+        "replaceHint": "This session already has an agreement: saving replaces its terms and previous settlement."
     },
     "conditionalCosts": {
         "concept": "Description",

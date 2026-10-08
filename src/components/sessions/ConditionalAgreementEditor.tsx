@@ -42,6 +42,7 @@ export function ConditionalAgreementEditor({
     canSettle = false,
     initialMode = 'terms',
     presentation = 'modal',
+    termsActionLabel,
     onSave,
     onClose,
 }: {
@@ -51,6 +52,7 @@ export function ConditionalAgreementEditor({
     canSettle?: boolean;
     initialMode?: Mode;
     presentation?: 'modal' | 'screen';
+    termsActionLabel?: string;
     onSave: (value: ConditionalAgreement) => void | Promise<unknown>;
     onClose: () => void;
 }) {
@@ -357,6 +359,11 @@ export function ConditionalAgreementEditor({
             ],
         }));
     const readinessError = () => {
+        if (
+            a.ticketMode === 'dj_fixed' &&
+            a.tickets.some((row) => a.ticketValue > row.price)
+        )
+            return 'conditionalFlow.feeExceedsPrice';
         if (a.tickets.some((ticket) => !ticket.name.trim()))
             return 'conditionalFlow.ticketNamesRequired';
         if (a.participants.slice(1).some((person) => !person.name.trim()))
@@ -864,6 +871,25 @@ export function ConditionalAgreementEditor({
                                                                 ticketValue: n,
                                                             })),
                                                     )}
+                                                    {a.ticketMode ===
+                                                        'dj_fixed' &&
+                                                        a.tickets.some(
+                                                            (row) =>
+                                                                a.ticketValue >
+                                                                row.price,
+                                                        ) && (
+                                                            <Text
+                                                                accessibilityRole="alert"
+                                                                style={{
+                                                                    color: '#dc4545',
+                                                                    lineHeight: 20,
+                                                                }}
+                                                            >
+                                                                {t(
+                                                                    'conditionalFlow.feeExceedsPrice',
+                                                                )}
+                                                            </Text>
+                                                        )}
                                                 </>
                                             )}
                                         </>,
@@ -1696,13 +1722,17 @@ export function ConditionalAgreementEditor({
                     <CommunityButton
                         busy={busy}
                         disabled={busy || (!model && mode === 'terms')}
-                        label={t(
-                            mode === 'actual'
-                                ? 'conditionalFlow.saveResult'
-                                : mode === 'forecast'
-                                  ? 'conditionalFlow.backAgreement'
-                                  : 'conditional.saveTerms',
-                        )}
+                        label={
+                            mode === 'terms' && termsActionLabel
+                                ? termsActionLabel
+                                : t(
+                                      mode === 'actual'
+                                          ? 'conditionalFlow.saveResult'
+                                          : mode === 'forecast'
+                                            ? 'conditionalFlow.backAgreement'
+                                            : 'conditional.saveTerms',
+                                  )
+                        }
                         onPress={() => {
                             if (mode === 'forecast') navigate('terms');
                             else void save();

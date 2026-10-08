@@ -36,8 +36,8 @@ El porcentaje de taquilla y el porcentaje de barra pueden ser distintos. No se a
 ## Recorrido
 
 1. **¿Cómo vas a cobrar?** Elegir importe fijo al DJ por entrada, porcentaje de taquilla, porcentaje de barra o combinado. Los importes comienzan vacíos; los ejemplos explican el modelo sin imponer condiciones.
-2. Introducir los precios y la participación. **Añadir otra condición** muestra fijo, mínimo, máximo, bonus, gastos, deducciones o notas cuando hacen falta. El reparto entre DJs es opcional; por defecto el propietario recibe todo.
-3. Un resumen explica el acuerdo en lenguaje natural. **Probar con unas ventas** abre una calculadora separada; volver conserva las cantidades introducidas. Guardar condiciones no registra ingresos realizados.
+2. Introducir los precios y la participación. En **Por entrada**, **Otro tipo de entrada** añade un bloque separado. El importe para los DJs no puede superar el precio de ningún tipo, tanto en el formulario como en Supabase. Los extras siguen disponibles en los otros modelos. El reparto entre DJs es opcional; por defecto el propietario recibe todo.
+3. Un resumen explica el acuerdo en lenguaje natural. **Hacer simulación** abre una calculadora separada; volver conserva las cantidades introducidas. **Continuar** lleva a elegir una sesión; todavía no guarda nada. En una sesión nueva hay que completar y guardar el evento. En una existente, seleccionar la fecha y pulsar **Aplicar y guardar en esta sesión**. Si ya tenía acuerdo, se avisa antes de sustituirlo. Solo esta confirmación persiste las condiciones; no registra ingresos realizados. Al terminar se abre el detalle con el acuerdo y **Descargar acuerdo PDF** en la parte superior.
 4. Después de la hora de fin, **Calcular mi caché** abre los resultados reales desde el detalle. Solo pide las cajas y cantidades correspondientes al acuerdo; devoluciones, invitados y gastos se despliegan cuando hacen falta. Guardar registra el caché del propietario, manteniendo los pagos independientes.
 5. **Editar condiciones** y **Revisar resultado** permiten corregir un acuerdo o una liquidación existente. La edición conserva las ventas y los pagos; cambiar condiciones de un acuerdo liquidado recalcula el resultado real.
 
@@ -74,6 +74,10 @@ El fijo y las garantías quedan fuera de esa base. Los gastos antiguos se conser
 - La simulación guarda `earning_amount = 0`; la liquidación guarda solo la parte del propietario. Los pagos existentes no se cambian.
 - Al caducar Pro se conserva la lectura de la información. Editar el acuerdo requiere recuperar Pro.
 - Las canceladas no se pueden seleccionar para convertir ni liquidar.
+
+## Documento del acuerdo
+
+El detalle prepara un PDF local de las condiciones guardadas, con datos de la sesión, referencia, tipos y precios de entrada, reparto entre DJs, gastos y espacios de identificación y firma. No incluye ventas simuladas. Si hay una liquidación registrada, se añade su desglose. La descarga abre las opciones del sistema para guardar o compartir; no envía el documento automáticamente. Es un documento pendiente de revisión y firma, sin aceptación electrónica entre las partes.
 
 ## Límites de esta versión
 

@@ -232,9 +232,29 @@ const errors = [];
         .getByLabel(flow.value_dj_fixed, { exact: true })
         .boundingBox();
     assert.ok(priceRect.y < shareRect.y, 'Ticket price comes before DJ fee');
+    await page.getByLabel(flow.price, { exact: true }).fill('5');
+    await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('6');
+    await page
+        .getByRole('button', { name: labels.continue, exact: true })
+        .click();
+    await page
+        .getByText(flow.feeExceedsPrice, { exact: true })
+        .first()
+        .waitFor();
+    assert.equal(
+        await page
+            .getByRole('button', {
+                name: labels.conditional.newSession,
+                exact: true,
+            })
+            .count(),
+        0,
+    );
+    await page.getByLabel(flow.price, { exact: true }).fill('10');
+    await page.getByLabel(flow.value_dj_fixed, { exact: true }).fill('7');
     await page
         .getByRole('button', {
-            name: labels.conditional.saveTerms,
+            name: labels.continue,
             exact: true,
         })
         .click();
@@ -245,6 +265,30 @@ const errors = [];
         })
         .click();
     await page.getByText('DJ night', { exact: true }).click();
+    assert.equal(
+        patches.length,
+        0,
+        'Choosing a session alone does not write the agreement',
+    );
+    await page
+        .getByRole('button', { name: flow.applyAndSave, exact: true })
+        .click();
+    await page
+        .getByRole('button', {
+            name: labels.agreementPdf.download,
+            exact: true,
+        })
+        .waitFor();
+    assert.equal(
+        patches.length,
+        1,
+        'Agreement applied once to the selected session',
+    );
+    assert.equal(saved.fee_agreement.ticketValue, 7);
+    await page
+        .getByRole('button', { name: flow.editAgreement, exact: true })
+        .click();
+    patches.length = 0;
     await page
         .getByRole('radio', {
             name: flow.model_ticket + ' ' + flow.example_ticket,
@@ -557,7 +601,7 @@ const errors = [];
     );
     await page
         .getByRole('button', {
-            name: labels.conditional.saveTerms,
+            name: labels.continue,
             exact: true,
         })
         .click();

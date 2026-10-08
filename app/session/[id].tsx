@@ -228,6 +228,30 @@ export default function SessionDetailScreen() {
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             >
+                {(FEATURES.feeAgreements ||
+                    session.fee_agreement?.version === 2) &&
+                    !session.is_guest &&
+                    session.fee_agreement && (
+                        <View style={{ marginTop: 24 }}>
+                            <FeeAgreementCard
+                                value={session.fee_agreement}
+                                documentSession={session}
+                                names={session.djs || []}
+                                currency={session.currency}
+                                canSettle={sessionPhase(session) === 'finished'}
+                                onChange={(a) =>
+                                    agreementUpdate.mutateAsync({
+                                        sessionId: session.id,
+                                        input: {
+                                            fee_agreement: a,
+                                            earning_amount: agreementAmount(a),
+                                        },
+                                        updateAll: false,
+                                    })
+                                }
+                            />
+                        </View>
+                    )}
                 {/* Title Section */}
                 <View className="mb-6">
                     <View className="flex-row items-center justify-between mb-2">
@@ -381,30 +405,6 @@ export default function SessionDetailScreen() {
                     </View>
                 </View>
 
-                {(FEATURES.feeAgreements ||
-                    session.fee_agreement?.version === 2) &&
-                    !session.is_guest &&
-                    session.fee_agreement && (
-                        <View style={{ marginTop: 24 }}>
-                            <FeeAgreementCard
-                                value={session.fee_agreement}
-                                documentSession={session}
-                                names={session.djs || []}
-                                currency={session.currency}
-                                canSettle={sessionPhase(session) === 'finished'}
-                                onChange={(a) =>
-                                    agreementUpdate.mutateAsync({
-                                        sessionId: session.id,
-                                        input: {
-                                            fee_agreement: a,
-                                            earning_amount: agreementAmount(a),
-                                        },
-                                        updateAll: false,
-                                    })
-                                }
-                            />
-                        </View>
-                    )}
                 {/* VAULT SECTION (MOVED TO BOTTOM) */}
                 {FEATURES.documents && (
                     <>
