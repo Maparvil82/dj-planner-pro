@@ -1,3 +1,6 @@
+import {blockedSessionDays} from '../../src/utils/blockedDays';
+import {BlockDayButton} from '../../src/components/sessionTools/BlockDayButton';
+import {useBlockedDays} from '../../src/hooks/useBlockedDays';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
 import { PageHeader } from '../../src/components/ui/PageHeader';
@@ -43,6 +46,7 @@ export default function HistoryScreen() {
 
     const { data: sessions, isLoading, refetch, isRefetching } = useAllSessionsQuery();
 
+    const blockedDays = useBlockedDays();
     // View State
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
     const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -160,10 +164,13 @@ export default function HistoryScreen() {
             };
         });
 
+        (blockedDays.data || []).forEach(date => {
+            marked[date] = {...marked[date], customStyles:{container:{...(marked[date]?.customStyles?.container || {}), borderWidth:2, borderColor:'#d88455',borderRadius:8}, text:{...(marked[date]?.customStyles?.text || {}),textDecorationLine:'line-through'}}};
+        });
         // Add selection styling - if selected, we make it even more prominent
         if (selectedCalendarDate) {
             const isToday = selectedCalendarDate === format(new Date(), 'yyyy-MM-dd');
-            const hasSessions = !!marked[selectedCalendarDate];
+            const hasSessions = filteredSessions.some(s=>s.date.slice(0,10)===selectedCalendarDate);
 
             marked[selectedCalendarDate] = {
                 ...marked[selectedCalendarDate],
@@ -174,20 +181,20 @@ export default function HistoryScreen() {
                             : (isDark ? '#1F2937' : '#EFF6FF'), // Or subtle bg if no session
                         borderRadius: 6,
                         borderWidth: 2,
-                        borderColor: '#7666df', // Primary blue border for selection
+                        borderColor: blockedDays.data?.includes(selectedCalendarDate) ? '#d88455' : '#7666df',
                         justifyContent: 'center',
                         alignItems: 'center'
                     },
                     text: {
                         color: hasSessions ? '#FFFFFF' : (isDark ? '#F3F4F6' : '#1D4ED8'),
-                        fontWeight: '900'
+                        fontWeight: '900', textDecorationLine: blockedDays.data?.includes(selectedCalendarDate) ? 'line-through' : 'none'
                     }
                 }
             };
         }
 
         return marked;
-    }, [filteredSessions, selectedCalendarDate, isDark]);
+    }, [filteredSessions, selectedCalendarDate, isDark, blockedDays.data]);
 
     // Sessions for the selected day in calendar view
     const selectedDaySessions = useMemo(() => {
@@ -357,7 +364,6 @@ export default function HistoryScreen() {
                     <View className="px-5">
                         <View className="bg-white dark:bg-[#171d2c] rounded-3xl overflow-hidden border border-[#e9ecf3] dark:border-[#252d40]">
                             <Calendar
-                                key={JSON.stringify(calendarMarkedDates)}
                                 markingType={'custom'}
                                 current={selectedCalendarDate}
                                 markedDates={calendarMarkedDates}
@@ -393,6 +399,7 @@ export default function HistoryScreen() {
                             </Text>
                         </View>
 
+                        <BlockDayButton date={selectedCalendarDate} hasSessions={(sessions || []).some(s=>s.status!=='cancelled' && blockedSessionDays({...s,recurrence_type:'none'},[selectedCalendarDate]).length>0)} />
                         {selectedDaySessions.length === 0 ? (
                             <View className="py-12 items-center justify-center bg-white dark:bg-[#171d2c] rounded-3xl border border-[#e9ecf3] dark:border-[#252d40]">
                                 <Text className="text-gray-400 dark:text-gray-500 font-medium">

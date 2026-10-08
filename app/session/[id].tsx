@@ -278,6 +278,41 @@ export default function SessionDetailScreen() {
                             />
                         </View>
                     )}
+                {!session.is_guest &&
+                    session.user_id === authSession.user.id && (
+                        <View
+                            style={{
+                                gap: 10,
+                                marginBottom: 20,
+                                flexDirection: 'row',
+                            }}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <CommunityButton
+                                    secondary
+                                    label={t('tools.expenses')}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: '/expenses',
+                                            params: { sessionId: session.id },
+                                        })
+                                    }
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <CommunityButton
+                                    secondary
+                                    label={t('tools.preparation')}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: '/preparation',
+                                            params: { sessionId: session.id },
+                                        })
+                                    }
+                                />
+                            </View>
+                        </View>
+                    )}
                 {/* Title Section */}
                 <View className="mb-6">
                     <View className="flex-row items-center justify-between mb-2">

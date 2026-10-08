@@ -70,8 +70,8 @@ test('dashboard separates confirmed fees, tentative fees and cancelled sessions 
         'USD',
     );
     assert.equal(usd.revenue, 900);
-    assert.equal(usd.costs, null);
-    assert.equal(usd.balance, null);
+    assert.equal(usd.costs, 0);
+    assert.equal(usd.balance, 900);
 });
 test('performed hours wait until overnight sessions actually end', () => {
     const m = dashboardMetrics(
@@ -255,4 +255,15 @@ test('payment summary counts receipts independently from fees, guests and cancel
             summary.cancelled,
         summary.selected.length,
     );
+});
+
+test('personal expenses use their own date and currency, with legacy euros preserved',()=>{
+ const expenses=[{amount:20,date:'2026-10-03',currency:'USD'},{amount:30,date:'2026-10-04',currency:'EUR'},{amount:10,date:'2026-10-01'},{amount:200,date:'2026-11-01',currency:'USD'}];
+ assert.equal(dashboardMetrics([session({currency:'USD'})],expenses,anchor,'month','USD').balance,280);
+ assert.equal(dashboardMetrics([],expenses,anchor,'month','EUR').costs,40);
+ assert.equal(dashboardMetrics([],expenses,anchor,'month','GBP').costs,0);
+});
+
+test('receipt for a cost already deducted in an agreement is not subtracted twice',()=>{
+const m=dashboardMetrics([session({earning_amount:200})],[{amount:50,date:'2026-10-01',currency:'EUR',included_in_agreement:true},{amount:10,date:'2026-10-01',currency:'EUR'}],anchor,'month','EUR');assert.equal(m.costs,10);assert.equal(m.balance,190);
 });

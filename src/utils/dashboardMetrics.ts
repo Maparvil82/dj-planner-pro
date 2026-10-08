@@ -65,11 +65,15 @@ export function dashboardMetrics(
         (sum, s) => sum + sessionDuration(s),
         0,
     );
-    // Existing expenses have no currency field and were entered as euros in the original app.
-    const euroExpenses = expenses
-        .filter((e) => e.date && inPeriod(e.date))
+    const periodExpenses = expenses.filter(
+        (e) => e.date && inPeriod(e.date) && !e.included_in_agreement,
+    );
+    const euroExpenses = periodExpenses
+        .filter((e) => currencyCode(e.currency || 'EUR') === 'EUR')
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-    const costs = currency === 'EUR' ? euroExpenses : null;
+    const costs = periodExpenses
+        .filter((e) => currencyCode(e.currency || 'EUR') === currency)
+        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
     const rankings = new Map<
         string,
         { name: string; id?: string; count: number; amount: number }

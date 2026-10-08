@@ -1,3 +1,5 @@
+import { confirmBlockedDays } from '../../src/utils/confirmBlockedDays';
+import { relatedSessionTargets } from '../../src/utils/sessionWorkflow';
 import { FEATURES } from '../../src/config/features';
 import {
     FeeAgreementCard,
@@ -445,6 +447,33 @@ export default function EditSessionScreen() {
             try {
                 if (!id) throw new Error('Missing ID');
 
+                if (
+                    [
+                        'date',
+                        'start_time',
+                        'end_time',
+                        'booking_timezone',
+                        'status',
+                    ].some((key) => key in changedFields)
+                ) {
+                    const all = await sessionService.getAllSessions(
+                        authSession.user.id,
+                    );
+                    const original = all.find((s) => s.id === id);
+                    const affected = original
+                        ? relatedSessionTargets(all, original, updateAll)
+                              .map((s) => ({
+                                  ...s,
+                                  ...changedFields,
+                                  date: updateAll
+                                      ? s.date
+                                      : changedFields.date || s.date,
+                                  recurrence_type: 'none' as const,
+                              }))
+                              .filter((s) => s.status !== 'cancelled')
+                        : [];
+                    if (!(await confirmBlockedDays(affected, t))) return;
+                }
                 const conflicts = await sessionService.getUpdateConflicts(
                     id,
                     changedFields,
@@ -485,7 +514,8 @@ export default function EditSessionScreen() {
             } catch (error: any) {
                 showError(
                     t('error'),
-                    error.message?.startsWith('workflow.') ||
+                    error.message?.startsWith('tools.') ||
+                        error.message?.startsWith('workflow.') ||
                         error.message?.startsWith('bookings.errors.') ||
                         error.message === 'invalid_earning_amount'
                         ? t(error.message)

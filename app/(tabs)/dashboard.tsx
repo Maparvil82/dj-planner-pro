@@ -132,7 +132,9 @@ export default function DashboardScreen() {
                             s.earning_type !== 'free',
                     )
                     .map((s) => currencyCode(s.currency)),
-                ...(expenses?.length ? ['EUR'] : []),
+                ...(expenses || []).map((e) =>
+                    currencyCode(e.currency || 'EUR'),
+                ),
             ]),
         ].sort();
         return values.length ? values : ['EUR'];
@@ -653,11 +655,7 @@ export default function DashboardScreen() {
                                         ? '—'
                                         : money(metrics.balance)
                                 }
-                                hint={
-                                    currency === 'EUR'
-                                        ? label('balanceHint')
-                                        : label('eurosOnly')
-                                }
+                                hint={label('balanceHint')}
 
                                 accent="#b58b37"
                                 dark={dark}

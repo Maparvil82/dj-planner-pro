@@ -12,8 +12,8 @@
       "bundleIdentifier": "com.djplannerpro.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de carteles y perfiles.",
-        "NSPhotoLibraryUsageDescription": "DJ Planner Pro necesita acceso a tu galería para que puedas seleccionar fotos de tus carteles y avatares."
+        "NSCameraUsageDescription": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de facturas, carteles y perfiles.",
+        "NSPhotoLibraryUsageDescription": "DJ Planner necesita acceso a tus fotos para añadir facturas, carteles y fotos de perfil."
       }
     },
     "android": {
@@ -45,8 +45,16 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de carteles y perfiles.",
+          "cameraPermission": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de facturas, carteles y perfiles.",
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de facturas, carteles y perfiles.",
+          "photosPermission": "DJ Planner necesita acceso a tus fotos para añadir facturas, carteles y fotos de perfil.",
+          "microphonePermission": false
         }
       ]
     ],

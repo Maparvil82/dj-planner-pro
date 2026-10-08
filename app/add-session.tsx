@@ -1,3 +1,4 @@
+import { confirmBlockedDays } from '../src/utils/confirmBlockedDays';
 import { useConditionalDraft } from '../src/store/useConditionalDraft';
 import { useRecentCollaborators } from '../src/hooks/useRecentCollaborators';
 import { SessionTimezoneField } from '../src/components/sessions/SessionTimezoneField';
@@ -322,6 +323,7 @@ export default function AddSessionScreen() {
         saving.current = true;
         setIsChecking(true);
         try {
+            if (!(await confirmBlockedDays([input], t))) return;
             const conflicts = await sessionService.getCreationConflicts(
                 input,
                 session.user.id,

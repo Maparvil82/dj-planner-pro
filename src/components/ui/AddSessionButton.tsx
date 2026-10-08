@@ -85,6 +85,42 @@ function CreationIcon({ kind, color }: { kind: string; color: string }) {
                         fill={color}
                     />
                 </>
+            ) : kind === 'expenses' ? (
+                <>
+                    <Rect
+                        x={4}
+                        y={2}
+                        width={16}
+                        height={20}
+                        rx={3}
+                        fill={color}
+                    />
+                    <Path
+                        d="M8 7h8M8 12h8M8 17h4"
+                        stroke="#fff"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                    />
+                </>
+            ) : kind === 'preparation' ? (
+                <>
+                    <Rect
+                        x={3}
+                        y={3}
+                        width={18}
+                        height={19}
+                        rx={4}
+                        fill={color}
+                    />
+                    <Path
+                        d="m7 12 3 3 7-7"
+                        stroke="#fff"
+                        fill="none"
+                        strokeWidth={2.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </>
             ) : kind === 'tickets' ? (
                 <>
                     <Rect
@@ -137,6 +173,8 @@ export function AddSessionButton() {
             router.prefetch('/conditional-session');
             router.prefetch('/tickets');
             router.prefetch('/guests');
+            router.prefetch('/expenses');
+            router.prefetch('/preparation');
         }
     }, [open, router]);
     const finishNavigation = useCallback(() => {
@@ -161,7 +199,9 @@ export function AddSessionButton() {
             href === '/add-session' ||
             href === '/conditional-session' ||
             href === '/tickets' ||
-            href === '/guests'
+            href === '/guests' ||
+            href === '/expenses' ||
+            href === '/preparation'
         )
             router.push(href);
         else destination.current = href;
@@ -173,6 +213,8 @@ export function AddSessionButton() {
         { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
         { key: 'tickets', color: '#e35d72', href: '/tickets' },
         { key: 'guests', color: '#16a5ad', href: '/guests' },
+        { key: 'expenses', color: '#df7743', href: '/expenses' },
+        { key: 'preparation', color: '#5973cb', href: '/preparation' },
     ] as const;
     return (
         <>
