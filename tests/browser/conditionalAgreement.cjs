@@ -443,6 +443,25 @@ const errors = [];
     await page
         .getByRole('button', { name: flow.calculate, exact: true })
         .waitFor();
+    await page
+        .getByRole('button', {
+            name: labels.agreementPdf.download,
+            exact: true,
+        })
+        .click();
+    await page.locator('iframe[srcdoc]').waitFor({ state: 'attached' });
+    const exported = await page
+        .locator('iframe[srcdoc]')
+        .getAttribute('srcdoc');
+    assert.ok(
+        exported.includes('DJ night') &&
+            exported.includes('Pendiente de revisión'),
+    );
+    assert.ok(
+        !exported.includes('610,00'),
+        'Forecast excluded from agreement PDF',
+    );
+    await page.locator('iframe[srcdoc]').evaluate((frame) => frame.remove());
     assert.equal(patches.length, 1);
     assert.equal(saved.earning_type, 'agreement');
     assert.equal(saved.earning_amount, 0);

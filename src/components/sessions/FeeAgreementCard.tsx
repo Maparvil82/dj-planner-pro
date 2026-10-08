@@ -1,6 +1,13 @@
 import { conditionalSummary } from '../../utils/conditionalPresentation';
 import { FEATURES } from '../../config/features';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Session } from '../../types/session';
+import { useAuthStore } from '../../store/useAuthStore';
+import { buildAgreementHtml } from '../../utils/agreementDocument';
+import {
+    prepareAgreementPdf,
+    shareAgreementPdf,
+} from '../../services/agreementPdf';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSessionUsage } from '../../hooks/useSessionUsage';
@@ -35,6 +42,7 @@ export function FeeAgreementCard({
     canSettle = false,
     onCurrency,
     conditional = false,
+    documentSession,
 }: {
     value: FeeAgreement | null;
     onChange: (a: FeeAgreement) => void | Promise<unknown>;
@@ -43,6 +51,7 @@ export function FeeAgreementCard({
     canSettle?: boolean;
     onCurrency?: (s: string) => void;
     conditional?: boolean;
+    documentSession?: Session;
 }) {
     const { t, currentLanguage } = useTranslation();
     const c = useCommunityColors();
@@ -52,6 +61,56 @@ export function FeeAgreementCard({
     const [error, setError] = useState(false);
     const [editorMode, setEditorMode] = useState<'terms' | 'actual'>('terms');
     const modern = conditional || value?.version === 2;
+    const owner = useAuthStore((state) => state.profile?.artist_name || '');
+    const [document, setDocument] = useState<{
+        html: string;
+        uri: string | null;
+    } | null>(null);
+    const [pdfError, setPdfError] = useState(false);
+    const [sharingPdf, setSharingPdf] = useState(false);
+    let html = '';
+    try {
+        if (documentSession && value?.version === 2)
+            html = buildAgreementHtml(
+                { ...documentSession, fee_agreement: value },
+                owner,
+                currentLanguage,
+                t,
+            );
+    } catch {}
+    useEffect(() => {
+        if (!html || !documentSession) return;
+        let cancelled = false;
+        setPdfError(false);
+        prepareAgreementPdf(html, documentSession.id)
+            .then((uri) => {
+                if (!cancelled) setDocument({ html, uri });
+            })
+            .catch(() => {
+                if (!cancelled) setPdfError(true);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [html, documentSession?.id]);
+    const exportPdf = async () => {
+        if (sharingPdf || !html || !documentSession) return;
+        setSharingPdf(true);
+        setPdfError(false);
+        try {
+            const uri =
+                document?.html === html
+                    ? document.uri
+                    : await prepareAgreementPdf(html, documentSession.id);
+            setDocument({ html, uri });
+            await shareAgreementPdf(uri, html);
+        } catch {
+            setPdfError(true);
+        } finally {
+            setSharingPdf(false);
+        }
+    };
+
     const openEditor = async (mode: 'terms' | 'actual') => {
         setError(false);
         if (usage.data?.isPro && !usage.isError) {
@@ -194,6 +253,44 @@ export function FeeAgreementCard({
                     )}
                     onPress={() => void openEditor('actual')}
                 />
+            )}
+            {documentSession && value?.version === 2 && (
+                <View
+                    style={{
+                        gap: 8,
+                        paddingTop: 12,
+                        borderTopWidth: 1,
+                        borderColor: c.border,
+                    }}
+                >
+                    <CommunityButton
+                        secondary
+                        label={t('agreementPdf.download')}
+                        busy={sharingPdf}
+                        disabled={
+                            sharingPdf ||
+                            !html ||
+                            (!pdfError && document?.html !== html)
+                        }
+                        onPress={() => void exportPdf()}
+                    />
+                    <Text
+                        style={{
+                            color: pdfError ? '#dc4545' : c.muted,
+                            fontSize: 12,
+                            lineHeight: 18,
+                        }}
+                        accessibilityRole={pdfError ? 'alert' : undefined}
+                    >
+                        {t(
+                            pdfError || !html
+                                ? 'agreementPdf.error'
+                                : document?.html === html
+                                  ? 'agreementPdf.ready'
+                                  : 'agreementPdf.preparing',
+                        )}
+                    </Text>
+                </View>
             )}
             {editing && (conditional || value?.version === 2) && (
                 <ConditionalAgreementEditor

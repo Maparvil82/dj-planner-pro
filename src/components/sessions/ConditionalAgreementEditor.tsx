@@ -1,3 +1,4 @@
+import { conditionalBreakdown } from '../../utils/conditionalBreakdown';
 import { useRef, useState } from 'react';
 import {
     Keyboard,
@@ -1530,67 +1531,91 @@ export function ConditionalAgreementEditor({
                                     >
                                         {money(result.owner)}
                                     </Text>
-                                    {[
-                                        ['ticketGross', result.ticketGross],
-                                        [
-                                            'venueRetention',
-                                            result.venueRetention,
-                                        ],
-                                        [
-                                            'ticketDeductions',
-                                            a.ticketBasis === 'net'
-                                                ? data.ticketDeductions
-                                                : 0,
-                                        ],
-                                        ['ticketsFee', result.tickets],
-                                        [
-                                            'barDeductions',
-                                            a.barBasis === 'net'
-                                                ? data.barDeductions
-                                                : 0,
-                                        ],
-                                        ['barFee', result.bar],
-                                        ['fixed', result.fixed],
-                                        ['bonusAmount', result.bonus],
-                                        ['expenses', result.expenses],
-                                        [
-                                            'minimumApplied',
-                                            result.minimumAdjustment,
-                                        ],
-                                        ['capApplied', result.capAdjustment],
-                                        ['pool', result.total],
-                                    ]
-                                        .filter(
-                                            ([, amount]) => Number(amount) > 0,
-                                        )
-                                        .map(([key, amount]) => (
-                                            <View
-                                                key={String(key)}
-                                                style={{
-                                                    flexDirection: 'row',
-                                                    justifyContent:
-                                                        'space-between',
-                                                    gap: 12,
-                                                }}
-                                            >
-                                                <Text
+                                    {(() => {
+                                        const breakdown = conditionalBreakdown(
+                                            a,
+                                            mode === 'actual',
+                                        );
+                                        return [
+                                            ['boxOffice', breakdown.boxOffice],
+                                            ['djPool', breakdown.pool],
+                                        ].map(([title, entries]) => {
+                                            const rows =
+                                                entries as typeof breakdown.pool;
+                                            if (!rows.length) return null;
+                                            return (
+                                                <View
+                                                    key={String(title)}
                                                     style={{
-                                                        color: c.muted,
-                                                        flex: 1,
+                                                        gap: 12,
+                                                        paddingTop: 16,
+                                                        borderTopWidth: 1,
+                                                        borderColor: c.border,
                                                     }}
                                                 >
-                                                    {t(`conditional.${key}`)}
-                                                </Text>
-                                                <Text
-                                                    style={{
-                                                        color: c.fg,
-                                                        fontWeight: '600',
-                                                    }}
-                                                >
-                                                    {money(Number(amount))}
-                                                </Text>
-                                            </View>
-                                        ))}
+                                                    <Text
+                                                        style={{
+                                                            color: c.fg,
+                                                            fontWeight: '800',
+                                                            fontSize: 16,
+                                                        }}
+                                                    >
+                                                        {t(
+                                                            `conditionalLedger.${title}`,
+                                                        )}
+                                                    </Text>
+                                                    {rows.map((row, i) => (
+                                                        <View
+                                                            key={`${row.key}.${i}`}
+                                                            style={{
+                                                                flexDirection:
+                                                                    'row',
+                                                                justifyContent:
+                                                                    'space-between',
+                                                                gap: 14,
+                                                            }}
+                                                        >
+                                                            <Text
+                                                                style={{
+                                                                    color: c.muted,
+                                                                    flex: 1,
+                                                                    lineHeight: 20,
+                                                                }}
+                                                            >
+                                                                {row.concept ||
+                                                                    t(
+                                                                        `conditionalLedger.${row.key}`,
+                                                                    )}
+                                                            </Text>
+                                                            <Text
+                                                                style={{
+                                                                    color: c.fg,
+                                                                    fontWeight:
+                                                                        row.key ===
+                                                                        'pool'
+                                                                            ? '800'
+                                                                            : '600',
+                                                                }}
+                                                            >
+                                                                {money(
+                                                                    row.amount,
+                                                                )}
+                                                            </Text>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            );
+                                        });
+                                    })()}
+                                    <Text
+                                        style={{
+                                            color: c.muted,
+                                            fontSize: 12,
+                                            lineHeight: 18,
+                                        }}
+                                    >
+                                        {t('conditionalLedger.remainderHint')}
+                                    </Text>
                                     {a.participants.length > 1 &&
                                         result.shares.map((share, i) => (
                                             <View

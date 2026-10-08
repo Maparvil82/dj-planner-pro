@@ -388,6 +388,8 @@ export default function SessionDetailScreen() {
                         <View style={{ marginTop: 24 }}>
                             <FeeAgreementCard
                                 value={session.fee_agreement}
+                                documentSession={session}
+                                names={session.djs || []}
                                 currency={session.currency}
                                 canSettle={sessionPhase(session) === 'finished'}
                                 onChange={(a) =>
