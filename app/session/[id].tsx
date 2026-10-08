@@ -1,3 +1,4 @@
+import { CommunityButton } from '../../src/components/community/CommunityUI';
 import { cityLabel } from '../../src/utils/cities';
 import { FeeAgreementCard } from '../../src/components/sessions/FeeAgreementCard';
 import { useUpdateSessionMutation } from '../../src/hooks/useSessionsQuery';
@@ -247,6 +248,21 @@ export default function SessionDetailScreen() {
                                             earning_amount: agreementAmount(a),
                                         },
                                         updateAll: false,
+                                    })
+                                }
+                            />
+                        </View>
+                    )}
+                {!session.is_guest &&
+                    session.user_id === authSession.user.id && (
+                        <View style={{ marginBottom: 20 }}>
+                            <CommunityButton
+                                secondary
+                                label={t('tickets.manage')}
+                                onPress={() =>
+                                    router.push({
+                                        pathname: '/tickets',
+                                        params: { sessionId: session.id },
                                     })
                                 }
                             />

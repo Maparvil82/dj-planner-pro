@@ -75,6 +75,24 @@ function CreationIcon({ kind, color }: { kind: string; color: string }) {
                         fill="none"
                     />
                 </>
+            ) : kind === 'tickets' ? (
+                <>
+                    <Rect
+                        x={2}
+                        y={5}
+                        width={20}
+                        height={14}
+                        rx={3}
+                        fill={color}
+                    />
+                    <Path
+                        d="M16 6v2m0 3v2m0 3v2"
+                        stroke="#fff"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                    />
+                    <Rect x={5} y={9} width={7} height={6} rx={1} fill="#fff" />
+                </>
             ) : kind === 'mix' ? (
                 <Path
                     d="M20 2v14.5a3.5 3.5 0 1 1-2-3.16V6.5l-9 2V19a3.5 3.5 0 1 1-2-3.16V5z"
@@ -107,6 +125,7 @@ export function AddSessionButton() {
             router.prefetch('/add-mix');
             router.prefetch('/venues');
             router.prefetch('/conditional-session');
+            router.prefetch('/tickets');
         }
     }, [open, router]);
     const finishNavigation = useCallback(() => {
@@ -127,7 +146,11 @@ export function AddSessionButton() {
         // Push a normal screen while the menu closes, instead of chaining
         // two animations. Modal destinations dismiss the menu without animation
         // before presentation, avoiding overlapping native sheets.
-        if (href === '/add-session' || href === '/conditional-session')
+        if (
+            href === '/add-session' ||
+            href === '/conditional-session' ||
+            href === '/tickets'
+        )
             router.push(href);
         else destination.current = href;
     };
@@ -136,6 +159,7 @@ export function AddSessionButton() {
         { key: 'conditional', color: '#ee9b21', href: '/conditional-session' },
         { key: 'mix', color: '#7b50e8', href: '/add-mix' },
         { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
+        { key: 'tickets', color: '#e35d72', href: '/tickets' },
     ] as const;
     return (
         <>
@@ -193,6 +217,8 @@ export function AddSessionButton() {
                                 width: '100%',
                                 flexDirection: 'row',
                                 alignItems: 'flex-start',
+                                flexWrap: 'wrap',
+                                rowGap: 24,
                             }}
                         >
                             {actions.map((action) => {
