@@ -1514,6 +1514,15 @@
         "manage": "Lista invitati",
         "ticketCountHint": "Il conteggio include le persone nella lista invitati.",
         "totalPeople_one": "1 persona in totale, incluso l’invitato principale.",
-        "admitCount_one": "Registra 1 persona"
+        "admitCount_one": "Registra 1 persona",
+        "upcoming": "Prossime e in corso",
+        "history": "Storico",
+        "noUpcoming": "Nessuna sessione in programma",
+        "emptyHistory": "Nessuna lista nello storico",
+        "emptyHistoryHint": "Qui restano le liste delle sessioni concluse o annullate.",
+        "readOnly": "Questa lista è in sola lettura.",
+        "enableCorrection": "Correggi lista",
+        "finishCorrection": "Termina correzione",
+        "correcting": "La correzione dello storico è attiva."
     }
 }

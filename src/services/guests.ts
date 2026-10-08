@@ -18,6 +18,20 @@ function check(error: { message: string } | null) {
         );
 }
 export const guestService = {
+    async sessionsWithLists(): Promise<string[]> {
+        const ids: string[] = [];
+        for (let page = 0; ; page++) {
+            const { data, error } = await supabase
+                .from('event_ticket_types')
+                .select('session_id')
+                .eq('is_guest_list', true)
+                .order('session_id')
+                .range(page * 500, page * 500 + 499);
+            check(error);
+            ids.push(...(data || []).map((row) => row.session_id));
+            if (!data || data.length < 500) return ids;
+        }
+    },
     async list(session: string): Promise<EventGuest[]> {
         const { data, error } = await supabase.rpc('event_guest_list', {
             p_session: session,

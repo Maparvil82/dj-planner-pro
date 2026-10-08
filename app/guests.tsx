@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -24,6 +24,8 @@ import {
 } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Crypto from 'expo-crypto';
+import { guestSessions } from '../src/utils/guestSessions';
+import { sessionPhase } from '../src/utils/sessionWorkflow';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { sessionService } from '../src/services/sessions';
@@ -114,6 +116,13 @@ export default function GuestsScreen() {
     const params = useLocalSearchParams<{ sessionId?: string }>();
     const [sessionId, setSessionId] = useState(params.sessionId || ''),
         [search, setSearch] = useState('');
+    const [view, setView] = useState<'upcoming' | 'history'>('upcoming'),
+        [correctionSession, setCorrectionSession] = useState(''),
+        [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 60000);
+        return () => clearInterval(timer);
+    }, []);
     const [mode, setMode] = useState<'add' | 'edit' | 'access' | null>(null),
         [guestId, setGuestId] = useState('');
     const [editingRevision, setEditingRevision] = useState(0),
@@ -137,6 +146,28 @@ export default function GuestsScreen() {
     const event = sessions.data?.find(
         (s) => s.id === sessionId && s.user_id === userId && !s.is_guest,
     );
+    const history = useQuery({
+        queryKey: ['guest-history', userId],
+        queryFn: () => guestService.sessionsWithLists(),
+        enabled: !!userId && !event && view === 'history',
+        staleTime: 0,
+    });
+    const candidates = useMemo(
+        () =>
+            guestSessions(
+                sessions.data || [],
+                userId || '',
+                view,
+                history.data || [],
+                new Date(now),
+            ),
+        [sessions.data, userId, view, history.data, now],
+    );
+    const finished =
+        !!event && sessionPhase(event, new Date(now)) === 'finished';
+    const readOnly =
+        event?.status === 'cancelled' ||
+        (finished && correctionSession !== sessionId);
     const guests = useQuery({
         queryKey: ['guests', userId, sessionId],
         queryFn: () => guestService.list(sessionId),
@@ -145,6 +176,7 @@ export default function GuestsScreen() {
     });
     useFocusEffect(
         useCallback(() => {
+            setNow(Date.now());
             if (userId && sessionId)
                 void qc.invalidateQueries({
                     queryKey: ['guests', userId, sessionId],
@@ -179,10 +211,15 @@ export default function GuestsScreen() {
         await Promise.all([
             qc.invalidateQueries({ queryKey: ['guests', userId, sessionId] }),
             qc.invalidateQueries({ queryKey: ['tickets', userId, sessionId] }),
+            qc.invalidateQueries({ queryKey: ['guest-history', userId] }),
         ]);
     }
     async function act(task: () => Promise<void>, closeAfter = false) {
         if (lock.current) return;
+        if (readOnly) {
+            setError(t('guests.readOnly'));
+            return;
+        }
         lock.current = true;
         setBusy(true);
         setError('');
@@ -289,23 +326,53 @@ export default function GuestsScreen() {
                         />
                     ) : (
                         <>
-                            {!(sessions.data || []).some(
-                                (s) =>
-                                    s.user_id === userId &&
-                                    !s.is_guest &&
-                                    s.status !== 'cancelled',
-                            ) ? (
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                {(['upcoming', 'history'] as const).map(
+                                    (key) => (
+                                        <View key={key} style={{ flex: 1 }}>
+                                            <CommunityButton
+                                                label={t(`guests.${key}`)}
+                                                secondary={view !== key}
+                                                onPress={() => {
+                                                    setView(key);
+                                                    setSearch('');
+                                                }}
+                                            />
+                                        </View>
+                                    ),
+                                )}
+                            </View>
+                            {view === 'history' && history.isPending ? (
+                                <ActivityIndicator color={c.accent} />
+                            ) : view === 'history' && history.isError ? (
+                                <CommunityMessage
+                                    title={t('tickets.connectionError')}
+                                    retry={() => {
+                                        void history.refetch();
+                                    }}
+                                />
+                            ) : candidates.length === 0 ? (
                                 <>
                                     <CommunityMessage
-                                        title={t('guests.noSessions')}
-                                        hint={t('guests.noSessionsHint')}
+                                        title={t(
+                                            view === 'history'
+                                                ? 'guests.emptyHistory'
+                                                : 'guests.noUpcoming',
+                                        )}
+                                        hint={t(
+                                            view === 'history'
+                                                ? 'guests.emptyHistoryHint'
+                                                : 'guests.noSessionsHint',
+                                        )}
                                     />
-                                    <CommunityButton
-                                        label={t('guests.createSession')}
-                                        onPress={() =>
-                                            router.push('/add-session')
-                                        }
-                                    />
+                                    {view === 'upcoming' && (
+                                        <CommunityButton
+                                            label={t('guests.createSession')}
+                                            onPress={() =>
+                                                router.push('/add-session')
+                                            }
+                                        />
+                                    )}
                                 </>
                             ) : (
                                 <>
@@ -319,15 +386,11 @@ export default function GuestsScreen() {
                                         value={search}
                                         onChangeText={setSearch}
                                     />
-                                    {(sessions.data || [])
-                                        .filter(
-                                            (s) =>
-                                                s.user_id === userId &&
-                                                !s.is_guest &&
-                                                s.status !== 'cancelled' &&
-                                                guestSearch(
-                                                    `${sessionDisplayTitle(s, t)} ${s.venue}`,
-                                                ).includes(guestSearch(search)),
+                                    {candidates
+                                        .filter((s) =>
+                                            guestSearch(
+                                                `${sessionDisplayTitle(s, t)} ${s.venue}`,
+                                            ).includes(guestSearch(search)),
                                         )
                                         .map((s) => (
                                             <Pressable
@@ -335,6 +398,7 @@ export default function GuestsScreen() {
                                                 accessibilityRole="button"
                                                 onPress={() => {
                                                     setSessionId(s.id);
+                                                    setCorrectionSession('');
                                                     setSearch('');
                                                 }}
                                                 style={{
@@ -433,6 +497,31 @@ export default function GuestsScreen() {
                                 </View>
                             ))}
                         </View>
+                        {finished && (
+                            <View style={{ gap: 10 }}>
+                                <Text style={{ color: c.muted }}>
+                                    {t(
+                                        readOnly
+                                            ? 'guests.readOnly'
+                                            : 'guests.correcting',
+                                    )}
+                                </Text>
+                                <CommunityButton
+                                    secondary
+                                    label={t(
+                                        readOnly
+                                            ? 'guests.enableCorrection'
+                                            : 'guests.finishCorrection',
+                                    )}
+                                    disabled={busy}
+                                    onPress={() =>
+                                        setCorrectionSession(
+                                            readOnly ? sessionId : '',
+                                        )
+                                    }
+                                />
+                            </View>
+                        )}
                         {cancelled && (
                             <Text style={{ color: c.muted }}>
                                 {t('tickets.cancelledSession')}
@@ -443,7 +532,7 @@ export default function GuestsScreen() {
                                 <CommunityButton
                                     label={t('guests.add')}
                                     disabled={
-                                        cancelled ||
+                                        readOnly ||
                                         guests.isPending ||
                                         guests.isError
                                     }
@@ -455,6 +544,7 @@ export default function GuestsScreen() {
                                 label={t('guests.changeSession')}
                                 onPress={() => {
                                     setSessionId('');
+                                    setCorrectionSession('');
                                     setSearch('');
                                 }}
                             />
@@ -670,7 +760,7 @@ export default function GuestsScreen() {
                                                     selected.admitted
                                                 }
                                                 onChange={setQuantity}
-                                                disabled={busy || !!cancelled}
+                                                disabled={busy || !!readOnly}
                                             />
                                             <CommunityButton
                                                 label={t('guests.admitCount', {
@@ -680,7 +770,7 @@ export default function GuestsScreen() {
                                                             selected.admitted,
                                                     ),
                                                 })}
-                                                disabled={cancelled}
+                                                disabled={readOnly}
                                                 busy={busy}
                                                 onPress={() => {
                                                     void access(
@@ -699,7 +789,7 @@ export default function GuestsScreen() {
                                         <CommunityButton
                                             secondary
                                             label={t('guests.undo')}
-                                            disabled={cancelled || busy}
+                                            disabled={readOnly || busy}
                                             onPress={() => {
                                                 void access('undo', 1);
                                             }}
@@ -708,7 +798,7 @@ export default function GuestsScreen() {
                                     <CommunityButton
                                         outlined
                                         label={t('guests.edit')}
-                                        disabled={cancelled || busy}
+                                        disabled={readOnly || busy}
                                         onPress={() => {
                                             setEditingRevision(
                                                 selected.revision,
@@ -723,7 +813,9 @@ export default function GuestsScreen() {
                                             outlined
                                             label={t('guests.remove')}
                                             disabled={
-                                                busy || selected.admitted > 0
+                                                readOnly ||
+                                                busy ||
+                                                selected.admitted > 0
                                             }
                                             onPress={() =>
                                                 setConfirmDelete(true)

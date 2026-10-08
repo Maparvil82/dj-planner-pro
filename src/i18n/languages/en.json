@@ -1518,6 +1518,15 @@
         "manage": "Guest list",
         "ticketCountHint": "Counts include people on your guest list.",
         "totalPeople_one": "1 person in total, including the named guest.",
-        "admitCount_one": "Check in 1 person"
+        "admitCount_one": "Check in 1 person",
+        "upcoming": "Upcoming and ongoing",
+        "history": "History",
+        "noUpcoming": "No upcoming sessions",
+        "emptyHistory": "No guest lists in history",
+        "emptyHistoryHint": "Lists from finished or cancelled sessions are kept here.",
+        "readOnly": "This list is read-only.",
+        "enableCorrection": "Correct list",
+        "finishCorrection": "Finish correction",
+        "correcting": "History correction is enabled."
     }
 }

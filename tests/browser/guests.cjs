@@ -145,7 +145,7 @@ const errors = [];
                 user_id: user.id,
                 title: 'Soul Night',
                 venue: 'Sala X',
-                date: '2026-10-10',
+                date: '2030-10-10',
                 start_time: '22:00',
                 end_time: '04:00',
                 status: 'confirmed',
@@ -156,11 +156,35 @@ const errors = [];
         ],
         guests = [],
         writes = 0;
+    const pastId = '00000000-0000-4000-8000-000000000818';
+    events.push({
+        ...events[0],
+        id: pastId,
+        title: 'Past Night',
+        date: '2020-10-10',
+    });
+    const historicalGuest = {
+        id: crypto.randomUUID(),
+        session_id: pastId,
+        full_name: 'Ana López',
+        companions: 0,
+        total: 1,
+        admitted: 1,
+        revision: 1,
+    };
+    await context.route('**/rest/v1/event_ticket_types*', (r) =>
+        r.fulfill({ json: [{ session_id: pastId }] }),
+    );
     await context.route('**/rest/v1/sessions*', (r) =>
         r.fulfill({ json: events }),
     );
     await context.route('**/rest/v1/rpc/event_guest_list', (r) =>
-        r.fulfill({ json: guests }),
+        r.fulfill({
+            json:
+                r.request().postDataJSON().p_session === pastId
+                    ? [historicalGuest]
+                    : guests,
+        }),
     );
     await context.route('**/rest/v1/rpc/save_event_guest', async (r) => {
         writes++;
@@ -206,6 +230,10 @@ const errors = [];
         .getByRole('button', { name: /Soul Night Sala X/ })
         .last()
         .click();
+    assert.equal(
+        await page.getByRole('button', { name: /Past Night Sala X/ }).count(),
+        0,
+    );
     await button(labels.guests.add).click();
     await page
         .getByRole('textbox', { name: labels.guests.fullName })
@@ -282,9 +310,29 @@ const errors = [];
     await button(labels.back).last().click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     await button(labels.guests.changeSession).click();
+    await button(labels.guests.history).click();
+    await page.getByRole('button', { name: /Past Night Sala X/ }).click();
+    await page.getByText(labels.guests.readOnly, { exact: true }).waitFor();
+    assert.equal(await button(labels.guests.add).isDisabled(), true);
+    await page.getByText('Ana López', { exact: true }).click();
+    assert.equal(await button(labels.guests.edit).isDisabled(), true);
+    assert.equal(await button(labels.guests.undo).isDisabled(), true);
+    await button(labels.back).last().click();
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await button(labels.guests.enableCorrection).click();
+    assert.equal(await button(labels.guests.add).isDisabled(), false);
+    await page.getByText(labels.guests.correcting, { exact: true }).waitFor();
+    await button(labels.guests.finishCorrection).click();
+    assert.equal(await button(labels.guests.add).isDisabled(), true);
+    await page.screenshot({
+        path: '/private/tmp/djplanner-guests-history.png',
+        animations: 'disabled',
+    });
+    await button(labels.guests.changeSession).click();
+    await button(labels.guests.upcoming).click();
     events = [];
     await page.reload();
-    await page.getByText(labels.guests.noSessions, { exact: true }).waitFor();
+    await page.getByText(labels.guests.noUpcoming, { exact: true }).waitFor();
     await button(labels.guests.createSession).waitFor();
     assert.deepEqual(errors, []);
     console.log(

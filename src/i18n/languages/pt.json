@@ -1512,6 +1512,15 @@
         "manage": "Lista de convidados",
         "ticketCountHint": "A contagem inclui as pessoas da tua lista de convidados.",
         "totalPeople_one": "1 pessoa no total, incluindo o convidado principal.",
-        "admitCount_one": "Registar 1 pessoa"
+        "admitCount_one": "Registar 1 pessoa",
+        "upcoming": "Próximas e em curso",
+        "history": "Histórico",
+        "noUpcoming": "Sem sessões próximas",
+        "emptyHistory": "Sem listas no histórico",
+        "emptyHistoryHint": "Aqui ficam as listas de sessões terminadas ou canceladas.",
+        "readOnly": "Esta lista está em modo de consulta.",
+        "enableCorrection": "Corrigir lista",
+        "finishCorrection": "Terminar correção",
+        "correcting": "A correção do histórico está ativa."
     }
 }

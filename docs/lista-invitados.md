@@ -3,7 +3,8 @@
 ## Recorrido
 
 `+ → Invitados → Sesión → Añadir invitado`. También desde el detalle de una sesión.
-Solo aparecen sesiones propias y no canceladas. Si no existen, se ofrece crear una.
+Por defecto aparecen sesiones propias próximas y en curso, ordenadas por fecha de inicio. Se respeta el horario completo, incluso tras medianoche y en la zona horaria del evento. Si no hay sesiones activas, se ofrece crear una.
+«Historial» conserva las listas existentes de sesiones terminadas o canceladas, con las más recientes primero. Las terminadas se abren en modo consulta; «Corregir lista» habilita las acciones hasta pulsar «Terminar corrección» o cambiar de sesión. Las canceladas permanecen en consulta.
 Nombre y apellidos (2–120 caracteres) y acompañantes (0–99). «Manuel Parra +3» son cuatro personas.
 La búsqueda ignora mayúsculas y acentos. Un nombre coincidente muestra un aviso y permite guardar un homónimo.
 

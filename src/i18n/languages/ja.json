@@ -1513,6 +1513,15 @@
         "manage": "ゲストリスト",
         "ticketCountHint": "集計にはゲストリストの方も含まれます。",
         "totalPeople_one": "代表ゲストを含め、合計1人。",
-        "admitCount_one": "1人の入場を登録"
+        "admitCount_one": "1人の入場を登録",
+        "upcoming": "開催予定・開催中",
+        "history": "履歴",
+        "noUpcoming": "開催予定のセッションはありません",
+        "emptyHistory": "履歴にゲストリストはありません",
+        "emptyHistoryHint": "終了または中止したセッションのリストが保存されます。",
+        "readOnly": "このリストは閲覧専用です。",
+        "enableCorrection": "リストを修正",
+        "finishCorrection": "修正を終了",
+        "correcting": "履歴の修正が有効です。"
     }
 }

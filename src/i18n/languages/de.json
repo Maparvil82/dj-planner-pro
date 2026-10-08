@@ -1514,6 +1514,15 @@
         "manage": "Gästeliste",
         "ticketCountHint": "Die Zählung umfasst die Personen auf deiner Gästeliste.",
         "totalPeople_one": "Insgesamt 1 Person einschließlich Hauptgast.",
-        "admitCount_one": "1 Person einlassen"
+        "admitCount_one": "1 Person einlassen",
+        "upcoming": "Bevorstehend und laufend",
+        "history": "Verlauf",
+        "noUpcoming": "Keine bevorstehenden Auftritte",
+        "emptyHistory": "Keine Gästelisten im Verlauf",
+        "emptyHistoryHint": "Hier bleiben Listen beendeter oder abgesagter Auftritte erhalten.",
+        "readOnly": "Diese Liste ist schreibgeschützt.",
+        "enableCorrection": "Liste korrigieren",
+        "finishCorrection": "Korrektur beenden",
+        "correcting": "Die Verlaufskorrektur ist aktiviert."
     }
 }

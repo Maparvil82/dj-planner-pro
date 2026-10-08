@@ -1512,6 +1512,15 @@
         "manage": "Liste d’invités",
         "ticketCountHint": "Le décompte inclut les personnes de votre liste d’invités.",
         "totalPeople_one": "1 personne au total, invité principal inclus.",
-        "admitCount_one": "Enregistrer 1 personne"
+        "admitCount_one": "Enregistrer 1 personne",
+        "upcoming": "À venir et en cours",
+        "history": "Historique",
+        "noUpcoming": "Aucune session à venir",
+        "emptyHistory": "Aucune liste dans l’historique",
+        "emptyHistoryHint": "Les listes de sessions terminées ou annulées sont conservées ici.",
+        "readOnly": "Cette liste est en consultation seule.",
+        "enableCorrection": "Corriger la liste",
+        "finishCorrection": "Terminer la correction",
+        "correcting": "La correction de l’historique est activée."
     }
 }
