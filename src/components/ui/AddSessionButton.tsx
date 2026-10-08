@@ -75,6 +75,16 @@ function CreationIcon({ kind, color }: { kind: string; color: string }) {
                         fill="none"
                     />
                 </>
+            ) : kind === 'guests' ? (
+                <>
+                    <Circle cx={9} cy={7} r={4} fill={color} />
+                    <Path d="M1 22v-4a8 8 0 0 1 16 0v4z" fill={color} />
+                    <Circle cx={18} cy={8} r={3} fill={color} />
+                    <Path
+                        d="M18 14a6 6 0 0 1 5 6v2h-4v-4a10 10 0 0 0-1-4z"
+                        fill={color}
+                    />
+                </>
             ) : kind === 'tickets' ? (
                 <>
                     <Rect
@@ -126,6 +136,7 @@ export function AddSessionButton() {
             router.prefetch('/venues');
             router.prefetch('/conditional-session');
             router.prefetch('/tickets');
+            router.prefetch('/guests');
         }
     }, [open, router]);
     const finishNavigation = useCallback(() => {
@@ -149,7 +160,8 @@ export function AddSessionButton() {
         if (
             href === '/add-session' ||
             href === '/conditional-session' ||
-            href === '/tickets'
+            href === '/tickets' ||
+            href === '/guests'
         )
             router.push(href);
         else destination.current = href;
@@ -160,6 +172,7 @@ export function AddSessionButton() {
         { key: 'mix', color: '#7b50e8', href: '/add-mix' },
         { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
         { key: 'tickets', color: '#e35d72', href: '/tickets' },
+        { key: 'guests', color: '#16a5ad', href: '/guests' },
     ] as const;
     return (
         <>

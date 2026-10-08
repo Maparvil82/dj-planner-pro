@@ -255,13 +255,23 @@ export default function SessionDetailScreen() {
                     )}
                 {!session.is_guest &&
                     session.user_id === authSession.user.id && (
-                        <View style={{ marginBottom: 20 }}>
+                        <View style={{ marginBottom: 20, gap: 10 }}>
                             <CommunityButton
                                 secondary
                                 label={t('tickets.manage')}
                                 onPress={() =>
                                     router.push({
                                         pathname: '/tickets',
+                                        params: { sessionId: session.id },
+                                    })
+                                }
+                            />
+                            <CommunityButton
+                                secondary
+                                label={t('guests.manage')}
+                                onPress={() =>
+                                    router.push({
+                                        pathname: '/guests',
                                         params: { sessionId: session.id },
                                     })
                                 }

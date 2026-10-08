@@ -425,6 +425,25 @@ export default function TicketsScreen() {
                                     >
                                         {t('tickets.onlineHint')}
                                     </Text>
+                                    {stats?.by_type.some(
+                                        (k) => k.is_guest_list,
+                                    ) && (
+                                        <>
+                                            <Text style={{ color: c.muted }}>
+                                                {t('guests.ticketCountHint')}
+                                            </Text>
+                                            <CommunityButton
+                                                secondary
+                                                label={t('guests.manage')}
+                                                onPress={() =>
+                                                    router.push({
+                                                        pathname: '/guests',
+                                                        params: { sessionId },
+                                                    })
+                                                }
+                                            />
+                                        </>
+                                    )}
                                     {heading(t('tickets.types'))}
                                     {stats?.by_type.map((k) => (
                                         <View
@@ -443,7 +462,10 @@ export default function TicketsScreen() {
                                                     fontSize: 16,
                                                 }}
                                             >
-                                                {k.name} · {money(k.price)}
+                                                {k.is_guest_list
+                                                    ? t('guests.title')
+                                                    : k.name}{' '}
+                                                · {money(k.price)}
                                             </Text>
                                             <Text style={{ color: c.muted }}>
                                                 {t('tickets.typeSummary', {

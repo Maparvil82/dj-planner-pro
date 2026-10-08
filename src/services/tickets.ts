@@ -6,6 +6,7 @@ export interface TicketType {
     name: string;
     price: number;
     is_invitation: boolean;
+    is_guest_list?: boolean;
     created_at: string;
 }
 export interface EventTicket {
@@ -58,6 +59,7 @@ export const ticketService = {
             .from('event_ticket_types')
             .select('*')
             .eq('session_id', sessionId)
+            .eq('is_guest_list', false)
             .order('created_at');
         if (error) failure(error);
         return data || [];
@@ -74,6 +76,7 @@ export const ticketService = {
             .from('event_tickets')
             .select('*')
             .eq('session_id', sessionId)
+            .is('guest_id', null)
             .order('created_at', { ascending: false })
             .order('id')
             .range(page * 50, page * 50 + 49);
