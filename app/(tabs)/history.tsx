@@ -1,3 +1,11 @@
+import {blockedSessionDays} from '../../src/utils/blockedDays';
+import {BlockDayButton} from '../../src/components/sessionTools/BlockDayButton';
+import {useBlockedDays} from '../../src/hooks/useBlockedDays';
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
+import { PageHeader } from '../../src/components/ui/PageHeader';
+import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
+import { sessionEarnings } from '../../src/utils/sessionPlanning';
 import React, { useMemo, useState, useContext, useEffect } from 'react';
 import {
     View,
@@ -9,31 +17,17 @@ import {
     TextInput,
     Modal,
     Pressable,
-    Dimensions,
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-    Calendar as CalendarIcon,
-    ChevronRight,
-    MapPin,
-    Clock,
-    Users,
-    Search,
-    Filter,
-    X,
-    Check,
-    Plus,
-    ArrowLeft
-} from 'lucide-react-native';
+import { Search, Filter, X, ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
-import { Avatar } from '../../src/components/ui/Avatar';
 import { useRouter } from 'expo-router';
-import { format, parseISO, isSameMonth, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 
 import { Calendar, LocaleConfig } from 'react-native-calendars';
@@ -42,22 +36,8 @@ import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
 
 setupCalendarLocales();
 
-const { width } = Dimensions.get('window');
-
-const calculateSessionEarnings = (session: any) => {
-    if (session.earning_type === 'fixed') return session.earning_amount || 0;
-    if (session.earning_type === 'hourly') {
-        const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-        const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-        let startMins = startH * 60 + startM;
-        let endMins = endH * 60 + endM;
-        if (endMins <= startMins) endMins += 24 * 60;
-        return (session.earning_amount || 0) * ((endMins - startMins) / 60);
-    }
-    return 0;
-};
-
 export default function HistoryScreen() {
+    const onTabScroll = useTabBarScroll();
     const { t, i18n, currentLanguage } = useTranslation();
     const { session, profile } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
@@ -66,6 +46,7 @@ export default function HistoryScreen() {
 
     const { data: sessions, isLoading, refetch, isRefetching } = useAllSessionsQuery();
 
+    const blockedDays = useBlockedDays();
     // View State
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
     const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -111,14 +92,14 @@ export default function HistoryScreen() {
         if (!sessions) return [];
         const venues = Array.from(new Set(sessions.map(s => s.venue).filter(Boolean)));
         return venues.sort();
-    }, [sessions]);
+    }, [sessions, t]);
 
     // Unique Titles for filter
     const uniqueTitles = useMemo(() => {
         if (!sessions) return [];
-        const titles = Array.from(new Set(sessions.map(s => s.title).filter(Boolean)));
+        const titles = Array.from(new Set(sessions.map(s => sessionDisplayTitle(s, t))));
         return titles.sort();
-    }, [sessions]);
+    }, [sessions, t]);
 
     // Filtering Logic
     const filteredSessions = useMemo(() => {
@@ -128,14 +109,14 @@ export default function HistoryScreen() {
             // Search Query
             if (searchQuery) {
                 const searchLower = searchQuery.toLowerCase();
-                const matchesTitle = session.title?.toLowerCase().includes(searchLower);
+                const matchesTitle = sessionDisplayTitle(session, t).toLowerCase().includes(searchLower);
                 const matchesVenue = session.venue?.toLowerCase().includes(searchLower);
                 if (!matchesTitle && !matchesVenue) return false;
             }
 
             // Advanced Filters
             if (selectedVenues.length > 0 && !selectedVenues.includes(session.venue)) return false;
-            if (selectedTitles.length > 0 && !selectedTitles.includes(session.title)) return false;
+            if (selectedTitles.length > 0 && !selectedTitles.includes(sessionDisplayTitle(session, t))) return false;
             if (selectedEarningTypes.length > 0 && !selectedEarningTypes.includes(session.earning_type)) return false;
 
             // Date Range logic (inclusive)
@@ -151,7 +132,7 @@ export default function HistoryScreen() {
             }
 
             // Earnings Range Filter
-            const earnings = calculateSessionEarnings(session);
+            const earnings = session.status === 'cancelled' ? 0 : sessionEarnings(session);
             const min = parseFloat(minEarnings);
             const max = parseFloat(maxEarnings);
 
@@ -160,14 +141,14 @@ export default function HistoryScreen() {
 
             return true;
         });
-    }, [sessions, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
+    }, [sessions, t, searchQuery, selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
 
     // Calendar Marked Dates Logic
     const calendarMarkedDates = useMemo(() => {
         const marked: any = {};
         filteredSessions.forEach(session => {
             const dateStr = session.date.substring(0, 10);
-            const baseColor = session.color || (isDark ? '#3B82F6' : '#2563EB');
+            const baseColor = session.color || (isDark ? '#7666df' : '#7666df');
 
             marked[dateStr] = {
                 customStyles: {
@@ -183,10 +164,13 @@ export default function HistoryScreen() {
             };
         });
 
+        (blockedDays.data || []).forEach(date => {
+            marked[date] = {...marked[date], customStyles:{container:{...(marked[date]?.customStyles?.container || {}), borderWidth:2, borderColor:'#d88455',borderRadius:8}, text:{...(marked[date]?.customStyles?.text || {}),textDecorationLine:'line-through'}}};
+        });
         // Add selection styling - if selected, we make it even more prominent
         if (selectedCalendarDate) {
             const isToday = selectedCalendarDate === format(new Date(), 'yyyy-MM-dd');
-            const hasSessions = !!marked[selectedCalendarDate];
+            const hasSessions = filteredSessions.some(s=>s.date.slice(0,10)===selectedCalendarDate);
 
             marked[selectedCalendarDate] = {
                 ...marked[selectedCalendarDate],
@@ -197,20 +181,20 @@ export default function HistoryScreen() {
                             : (isDark ? '#1F2937' : '#EFF6FF'), // Or subtle bg if no session
                         borderRadius: 6,
                         borderWidth: 2,
-                        borderColor: '#2563EB', // Primary blue border for selection
+                        borderColor: blockedDays.data?.includes(selectedCalendarDate) ? '#d88455' : '#7666df',
                         justifyContent: 'center',
                         alignItems: 'center'
                     },
                     text: {
                         color: hasSessions ? '#FFFFFF' : (isDark ? '#F3F4F6' : '#1D4ED8'),
-                        fontWeight: '900'
+                        fontWeight: '900', textDecorationLine: blockedDays.data?.includes(selectedCalendarDate) ? 'line-through' : 'none'
                     }
                 }
             };
         }
 
         return marked;
-    }, [filteredSessions, selectedCalendarDate, isDark]);
+    }, [filteredSessions, selectedCalendarDate, isDark, blockedDays.data]);
 
     // Sessions for the selected day in calendar view
     const selectedDaySessions = useMemo(() => {
@@ -258,136 +242,41 @@ export default function HistoryScreen() {
         return count;
     }, [selectedVenues, selectedTitles, selectedEarningTypes, startDate, endDate, minEarnings, maxEarnings]);
 
-    if (isLoading && !isRefetching) {
-        return (
-            <SafeAreaView className="flex-1 bg-white dark:bg-gray-950 items-center justify-center">
-                <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#2563EB'} />
-            </SafeAreaView>
-        );
-    }
+    const header = <PageHeader title={t('history')} subtitle={t('workflow.historyIntro')}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('back')} onPress={() => router.back()} style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: isDark ? '#20273b' : '#e9eaf3', alignItems: 'center', justifyContent: 'center' }}>
+            <ArrowLeft size={20} color={isDark ? '#f3f4f8' : '#202538'} />
+        </TouchableOpacity>
+    </PageHeader>;
 
-    const renderSessionCard = (session: any) => {
-        const dateObj = parseISO(session.date);
-        const d = format(dateObj, 'd');
-        const mName = format(dateObj, 'MMM', { locale });
-        const wName = format(dateObj, 'EEE', { locale });
-        const earnings = calculateSessionEarnings(session);
+    if (isLoading && !isRefetching) return <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} edges={['top', 'left', 'right']}>{header}<View style={{flex:1,alignItems:'center',justifyContent:'center'}}><ActivityIndicator size="large" color="#7666df" /></View></SafeAreaView>;
 
-        return (
-            <TouchableOpacity
-                key={session.id}
-                activeOpacity={0.7}
-                onPress={() => router.push(`/session/${session.id}`)}
-                className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden flex-row items-stretch mb-4"
-            >
-                <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
-                    <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                        {wName}
-                    </Text>
-                    <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
-                        {d}
-                    </Text>
-                    <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                        {mName}
-                    </Text>
-                </View>
-
-                <View className="flex-1 flex-row items-center p-4">
-                    <View className="flex-1 mr-3">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>
-                            {session.title}
-                        </Text>
-                        <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>
-                            {session.venue}
-                        </Text>
-                        <View className="flex-row items-center flex-wrap gap-2">
-                            <Text className="text-xs font-medium px-2 py-1 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>
-                                {session.start_time} - {session.end_time}
-                            </Text>
-
-                            {session.is_collective && session.djs && session.djs.length > 0 && (
-                                <View className="flex-row items-center px-1.5 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-md max-w-[50%]">
-                                    <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} className="mr-1" />
-                                    <Text className="text-xs font-medium text-gray-600 dark:text-gray-400" numberOfLines={1}>
-                                        {session.djs.join(', ')}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    {session.earning_type && session.earning_type !== 'free' && (
-                        <View className="items-end justify-center mr-2">
-                            {session.status === 'cancelled' && (
-                                <Text className="text-[9px] font-bold text-red-500 uppercase mb-0.5">{t('status_cancelled')}</Text>
-                            )}
-                            <View className={`px-3 py-1.5 rounded-lg border ${session.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'}`}>
-                                <Text className={`text-xs font-bold ${session.status === 'cancelled' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
-                                    {session.status === 'cancelled' ? '-' : ''}{earnings.toFixed(0)} {session.currency || '€'}
-                                </Text>
-                            </View>
-                        </View>
-                    )}
-
-                    <View className="justify-center items-center ml-1">
-                        <ChevronRight size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
-    };
+    const renderSessionCard = (session: NonNullable<typeof sessions>[number]) => (
+        <View key={session.id} style={{ marginBottom: 14 }}>
+            <SessionPreviewCard session={session} onPress={() => router.push(`/session/${session.id}`)} showDjs />
+        </View>
+    );
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'left', 'right']}>
-            {/* Header */}
-            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
-                    {/* Left Actions */}
-                    <View className="flex-row items-center gap-3 w-20">
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
-                        >
-                            <ArrowLeft size={20} color={isDark ? '#FFFFFF' : '#111827'} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Centered Title */}
-                    <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            {t('history')}
-                        </Text>
-                    </View>
-
-                    {/* Right Actions */}
-                    <View className="flex-row items-center gap-3 ml-auto">
-                        <TouchableOpacity
-                            onPress={() => router.push('/add-session')}
-                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
-                        >
-                            <Plus size={20} color="#FFFFFF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} edges={['top', 'left', 'right']}>
+            {header}
 
             {/* Sub-Header: Controls */}
-            <View className="px-6 pt-4 flex-row items-center justify-between">
+            <View className="px-5 flex-row items-center justify-between">
                 {/* View Switcher */}
-                <View className="flex-row bg-gray-100 dark:bg-gray-900 rounded-full p-1">
+                <View className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
                     <TouchableOpacity
-                        onPress={() => setViewMode('calendar')}
-                        className={`px-4 py-1.5 rounded-full ${viewMode === 'calendar' ? 'bg-white dark:bg-gray-800' : ''}`}
+                        accessibilityRole="button" accessibilityState={{selected:viewMode==='calendar'}} onPress={() => setViewMode('calendar')}
+                        className={`px-4 py-2 rounded-xl ${viewMode === 'calendar' ? 'bg-[#f0edfc] dark:bg-[#292743]' : ''}`}
                     >
-                        <Text className={`text-xs font-bold ${viewMode === 'calendar' ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <Text className={`text-xs font-bold ${viewMode === 'calendar' ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-500 dark:text-[#a8b2c6]'}`}>
                             {t('view_calendar')}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => setViewMode('list')}
-                        className={`px-4 py-1.5 rounded-full ${viewMode === 'list' ? 'bg-white dark:bg-gray-800' : ''}`}
+                        accessibilityRole="button" accessibilityState={{selected:viewMode==='list'}} onPress={() => setViewMode('list')}
+                        className={`px-4 py-2 rounded-xl ${viewMode === 'list' ? 'bg-[#f0edfc] dark:bg-[#292743]' : ''}`}
                     >
-                        <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <Text className={`text-xs font-bold ${viewMode === 'list' ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-500 dark:text-[#a8b2c6]'}`}>
                             {t('view_list')}
                         </Text>
                     </TouchableOpacity>
@@ -396,8 +285,8 @@ export default function HistoryScreen() {
 
                 {/* Advanced Filter Trigger */}
                 <TouchableOpacity
-                    onPress={() => setIsAdvancedModalVisible(true)}
-                    className={`w-9 h-9 rounded-full items-center justify-center ${activeFiltersCount > 0 ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-900'}`}
+                    accessibilityRole="button" accessibilityLabel={t('filters_title')} onPress={() => setIsAdvancedModalVisible(true)}
+                    className={`w-11 h-11 rounded-2xl items-center justify-center ${activeFiltersCount > 0 ? 'bg-[#6554df]' : 'bg-gray-100 dark:bg-gray-900'}`}
                 >
                     <Filter size={18} color={activeFiltersCount > 0 ? '#FFFFFF' : (isDark ? '#9CA3AF' : '#4B5563')} />
                     {activeFiltersCount > 0 && (
@@ -409,19 +298,19 @@ export default function HistoryScreen() {
             </View>
 
             {/* Search Bar */}
-            <View className="px-6 mt-4">
-                <View className="flex-row items-center bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800">
-                    <Search size={20} color={isDark ? '#4B5563' : '#9CA3AF'} />
+            <View className="px-5 mt-4">
+                <View className="flex-row items-center bg-white dark:bg-[#171d2c] rounded-2xl px-4 py-3.5 border border-[#e9ecf3] dark:border-[#252d40]">
+                    <Search size={20} color={isDark ? '#a8b2c6' : '#9CA3AF'} />
                     <TextInput
                         className="flex-1 ml-3 text-gray-900 dark:text-white font-medium"
                         placeholder={t('search_placeholder')}
-                        placeholderTextColor={isDark ? '#4B5563' : '#9CA3AF'}
+                        placeholderTextColor={isDark ? '#a8b2c6' : '#9CA3AF'}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                     {searchQuery !== '' && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <X size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                            <X size={18} color={isDark ? '#a8b2c6' : '#9CA3AF'} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -430,7 +319,7 @@ export default function HistoryScreen() {
 
             {viewMode === 'list' ? (
                 <ScrollView
-                    className="flex-1 px-6 mt-2"
+                    className="flex-1 px-5 mt-2"
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl
@@ -442,9 +331,7 @@ export default function HistoryScreen() {
                 >
                     {groupedSessions.length === 0 ? (
                         <View className="py-20 items-center justify-center">
-                            <View className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-full items-center justify-center mb-4 border border-gray-100 dark:border-gray-800">
-                                <CalendarIcon size={32} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                            </View>
+
                             <Text className="text-gray-500 dark:text-gray-400 text-lg font-bold text-center px-10">
                                 {searchQuery || activeFiltersCount > 0 ? t('no_results_filtered') : t('no_sessions_yet')}
                             </Text>
@@ -453,7 +340,7 @@ export default function HistoryScreen() {
                                     onPress={resetFilters}
                                     className="mt-6 px-6 py-3 bg-gray-100 dark:bg-gray-900 rounded-full"
                                 >
-                                    <Text className="text-blue-600 dark:text-blue-400 font-bold">{t('filter_reset')}</Text>
+                                    <Text className="text-[#7666df] dark:text-[#bdb0f5] font-bold">{t('filter_reset')}</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
@@ -473,28 +360,27 @@ export default function HistoryScreen() {
                     <View className="h-20" />
                 </ScrollView>
             ) : (
-                <ScrollView className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
-                    <View className="px-6">
-                        <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
+                    <View className="px-5">
+                        <View className="bg-white dark:bg-[#171d2c] rounded-3xl overflow-hidden border border-[#e9ecf3] dark:border-[#252d40]">
                             <Calendar
-                                key={JSON.stringify(calendarMarkedDates)}
                                 markingType={'custom'}
                                 current={selectedCalendarDate}
                                 markedDates={calendarMarkedDates}
                                 onDayPress={(day: any) => setSelectedCalendarDate(day.dateString)}
                                 theme={{
-                                    calendarBackground: isDark ? '#111827' : '#ffffff',
+                                    calendarBackground: isDark ? '#171d2c' : '#ffffff',
                                     textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
-                                    selectedDayBackgroundColor: '#2563EB',
+                                    selectedDayBackgroundColor: '#7666df',
                                     selectedDayTextColor: '#ffffff',
-                                    todayTextColor: '#2563EB',
+                                    todayTextColor: '#7666df',
                                     dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
                                     textDisabledColor: isDark ? '#374151' : '#d9e1e8',
-                                    dotColor: '#2563EB',
+                                    dotColor: '#7666df',
                                     selectedDotColor: '#ffffff',
-                                    arrowColor: '#2563EB',
+                                    arrowColor: '#7666df',
                                     monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
-                                    indicatorColor: '#2563EB',
+                                    indicatorColor: '#7666df',
                                     textDayFontWeight: '600',
                                     textMonthFontWeight: 'bold',
                                     textDayHeaderFontWeight: 'bold',
@@ -503,18 +389,19 @@ export default function HistoryScreen() {
                         </View>
                     </View>
 
-                    <View className="px-6 mt-8">
+                    <View className="px-5 mt-6">
                         <View className="flex-row items-center justify-between mb-4">
                             <Text className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                                 {format(parseISO(selectedCalendarDate), 'd MMMM yyyy', { locale: locale })}
                             </Text>
-                            <Text className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
+                            <Text className="text-xs font-bold text-[#7666df] bg-[#f0edfc] dark:bg-[#292743] px-2 py-1 rounded-md">
                                 {selectedDaySessions.length} {t('sessions')}
                             </Text>
                         </View>
 
+                        <BlockDayButton date={selectedCalendarDate} hasSessions={(sessions || []).some(s=>s.status!=='cancelled' && blockedSessionDays({...s,recurrence_type:'none'},[selectedCalendarDate]).length>0)} />
                         {selectedDaySessions.length === 0 ? (
-                            <View className="py-12 items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                            <View className="py-12 items-center justify-center bg-white dark:bg-[#171d2c] rounded-3xl border border-[#e9ecf3] dark:border-[#252d40]">
                                 <Text className="text-gray-400 dark:text-gray-500 font-medium">
                                     {t('no_sessions_this_day')}
                                 </Text>
@@ -568,11 +455,11 @@ export default function HistoryScreen() {
                                         >
                                             <View>
                                                 <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_start_date')}</Text>
-                                                <Text className={`font-bold ${startDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                <Text className={`font-bold ${startDate ? 'text-[#7666df]' : 'text-gray-400 dark:text-gray-500'}`}>
                                                     {startDate ? format(parseISO(startDate), 'dd/MM/yyyy') : '--/--/----'}
                                                 </Text>
                                             </View>
-                                            <CalendarIcon size={16} color={startDate ? '#2563EB' : '#9CA3AF'} />
+
                                         </TouchableOpacity>
 
                                         <TouchableOpacity
@@ -581,11 +468,11 @@ export default function HistoryScreen() {
                                         >
                                             <View>
                                                 <Text className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-1">{t('filter_end_date')}</Text>
-                                                <Text className={`font-bold ${endDate ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                <Text className={`font-bold ${endDate ? 'text-[#7666df]' : 'text-gray-400 dark:text-gray-500'}`}>
                                                     {endDate ? format(parseISO(endDate), 'dd/MM/yyyy') : '--/--/----'}
                                                 </Text>
                                             </View>
-                                            <CalendarIcon size={16} color={endDate ? '#2563EB' : '#9CA3AF'} />
+
                                         </TouchableOpacity>
                                     </View>
                                     {(startDate || endDate) && (
@@ -617,7 +504,7 @@ export default function HistoryScreen() {
                                                         }
                                                     }}
                                                     className={`px-4 py-2 rounded-xl border ${isSelected
-                                                        ? 'bg-blue-600 border-blue-600'
+                                                        ? 'bg-[#6554df] border-blue-600'
                                                         : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
                                                         }`}
                                                 >
@@ -650,7 +537,7 @@ export default function HistoryScreen() {
                                                         }
                                                     }}
                                                     className={`px-4 py-2 rounded-xl border ${isSelected
-                                                        ? 'bg-blue-600 border-blue-600'
+                                                        ? 'bg-[#6554df] border-blue-600'
                                                         : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
                                                         }`}
                                                 >
@@ -687,7 +574,7 @@ export default function HistoryScreen() {
                                                         }
                                                     }}
                                                     className={`flex-1 px-4 py-3 rounded-xl border items-center ${isSelected
-                                                        ? 'bg-blue-600 border-blue-600'
+                                                        ? 'bg-[#6554df] border-blue-600'
                                                         : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800'
                                                         }`}
                                                 >
@@ -748,7 +635,7 @@ export default function HistoryScreen() {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => setIsAdvancedModalVisible(false)}
-                                    className="flex-[2] py-4 rounded-2xl bg-blue-600 items-center"
+                                    className="flex-[2] py-4 rounded-2xl bg-[#6554df] items-center"
                                 >
                                     <Text className="text-white font-black">{t('filter_apply')}</Text>
                                 </TouchableOpacity>
@@ -764,25 +651,25 @@ export default function HistoryScreen() {
                         <Calendar
                             current={startDate || undefined}
                             markedDates={startDate ? {
-                                [startDate]: { selected: true, selectedColor: '#2563EB' }
+                                [startDate]: { selected: true, selectedColor: '#7666df' }
                             } : {}}
                             onDayPress={(day: any) => {
                                 setStartDate(day.dateString);
                                 setShowStartDateCalendar(false);
                             }}
                             theme={{
-                                calendarBackground: isDark ? '#111827' : '#ffffff',
+                                calendarBackground: isDark ? '#171d2c' : '#ffffff',
                                 textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
-                                selectedDayBackgroundColor: '#2563EB',
+                                selectedDayBackgroundColor: '#7666df',
                                 selectedDayTextColor: '#ffffff',
-                                todayTextColor: '#2563EB',
+                                todayTextColor: '#7666df',
                                 dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
                                 textDisabledColor: isDark ? '#374151' : '#d9e1e8',
-                                dotColor: '#2563EB',
+                                dotColor: '#7666df',
                                 selectedDotColor: '#ffffff',
-                                arrowColor: '#2563EB',
+                                arrowColor: '#7666df',
                                 monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
-                                indicatorColor: '#2563EB',
+                                indicatorColor: '#7666df',
                             }}
                         />
                         <TouchableOpacity
@@ -802,25 +689,25 @@ export default function HistoryScreen() {
                         <Calendar
                             current={endDate || undefined}
                             markedDates={endDate ? {
-                                [endDate]: { selected: true, selectedColor: '#2563EB' }
+                                [endDate]: { selected: true, selectedColor: '#7666df' }
                             } : {}}
                             onDayPress={(day: any) => {
                                 setEndDate(day.dateString);
                                 setShowEndDateCalendar(false);
                             }}
                             theme={{
-                                calendarBackground: isDark ? '#111827' : '#ffffff',
+                                calendarBackground: isDark ? '#171d2c' : '#ffffff',
                                 textSectionTitleColor: isDark ? '#9CA3AF' : '#b6c1cd',
-                                selectedDayBackgroundColor: '#2563EB',
+                                selectedDayBackgroundColor: '#7666df',
                                 selectedDayTextColor: '#ffffff',
-                                todayTextColor: '#2563EB',
+                                todayTextColor: '#7666df',
                                 dayTextColor: isDark ? '#F3F4F6' : '#2d4150',
                                 textDisabledColor: isDark ? '#374151' : '#d9e1e8',
-                                dotColor: '#2563EB',
+                                dotColor: '#7666df',
                                 selectedDotColor: '#ffffff',
-                                arrowColor: '#2563EB',
+                                arrowColor: '#7666df',
                                 monthTextColor: isDark ? '#F3F4F6' : '#2d4150',
-                                indicatorColor: '#2563EB',
+                                indicatorColor: '#7666df',
                             }}
                         />
                         <TouchableOpacity

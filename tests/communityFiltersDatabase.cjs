@@ -1,0 +1,544 @@
+const { PGlite } = require('@electric-sql/pglite');
+const fs = require('node:fs'),
+    path = require('node:path'),
+    assert = require('node:assert/strict');
+const db = new PGlite();
+const uid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+async function role(name, user = '') {
+    await db.exec('reset role');
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+        user,
+    ]);
+    await db.exec(`set role ${name}`);
+}
+const feed = async (
+    city = '',
+    genre = '',
+    follow = false,
+    offset = 0,
+    size = 20,
+) =>
+    (
+        await db.query(
+            'select * from public.community_feed_filtered($1,null,$2,$3,$4,$5)',
+            [follow, offset, size, city, genre],
+        )
+    ).rows;
+const discover = async (
+    city = '',
+    genre = '',
+    search = '',
+    offset = 0,
+    size = 20,
+) =>
+    (
+        await db.query(
+            'select * from public.community_discover_filtered($1,$2,$3,$4,$5)',
+            [search, city, genre, offset, size],
+        )
+    ).rows;
+(async () => {
+    await db.exec(`create role anon;create role authenticated;create schema auth;grant usage on schema auth to authenticated;create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create schema community_private;grant usage on schema community_private to authenticated;
+ create table public.community_profiles(user_id uuid primary key,artist_name text,city text,genres text,is_visible boolean,created_at timestamptz default now());
+ alter table public.community_profiles enable row level security;grant select on public.community_profiles to authenticated;create policy visible on public.community_profiles to authenticated using(is_visible or user_id=auth.uid());
+ create table public.sessions(id uuid primary key,user_id uuid,title text,venue text,date date,start_time text,end_time text,status text,poster_url text,venue_id uuid,poster_focus_x float8 default .5,poster_focus_y float8 default .5);
+ create table public.venues(id uuid primary key,user_id uuid,city text);
+ create table public.community_session_shares(session_id uuid,user_id uuid,created_at timestamptz default now());
+ create table public.session_collaborators(session_id uuid,dj_id uuid,status text);
+ create table public.community_follows(follower_id uuid,following_id uuid);
+ create type public.community_session_card as(session_id uuid,author_id uuid,artist_name text,avatar_url text,title text,venue text,city text,date date,start_time text,end_time text,poster_url text,shared_at timestamptz,collaborators jsonb,poster_focus_x float8,poster_focus_y float8);
+ alter table public.community_profiles add column avatar_url text;`);
+    await db.exec(
+        fs.readFileSync(
+            path.join(
+                __dirname,
+                '../supabase/migrations/20261004014648_community_city_genre_filters.sql',
+            ),
+            'utf8',
+        ),
+    );
+    for (const [n, name, city, genre, visible] of [
+        [1, 'Viewer', 'Sevilla', 'House', true],
+        [2, 'Alpha', 'Málaga', 'Deep House', true],
+        [3, 'Beta', 'Madrid', 'House · Techno', true],
+        [4, 'Hidden', 'Secret City', 'Secret Genre', false],
+        [5, 'Pepe', 'Barcelona', 'House', true],
+    ])
+        await db.query(
+            'insert into public.community_profiles(user_id,artist_name,city,genres,is_visible) values($1,$2,$3,$4,$5)',
+            [uid(n), name, city, genre, visible],
+        );
+    await db.query('insert into public.venues values($1,$2,$3),($4,$5,$6)', [
+        uid(101),
+        uid(2),
+        'Málaga',
+        uid(102),
+        uid(4),
+        'Secret City',
+    ]);
+    async function session(
+        n,
+        owner = 2,
+        status = 'confirmed',
+        shared = true,
+        venue = 101,
+    ) {
+        await db.query(
+            "insert into public.sessions(id,user_id,title,venue,date,start_time,end_time,status,venue_id) values($1,$2,'Fixture','Club','2027-01-01','22:00','04:00',$3,$4)",
+            [uid(n), uid(owner), status, uid(venue)],
+        );
+        if (shared)
+            await db.query(
+                'insert into public.community_session_shares values($1,$2,now())',
+                [uid(n), uid(owner)],
+            );
+    }
+    await session(201);
+    await session(202, 2, 'cancelled');
+    await session(203, 2, 'confirmed', false);
+    await session(204, 4, 'confirmed', true, 102);
+    await session(205);
+    await db.query(
+        "insert into public.session_collaborators values($1,$2,'accepted'),($3,$4,'pending')",
+        [uid(201), uid(5), uid(205), uid(5)],
+    );
+    await db.query('insert into public.community_follows values($1,$2)', [
+        uid(1),
+        uid(5),
+    ]);
+    await role('authenticated', uid(1));
+    assert.equal(
+        (await feed()).length,
+        2,
+        'private/cancelled/hidden session leaked',
+    );
+    assert.equal(
+        (await feed(' malaga ', 'deep house')).length,
+        2,
+        'case/accent normalization failed',
+    );
+    assert.deepEqual(
+        (await feed('Málaga', 'House')).map((s) => s.session_id),
+        [uid(201)],
+        'House matched Deep House or pending collaborator',
+    );
+    assert.equal(
+        (await feed('Barcelona', 'House')).length,
+        0,
+        'session city incorrectly used DJ home city',
+    );
+    assert.equal(
+        (await feed('Málaga', 'House', true)).length,
+        1,
+        'following collaborator filter broken',
+    );
+    assert.equal(
+        (await discover('malaga', 'House')).length,
+        0,
+        'genre substring matched',
+    );
+    assert.deepEqual(
+        (await discover('madrid', 'house')).map((p) => p.user_id),
+        [uid(3)],
+    );
+    assert.equal(
+        (await discover('', '', 'Secret')).length,
+        0,
+        'hidden DJ leaked',
+    );
+    assert.equal(
+        (await discover('', '', '%')).length,
+        0,
+        'wildcard search changed scope',
+    );
+    const options = (
+        await db.query(
+            "select public.community_filter_options('sessions') result",
+        )
+    ).rows[0].result;
+    assert.deepEqual(options.cities, ['Málaga']);
+    assert.ok(!options.genres.includes('Secret Genre'));
+    const djOptions = (
+        await db.query("select public.community_filter_options('djs') result")
+    ).rows[0].result;
+    assert.ok(
+        djOptions.cities.includes('Madrid') &&
+            !djOptions.cities.includes('Secret City'),
+    );
+    // Matching rows beyond an unfiltered first page must still appear on page 1.
+    await role('postgres');
+    for (let n = 300; n < 325; n++) await session(n);
+    await role('authenticated', uid(1));
+    assert.equal(
+        (await feed('Málaga', 'House', false, 0, 1))[0].session_id,
+        uid(201),
+    );
+    assert.equal((await feed('Málaga', 'Deep House', false, 20, 20)).length, 7);
+    await role('anon');
+    await assert.rejects(() => feed(), /permission denied/);
+    await assert.rejects(() => discover(), /permission denied/);
+    await role('authenticated');
+    assert.equal((await feed()).length, 0);
+    assert.equal((await discover()).length, 0);
+    await role('postgres');
+    await db.exec(
+        'alter table public.community_profiles add column city_location jsonb; grant select on public.community_follows to authenticated; alter table public.community_follows enable row level security; create policy own_follows on public.community_follows for select to authenticated using(follower_id=(select auth.uid()));',
+    );
+    const hybrid = fs.readFileSync(
+        'supabase/migrations/20261004131746_hybrid_city_lookup.sql',
+        'utf8',
+    );
+    await db.exec(
+        hybrid.slice(
+            hybrid.indexOf('create function community_private.city_label'),
+            hybrid.indexOf('-- RLS exposes'),
+        ),
+    );
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004134238_community_followed_djs_and_search.sql',
+            'utf8',
+        ),
+    );
+    await db.query(
+        'insert into public.community_follows values($1,$2),($3,$4)',
+        [uid(1), uid(4), uid(2), uid(3)],
+    );
+    await session(326);
+    await db.query("update sessions set title='Unique Night' where id=$1", [
+        uid(326),
+    ]);
+    await role('authenticated', uid(1));
+    const followed = async (name = '', city = '', genre = '') =>
+        (
+            await db.query('select * from community_followed_djs($1,$2,$3)', [
+                name,
+                city,
+                genre,
+            ])
+        ).rows;
+    assert.deepEqual(
+        (await followed()).map((p) => p.user_id),
+        [uid(5)],
+        'Following lists DJ profiles without requiring their own published sessions, excluding private profiles and other users follows',
+    );
+    assert.equal((await followed('pepe', 'barcelona', 'house')).length, 1);
+    assert.equal((await followed('pepe', 'madrid', 'house')).length, 0);
+    assert.equal(
+        (
+            await db.query(
+                "select * from community_feed_search(search_text=>'unique night', page_size=>1)",
+            )
+        ).rows[0].session_id,
+        uid(326),
+        'Text search applies before pagination',
+    );
+    assert.equal(
+        (
+            await db.query(
+                "select * from community_feed_search(search_text=>'Unique Night',filter_genre=>'House')",
+            )
+        ).rows.length,
+        0,
+        'Search composes with exact style filters',
+    );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004140016_community_profile_session_counts.sql',
+            'utf8',
+        ),
+    );
+    await role('authenticated', uid(1));
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261004233501_community_discover_exclude_self.sql',
+            'utf8',
+        ),
+    );
+    await role('authenticated', uid(1));
+    const discovery = async (
+        search = '',
+        city = '',
+        genre = '',
+        offset = 0,
+        size = 20,
+    ) =>
+        (
+            await db.query(
+                'select * from community_discover_filtered($1,$2,$3,$4,$5)',
+                [search, city, genre, offset, size],
+            )
+        ).rows;
+    assert.ok(
+        !(await discovery()).some((p) => p.user_id === uid(1)),
+        'Viewer excluded from unfiltered discovery',
+    );
+    assert.equal(
+        (await discovery('Viewer', 'Sevilla', 'House')).length,
+        0,
+        'Viewer excluded with combined filters',
+    );
+    const first = await discovery('', '', '', 0, 2);
+    const second = await discovery('', '', '', 2, 2);
+    assert.equal(
+        first.length,
+        2,
+        'Self exclusion happens before the page limit',
+    );
+    assert.equal(
+        new Set([...first, ...second].map((p) => p.user_id)).size,
+        3,
+        'All other public DJs can be paginated without gaps',
+    );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005002722_community_profile_posters.sql',
+            'utf8',
+        ),
+    );
+    // Public past posters, private/cancelled/unshared/future exclusions, accepted guests.
+    await db.query(
+        "update sessions set date=current_date-1,poster_url='https://fixture.example/poster.jpg' where id=any($1::uuid[])",
+        [[uid(201), uid(202), uid(203), uid(204), uid(205)]],
+    );
+    await db.query(
+        "update sessions set poster_url='https://fixture.example/future.jpg' where id=$1",
+        [uid(326)],
+    );
+    await role('authenticated', uid(1));
+    const posters = async (author, offset = 0, size = 20) =>
+        (
+            await db.query(
+                'select * from community_profile_posters($1,$2,$3)',
+                [author, offset, size],
+            )
+        ).rows;
+    assert.deepEqual(
+        (await posters(uid(2))).map((row) => row.session_id).sort(),
+        [uid(201), uid(205)],
+        'Only public confirmed past sessions with posters',
+    );
+    assert.deepEqual(
+        (await posters(uid(5))).map((row) => row.session_id),
+        [uid(201)],
+        'Accepted participation appears; pending invitations stay hidden',
+    );
+    assert.equal(
+        (await posters(uid(4))).length,
+        0,
+        'Hidden profiles expose no posters',
+    );
+    assert.equal(
+        (await posters(null)).length,
+        0,
+        'No accidental all-author feed',
+    );
+    assert.notEqual(
+        (await posters(uid(2), 0, 1))[0].session_id,
+        (await posters(uid(2), 1, 1))[0].session_id,
+        'Poster pagination is stable',
+    );
+    await role('authenticated');
+    assert.equal((await posters(uid(2))).length, 0);
+    await role('anon');
+    await assert.rejects(() => posters(uid(2)), /permission denied/);
+    await role('authenticated', uid(1));
+    const counts = async () =>
+        (
+            await db.query(
+                'select * from community_profile_session_counts($1::uuid[])',
+                [[uid(2), uid(4), uid(5)]],
+            )
+        ).rows;
+    const rows = await counts();
+    assert.equal(
+        Number(rows.find((r) => r.user_id === uid(5)).session_count),
+        1,
+        'Accepted collaborator counts only public shared sessions',
+    );
+    assert.ok(
+        Number(rows.find((r) => r.user_id === uid(2)).session_count) > 20,
+        'Counts are independent of feed pagination',
+    );
+    assert.ok(
+        !rows.some((r) => r.user_id === uid(4)),
+        'Hidden profile counts are not exposed',
+    );
+    await role('authenticated');
+    assert.equal((await counts()).length, 0);
+    await role('anon');
+    await assert.rejects(() => counts(), /permission denied/);
+    await role('anon');
+    await assert.rejects(() => followed(), /permission denied/);
+    await assert.rejects(
+        () =>
+            db.query(
+                "select * from community_feed_search(search_text=>'unique')",
+            ),
+        /permission denied/,
+    );
+    await role('authenticated');
+    assert.equal((await followed()).length, 0);
+    await role('postgres');
+    await db.exec(
+        `create table public.community_profile_mixes(id uuid primary key,user_id uuid,title text,source_url text,platform text,created_at timestamptz);`,
+    );
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005173137_community_following_activity.sql',
+            'utf8',
+        ),
+    );
+    for (const [n, owner, title, created] of [
+        [501, 5, 'Jazz special', '2029-01-01'],
+        [502, 4, 'Private mix', '2029-01-02'],
+        [503, 3, 'Not followed', '2029-01-03'],
+        [504, 5, 'Older mix', '2020-01-01'],
+    ])
+        await db.query(
+            "insert into community_profile_mixes values($1,$2,$3,'https://www.mixcloud.com/dj/set/','mixcloud',$4)",
+            [uid(n), uid(owner), title, created],
+        );
+    const activity = async (
+        search = '',
+        city = '',
+        genre = '',
+        offset = 0,
+        size = 20,
+    ) =>
+        (
+            await db.query(
+                'select * from community_following_activity($1,$2,$3,$4,$5)',
+                [search, city, genre, offset, size],
+            )
+        ).rows;
+    await role('authenticated', uid(1));
+    const timeline = await activity();
+    assert.deepEqual(
+        timeline.map((x) => x.id),
+        [uid(501), uid(201), uid(504)],
+        'Only followed public mixes and accepted public collaborations appear, newest publication first',
+    );
+    assert.equal(timeline[0].kind, 'mix');
+    assert.equal(timeline[1].kind, 'session');
+    assert.ok(!JSON.stringify(timeline).includes('Private mix'));
+    assert.ok(!('earning_amount' in timeline[1].payload));
+    assert.deepEqual(
+        (await activity('jazz', 'barcelona', 'house')).map((x) => x.id),
+        [uid(501)],
+    );
+    assert.equal((await activity('jazz', 'madrid')).length, 0);
+    assert.equal((await activity('jazz', '', 'Deep House')).length, 0);
+    const paged = [];
+    for (let i = 0; i < timeline.length; i++)
+        paged.push((await activity('', '', '', i, 1))[0].id);
+    assert.deepEqual(
+        paged,
+        timeline.map((x) => x.id),
+        'Pagination preserves mixed chronology',
+    );
+    await role('authenticated', uid(3));
+    assert.equal(
+        (await activity()).length,
+        0,
+        'Another user does not inherit follows',
+    );
+    await role('authenticated');
+    assert.equal((await activity()).length, 0);
+    await role('anon');
+    await assert.rejects(() => activity(), /permission denied/);
+    await role('postgres');
+    await db.query(
+        'delete from community_follows where follower_id=$1 and following_id=$2',
+        [uid(1), uid(5)],
+    );
+    await role('authenticated', uid(1));
+    assert.equal(
+        (await activity()).length,
+        0,
+        'Unfollowing removes all of that DJ’s content immediately',
+    );
+    await role('postgres');
+    await db.exec(
+        fs.readFileSync(
+            'supabase/migrations/20261005182846_community_session_shelves.sql',
+            'utf8',
+        ),
+    );
+    await db.query('insert into community_follows values($1,$2)', [
+        uid(1),
+        uid(5),
+    ]);
+    const shelf = async (
+        name,
+        city = 'malaga',
+        offset = 0,
+        size = 50,
+        genre = '',
+        search = '',
+    ) =>
+        (
+            await db.query(
+                "select * from community_session_shelf($1,$2,'2026-10-05',$3,'',$4,$5,$6)",
+                [name, city, search, genre, offset, size],
+            )
+        ).rows;
+    await role('authenticated', uid(1));
+    const a = await shelf('following'),
+        b = await shelf('city'),
+        c = await shelf('rest');
+    assert.deepEqual(
+        a.map((x) => x.session_id),
+        [uid(201)],
+        'Accepted followed guests appear in the first shelf',
+    );
+    assert.ok(
+        b.some((x) => x.session_id === uid(326)),
+        'Future events in the normalized profile city appear',
+    );
+    assert.ok(
+        !b.some((x) => x.session_id === uid(205)),
+        'Past local events stay in the rest',
+    );
+    const all = [...a, ...b, ...c].map((x) => x.session_id);
+    assert.equal(new Set(all).size, all.length, 'No duplicates across shelves');
+    assert.ok(
+        !all.some((id) => [uid(202), uid(203), uid(204)].includes(id)),
+        'Private, cancelled and hidden excluded',
+    );
+    assert.equal((await shelf('city', 'Madrid')).length, 0);
+    assert.equal(
+        (await shelf('following', 'malaga', 0, 50, 'Techno')).length,
+        0,
+    );
+    assert.equal(
+        (await shelf('city', 'malaga', 0, 1, '', 'Unique Night'))[0].session_id,
+        uid(326),
+        'Search before pagination',
+    );
+    const shelfPages = [
+        ...(await shelf('city', 'malaga', 0, 1)),
+        ...(await shelf('city', 'malaga', 1, 1)),
+    ];
+    assert.deepEqual(
+        shelfPages.map((x) => x.session_id),
+        b.slice(0, 2).map((x) => x.session_id),
+    );
+    assert.equal((await shelf('not-a-shelf')).length, 0);
+    await role('authenticated');
+    assert.equal((await shelf('city')).length, 0);
+    await role('anon');
+    await assert.rejects(() => shelf('city'), /permission denied/);
+    console.log(
+        'PASS combined filters, exact genres, accent/case city matching, accepted collaborators, pagination, name search, private data exclusion and authenticated-only access.',
+    );
+})()
+    .catch((e) => {
+        console.error(e);
+        process.exitCode = 1;
+    })
+    .finally(() => db.close());

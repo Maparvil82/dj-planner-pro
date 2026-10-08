@@ -1,11 +1,19 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import { sessionDisplayTitle, sessionDisplaySubtitle } from '../../src/utils/sessionNaming';
+import type { Session } from '../../src/types/session';
+import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
+import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
+import { PageHeader } from '../../src/components/ui/PageHeader';
+import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
+import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
+import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery, useUpcomingSessionsQuery, useDeleteSessionMutation, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { CalendarPlus, Inbox, Users, TrendingUp, Wallet, ChevronRight, X, Plus, ArrowUpRight, Calendar, ChevronLeft } from 'lucide-react-native';
+import { useSessionsQuery, useUpcomingSessionsQuery, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { ChevronRight, X, Calendar } from 'lucide-react-native';
 import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -14,6 +22,7 @@ import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 import { FlatList, Dimensions, useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
+    const onTabScroll = useTabBarScroll();
     const { width: windowWidth } = useWindowDimensions();
     const CALENDAR_WIDTH = windowWidth > 1024 ? 1024 - 32 : windowWidth - 32;
     const { t, currentLanguage } = useTranslation();
@@ -30,9 +39,22 @@ export default function HomeScreen() {
 
     const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
     const { data: allSessions } = useAllSessionsQuery();
-    const deleteSessionMutation = useDeleteSessionMutation();
+    const deletion = useSessionDeletion();
+    const queuedDeletion = useRef<Session | null>(null);
+    const showQueuedDeletion = () => {
+        const target = queuedDeletion.current;
+        queuedDeletion.current = null;
+        if (target) deletion.requestDelete(target);
+    };
+    const requestListDelete = (target: Session, source: 'earnings' | 'projected') => {
+        if (Platform.OS === 'ios') queuedDeletion.current = target;
+        if (source === 'earnings') setIsEarningsModalVisible(false);
+        else setIsProjectedModalVisible(false);
+        if (Platform.OS !== 'ios') deletion.requestDelete(target);
+    };
 
-    const now = startOfToday();
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(timer); }, []);
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
     const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
@@ -44,21 +66,10 @@ export default function HomeScreen() {
     const isLoadingUpcoming = isUpcomingLoading || !initialized;
     const isLoadingMonth = isMonthLoading || !initialized;
 
-    const calculateSessionEarnings = (session: any) => {
-        if (session.earning_type === 'fixed') return session.earning_amount || 0;
-        if (session.earning_type === 'hourly') {
-            const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-            const [endH, endM] = (session.end_time || '00:00').split(':').map(Number);
-            let startMins = startH * 60 + startM;
-            let endMins = endH * 60 + endM;
-            if (endMins <= startMins) endMins += 24 * 60;
-            return (session.earning_amount || 0) * ((endMins - startMins) / 60);
-        }
-        return 0;
-    };
+    const calculateSessionEarnings = sessionEarnings;
 
-    const { earnedSoFar, projectedTotal, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList } = useMemo(() => {
-        if (!monthSessions) return { earnedSoFar: 0, projectedTotal: 0, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [], pendingSessionsList: [] };
+    const { earnedTotals, projectedTotals, earnedCount, projectedCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList } = useMemo(() => {
+        if (!monthSessions) return { earnedTotals: {} as Record<string, number>, projectedTotals: {} as Record<string, number>, earnedCount: 0, projectedCount: 0, earnedData: [], projectedData: [], earnedSessionsList: [], pendingSessionsList: [] };
 
         let earned = 0;
         let projected = 0;
@@ -70,48 +81,19 @@ export default function HomeScreen() {
         const earnedSessionsList: any[] = [];
         const pendingSessionsList: any[] = [];
 
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        const currentTotalMinutes = currentHour * 60 + currentMinute;
 
         monthSessions.forEach((session: any) => {
-            const amount = session.status === 'cancelled' ? 0 : calculateSessionEarnings(session);
+            if (session.status === 'cancelled' || session.is_guest) return;
+            const amount = calculateSessionEarnings(session);
             const color = session.color || '#3B82F6';
 
-            projected += amount;
-            projectedMap[color] = (projectedMap[color] || 0) + amount;
-            pCount++;
-
-            let isEarned = false;
-            if (session.date < todayStr) {
-                isEarned = true;
-            } else if (session.date === todayStr) {
-                const [endH, endM] = (session.end_time || '23:59').split(':').map(Number);
-                let endTotalMinutes = endH * 60 + endM;
-
-                // Si la sesión termina al día siguiente (ej. 03:00 am pero empieza el 'mismo' día)
-                // consideramos la lógica real del DJ: si la hora de fin es muy temprana (ej. 00-06h), 
-                // realmente pertenece a la madrugada siguiente.
-                // Como es una aproximación simple, si los minutos de fin son menores o iguales a la hora actual, ha terminado.
-                // Para ser estrictos: si la sesión pasa de las 12 (endT < startT), entonces hoy no ha terminado a no ser que estemos en esa madrugada.
-                // Simplificando usando la hora calculada:
-                const [startH, startM] = (session.start_time || '00:00').split(':').map(Number);
-                const startTotalMinutes = startH * 60 + startM;
-
-                if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60; // cruza la medianoche
-
-                // También ajustamos la hora actual si "sigue" a la sesión en la madrugada
-                let adjustedCurrentMinutes = currentTotalMinutes;
-                if (currentTotalMinutes < 12 * 60 && startTotalMinutes > 12 * 60) {
-                    adjustedCurrentMinutes += 24 * 60;
-                }
-
-                if (adjustedCurrentMinutes >= endTotalMinutes) {
-                    isEarned = true;
-                }
+            if (session.status !== 'pending') {
+                projected += amount;
+                projectedMap[color] = (projectedMap[color] || 0) + amount;
+                pCount++;
             }
+
+            const isEarned = session.status !== 'pending' && sessionRange(session).end <= now;
 
             if (isEarned) {
                 earned += amount;
@@ -121,7 +103,7 @@ export default function HomeScreen() {
                     earnedSessionsList.push({ ...session, calculatedEarned: amount });
                 }
             } else {
-                if (amount > 0) {
+                if (amount > 0 && session.status !== 'pending') {
                     pendingSessionsList.push({ ...session, calculatedEarned: amount });
                 }
             }
@@ -133,8 +115,8 @@ export default function HomeScreen() {
         earnedSessionsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         pendingSessionsList.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return { earnedSoFar: earned, projectedTotal: projected, earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
-    }, [monthSessions]);
+        return { earnedTotals: earningsByCurrency(earnedSessionsList), projectedTotals: earningsByCurrency(monthSessions.filter(s => !s.is_guest && s.status !== 'pending' && s.status !== 'cancelled')), earnedCount: eCount, projectedCount: pCount, earnedData, projectedData, earnedSessionsList, pendingSessionsList };
+    }, [monthSessions, now]);
 
     const filteredUpcomingSessions = useMemo(() => {
         if (!upcomingSessions) return [];
@@ -193,12 +175,12 @@ export default function HomeScreen() {
                                 router.push(`/session/${day.sessions[0].id}` as any);
                             }
                         }}
-                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700' : 'bg-transparent'}`}
+                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-[#292743] border border-[#dcd6f8] dark:border-[#4a4178]' : 'bg-transparent'}`}
                     >
-                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
                             {day.dayName}
                         </Text>
-                        <Text className={`text-md font-normal ${day.isToday ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-800'}`}>
+                        <Text className={`text-md font-normal ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
                             {day.dayNumber}
                         </Text>
                         {day.sessions.length > 0 && (
@@ -219,39 +201,14 @@ export default function HomeScreen() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
-            {/* HEADER */}
-            <View className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 justify-center">
-                <View className="flex-row items-center justify-between h-10">
-                    {/* Left Actions - Empty for balance */}
-                    <View className="w-8" />
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} edges={['top']}>
+            <PageHeader showPlaces title={t('community.sessions')} subtitle={t('workflow.homeIntro')}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('history')} onPress={() => router.push('/history')} style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: isDark ? '#20273b' : '#e9eaf3', alignItems: 'center', justifyContent: 'center' }}>
+                    <Calendar size={20} color={isDark ? '#f3f4f8' : '#202538'} />
+                </TouchableOpacity>
+            </PageHeader>
 
-                    {/* Centered Title */}
-                    <View className="absolute left-0 right-0 items-center justify-center">
-                        <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                            DJ Planner
-                        </Text>
-                    </View>
-
-                    {/* Right Actions */}
-                    <View className="flex-row items-center gap-3 ml-auto">
-                        <TouchableOpacity
-                            onPress={() => router.push('/history')}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
-                        >
-                            <Calendar size={20} color={isDark ? '#FFFFFF' : '#111827'} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => router.push('/add-session')}
-                            className="w-8 h-8 rounded-full bg-blue-600 items-center justify-center shadow-lg shadow-blue-500/30"
-                        >
-                            <Plus size={20} color="#FFFFFF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-
-            <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950" contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="max-w-5xl w-full mx-auto px-4">
 
 
@@ -283,91 +240,44 @@ export default function HomeScreen() {
                         />
                     </View>
 
-                    {/* MONTHLY EARNINGS CARD */}
-                    <View className="mb-10">
-                        <View className="flex-row gap-4 px-2">
-                            {/* Earned So Far Card */}
-                            <TouchableOpacity
-                                className="flex-1 bg-neutral-200 dark:bg-gray-900 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/40"
-                                activeOpacity={0.7}
-                                onPress={() => setIsEarningsModalVisible(true)}
-                            >
-                                <View className="flex-row items-center justify-between mb-1">
-                                    <Text className="text-xs font-semibold text-neutral-800 dark:text-gray-400 uppercase tracking-wider">
-                                        {t('earned_so_far') || 'Llevas ganado'}
-                                    </Text>
-                                    <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                </View>
 
-                                <View className="flex-row items-baseline mt-5">
-                                    <Text className="text-5xl text-gray-900 dark:text-white">
-                                        {earnedSoFar.toFixed(0)}
-                                    </Text>
-                                    <Text className="text-lg font-bold neutral-800  dark:text-gray-400 ml-1 mb-1">€</Text>
-                                </View>
-                                <Text className="text-sm font-medium neutral-800  dark:text-gray-500 mt-2 flex-wrap">
-                                    {capitalizedMonthName} • {earnedCount} {earnedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
-                                </Text>
-                            </TouchableOpacity>
-
-                            {/* Projected Total Card */}
-                            <TouchableOpacity
-                                className="flex-1 bg-neutral-800 dark:bg-emerald-900/20 rounded-xl  p-5 shadow-sm shadow-black/5 border border-neutral-200 dark:border-emerald-800/40"
-                                activeOpacity={0.7}
-                                onPress={() => setIsProjectedModalVisible(true)}
-                            >
-                                <View className="flex-row items-center justify-between mb-1">
-                                    <Text className="text-xs font-semibold text-neutral-400 dark:text-green-400 uppercase tracking-wider">
-                                        {t('projected_total') || 'Prevees ganar'}
-                                    </Text>
-                                    <ChevronRight size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                </View>
-
-                                <View className="flex-row items-baseline mt-5">
-                                    <Text className="text-5xl text-neutral-400 dark:text-emerald-400">
-                                        {projectedTotal.toFixed(0)}
-                                    </Text>
-                                    <Text className="text-lg font-bold text-neutral-400 dark:text-emerald-500/80 ml-1 mb-1">€</Text>
-                                </View>
-                                <Text className="text-sm font-medium text-neutral-400 dark:text-emerald-500/60 mt-2 flex-wrap">
-                                    {capitalizedMonthName} • {projectedCount} {projectedCount === 1 ? (t('session')?.toLowerCase() || 'sesión') : (t('sessions')?.toLowerCase() || 'sesiones')}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, paddingHorizontal: 4 }}>
+                        <HomeSummaryCard title={t('workflow.completedFees')} totals={earnedTotals} caption={`${capitalizedMonthName} · ${earnedCount} ${t(earnedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} onPress={() => setIsEarningsModalVisible(true)} />
+                        <HomeSummaryCard title={t('insights.revenue')} totals={projectedTotals} caption={`${capitalizedMonthName} · ${projectedCount} ${t(projectedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} highlighted onPress={() => setIsProjectedModalVisible(true)} />
                     </View>
 
                     {/* UPCOMING SESSIONS */}
-                    <View className="px-2">
-                        <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    <View style={{ paddingHorizontal: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1, minWidth: 0, fontSize: windowWidth < 360 ? 14 : 17, fontWeight: '700', color: isDark ? '#fff' : '#202538', letterSpacing: -0.3 }}>
                                 {t('upcoming_sessions')}
                             </Text>
 
-                            <View className="flex-row bg-gray-200 dark:bg-gray-800 rounded-full p-1 border border-gray-300/50 dark:border-gray-700/50">
+                            <View style={{ flexShrink: 0 }} className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('all')}
-                                    className="px-3 py-1.5 rounded-full"
+                                    className="px-3 py-1.5 rounded-xl"
                                     style={{
-                                        backgroundColor: sessionFilter === 'all' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                        backgroundColor: sessionFilter === 'all' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
                                     }}
                                 >
                                     <Text className="text-xs font-bold"
                                         style={{
-                                            color: sessionFilter === 'all' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                            color: sessionFilter === 'all' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
                                         }}>
                                         {t('filter_all') || 'Todas'}
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('month')}
-                                    className="px-3 py-1.5 rounded-full"
+                                    className="px-3 py-1.5 rounded-xl"
                                     style={{
-                                        backgroundColor: sessionFilter === 'month' ? (isDark ? '#4B5563' : '#FFFFFF') : 'transparent',
+                                        backgroundColor: sessionFilter === 'month' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
                                     }}
                                 >
                                     <Text className="text-xs font-bold"
                                         style={{
-                                            color: sessionFilter === 'month' ? (isDark ? '#FFFFFF' : '#111827') : (isDark ? '#9CA3AF' : '#6B7280')
+                                            color: sessionFilter === 'month' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
                                         }}>
                                         {t('filter_this_month') || 'Este Mes'}
                                     </Text>
@@ -398,75 +308,14 @@ export default function HomeScreen() {
                                             </Text>
                                             <View className="flex-row flex-wrap gap-4">
                                                 {groups[monthLabel].map((session: any) => {
-                                                    const [y, m, d] = session.date.split('-');
-                                                    const sessionDateObj = new Date(Number(y), Number(m) - 1, Number(d));
-                                                    const monthName = sessionDateObj.toLocaleDateString(currentLanguage, { month: 'short' });
-                                                    const weekdayName = sessionDateObj.toLocaleDateString(currentLanguage, { weekday: 'short' });
-
                                                     return (
                                                         <View key={session.id} className="w-full md:w-[48.5%] lg:w-[32%]">
-                                                            <TouchableOpacity
-                                                                activeOpacity={0.7}
+                                                            <SessionPreviewCard
+                                                                showPoster
+                                                                session={session}
                                                                 onPress={() => router.push(`/session/${session.id}` as any)}
-                                                                onLongPress={() => {
-                                                                    Alert.alert(
-                                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                                        [
-                                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                                            {
-                                                                                text: t('delete') || 'Eliminar',
-                                                                                style: 'destructive',
-                                                                                onPress: () => {
-                                                                                    deleteSessionMutation.mutate(session.id);
-                                                                                }
-                                                                            }
-                                                                        ]
-                                                                    );
-                                                                }}
-                                                                className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm shadow-black/5 rounded-xl overflow-hidden flex-row items-stretch"
-                                                            >
-                                                                <View className="w-24 h-24 items-center justify-center m-2 rounded-xl" style={{ backgroundColor: session.color || '#262626' }}>
-                                                                    <Text className="text-[10px] font-bold uppercase mb-1" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                                        {weekdayName}
-                                                                    </Text>
-                                                                    <Text className="font-extrabold text-2xl leading-none mb-0.5" style={{ color: session.color && session.color !== '#262626' ? '#FFFFFF' : '#A3A3A3' }}>
-                                                                        {d}
-                                                                    </Text>
-                                                                    <Text className="text-[10px] font-bold uppercase" style={{ color: session.color && session.color !== '#262626' ? '#E5E5E5' : '#A3A3A3', opacity: session.color && session.color !== '#262626' ? 0.9 : 0.8 }}>
-                                                                        {monthName}
-                                                                    </Text>
-                                                                </View>
-                                                                <View className="flex-1 flex-row items-center p-4">
-                                                                    <View className="flex-1 mr-2">
-                                                                        <Text className="text-lg font-bold text-gray-900 dark:text-white mb-1" numberOfLines={1}>{session.title}</Text>
-                                                                        <Text className="text-gray-500 dark:text-gray-400 text-sm mb-3" numberOfLines={1}>{session.venue}</Text>
-                                                                        <View className="flex-row items-center flex-wrap gap-2">
-                                                                            <Text className="text-xs font-semibold px-2 py-0.5 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800/50" style={{ color: session.color || '#3B82F6' }}>{session.start_time} - {session.end_time}</Text>
-
-                                                                            {session.is_collective && (
-                                                                                <Users size={12} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                                                                            )}
-                                                                        </View>
-                                                                    </View>
-
-                                                                    {session.earning_type && session.earning_type !== 'free' && (
-                                                                        <View className="items-end justify-center mr-2">
-                                                                            {session.status === 'cancelled' && (
-                                                                                <Text className="text-[9px] font-bold text-red-500 uppercase mb-0.5">{t('status_cancelled')}</Text>
-                                                                            )}
-                                                                            <View className={`px-2 py-1 rounded-lg border ${session.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'}`}>
-                                                                                <Text className={`text-[10px] font-bold ${session.status === 'cancelled' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
-                                                                                    {session.status === 'cancelled' ? '-' : ''}{calculateSessionEarnings(session).toFixed(0)} {session.currency || '€'}
-                                                                                </Text>
-                                                                            </View>
-                                                                        </View>
-                                                                    )}
-                                                                    <View className="justify-center items-center">
-                                                                        <ChevronRight size={18} color={isDark ? '#4B5563' : '#9CA3AF'} />
-                                                                    </View>
-                                                                </View>
-                                                            </TouchableOpacity>
+                                                                onLongPress={session.is_guest ? undefined : () => deletion.requestDelete(session)}
+                                                            />
                                                         </View>
                                                     );
                                                 })}
@@ -496,12 +345,13 @@ export default function HomeScreen() {
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setIsEarningsModalVisible(false)}
+                onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
                         <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
                             <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                {t('earned_history') || 'Historial de ingresos'} - {capitalizedMonthName}
+                                {t('workflow.completedFees')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsEarningsModalVisible(false)}
@@ -523,31 +373,15 @@ export default function HomeScreen() {
                                                 setIsEarningsModalVisible(false);
                                                 router.push(`/session/${session.id}` as any);
                                             }}
-                                            onLongPress={() => {
-                                                Alert.alert(
-                                                    t('delete_session_title') || 'Eliminar Sesión',
-                                                    t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                    [
-                                                        { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                        {
-                                                            text: t('delete') || 'Eliminar',
-                                                            style: 'destructive',
-                                                            onPress: () => {
-                                                                setIsEarningsModalVisible(false);
-                                                                deleteSessionMutation.mutate(session.id);
-                                                            }
-                                                        }
-                                                    ]
-                                                );
-                                            }}
+                                            onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'earnings')}
                                             className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                         >
                                             <View className="flex-1 pr-4">
                                                 <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                    {session.title}
+                                                    {sessionDisplayTitle(session, t)}
                                                 </Text>
                                                 <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {d}/{m}/{y} • {session.venue}
+                                                    {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                 </Text>
                                             </View>
                                             <View className="flex-row items-center">
@@ -574,12 +408,13 @@ export default function HomeScreen() {
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setIsProjectedModalVisible(false)}
+                onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
                     <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
                         <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
                             <Text className="text-xl font-bold text-gray-900 dark:text-white">
-                                {t('projected_total') || 'Previsión de ingresos'} - {capitalizedMonthName}
+                                {t('insights.revenue')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsProjectedModalVisible(false)}
@@ -594,7 +429,7 @@ export default function HomeScreen() {
                             {/* PENDING SESSIONS */}
                             <View className="mb-6">
                                 <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
-                                    Pendientes ({pendingSessionsList.length})
+                                    {t('workflow.confirmedUpcoming')} ({pendingSessionsList.length})
                                 </Text>
                                 {pendingSessionsList.length > 0 ? (
                                     pendingSessionsList.map((session, index) => {
@@ -607,31 +442,15 @@ export default function HomeScreen() {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
-                                                onLongPress={() => {
-                                                    Alert.alert(
-                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                        [
-                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                            {
-                                                                text: t('delete') || 'Eliminar',
-                                                                style: 'destructive',
-                                                                onPress: () => {
-                                                                    setIsProjectedModalVisible(false);
-                                                                    deleteSessionMutation.mutate(session.id);
-                                                                }
-                                                            }
-                                                        ]
-                                                    );
-                                                }}
+                                                onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
                                                     <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                        {session.title}
+                                                        {sessionDisplayTitle(session, t)}
                                                     </Text>
                                                     <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {d}/{m}/{y} • {session.venue}
+                                                        {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
@@ -653,7 +472,7 @@ export default function HomeScreen() {
                             {/* EARNED SESSIONS */}
                             <View>
                                 <Text className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-4">
-                                    Ya completadas ({earnedSessionsList.length})
+                                    {t('workflow.finished')} ({earnedSessionsList.length})
                                 </Text>
                                 {earnedSessionsList.length > 0 ? (
                                     earnedSessionsList.map((session, index) => {
@@ -666,31 +485,15 @@ export default function HomeScreen() {
                                                     setIsProjectedModalVisible(false);
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
-                                                onLongPress={() => {
-                                                    Alert.alert(
-                                                        t('delete_session_title') || 'Eliminar Sesión',
-                                                        t('delete_session_message') || '¿Estás seguro de que quieres eliminar esta sesión de forma permanente?',
-                                                        [
-                                                            { text: t('cancel') || 'Cancelar', style: 'cancel' },
-                                                            {
-                                                                text: t('delete') || 'Eliminar',
-                                                                style: 'destructive',
-                                                                onPress: () => {
-                                                                    setIsProjectedModalVisible(false);
-                                                                    deleteSessionMutation.mutate(session.id);
-                                                                }
-                                                            }
-                                                        ]
-                                                    );
-                                                }}
+                                                onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
                                                 className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
                                                     <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
-                                                        {session.title}
+                                                        {sessionDisplayTitle(session, t)}
                                                     </Text>
                                                     <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {d}/{m}/{y} • {session.venue}
+                                                        {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
@@ -713,6 +516,7 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </Modal>
+            {deletion.dialog}
         </SafeAreaView >
     );
 }
