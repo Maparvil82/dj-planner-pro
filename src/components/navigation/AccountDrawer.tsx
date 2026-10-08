@@ -35,6 +35,9 @@ export function useOpenAccountMenu() {
     const menu = useContext(DrawerContext);
     return () => menu?.open();
 }
+export function useAccountIsPro() {
+    return useContext(DrawerContext)?.isPro === true;
+}
 export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
     const menu = useContext(DrawerContext);
     const { profile, session } = useAuthStore();
@@ -76,27 +79,13 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
                     pointerEvents="none"
                     style={{
                         position: 'absolute',
-                        bottom: tab ? -4 : 0,
-                        paddingHorizontal: 5,
-                        paddingVertical: 1,
-                        borderRadius: 5,
-                        backgroundColor: '#6554df',
-                        borderWidth: 1.5,
-                        borderColor: c.bg,
+                        width: tab ? 30 : 42,
+                        height: tab ? 30 : 42,
+                        borderRadius: tab ? 15 : 21,
+                        borderWidth: 2,
+                        borderColor: '#6554df',
                     }}
-                >
-                    <Text
-                        style={{
-                            color: '#fff',
-                            fontSize: 7,
-                            lineHeight: 9,
-                            fontWeight: '900',
-                            letterSpacing: 0.4,
-                        }}
-                    >
-                        PRO
-                    </Text>
-                </View>
+                />
             )}
         </Container>
     );

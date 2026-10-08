@@ -3,6 +3,7 @@ import {
     AccountDrawerProvider,
     AccountAvatarButton,
     useOpenAccountMenu,
+    useAccountIsPro,
 } from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
@@ -34,6 +35,7 @@ export default function TabLayout() {
 function TabLayoutContent() {
     const { t } = useTranslation();
     const openAccountMenu = useOpenAccountMenu();
+    const isPro = useAccountIsPro();
     const { width } = useWindowDimensions();
     const { session, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
@@ -169,7 +171,7 @@ function TabLayoutContent() {
                     },
                 }}
                 options={{
-                    title: t('tab_you'),
+                    title: isPro ? `${t('tab_you')} · Pro` : t('tab_you'),
                     tabBarAccessibilityLabel: t('accountMenu.open'),
                     tabBarIcon: () => <AccountAvatarButton tab />,
                 }}
