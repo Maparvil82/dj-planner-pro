@@ -1,3 +1,7 @@
+import { useSessionToolBack } from '../../hooks/useSessionToolBack';
+import { useScrollHeader } from '../../hooks/useScrollHeader';
+import { SessionFormHeader } from '../sessions/SessionFormLayout';
+import { formatRegionalDate } from '../../i18n/regionalDates';
 import { useState, type ReactNode } from 'react';
 import {
     KeyboardAvoidingView,
@@ -9,12 +13,11 @@ import {
     Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useCommunityColors } from '../community/CommunityUI';
 import type { Session } from '../../types/session';
 import { sessionDisplayTitle } from '../../utils/sessionNaming';
+import { SessionSelectionEmpty, type SessionSelectionPurpose } from './SessionSelectionEmpty';
 export function ToolsLayout({
     title,
     children,
@@ -24,56 +27,18 @@ export function ToolsLayout({
     children: ReactNode;
     onBack?: () => void;
 }) {
-    const c = useCommunityColors(),
-        router = useRouter(),
-        { t } = useTranslation();
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
+    const c = useCommunityColors();
+    const goBack = useSessionToolBack();
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-            <View
-                style={{
-                    padding: 20,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                }}
-            >
-                <Text
-                    style={{
-                        flex: 1,
-                        fontSize: 28,
-                        fontWeight: '900',
-                        color: c.fg,
-                    }}
-                >
-                    {title}
-                </Text>
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t('back')}
-                    onPress={
-                        onBack ||
-                        (() =>
-                            router.canGoBack()
-                                ? router.back()
-                                : router.replace('/home'))
-                    }
-                    style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 16,
-                        backgroundColor: c.border,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <X color={c.fg} size={22} />
-                </Pressable>
-            </View>
+            <SessionFormHeader navigationBack title={title} subtitle="" progress={headerProgress}
+                onClose={onBack || goBack} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
-                <ScrollView
+                <ScrollView onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll} scrollEventThrottle={16}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         padding: 20,
@@ -115,7 +80,7 @@ export function ToolField({
                 keyboardType={keyboardType}
                 style={{
                     backgroundColor: c.card,
-                    borderWidth: 1,
+                    borderWidth: c.dark ? 0 : 1,
                     borderColor: c.border,
                     borderRadius: 16,
                     padding: 16,
@@ -130,14 +95,14 @@ export function ToolField({
 export function SessionChooser({
     sessions,
     onSelect,
-    empty,
+    purpose,
 }: {
     sessions: Session[];
     onSelect: (s: Session) => void;
-    empty: string;
+    purpose: SessionSelectionPurpose;
 }) {
     const c = useCommunityColors(),
-        { t } = useTranslation(),
+        { t, dateLocale } = useTranslation(),
         [search, setSearch] = useState('');
     const normal = (v: string) =>
         v
@@ -149,6 +114,7 @@ export function SessionChooser({
             normal(search),
         ),
     );
+    if (!sessions.length) return <SessionSelectionEmpty purpose={purpose} />;
     return (
         <>
             <Text style={{ color: c.muted }}>{t('tools.chooseSession')}</Text>
@@ -157,19 +123,15 @@ export function SessionChooser({
                 value={search}
                 onChangeText={setSearch}
             />
-            {!sessions.length ? (
-                <>
-                    <Text style={{ color: c.fg }}>{empty}</Text>
-                </>
-            ) : (
-                matches.map((s) => (
+            {!matches.length && <Text style={{ color: c.muted }}>{t('sessionSelection.noResults')}</Text>}
+            {matches.map((s) => (
                     <Pressable
                         key={s.id}
                         accessibilityRole="button"
                         onPress={() => onSelect(s)}
                         style={{
                             backgroundColor: c.card,
-                            borderWidth: 1,
+                            borderWidth: c.dark ? 0 : 1,
                             borderColor: c.border,
                             padding: 18,
                             borderRadius: 20,
@@ -177,20 +139,20 @@ export function SessionChooser({
                         }}
                     >
                         <Text
-                            style={{
+                            style={[{
                                 fontSize: 17,
                                 color: c.fg,
                                 fontWeight: '700',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {sessionDisplayTitle(s, t)}
                         </Text>
-                        <Text style={{ color: c.muted }}>
-                            {s.date} · {s.start_time.slice(0, 5)} · {s.venue}
+                        <Text style={[{ color: c.muted }, c.dark && { color: c.cardText }]}>
+                            {formatRegionalDate(s.date, dateLocale)} · {s.start_time.slice(0, 5)} · {s.venue}
                         </Text>
                     </Pressable>
                 ))
-            )}
+            }
         </>
     );
 }

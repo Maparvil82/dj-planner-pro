@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "DJ Planner PRO",
+    "name": "DJ Planner",
     "slug": "dj-planner-pro",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "djplannerpro",
     "ios": {
       "supportsTablet": false,
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#171717",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "package": "com.djplannerpro.app",
@@ -30,6 +30,7 @@
     },
     "plugins": [
       "expo-router",
+      ["expo-secure-store", {"configureAndroidBackup": true}],
       "@react-native-community/datetimepicker",
       "expo-localization",
       "expo-sharing",
@@ -37,8 +38,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#171717"
         }
       ],
       "expo-status-bar",

@@ -1,3 +1,6 @@
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
+import { StorageImage as Image } from '../../src/components/ui/StorageImage';
 import { CityInput } from '../../src/components/profile/CityInput';
 import { normalizeCity, type CityLocation } from '../../src/utils/cities';
 import { FEATURES } from '../../src/config/features';
@@ -12,11 +15,10 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
-    Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, Redirect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Trash2, Plus, X, Check, CloudOff, Camera } from 'lucide-react-native';
+import { Trash2, Plus, X, Check, CloudOff, Camera, Star } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { venueService } from '../../src/services/venues';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -39,11 +41,13 @@ import { confirmAction } from '../../src/utils/confirmAction';
 import type { CreateVenueInput } from '../../src/types/venue';
 
 export default function VenueDetailScreen() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const params = useLocalSearchParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const router = useRouter();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
+    const darkPalette = useDarkPalette();
     const { session } = useAuthStore();
     const isDark = themeCtx?.activeTheme === 'dark';
     const { data: venue, isLoading, error, refetch } = useVenueByIdQuery(id);
@@ -271,8 +275,16 @@ export default function VenueDetailScreen() {
                 setImages((previous) => [...previous, url]);
                 changed();
             }
-        } catch {
-            Alert.alert(t('error'), t('error_uploading'));
+        } catch (error) {
+            Alert.alert(
+                t('error'),
+                t(
+                    error instanceof Error &&
+                        error.message.startsWith('storageSafety.')
+                        ? error.message
+                        : 'error_uploading',
+                ),
+            );
         } finally {
             setIsSaving(false);
         }
@@ -282,12 +294,15 @@ export default function VenueDetailScreen() {
         setImages((previous) => previous.filter((_, i) => i !== index));
         changed();
     };
-    const fg = isDark ? '#f3f4f8' : '#202538';
-    const muted = isDark ? '#a8b2c6' : '#6d7588';
+    const accent = isDark ? darkPalette.primary : '#6554df';
+    const accentTint = isDark ? darkPalette.tint : '#f0edfc';
+    const onAccent = isDark ? darkPalette.onPrimary : '#ffffff';
+    const fg = isDark ? darkPalette.text : '#202538';
+    const muted = isDark ? darkPalette.muted : '#6d7588';
     const fieldStyle = {
-        backgroundColor: isDark ? '#111625' : '#f8f9fd',
+        backgroundColor: isDark ? darkPalette.field : '#f8f9fd',
         color: fg,
-        borderColor: isDark ? '#30394e' : '#e9ecf3',
+        borderColor: isDark ? darkPalette.border : '#e9ecf3',
         borderWidth: 1,
         borderRadius: 14,
         paddingHorizontal: 14,
@@ -362,20 +377,32 @@ export default function VenueDetailScreen() {
                         }}
                         style={{
                             flex: 1,
-                            height: 46,
+                            minWidth: 0,
+                            minHeight: 56,
+                            gap: 3,
+                            paddingVertical: 6,
+                            borderWidth: 1,
+                            borderColor: score <= value ? accent : (isDark ? darkPalette.border : '#d5d9e3'),
                             borderRadius: 13,
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor:
                                 score <= value
-                                    ? isDark
-                                        ? '#342957'
-                                        : '#f0edfc'
+                                    ? accentTint
                                     : isDark
-                                      ? '#111625'
+                                      ? darkPalette.field
                                       : '#f8f9fd',
                         }}
-                    ></TouchableOpacity>
+                    >
+                        <Star
+                            size={20}
+                            color={score <= value ? accent : muted}
+                            fill={score <= value ? accent : 'transparent'}
+                        />
+                        <Text style={{ color: score <= value ? accent : fg, fontSize: 12, fontWeight: '700' }}>
+                            {score}
+                        </Text>
+                    </TouchableOpacity>
                 ))}
             </View>
         </View>
@@ -386,11 +413,11 @@ export default function VenueDetailScreen() {
             <SafeAreaView
                 style={{
                     flex: 1,
-                    backgroundColor: isDark ? '#0d1220' : '#f5f6fa',
+                    backgroundColor: isDark ? darkPalette.background : '#f5f6fa',
                     justifyContent: 'center',
                 }}
             >
-                <ActivityIndicator color="#6554df" />
+                <ActivityIndicator color={accent} />
             </SafeAreaView>
         );
     if (!venue)
@@ -410,7 +437,7 @@ export default function VenueDetailScreen() {
                 <TouchableOpacity
                     onPress={() => (error ? refetch() : router.back())}
                 >
-                    <Text style={{ color: '#6554df' }}>
+                    <Text style={{ color: accent }}>
                         {error ? t('insights.retry') : t('back')}
                     </Text>
                 </TouchableOpacity>
@@ -433,10 +460,10 @@ export default function VenueDetailScreen() {
     return (
         <SafeAreaView
             edges={['top', 'bottom']}
-            style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }}
+            style={{ flex: 1, backgroundColor: isDark ? darkPalette.background : '#f5f6fa' }}
         >
             <Stack.Screen options={{ headerShown: false }} />
-            <SessionFormHeader
+            <SessionFormHeader progress={headerProgress}
                 title={t('places.detailTitle')}
                 subtitle={venue.name}
                 onClose={() => {
@@ -447,7 +474,7 @@ export default function VenueDetailScreen() {
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                <ScrollView
+                <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -475,12 +502,12 @@ export default function VenueDetailScreen() {
                             {saveStatus === 'saving' || isSaving ? (
                                 <ActivityIndicator
                                     size="small"
-                                    color="#6554df"
+                                    color={accent}
                                 />
                             ) : saveStatus === 'error' || !valid ? (
                                 <CloudOff size={16} color="#e37070" />
                             ) : (
-                                <Check size={16} color="#9983ee" />
+                                <Check size={16} color={accent} />
                             )}
                             <Text
                                 style={{
@@ -503,7 +530,7 @@ export default function VenueDetailScreen() {
                                 >
                                     <Text
                                         style={{
-                                            color: '#9983ee',
+                                            color: accent,
                                             fontWeight: '700',
                                         }}
                                     >
@@ -640,16 +667,14 @@ export default function VenueDetailScreen() {
                                             backgroundColor:
                                                 !equipInput.trim() ||
                                                 !validQuantity
-                                                    ? isDark
-                                                        ? '#39315c'
-                                                        : '#c5bdee'
-                                                    : '#6554df',
+                                                    ? (isDark ? darkPalette.raised : '#e9ecf3')
+                                                    : accent,
                                             borderRadius: 14,
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                         }}
                                     >
-                                        <Plus size={22} color="#fff" />
+                                        <Plus size={22} color={!equipInput.trim() || !validQuantity ? muted : onAccent} />
                                     </TouchableOpacity>
                                 </View>
                                 {!validQuantity && (
@@ -674,14 +699,14 @@ export default function VenueDetailScreen() {
                                             alignItems: 'center',
                                             paddingLeft: 14,
                                             backgroundColor: isDark
-                                                ? '#111625'
+                                                ? darkPalette.field
                                                 : '#f8f9fd',
                                             borderRadius: 14,
                                         }}
                                     >
                                         <Text
                                             style={{
-                                                color: '#9983ee',
+                                                color: accent,
                                                 fontWeight: '800',
                                             }}
                                         >
@@ -789,7 +814,7 @@ export default function VenueDetailScreen() {
                                             borderRadius: 16,
                                             overflow: 'hidden',
                                             backgroundColor: isDark
-                                                ? '#111625'
+                                                ? darkPalette.field
                                                 : '#f8f9fd',
                                         }}
                                     >
@@ -831,25 +856,21 @@ export default function VenueDetailScreen() {
                                         borderRadius: 16,
                                         borderWidth: 1,
                                         borderStyle: 'dashed',
-                                        borderColor: isDark
-                                            ? '#504673'
-                                            : '#c9c1ed',
-                                        backgroundColor: isDark
-                                            ? '#211d35'
-                                            : '#f7f5fe',
+                                        borderColor: accent,
+                                        backgroundColor: accentTint,
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: 8,
                                     }}
                                 >
                                     {isSaving ? (
-                                        <ActivityIndicator color="#9983ee" />
+                                        <ActivityIndicator color={accent} />
                                     ) : (
-                                        <Camera size={25} color="#9983ee" />
+                                        <Camera size={25} color={accent} />
                                     )}
                                     <Text
                                         style={{
-                                            color: '#9983ee',
+                                            color: accent,
                                             fontWeight: '600',
                                             fontSize: 13,
                                         }}

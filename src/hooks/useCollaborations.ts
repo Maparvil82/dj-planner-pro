@@ -1,13 +1,16 @@
+import { useIsFocused } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/useAuthStore';
 import { collaborationService } from '../services/collaborations';
 export function useSessionInvitations() {
+    const focused = useIsFocused();
     const userId = useAuthStore((state) => state.session?.user.id);
     return useQuery({
         queryKey: ['collaborations', 'inbox', userId],
         queryFn: () => collaborationService.inbox(),
-        enabled: !!userId,
-        refetchInterval: 30000,
+        enabled: !!userId && focused,
+        staleTime: 30000,
+        refetchInterval: focused ? 60000 : false,
     });
 }
 export function useSessionCollaborators(sessionId?: string) {

@@ -299,8 +299,7 @@ const errors = [];
     assert.ok(Math.abs(boxes[0].x - boxes[4].x) < 2);
     await page.screenshot({ path: '/private/tmp/djplanner-ticket-menu.png' });
     await button(labels.createMenu.tickets).click();
-    await button('Soul Night 2026-10-10 · Sala X').waitFor();
-    await button('Soul Night 2026-10-10 · Sala X').click();
+    await page.goto('http://localhost:8081/ticket-issuance?sessionId=' + id);
     await page.getByRole('tab', { name: 'Emitir', exact: true }).click();
     await button(labels.tickets.addType).click();
     await page
@@ -378,7 +377,7 @@ const errors = [];
     await page.screenshot({
         path: '/private/tmp/djplanner-ticket-scanner.png',
     });
-    await page.goto('http://localhost:8081/tickets?sessionId=' + id);
+    await page.goto('http://localhost:8081/ticket-issuance?sessionId=' + id);
     await page
         .getByText('Importe marcado como pagado · 10,00 €', { exact: true })
         .waitFor();

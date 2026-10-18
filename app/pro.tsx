@@ -1,3 +1,6 @@
+import { ProBenefits } from '../src/components/profile/ProBenefits';
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
+import { ScrollHeaderContainer } from '../src/components/ui/ScrollHeaderContainer';
 import { FEATURES } from '../src/config/features';
 import {
     ImageBackground,
@@ -19,6 +22,7 @@ import {
 } from '../src/components/community/CommunityUI';
 
 export default function ProScreen() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const { t } = useTranslation();
     const c = useCommunityColors();
     const router = useRouter();
@@ -27,7 +31,8 @@ export default function ProScreen() {
     if (!session) return <Redirect href="/(auth)/login" />;
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-            <View
+            <ScrollHeaderContainer progress={headerProgress} hasIcons={true}>
+<View
                 style={{
                     paddingHorizontal: 20,
                     flexDirection: 'row',
@@ -54,10 +59,11 @@ export default function ProScreen() {
                     <ArrowLeft size={22} color={c.fg} />
                 </Pressable>
                 <Text style={{ fontSize: 15, fontWeight: '800', color: c.fg }}>
-                    DJ Planner Pro
+                    DJ Planner
                 </Text>
             </View>
-            <ScrollView
+</ScrollHeaderContainer>
+            <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                 contentContainerStyle={{
                     width: '100%',
                     maxWidth: 680,
@@ -97,7 +103,7 @@ export default function ProScreen() {
                                     fontWeight: '800',
                                 }}
                             >
-                                DJ PLANNER PRO
+                                DJ PLANNER
                             </Text>
                             <Text
                                 style={{
@@ -128,70 +134,7 @@ export default function ProScreen() {
                     >
                         {t('proPage.benefits')}
                     </Text>
-                    <View
-                        style={{
-                            borderRadius: 24,
-                            padding: 22,
-                            backgroundColor: c.card,
-                            gap: 12,
-                            borderWidth: 1,
-                            borderColor: c.border,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 36,
-                                fontWeight: '800',
-                                color: c.accent,
-                            }}
-                        >
-                            ∞
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.fg,
-                                fontSize: 19,
-                                fontWeight: '800',
-                            }}
-                        >
-                            {t('proPage.unlimited')}
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.muted,
-                                fontSize: 14,
-                                lineHeight: 22,
-                            }}
-                        >
-                            {t('proPage.unlimitedHint')}
-                        </Text>
-                    </View>
-                    {(FEATURES.feeAgreements ||
-                        FEATURES.conditionalSessions) && (
-                        <View
-                            style={{
-                                backgroundColor: c.card,
-                                padding: 22,
-                                borderRadius: 24,
-                                gap: 12,
-                                borderWidth: 1,
-                                borderColor: c.border,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    color: c.fg,
-                                    fontWeight: '800',
-                                    fontSize: 19,
-                                }}
-                            >
-                                {t('conditional.title')} · PRO
-                            </Text>
-                            <Text style={{ color: c.muted, lineHeight: 22 }}>
-                                {t('conditional.proBenefit')}
-                            </Text>
-                        </View>
-                    )}
+                    <ProBenefits />
                     {FEATURES.bookings && (
                         <View
                             style={{
@@ -199,44 +142,44 @@ export default function ProScreen() {
                                 padding: 22,
                                 backgroundColor: c.card,
                                 gap: 12,
-                                borderWidth: 1,
+                                borderWidth: c.dark ? 0 : 1,
                                 borderColor: c.border,
                             }}
                         >
                             <Text
-                                style={{
+                                style={[{
                                     color: c.accent,
                                     fontSize: 11,
                                     fontWeight: '800',
                                     letterSpacing: 1,
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t('proPage.soon')}
                             </Text>
                             <Text
-                                style={{
+                                style={[{
                                     color: c.fg,
                                     fontSize: 19,
                                     fontWeight: '800',
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t('bookings.title')}
                             </Text>
                             <Text
-                                style={{
+                                style={[{
                                     color: c.muted,
                                     fontSize: 14,
                                     lineHeight: 22,
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t('proPage.bookingsHint')}
                             </Text>
                             <Text
-                                style={{
+                                style={[{
                                     color: c.muted,
                                     fontSize: 12,
                                     lineHeight: 19,
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t('proPage.bookingsPending')}
                             </Text>
@@ -274,7 +217,7 @@ export default function ProScreen() {
                     disabled={usage.isPending}
                     onPress={() =>
                         usage.data?.isPro
-                            ? router.push('/profile?section=plan')
+                            ? router.push('/profile?section=settings')
                             : router.push('/paywall')
                     }
                 />

@@ -1,5 +1,7 @@
+import { useDarkPalette } from '../../contexts/ThemeContext';
+import { StorageImage as Image } from './StorageImage';
 import { useState } from 'react';
-import { Image, Text, View, type ColorValue } from 'react-native';
+import { Text, View, type ColorValue } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export function TabProfileIcon({
@@ -17,6 +19,7 @@ export function TabProfileIcon({
     focused: boolean;
     hasUnread?: boolean;
 }) {
+    const darkPalette = useDarkPalette();
     const { activeTheme } = useTheme();
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
     const showPhoto = !!url && failedUrl !== url;
@@ -32,7 +35,7 @@ export function TabProfileIcon({
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor:
-                        activeTheme === 'dark' ? '#283142' : '#e5e7eb',
+                        activeTheme === 'dark' ? darkPalette.raised : '#e5e7eb',
                     borderColor: color,
                     borderWidth: focused ? 1.5 : 0,
                 }}
@@ -67,9 +70,9 @@ export function TabProfileIcon({
                         borderRadius: 5,
                         borderWidth: 2,
                         borderColor:
-                            activeTheme === 'dark' ? '#111827' : '#fbfbfb',
+                            activeTheme === 'dark' ? darkPalette.background : '#fbfbfb',
                         backgroundColor:
-                            activeTheme === 'dark' ? '#bdb0f5' : '#6554df',
+                            activeTheme === 'dark' ? darkPalette.primary : '#6554df',
                     }}
                 />
             )}

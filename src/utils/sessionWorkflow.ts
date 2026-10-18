@@ -1,3 +1,4 @@
+import { SESSION_EVENT_TYPES } from '../types/session';
 import { agreementAmount, validateFeeAgreement } from './feeAgreement';
 import type { CreateSessionInput, Session } from '../types/session';
 import { localDateString, sessionRange } from './sessionPlanning';
@@ -29,6 +30,10 @@ export function parseSessionAmount(
 export function validateSessionInput(
     input: CreateSessionInput,
 ): CreateSessionInput {
+    if (input.notes != null && (typeof input.notes !== 'string' || input.notes.length > 5000))
+        throw new Error('sessionNotes.tooLong');
+    if (input.event_type != null && !SESSION_EVENT_TYPES.includes(input.event_type))
+        throw new Error('sessionType.invalid');
     if (!input.venue.trim()) throw new Error('missing_fields');
     if (input.booking_timezone !== undefined && !input.booking_timezone?.trim())
         throw new Error('location.invalidTimezone');
@@ -82,6 +87,7 @@ export function validateSessionInput(
     return {
         ...input,
         title: input.title.trim(),
+        ...(input.notes !== undefined ? { notes: input.notes?.trim() || null } : {}),
         venue: input.venue.trim(),
         djs,
         dj_profile_ids: input.is_collective

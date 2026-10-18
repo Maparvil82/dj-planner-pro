@@ -1,3 +1,4 @@
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
 import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
 import {
     AccountDrawerProvider,
@@ -33,6 +34,7 @@ export default function TabLayout() {
 }
 
 function TabLayoutContent() {
+    const darkPalette = useDarkPalette();
     const { t } = useTranslation();
     const openAccountMenu = useOpenAccountMenu();
     const isPro = useAccountIsPro();
@@ -48,7 +50,7 @@ function TabLayoutContent() {
                     flex: 1,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: isDark ? '#111827' : '#FFFFFF',
+                    backgroundColor: isDark ? darkPalette.background : '#FFFFFF',
                 }}
             >
                 <ActivityIndicator size="large" color="#2563EB" />
@@ -65,12 +67,12 @@ function TabLayoutContent() {
             tabBar={(props) => <ScrollTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: isDark ? '#bdb0f5' : '#6554df',
-                tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF', // gray-500 : gray-400
+                tabBarActiveTintColor: isDark ? darkPalette.primary : '#6554df',
+                tabBarInactiveTintColor: isDark ? darkPalette.muted : '#9CA3AF', // gray-500 : gray-400
                 tabBarStyle: {
-                    backgroundColor: isDark ? '#111827' : '#fbfbfbff', // gray-900 : white
+                    backgroundColor: isDark ? darkPalette.background : '#fbfbfbff', // gray-900 : white
                     borderTopWidth: 1,
-                    borderTopColor: isDark ? '#1F2937' : '#F3F4F6', // gray-800 : gray-100
+                    borderTopColor: isDark ? darkPalette.surface : '#F3F4F6', // gray-800 : gray-100
                     elevation: 0,
                     paddingBottom: 5,
                     height: 80,

@@ -9,18 +9,17 @@ import {
     AuthShell,
     AuthField,
     AuthMessage,
+    AuthButton,
+    AUTH_COLORS,
+    AUTH_SCREEN_IMAGES,
 } from '../../src/components/auth/AuthUI';
-import {
-    CommunityButton,
-    useCommunityColors,
-} from '../../src/components/community/CommunityUI';
 import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function LoginScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const { dj } = useLocalSearchParams<{ dj?: string }>();
     const destination = sharedDJDestination(dj);
-    const c = useCommunityColors();
+    const c = AUTH_COLORS;
     const passwordRef = useRef<TextInput>(null);
     const submitting = useRef(false);
     const [email, setEmail] = useState('');
@@ -59,6 +58,7 @@ export default function LoginScreen() {
     };
     return (
         <AuthShell
+            image={AUTH_SCREEN_IMAGES.login}
             title={t('authExperience.loginTitle')}
             subtitle={t('authExperience.loginHint')}
             onBack={() => router.replace('/(auth)/welcome')}
@@ -108,7 +108,9 @@ export default function LoginScreen() {
                     }}
                     onSubmitEditing={() => void handleLogin()}
                 />
-                <Link href="/(auth)/forgot-password" asChild>
+                <Link href={destination
+                    ? { pathname: '/(auth)/forgot-password', params: { dj } }
+                    : '/(auth)/forgot-password'} asChild>
                     <TouchableOpacity
                         accessibilityRole="link"
                         disabled={loading}
@@ -122,7 +124,7 @@ export default function LoginScreen() {
                             style={{
                                 color: c.accent,
                                 fontSize: 13,
-                                fontWeight: '700',
+                                fontWeight: '500',
                             }}
                         >
                             {t('authExperience.forgotPassword')}
@@ -130,7 +132,7 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                 </Link>
             </View>
-            <CommunityButton
+            <AuthButton
                 label={t('login')}
                 onPress={() => void handleLogin()}
                 disabled={!canSubmit}
@@ -157,7 +159,7 @@ export default function LoginScreen() {
                             style={{
                                 color: c.accent,
                                 fontSize: 15,
-                                fontWeight: '800',
+                                fontWeight: '600',
                             }}
                         >
                             {t('authExperience.createAccount')}

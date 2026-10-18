@@ -12,128 +12,96 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { AuthBrand, AUTH_IMAGE } from '../../src/components/auth/AuthUI';
+
+import { AUTH_IMAGE, AUTH_COLORS, AuthBrand } from '../../src/components/auth/AuthUI';
+
 export default function WelcomeScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { height, width } = useWindowDimensions();
     const session = useAuthStore((state) => state.session);
+    const compact = height < 700;
     if (session) return <Redirect href="/(tabs)/home" />;
     return (
-        <View
-            style={{ flex: 1, backgroundColor: '#08070f', overflow: 'hidden' }}
-        >
+        <View style={{ flex: 1, backgroundColor: AUTH_COLORS.bg }}>
             <StatusBar style="light" />
-            <ImageBackground
-                source={AUTH_IMAGE}
-                resizeMode="cover"
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    height: width >= 900 ? height : height * 0.75,
-                    width: '100%',
-                    overflow: 'hidden',
-                    left: 0,
-                }}
-            />
-            <LinearGradient
-                pointerEvents="none"
-                colors={[
-                    'rgba(8,7,15,0.25)',
-                    'rgba(8,7,15,0.02)',
-                    'rgba(8,7,15,0.85)',
-                    '#08070f',
-                ]}
-                locations={[0, 0.3, 0.7, 1]}
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                }}
-            />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
-                    minHeight: height,
-                    paddingTop: insets.top + 28,
-                    paddingBottom: Math.max(insets.bottom, 28),
-                    paddingHorizontal: width >= 900 ? 64 : 28,
-                    width: '100%',
-                    maxWidth: 1120,
-                    alignSelf: 'center',
+                    flexGrow: 1,
+                    paddingTop: insets.top + 12,
+                    paddingBottom: Math.max(insets.bottom, 12),
+                    paddingHorizontal: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                 }}
             >
-                <AuthBrand light />
-                <View style={{ flex: 1, minHeight: height * 0.34 }} />
-                <View
+                <ImageBackground
+                    source={AUTH_IMAGE}
+                    resizeMode="cover"
+                    imageStyle={{ borderRadius: 28 }}
                     style={{
-                        gap: 18,
-                        maxWidth: 480,
                         width: '100%',
-                        minWidth: 0,
+                        maxWidth: 480,
+                        height: Math.min(width >= 700 ? 900 : Infinity, Math.max(500, height - insets.top - Math.max(insets.bottom, 12) - 12)),
+                        borderRadius: 28,
+                        overflow: 'hidden',
+                        backgroundColor: AUTH_COLORS.card,
+                        justifyContent: 'space-between',
                     }}
                 >
-                    <Text
-                        style={{
-                            color: '#c8b9ff',
-                            fontSize: 13,
-                            fontWeight: '700',
-                            letterSpacing: 0.4,
-                        }}
-                    >
-                        {t('authExperience.welcome')}
-                    </Text>
-                    <Text
-                        accessibilityRole="header"
-                        style={{
-                            color: '#fff',
-                            fontSize: width < 360 ? 38 : 44,
-                            lineHeight: width < 360 ? 43 : 49,
-                            fontWeight: '900',
-                            letterSpacing: -1.7,
-                        }}
-                    >
-                        {t('authExperience.welcomeTitle')}
-                    </Text>
-                    <Text
-                        style={{
-                            color: '#c4bfd0',
-                            fontSize: 15,
-                            lineHeight: 24,
-                        }}
-                    >
-                        {t('authExperience.welcomeHint')}
-                    </Text>
-                    <TouchableOpacity
-                        accessibilityRole="button"
-                        onPress={() => {
-                            useAuthStore.getState().setHasSeenOnboarding(true);
-                            router.replace('/(auth)/login');
-                        }}
-                        style={{
-                            backgroundColor: '#6554df',
-                            borderRadius: 18,
-                            minHeight: 56,
-                            padding: 17,
-                            alignItems: 'center',
-                            marginTop: 10,
-                        }}
+                    <LinearGradient
+                        pointerEvents="none"
+                        colors={['rgba(0,0,0,0.3)', 'transparent']}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 130 }}
+                    />
+                    <View style={{ margin: 24 }}>
+                        <AuthBrand light />
+                    </View>
+                    <View style={{ minHeight: compact ? 150 : 240, flex: 1 }} />
+                    <LinearGradient
+                        colors={['rgba(35,35,35,0.88)', 'rgba(43,48,32,0.97)', '#232323']}
+                        style={{ borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: width < 360 ? 20 : 24, paddingTop: 28, gap: 14 }}
                     >
                         <Text
+                            accessibilityRole="header"
                             style={{
-                                color: '#fff',
-                                fontSize: 16,
-                                fontWeight: '800',
+                                color: AUTH_COLORS.fg,
+                                fontSize: compact ? 28 : 32,
+                                lineHeight: compact ? 32 : 36,
+                                fontWeight: '500',
+                                letterSpacing: -0.8,
+                                maxWidth: 330,
                             }}
                         >
-                            {t('authExperience.next')}
+                            {t('authExperience.welcomeTitle')}
                         </Text>
-                    </TouchableOpacity>
-                </View>
+                        <Text style={{ color: AUTH_COLORS.muted, fontSize: 13, lineHeight: 20, maxWidth: 350 }}>
+                            {t('authExperience.welcomeHint')}
+                        </Text>
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            onPress={() => {
+                                useAuthStore.getState().setHasSeenOnboarding(true);
+                                router.replace('/(auth)/login');
+                            }}
+                            style={{
+                                backgroundColor: AUTH_COLORS.accent,
+                                borderRadius: 16,
+                                minHeight: 52,
+                                padding: 16,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginTop: 10,
+                            }}
+                        >
+                            <Text style={{ color: AUTH_COLORS.card, fontSize: 15, fontWeight: '600' }}>
+                                {t('authExperience.next')}
+                            </Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                </ImageBackground>
             </ScrollView>
         </View>
     );

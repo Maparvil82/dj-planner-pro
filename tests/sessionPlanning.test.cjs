@@ -21,6 +21,7 @@ const {
     recurrenceDates,
     findSessionConflicts,
     sessionRange,
+    liveSessions,
     sessionDuration,
     sessionEarnings,
     sessionBalance,
@@ -349,4 +350,15 @@ test('event time zone fixes phases and conflicts independently of the viewer dev
 test('DST gaps and overlaps use the same instant as the database', () => {
     assert.equal(sessionRange(session({date:'2026-03-29',start_time:'02:30',end_time:'04:00',booking_timezone:'Europe/Madrid'})).start.toISOString(),'2026-03-29T01:30:00.000Z');
     assert.equal(sessionRange(session({date:'2026-10-25',start_time:'02:30',end_time:'04:00',booking_timezone:'Europe/Madrid'})).start.toISOString(),'2026-10-25T01:30:00.000Z');
+});
+
+test('live sessions are owned, in progress, and remain live across midnight in their timezone', () => {
+    const event = session({id:'live',date:'2026-10-10',booking_timezone:'Europe/Madrid'});
+    const rows = [event,session({id:'future',date:'2026-10-12',booking_timezone:'Europe/Madrid'}),
+        {...event,id:'past',date:'2026-10-09'}, {...event,id:'cancelled',status:'cancelled'},
+        {...event,id:'other',user_id:'other-owner'}, {...event,id:'guest',is_guest:true}];
+    assert.deepEqual(liveSessions(rows,'test-owner',new Date('2026-10-11T01:00:00+02:00')).map(s=>s.id),['live']);
+    assert.deepEqual(liveSessions(rows,'test-owner',new Date('2026-10-10T21:59:59+02:00')),[]);
+    assert.equal(liveSessions(rows,'test-owner',new Date('2026-10-10T22:00:00+02:00'))[0].id,'live');
+    assert.deepEqual(liveSessions(rows,'test-owner',new Date('2026-10-11T04:00:00+02:00')),[]);
 });

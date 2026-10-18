@@ -1,3 +1,4 @@
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     AppState,
@@ -21,6 +22,7 @@ import { useAuthStore } from '../src/store/useAuthStore';
 import { useSessionByIdQuery } from '../src/hooks/useSessionsQuery';
 import { useTranslation } from '../src/i18n/useTranslation';
 import { ticketService, type ScanResult } from '../src/services/tickets';
+import { entryCounterService } from '../src/services/entryCounter';
 import { parseTicketQr } from '../src/utils/ticketing';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
 import {
@@ -31,10 +33,11 @@ import {
 import { SessionFormHeader } from '../src/components/sessions/SessionFormLayout';
 
 export default function TicketScannerScreen() {
-    const { sessionId } = useLocalSearchParams<{ sessionId: string }>(),
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
+    const { sessionId, mode } = useLocalSearchParams<{ sessionId: string; mode?: string }>(),
         router = useRouter(),
         c = useCommunityColors(),
-        { t, currentLanguage } = useTranslation();
+        { t, currentLanguage, formatMoney } = useTranslation();
     const userId = useAuthStore((s) => s.session?.user.id),
         client = useQueryClient();
     const event = useSessionByIdQuery(sessionId);
@@ -48,6 +51,8 @@ export default function TicketScannerScreen() {
         [error, setError] = useState(''),
         [torch, setTorch] = useState(false),
         [manual, setManual] = useState('');
+    const counterMode = mode === 'counter';
+    const [total, setTotal] = useState<number | null>(null);
     const paying = useRef(false);
     const locked = useRef(false),
         lastToken = useRef<string | null>(null),
@@ -76,11 +81,14 @@ export default function TicketScannerScreen() {
         const token = parseTicketQr(data.trim());
         lastToken.current = token;
         try {
-            const response = token
-                ? await ticketService.scan(sessionId, token)
+            const response = counterMode
+                ? await entryCounterService.scan(sessionId, data)
+                : token ? await ticketService.scan(sessionId, token)
                 : { status: 'invalid' as const };
             if (!alive.current) return;
             setResult(response);
+            if ('count' in response) setTotal(Number(response.count));
+            if (counterMode) void client.invalidateQueries({queryKey: ['entry-counter', userId, sessionId]});
             void client.invalidateQueries({
                 queryKey: ['tickets', userId, sessionId],
             });
@@ -136,6 +144,8 @@ export default function TicketScannerScreen() {
             if (alive.current) setBusy(false);
         }
     }
+    const ready = useAuthStore(s => s.initialized && s.hasHydrated);
+    if (!ready) return <SafeAreaView style={{flex:1,backgroundColor:c.bg,justifyContent:'center'}}><ActivityIndicator color={c.accent}/></SafeAreaView>;
     if (!userId) return <Redirect href="/(auth)/login" />;
     const allowed =
         event.data?.user_id === userId &&
@@ -149,7 +159,7 @@ export default function TicketScannerScreen() {
               : '#cb435b';
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-            <SessionFormHeader
+            <SessionFormHeader progress={headerProgress}
                 title={t('tickets.scan')}
                 subtitle={
                     event.data
@@ -180,7 +190,7 @@ export default function TicketScannerScreen() {
                 ) : (
                     <>
                         <Text style={{ color: c.muted, lineHeight: 20 }}>
-                            {t('tickets.scanHint')}
+                            {t(counterMode ? 'entryCounter.scanHint' : 'tickets.scanHint')}
                         </Text>
                         {result || error || busy ? (
                             <View
@@ -217,9 +227,10 @@ export default function TicketScannerScreen() {
                                                     }}
                                                 >
                                                     {t(
-                                                        `tickets.result_${result.status}`,
+                                                        counterMode ? `entryCounter.result_${result.status}` : `tickets.result_${result.status}`,
                                                     )}
                                                 </Text>
+                                                {counterMode && total !== null && <Text style={{color:c.fg,fontSize:22,fontWeight:'700'}}>{t('entryCounter.total', {count:total})}</Text>}
                                                 {!!result.type_name && (
                                                     <Text
                                                         style={{
@@ -254,7 +265,7 @@ export default function TicketScannerScreen() {
                                                         {t(
                                                             'tickets.pendingHint',
                                                             {
-                                                                price: `${result.price} ${event.data?.currency || '€'}`,
+                                                                price: formatMoney(Number(result.price), event.data?.currency || '€'),
                                                             },
                                                         )}
                                                     </Text>

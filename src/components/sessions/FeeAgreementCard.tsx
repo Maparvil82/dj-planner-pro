@@ -12,6 +12,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSessionUsage } from '../../hooks/useSessionUsage';
 import { useTranslation } from '../../i18n/useTranslation';
+import { moneyCurrencyCode } from '../../i18n/money';
 import { ConditionalAgreementEditor } from './ConditionalAgreementEditor';
 import { FeeAgreementEditor } from './FeeAgreementEditor';
 import { FeeAgreement, calculateFeeAgreement } from '../../utils/feeAgreement';
@@ -53,7 +54,7 @@ export function FeeAgreementCard({
     conditional?: boolean;
     documentSession?: Session;
 }) {
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, formatMoney, numberLocale } = useTranslation();
     const c = useCommunityColors();
     const router = useRouter();
     const usage = useSessionUsage();
@@ -76,6 +77,7 @@ export function FeeAgreementCard({
                 owner,
                 currentLanguage,
                 t,
+                numberLocale,
             );
     } catch {}
     useEffect(() => {
@@ -171,14 +173,14 @@ export function FeeAgreementCard({
                         value,
                         t,
                         (n) =>
-                            `${new Intl.NumberFormat(currentLanguage, { maximumFractionDigits: 2 }).format(n)} ${currency}`,
+                            formatMoney(n, currency),
                     )}
                 </Text>
             )}
             {value?.version === 1 && (
                 <Text style={{ color: c.fg, lineHeight: 21 }}>
-                    {t('agreement.fixed')}: {value.fixed} {currency} ·{' '}
-                    {value.perTicket} {currency} / {t('agreement.tickets')} ·{' '}
+                    {t('agreement.fixed')}: {formatMoney(value.fixed, currency)} ·{' '}
+                    {formatMoney(value.perTicket, currency)} / {t('agreement.tickets')} ·{' '}
                     {value.entryPercent}% {t('agreement.entries')} ·{' '}
                     {value.barPercent}% {t('agreement.bar')}
                 </Text>
@@ -187,10 +189,7 @@ export function FeeAgreementCard({
                 <Text
                     style={{ color: c.accent, fontWeight: '800', fontSize: 21 }}
                 >
-                    {new Intl.NumberFormat(currentLanguage, {
-                        maximumFractionDigits: 2,
-                    }).format(amount)}{' '}
-                    {currency} ·{' '}
+                    {formatMoney(amount, currency)} ·{' '}
                     {t(
                         value?.settled
                             ? 'agreement.yourFee'
@@ -200,19 +199,19 @@ export function FeeAgreementCard({
             )}
             {onCurrency && (
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {['€', '$', '£'].map((symbol) => (
+                    {[...new Map([currency, '€', '$', '£'].map(symbol => [moneyCurrencyCode(symbol), symbol])).values()].map((symbol) => (
                         <Pressable
                             key={symbol}
                             accessibilityRole="radio"
                             accessibilityState={{
-                                checked: currency === symbol,
+                                checked: moneyCurrencyCode(currency) === moneyCurrencyCode(symbol),
                             }}
-                            onPress={() => onCurrency(symbol)}
+                            onPress={() => { if (moneyCurrencyCode(currency) !== moneyCurrencyCode(symbol)) onCurrency(symbol); }}
                             style={{
                                 padding: 12,
                                 borderRadius: 12,
                                 backgroundColor:
-                                    currency === symbol ? c.card : c.tint,
+                                    moneyCurrencyCode(currency) === moneyCurrencyCode(symbol) ? c.card : c.tint,
                             }}
                         >
                             <Text

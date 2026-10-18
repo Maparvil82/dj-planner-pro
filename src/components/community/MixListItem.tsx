@@ -1,6 +1,7 @@
+import { StorageImage as Image } from '../ui/StorageImage';
+import { CommunitySafetyMenu } from './CommunitySafetyMenu';
 import { useState } from 'react';
 import {
-    Image,
     Text,
     TouchableOpacity,
     View,
@@ -164,6 +165,14 @@ export function MixListItem({
                             </Text>
                         )}
                     </View>
+                    <CommunitySafetyMenu
+                        target={{
+                            kind: 'mix',
+                            id: mix.id,
+                            authorId: mix.user_id,
+                            name: mix.title,
+                        }}
+                    />
                     {saveState && (
                         <SaveMixButton id={mix.id} state={saveState} />
                     )}
@@ -180,7 +189,7 @@ export function MixListItem({
                             width: 44,
                             height: 44,
                             borderRadius: 22,
-                            backgroundColor: active ? c.tint : '#6554df',
+                            backgroundColor: active ? c.tint : c.accent,
                             alignItems: 'center',
                             justifyContent: 'center',
                         }}
@@ -188,7 +197,7 @@ export function MixListItem({
                         {active ? (
                             <X size={19} color={c.accent} />
                         ) : (
-                            <Play size={18} fill="#fff" color="#fff" />
+                            <Play size={18} fill={c.onAccent} color={c.onAccent} />
                         )}
                     </TouchableOpacity>
                 </View>

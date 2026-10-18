@@ -142,7 +142,12 @@ const errors = [];
         let body = [];
         if (url.pathname.includes('/auth/v1/user')) body = user;
         else if (url.pathname.includes('/auth/v1/token')) body = session;
-        else if (url.pathname.includes('/rpc/community_city_suggestions')) {
+        else if (url.pathname.endsWith('/community_safety')) {
+            // Consent itself is covered by communitySafety.cjs. This existing
+            // DJ fixture has already accepted the current community rules.
+            body = { version: '2026-10-09', accepted: true, moderator: false,
+                restricted: false, contact: null };
+        } else if (url.pathname.includes('/rpc/community_city_suggestions')) {
             const q = req.postDataJSON().search_city.toLowerCase();
             body = [
                 { city: 'Sevilla', city_location: null },
@@ -341,7 +346,7 @@ const errors = [];
         .waitFor();
     for (const label of ['Sesiones', 'Siguiendo', 'DJs', 'Ciudad', 'Estilo'])
         assert.equal(
-            await page.getByText(label, { exact: true }).count(),
+            await page.getByText(label, { exact: true }).evaluateAll(nodes => nodes.filter(node => !node.closest('[data-testid="scroll-tab-bar"]')).length),
             0,
             `Gate must hide ${label}`,
         );
@@ -481,7 +486,7 @@ const errors = [];
         .getByRole('button', { name: 'Publicar perfil y entrar', exact: true })
         .click();
     await page.waitForURL('**/community');
-    await page.getByText('Sesiones', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Sesiones', exact: true }).waitFor();
     assert.equal(current.city, 'Madrid', 'Saving normalizes the city');
     assert.equal(
         current.city_location.id,
@@ -500,7 +505,7 @@ const errors = [];
     await page
         .getByRole('button', { name: 'Editar Perfil', exact: true })
         .click();
-    await page.getByText('Tus enlaces · opcional', { exact: true }).waitFor();
+    await page.getByRole('switch', { name: 'Mostrar mi perfil en Comunidad', exact: true }).waitFor();
     assert.equal(
         await page
             .getByRole('textbox', { name: 'Ciudad *', exact: true })

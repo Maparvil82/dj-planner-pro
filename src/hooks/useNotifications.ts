@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import {
     useInfiniteQuery,
     useMutation,
@@ -9,20 +10,22 @@ import {
     notificationService,
     NOTIFICATION_PAGE_SIZE,
 } from '../services/notifications';
-export function useUnreadNotifications() {
+export function useUnreadNotifications(poll = false) {
     const userId = useAuthStore((state) => state.session?.user.id);
     return useQuery({
         queryKey: ['notifications', 'unread', userId],
         enabled: !!userId,
         queryFn: () => notificationService.unread(userId!),
-        refetchInterval: 30000,
+        staleTime: 30000,
+        refetchInterval: poll ? 60000 : false,
     });
 }
 export function useNotifications() {
+    const focused = useIsFocused();
     const userId = useAuthStore((state) => state.session?.user.id);
     return useInfiniteQuery({
         queryKey: ['notifications', 'list', userId],
-        enabled: !!userId,
+        enabled: !!userId && focused,
         initialPageParam: 0,
         queryFn: ({ pageParam }) =>
             notificationService.list(userId!, pageParam),
@@ -30,7 +33,8 @@ export function useNotifications() {
             last.length === NOTIFICATION_PAGE_SIZE
                 ? pages.length * NOTIFICATION_PAGE_SIZE
                 : undefined,
-        refetchInterval: 30000,
+        staleTime: 30000,
+        refetchInterval: focused ? 60000 : false,
     });
 }
 export function useMarkNotificationsRead() {

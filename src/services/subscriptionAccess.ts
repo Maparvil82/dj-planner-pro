@@ -13,6 +13,18 @@ export async function syncSubscriptionAccess(): Promise<SessionUsage> {
         'subscription-access',
     );
     if (error || !data || data.error)
-        throw new Error('billing.verificationError');
+        return getSessionUsage(); // Server-clock trial and short paid cache remain authoritative.
     return data as SessionUsage;
+}
+
+export async function startProTrial(): Promise<SessionUsage> {
+    const { data, error } = await supabase.rpc('start_pro_trial');
+    if (error || !data) throw new Error(error?.message?.startsWith('trial.') ? error.message : 'trial.activationError');
+    return data as SessionUsage;
+}
+
+export async function getCurrentAccess(): Promise<SessionUsage> {
+    const usage = await getSessionUsage();
+    if (usage.trial?.status === 'active' || usage.paidPro) return usage;
+    return syncSubscriptionAccess();
 }

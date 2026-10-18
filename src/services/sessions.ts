@@ -1,3 +1,6 @@
+import { DEFAULT_SESSION_COLOR } from '../theme/colors';
+import { optimizedImage } from './optimizedImage';
+import { storageError } from '../utils/storageLimits';
 import { exceedsSessionLimit, SessionLimitError } from '../utils/sessionLimit';
 import { getSessionUsage, syncSubscriptionAccess } from './subscriptionAccess';
 import { Platform } from 'react-native';
@@ -36,7 +39,7 @@ export const sessionService = {
         input: CreateSessionInput,
         userId: string,
     ): Promise<Session> {
-        input = validateSessionInput(input);
+        input = validateSessionInput({ ...input, color: input.color || DEFAULT_SESSION_COLOR });
         if (
             input.earning_type === 'agreement' &&
             !(await syncSubscriptionAccess()).isPro
@@ -54,7 +57,7 @@ export const sessionService = {
             .rpc('create_session_series', {
                 input: {
                     ...input,
-                    color: input.color || getColorForString(input.title),
+                    color: input.color || DEFAULT_SESSION_COLOR,
                 },
                 session_dates: dates,
             })
@@ -236,9 +239,7 @@ export const sessionService = {
             );
         }
 
-        const guests = (await collaborationService.agenda()).filter(
-            (session) => session.date >= startPath && session.date < endPath,
-        );
+        const guests = await collaborationService.agenda({ from: startPath, to: endPath });
         return [...(data || []).map(withVenueCity), ...guests].sort((a, b) =>
             a.date.localeCompare(b.date),
         );
@@ -268,7 +269,7 @@ export const sessionService = {
             );
         }
 
-        const guests = (await collaborationService.agenda()).filter(
+        const guests = (await collaborationService.agenda({ from: today })).filter(
             (session) =>
                 session.date >= today && session.status !== 'cancelled',
         );
@@ -392,6 +393,8 @@ export const sessionService = {
             throw new Error('agreement.singleSession');
         const allowed = [
             'title',
+            'event_type',
+            'notes',
             'venue',
             'venue_id',
             'booking_timezone',
@@ -456,45 +459,10 @@ export const sessionService = {
         dimensions?: { width: number; height: number },
     ): Promise<string | null> {
         try {
-            const ImageManipulator = await import('expo-image-manipulator');
-
             if (!userId) throw new Error('User required');
-            // Limit both axes without upscaling or cropping the artwork.
-            const longest = Math.max(
-                dimensions?.width || 0,
-                dimensions?.height || 0,
-            );
-            const resize =
-                longest > 1600
-                    ? [
-                          {
-                              resize:
-                                  dimensions!.width >= dimensions!.height
-                                      ? { width: 1600 }
-                                      : { height: 1600 },
-                          },
-                      ]
-                    : longest
-                      ? []
-                      : [{ resize: { width: 1200 } }];
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                imageUri,
-                resize,
-                {
-                    compress: 0.8,
-                    format: ImageManipulator.SaveFormat.JPEG,
-                    base64: false,
-                },
-            );
+            const bytes = await optimizedImage(imageUri, 1600, dimensions);
 
-            const bytes =
-                Platform.OS === 'web'
-                    ? await (await fetch(manipulatedImage.uri)).arrayBuffer()
-                    : await new (await import('expo-file-system')).File(
-                          manipulatedImage.uri,
-                      ).arrayBuffer();
-
-            const filePath = `${userId}/poster_${Date.now()}.jpg`;
+            const filePath = `${userId}/poster_${(await import('expo-crypto')).randomUUID()}.jpg`;
             const contentType = 'image/jpeg';
 
             // 2. Upload to storage
@@ -505,7 +473,7 @@ export const sessionService = {
                     upsert: false,
                 });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) throw storageError(uploadError);
 
             // 3. Get public URL
             const { data: publicUrlData } = supabase.storage
@@ -514,6 +482,11 @@ export const sessionService = {
 
             return publicUrlData.publicUrl;
         } catch (error) {
+            if (
+                error instanceof Error &&
+                error.message.startsWith('storageSafety.')
+            )
+                throw error;
             console.error('Upload Session Poster Error:', error);
             return null;
         }

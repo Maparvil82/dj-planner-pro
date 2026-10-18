@@ -4,13 +4,14 @@ import React, {
     useState,
     ReactNode,
     useRef,
+    useCallback,
 } from 'react';
 import Purchases, {
     CustomerInfo,
     PurchasesOffering,
     PurchasesPackage,
 } from 'react-native-purchases';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { rcService } from '../services/revenuecat';
 import { useAuthStore } from '../store/useAuthStore';
@@ -23,6 +24,7 @@ interface SubscriptionContextType {
     monthlyPackage: PurchasesPackage | null;
     annualPackage: PurchasesPackage | null;
     customerInfo: CustomerInfo | null;
+    storefrontCountryCode: string | null;
     refreshSubscriptionStatus: () => Promise<void>;
     purchaseMonthly: () => Promise<boolean>;
     purchaseAnnual: () => Promise<boolean>;
@@ -38,25 +40,31 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const [currentOffering, setCurrentOffering] =
         useState<PurchasesOffering | null>(null);
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+    const [storefrontCountryCode, setStorefrontCountryCode] = useState<string | null>(null);
     const generation = useRef(0);
     const ready = useRef(false);
-    const apply = (info: CustomerInfo) => {
+    const refreshRequest = useRef(0);
+    const operationInFlight = useRef(false);
+    const apply = useCallback((info: CustomerInfo) => {
         setCustomerInfo(info);
         setIsPro(rcService.hasProAccess(info));
-    };
+    }, []);
     useEffect(() => {
         const version = ++generation.current;
         let cancelled = false;
         let listener: ((info: CustomerInfo) => void) | undefined;
         ready.current = false;
+        operationInFlight.current = false;
+        ++refreshRequest.current;
         setIsPro(false);
         setCustomerInfo(null);
         setCurrentOffering(null);
+        setStorefrontCountryCode(null);
         setIsLoading(true);
         const initialize = async () => {
             try {
                 if (
-                    Platform.OS !== 'ios' ||
+                    !rcService.supportsPurchases() ||
                     Constants.executionEnvironment ===
                         ExecutionEnvironment.StoreClient ||
                     !userId
@@ -69,13 +77,15 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     if (!cancelled) apply(info);
                 };
                 Purchases.addCustomerInfoUpdateListener(listener);
-                const [info, offering] = await Promise.all([
+                const [info, offering, country] = await Promise.all([
                     rcService.getCustomerInfo(),
-                    rcService.getCurrentOffering(),
+                    rcService.getCurrentOffering(true),
+                    rcService.getStorefrontCountry(),
                 ]);
                 if (cancelled) return;
                 if (info) apply(info);
                 setCurrentOffering(offering);
+                setStorefrontCountryCode(country);
                 ready.current = true;
             } finally {
                 if (!cancelled && generation.current === version)
@@ -87,22 +97,33 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             cancelled = true;
             if (listener) Purchases.removeCustomerInfoUpdateListener(listener);
         };
-    }, [userId]);
-    const refreshSubscriptionStatus = async () => {
-        if (!ready.current) return;
+    }, [userId, apply]);
+    const refreshSubscriptionStatus = useCallback(async () => {
+        if (!ready.current || operationInFlight.current) return;
         const version = generation.current;
-        const info = await rcService.getCustomerInfo();
-        if (info && generation.current === version) apply(info);
-    };
+        const request = ++refreshRequest.current;
+        setIsLoading(true);
+        try {
+            const [info, offering, country] = await Promise.all([rcService.getCustomerInfo(), rcService.getCurrentOffering(true), rcService.getStorefrontCountry()]);
+            if (generation.current !== version || refreshRequest.current !== request) return;
+            if (info) apply(info);
+            setCurrentOffering(offering);
+            setStorefrontCountryCode(country);
+        } finally {
+            if (generation.current === version && refreshRequest.current === request) setIsLoading(false);
+        }
+    }, [apply]);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (state) => {
             if (state === 'active') void refreshSubscriptionStatus();
         });
         return () => subscription.remove();
-    }, [userId]);
+    }, [refreshSubscriptionStatus]);
     const purchase = async (pkg: PurchasesPackage | null): Promise<boolean> => {
-        if (!ready.current || !pkg || isLoading) return false;
+        if (!ready.current || !pkg || isLoading || operationInFlight.current) return false;
         const version = generation.current;
+        operationInFlight.current = true;
+        ++refreshRequest.current;
         setIsLoading(true);
         try {
             const result = await rcService.purchasePackage(pkg);
@@ -115,12 +136,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 rcService.hasProAccess(result.customerInfo)
             );
         } finally {
-            if (generation.current === version) setIsLoading(false);
+            if (generation.current === version) {
+                operationInFlight.current = false;
+                setIsLoading(false);
+            }
         }
     };
     const restorePurchases = async (): Promise<boolean> => {
-        if (!ready.current || isLoading) return false;
+        if (!ready.current || isLoading || operationInFlight.current) return false;
         const version = generation.current;
+        operationInFlight.current = true;
+        ++refreshRequest.current;
         setIsLoading(true);
         try {
             const result = await rcService.restoreUserPurchases();
@@ -132,7 +158,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 rcService.hasProAccess(result.customerInfo)
             );
         } finally {
-            if (generation.current === version) setIsLoading(false);
+            if (generation.current === version) {
+                operationInFlight.current = false;
+                setIsLoading(false);
+            }
         }
     };
     return (
@@ -145,6 +174,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 monthlyPackage: currentOffering?.monthly || null,
                 annualPackage: currentOffering?.annual || null,
                 customerInfo,
+                storefrontCountryCode,
                 refreshSubscriptionStatus,
                 purchaseMonthly: () =>
                     purchase(currentOffering?.monthly || null),

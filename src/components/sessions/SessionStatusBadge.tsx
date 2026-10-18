@@ -1,3 +1,4 @@
+import { PARTIAL_PAYMENT_COLORS } from '../../theme/paymentColors';
 import { useEffect, useState } from 'react';
 import { Text, View, AppState } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -37,7 +38,9 @@ export function SessionStatusBadge({
           ? sessionPhase(session, now)
           : payment;
     const color =
-        phase === 'unpaid' || phase === 'partial'
+        phase === 'partial'
+            ? PARTIAL_PAYMENT_COLORS[dark ? 'dark' : 'light']
+            : phase === 'unpaid'
             ? dark
                 ? '#e6b85c'
                 : '#956414'

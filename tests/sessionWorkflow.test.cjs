@@ -45,3 +45,19 @@ test('series edits target only current and following occurrences, never matching
     assert.deepEqual(relatedSessionTargets(all,current,false).map(s=>s.id),['child']);
     assert.deepEqual(relatedSessionTargets(all,independent,true).map(s=>s.id),['independent']);
 });
+
+test('session classification is optional, accepts all formats and rejects unknown values', () => {
+    for (const event_type of [undefined, null, 'club', 'festival', 'wedding', 'corporate', 'residency'])
+        assert.equal(validateSessionInput(session({event_type})).event_type, event_type);
+    for (const event_type of ['', 'conference', 'CLUB', 1])
+        assert.throws(() => validateSessionInput(session({event_type})), /sessionType.invalid/);
+});
+
+test('private notes are optional, trim outside whitespace, preserve paragraphs and enforce the limit', () => {
+    assert.equal(validateSessionInput(session()).notes, undefined);
+    assert.equal(validateSessionInput(session({notes:null})).notes, null);
+    assert.equal(validateSessionInput(session({notes:'  \n  '})).notes, null);
+    assert.equal(validateSessionInput(session({notes:'  Primera línea\nSegunda línea  '})).notes, 'Primera línea\nSegunda línea');
+    assert.equal(validateSessionInput(session({notes:'a'.repeat(5000)})).notes.length,5000);
+    for (const notes of ['a'.repeat(5001),42,{}]) assert.throws(()=>validateSessionInput(session({notes})),/sessionNotes.tooLong/);
+});

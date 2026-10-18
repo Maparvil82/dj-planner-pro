@@ -1,3 +1,4 @@
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
 import { useConditionalDraft } from '../src/store/useConditionalDraft';
 import type { ConditionalAgreement } from '../src/utils/feeAgreement';
 import { useRef, useState } from 'react';
@@ -30,8 +31,9 @@ import {
 import { ConditionalAgreementEditor } from '../src/components/sessions/ConditionalAgreementEditor';
 
 export default function ConditionalSessionScreen() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const c = useCommunityColors(),
-        { t } = useTranslation(),
+        { t, formatMoney } = useTranslation(),
         router = useRouter();
     const userId = useAuthStore((s) => s.session?.user.id);
     const usage = useSessionUsage();
@@ -76,7 +78,7 @@ export default function ConditionalSessionScreen() {
     if (usage.isPending || usage.isError)
         return (
             <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-                <SessionFormHeader
+                <SessionFormHeader progress={headerProgress}
                     title={t('conditional.title')}
                     badge="PRO"
                     subtitle={t('conditionalFlow.intro')}
@@ -155,7 +157,7 @@ export default function ConditionalSessionScreen() {
     };
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-            <SessionFormHeader
+            <SessionFormHeader progress={headerProgress}
                 title={t('conditionalCosts.apply')}
                 badge="PRO"
                 subtitle={t('conditionalFlow.draftHint')}
@@ -163,7 +165,7 @@ export default function ConditionalSessionScreen() {
                     router.canGoBack() ? router.back() : router.replace('/home')
                 }
             />
-            <ScrollView
+            <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                 ref={scroll}
                 contentContainerStyle={{
                     padding: 20,
@@ -186,7 +188,7 @@ export default function ConditionalSessionScreen() {
                             {conditionalSummary(
                                 draft,
                                 t,
-                                (n) => `${n} ${selected?.currency || '€'}`,
+                                (n) => formatMoney(n, selected?.currency || '€'),
                             )}
                         </Text>
                         <CommunityButton
@@ -264,27 +266,27 @@ export default function ConditionalSessionScreen() {
                                         gap: 6,
                                         borderRadius: 18,
                                         backgroundColor: c.card,
-                                        borderWidth: 1,
+                                        borderWidth: c.dark ? 0 : 1,
                                         borderColor: c.border,
                                     }}
                                 >
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.fg,
                                             fontWeight: '700',
                                             fontSize: 16,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {sessionDisplayTitle(s, t)}
                                     </Text>
-                                    <Text style={{ color: c.muted }}>
+                                    <Text style={[{ color: c.muted }, c.dark && { color: c.cardText }]}>
                                         {s.date} · {s.venue}
                                     </Text>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.accent,
                                             fontSize: 12,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {t(
                                             s.fee_agreement?.version === 2
@@ -300,7 +302,7 @@ export default function ConditionalSessionScreen() {
                 {selected && draft && (
                     <View
                         style={{
-                            borderWidth: 1,
+                            borderWidth: c.dark ? 0 : 1,
                             borderColor: c.accent,
                             backgroundColor: c.card,
                             borderRadius: 18,
@@ -309,29 +311,29 @@ export default function ConditionalSessionScreen() {
                         }}
                     >
                         <Text
-                            style={{
+                            style={[{
                                 color: c.fg,
                                 fontWeight: '800',
                                 fontSize: 18,
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {sessionDisplayTitle(selected, t)}
                         </Text>
-                        <Text style={{ color: c.muted }}>
+                        <Text style={[{ color: c.muted }, c.dark && { color: c.cardText }]}>
                             {selected.date} · {selected.venue}
                         </Text>
-                        <Text style={{ color: c.muted, lineHeight: 21 }}>
+                        <Text style={[{ color: c.muted, lineHeight: 21 }, c.dark && { color: c.cardText }]}>
                             {t('conditionalFlow.applyHint')}
                         </Text>
                         {selected.fee_agreement && (
-                            <Text style={{ color: c.fg, lineHeight: 21 }}>
+                            <Text style={[{ color: c.fg, lineHeight: 21 }, c.dark && { color: c.cardText }]}>
                                 {t('conditionalFlow.replaceHint')}
                             </Text>
                         )}
                         {!!applyError && (
                             <Text
                                 accessibilityRole="alert"
-                                style={{ color: '#dc4545' }}
+                                style={[{ color: '#dc4545' }, c.dark && { color: c.cardText }]}
                             >
                                 {t(applyError)}
                             </Text>

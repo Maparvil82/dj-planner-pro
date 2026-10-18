@@ -1,3 +1,4 @@
+import { storageError } from '../utils/storageLimits';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { decode } from 'base64-arraybuffer';
@@ -55,18 +56,18 @@ export const expenseReceipts = {
         const { error } = await supabase.storage
             .from(bucket)
             .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
-        if (error) throw error;
+        if (error) throw storageError(error);
         return path;
     },
     async url(path: string) {
         const { data, error } = await supabase.storage
             .from(bucket)
             .createSignedUrl(path, 300);
-        if (error) throw error;
+        if (error) throw storageError(error);
         return data.signedUrl;
     },
     async remove(path: string) {
         const { error } = await supabase.storage.from(bucket).remove([path]);
-        if (error) throw error;
+        if (error) throw storageError(error);
     },
 };

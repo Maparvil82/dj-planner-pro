@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sessionService } from '../services/sessions';
 import { useAuthStore } from '../store/useAuthStore';
@@ -23,6 +24,7 @@ export const useSessionsQuery = (year: number, month: number) => {
 };
 
 export const useUpcomingSessionsQuery = () => {
+    const focused = useIsFocused();
     const [now, setNow] = useState(() => new Date());
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
@@ -42,30 +44,28 @@ export const useUpcomingSessionsQuery = () => {
             if (!userId) return [];
             return sessionService.getUpcomingSessions(userId);
         },
-        enabled: !!userId && initialized,
-        staleTime: 0,
-        refetchInterval: 60000,
+        enabled: !!userId && initialized && focused,
+        staleTime: 30000,
+        refetchInterval: focused ? 60000 : false,
     });
-    const { refetch } = query;
     useFocusEffect(
         useCallback(() => {
             setNow(new Date());
-            if (userId && initialized) void refetch();
-        }, [userId, initialized, refetch]),
+        }, []),
     );
     useEffect(() => {
+        if (!focused) return;
         const timer = setInterval(() => setNow(new Date()), 60000);
         const listener = AppState.addEventListener('change', (state) => {
             if (state === 'active') {
                 setNow(new Date());
-                if (userId && initialized) void refetch();
             }
         });
         return () => {
             clearInterval(timer);
             listener.remove();
         };
-    }, [userId, initialized, refetch]);
+    }, [focused]);
     return query;
 };
 
@@ -216,7 +216,7 @@ export const useUpdateSessionMutation = () => {
     });
 };
 
-export const useAllSessionsQuery = () => {
+export const useAllSessionsQuery = (enabled = true) => {
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
@@ -226,6 +226,6 @@ export const useAllSessionsQuery = () => {
             if (!userId) return [];
             return sessionService.getAllSessions(userId);
         },
-        enabled: !!userId && initialized,
+        enabled: enabled && !!userId && initialized,
     });
 };

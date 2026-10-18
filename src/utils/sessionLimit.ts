@@ -1,9 +1,12 @@
-export const FREE_SESSION_LIMIT = 30;
+export const FREE_SESSION_LIMIT = 15;
 export interface SessionUsage {
     count: number;
     limit: number;
     isPro: boolean;
     remaining: number;
+    paidPro?: boolean;
+    serverNow?: string;
+    trial?: { eligible: boolean; status: 'available' | 'active' | 'expired'; startedAt: string | null; expiresAt: string | null };
 }
 export function exceedsSessionLimit(
     usage: SessionUsage,

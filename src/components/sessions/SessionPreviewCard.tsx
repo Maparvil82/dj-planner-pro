@@ -1,3 +1,8 @@
+import { SessionAttendanceBadges } from './SessionAttendanceBadges';
+import { SessionExpenseBadge } from './SessionExpenses';
+import { SessionTaskBadge } from './SessionTaskBadge';
+import { SessionPartialPaymentSummary } from './SessionPartialPaymentSummary';
+import { useDarkPalette } from '../../contexts/ThemeContext';
 import {
     sessionDisplayTitle,
     sessionDisplaySubtitle,
@@ -8,7 +13,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { Session } from '../../types/session';
-import { sessionEarnings } from '../../utils/sessionPlanning';
+import { sessionEarnings, sessionPaymentState } from '../../utils/sessionPlanning';
 import { SessionStatusBadge } from './SessionStatusBadge';
 
 export function SessionPreviewCard({
@@ -24,18 +29,19 @@ export function SessionPreviewCard({
     showDjs?: boolean;
     showPoster?: boolean;
 }) {
+    const darkPalette = useDarkPalette();
     const { activeTheme } = useTheme();
-    const { t, currentLanguage } = useTranslation();
+    const { t, dateLocale, formatMoney } = useTranslation();
     const subtitle = sessionDisplaySubtitle(session);
     const dark = activeTheme === 'dark';
-    const text = dark ? '#f3f4f8' : '#202538';
-    const muted = dark ? '#a8b2c6' : '#6d7588';
+    const text = dark ? darkPalette.text : '#202538';
+    const muted = dark ? darkPalette.muted : '#6d7588';
     const [year, month, day] = session.date.split('-').map(Number);
     const date = new Date(year, month - 1, day);
-    const weekday = date.toLocaleDateString(currentLanguage, {
+    const weekday = date.toLocaleDateString(dateLocale, {
         weekday: 'short',
     });
-    const monthName = date.toLocaleDateString(currentLanguage, {
+    const monthName = date.toLocaleDateString(dateLocale, {
         month: 'short',
     });
     const fee = session.status === 'cancelled' ? 0 : sessionEarnings(session);
@@ -50,16 +56,16 @@ export function SessionPreviewCard({
     return (
         <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={`${sessionDisplayTitle(session, t)}, ${subtitle}, ${date.toLocaleDateString(currentLanguage)}`}
+            accessibilityLabel={`${sessionDisplayTitle(session, t)}, ${subtitle}, ${date.toLocaleDateString(dateLocale)}`}
             activeOpacity={0.8}
             onPress={onPress}
             onLongPress={onLongPress}
             style={{
                 overflow: 'hidden',
                 borderRadius: 24,
-                borderWidth: 1,
-                borderColor: dark ? '#252d40' : '#e9ecf3',
-                backgroundColor: dark ? '#171d2c' : '#fff',
+                borderWidth: dark ? 0 : 1,
+                borderColor: dark ? darkPalette.border : '#e9ecf3',
+                backgroundColor: dark ? darkPalette.surface : '#fff',
             }}
         >
             <View
@@ -73,7 +79,7 @@ export function SessionPreviewCard({
                     backgroundColor: session.color || '#262626',
                 }}
             />
-            <View style={{ padding: 18, gap: 16 }}>
+            <View style={{ paddingHorizontal: 20, paddingVertical: 18, gap: 16 }}>
                 <View
                     style={{
                         flexDirection: 'row',
@@ -87,13 +93,13 @@ export function SessionPreviewCard({
                             paddingVertical: 9,
                             borderRadius: 18,
                             alignItems: 'center',
-                            backgroundColor: dark ? '#292743' : '#f0edfc',
+                            backgroundColor: dark ? darkPalette.tint : '#f0edfc',
                             gap: 2,
                         }}
                     >
                         <Text
                             style={{
-                                color: dark ? '#bdb0f5' : '#7666df',
+                                color: dark ? darkPalette.primary : '#7666df',
                                 fontSize: 10,
                                 fontWeight: '700',
                                 textTransform: 'uppercase',
@@ -131,13 +137,13 @@ export function SessionPreviewCard({
                         >
                             <Text
                                 numberOfLines={2}
-                                style={{
+                                style={[{
                                     flex: 1,
                                     color: text,
                                     fontSize: 16,
                                     fontWeight: '700',
                                     lineHeight: 21,
-                                }}
+                                }, dark && { color: darkPalette.onSurface }]}
                             >
                                 {sessionDisplayTitle(session, t)}
                             </Text>
@@ -152,11 +158,11 @@ export function SessionPreviewCard({
                             {!!subtitle && (
                                 <Text
                                     numberOfLines={1}
-                                    style={{
+                                    style={[{
                                         flex: 1,
                                         color: muted,
                                         fontSize: 12,
-                                    }}
+                                    }, dark && { color: darkPalette.onSurface }]}
                                 >
                                     {subtitle}
                                 </Text>
@@ -168,11 +174,11 @@ export function SessionPreviewCard({
                         session.djs?.length ? (
                             <Text
                                 numberOfLines={2}
-                                style={{
+                                style={[{
                                     color: muted,
                                     fontSize: 11,
                                     lineHeight: 15,
-                                }}
+                                }, dark && { color: darkPalette.onSurface }]}
                             >
                                 {session.djs.join(', ')}
                             </Text>
@@ -180,13 +186,13 @@ export function SessionPreviewCard({
                     </View>
                     <ChevronRight
                         size={17}
-                        color={dark ? '#657089' : '#afb5c5'}
+                        color={dark ? darkPalette.muted : '#afb5c5'}
                     />
                 </View>
                 <View
                     style={{
                         borderTopWidth: 1,
-                        borderTopColor: dark ? '#252d40' : '#f0f1f6',
+                        borderTopColor: dark ? darkPalette.border : '#f0f1f6',
                         paddingTop: 13,
                         flexDirection: 'row',
                         alignItems: 'center',
@@ -202,11 +208,11 @@ export function SessionPreviewCard({
                         }}
                     >
                         <Text
-                            style={{
+                            style={[{
                                 color: muted,
                                 fontSize: 12,
                                 fontWeight: '500',
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {session.start_time.slice(0, 5)} –{' '}
                             {session.end_time.slice(0, 5)}
@@ -214,36 +220,34 @@ export function SessionPreviewCard({
                     </View>
                     {session.is_guest ? (
                         <Text
-                            style={{
+                            style={[{
                                 color: muted,
                                 fontSize: 11,
                                 marginLeft: 'auto',
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {t('collaboration.guestSession')}
                         </Text>
-                    ) : session.earning_type !== 'free' ? (
+                    ) : session.earning_type !== 'free' && sessionPaymentState(session) !== 'partial' ? (
                         <Text
-                            style={{
+                            style={[{
                                 color: text,
                                 fontSize: 16,
                                 fontWeight: '700',
                                 marginLeft: 'auto',
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {session.earning_type === 'agreement' &&
                             !session.fee_agreement?.settled
                                 ? '—'
-                                : new Intl.NumberFormat(currentLanguage, {
-                                      maximumFractionDigits: 2,
-                                  }).format(fee)}{' '}
-                            {session.earning_type === 'agreement' &&
-                            !session.fee_agreement?.settled
-                                ? ''
-                                : session.currency || '€'}
+                                : formatMoney(fee, session.currency || '€')}
                         </Text>
                     ) : null}
                 </View>
+                <SessionPartialPaymentSummary session={session} />
+                <SessionExpenseBadge session={session} />
+                <SessionTaskBadge session={session} />
+            <SessionAttendanceBadges session={session} />
             </View>
         </TouchableOpacity>
     );

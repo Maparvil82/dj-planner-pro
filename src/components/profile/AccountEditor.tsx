@@ -31,6 +31,10 @@ export function AccountEditor({
     const [error, setError] = useState('');
     const save = async () => {
         if (busy) return;
+        if (password && password.length < 8) {
+            setError(t('authExperience.passwordHint'));
+            return;
+        }
         const input: { email?: string; password?: string } = {};
         if (email.trim() !== currentEmail) input.email = email.trim();
         if (password) input.password = password;
@@ -156,6 +160,7 @@ export function AccountEditor({
                             busy={busy}
                             disabled={
                                 !email.trim() ||
+                                (!!password && password.length < 8) ||
                                 (email.trim() === currentEmail && !password)
                             }
                             onPress={() => {

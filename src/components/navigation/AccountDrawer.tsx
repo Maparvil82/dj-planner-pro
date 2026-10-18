@@ -1,3 +1,5 @@
+import darkPalette from '../../theme/darkPalette.json';
+import { useCommunitySafetyStatus } from '../../hooks/useCommunitySafety';
 import { FEATURES } from '../../config/features';
 import {
     createContext,
@@ -9,6 +11,7 @@ import {
 } from 'react';
 import {
     Animated,
+    ActivityIndicator,
     Modal,
     Platform,
     Pressable,
@@ -17,9 +20,11 @@ import {
     View,
     useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
-import { X, ChevronRight } from 'lucide-react-native';
+import { X, ChevronRight, LogOut } from 'lucide-react-native';
+import { confirmAction } from '../../utils/confirmAction';
+import { showError } from '../../utils/showError';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useUnreadNotifications } from '../../hooks/useNotifications';
@@ -83,7 +88,7 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
                         height: tab ? 30 : 42,
                         borderRadius: tab ? 15 : 21,
                         borderWidth: 2,
-                        borderColor: '#6554df',
+                        borderColor: c.accent,
                     }}
                 />
             )}
@@ -91,11 +96,14 @@ export function AccountAvatarButton({ tab = false }: { tab?: boolean }) {
     );
 }
 export function AccountDrawerProvider({ children }: { children: ReactNode }) {
+    const insets = useSafeAreaInsets();
     const [open, setOpen] = useState(false);
+    const [signingOut, setSigningOut] = useState(false);
+    const logoutInFlight = useRef(false);
     const { width } = useWindowDimensions();
     const drawerWidth = Math.min(360, width * 0.88);
     const translate = useRef(new Animated.Value(-drawerWidth)).current;
-    const { profile, session } = useAuthStore();
+    const { profile, session, signOut } = useAuthStore();
     const c = useCommunityColors();
     const { t } = useTranslation();
     const router = useRouter();
@@ -109,6 +117,22 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
     const unread = useUnreadNotifications();
     const usage = useSessionUsage();
     const close = () => setOpen(false);
+    const requestSignOut = async () => {
+        if (logoutInFlight.current) return;
+        logoutInFlight.current = true;
+        setSigningOut(true);
+        try {
+            if (!await confirmAction(t('log_out'), t('accountMenu.logoutConfirm'), t('cancel'), t('log_out'))) return;
+            // Dismiss the overlay before auth redirects to the sign-in screen.
+            close();
+            await signOut();
+        } catch {
+            showError(t('log_out'), t('authExperience.connectionError'));
+        } finally {
+            logoutInFlight.current = false;
+            setSigningOut(false);
+        }
+    };
     useEffect(() => {
         if (!session) setOpen(false);
     }, [session]);
@@ -131,19 +155,19 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
         pendingRoute.current = href;
         close();
     };
+    const safety = useCommunitySafetyStatus();
     const rows: { key: string; href: Href; count?: number }[] = [
         {
             key: 'notifications',
             href: '/notifications',
             count: unread.data || 0,
         },
-        { key: 'history', href: '/(tabs)/history' },
         { key: 'savedMixes', href: '/saved-mixes' },
         ...(FEATURES.bookings
             ? [{ key: 'bookings', href: '/bookings' as Href }]
             : []),
-        { key: 'plan', href: '/profile?section=plan' },
         { key: 'settings', href: '/profile?section=settings' },
+        ...(safety.data?.moderator ? [{ key: 'moderation', href: '/moderation' as Href }] : []),
     ];
     return (
         <DrawerContext.Provider
@@ -179,7 +203,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                             transform: [{ translateX: translate }],
                         }}
                     >
-                        <SafeAreaView style={{ flex: 1 }}>
+                        <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
                             <View
                                 style={{
                                     alignItems: 'flex-end',
@@ -202,9 +226,12 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                 </Pressable>
                             </View>
                             <ScrollView
+                                style={{ flex: 1 }}
                                 contentContainerStyle={{
+                                    flexGrow: 1,
                                     paddingHorizontal: 24,
-                                    paddingBottom: 32,
+                                    paddingTop: 24,
+                                    paddingBottom: 24,
                                 }}
                             >
                                 <Pressable
@@ -214,7 +241,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                     )}
                                     onPress={() => navigate('/profile')}
                                     style={{
-                                        gap: 12,
+                                        gap: 14,
                                         paddingBottom: 24,
                                         borderBottomWidth: 1,
                                         borderColor: c.border,
@@ -226,7 +253,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                             profile?.artist_name ||
                                             session?.user.email
                                         }
-                                        size={64}
+                                        size={72}
                                         color={c.fg}
                                         focused={false}
                                     />
@@ -241,13 +268,13 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                     >
                                         <Text
                                             numberOfLines={2}
-                                            style={{
+                                            style={[{
                                                 flexShrink: 1,
-                                                fontSize: 25,
-                                                lineHeight: 31,
+                                                fontSize: 24,
+                                                lineHeight: 30,
                                                 fontWeight: '800',
                                                 color: c.fg,
-                                            }}
+                                            }, c.dark && { color: c.cardText }]}
                                         >
                                             {profile?.artist_name ||
                                                 t('unifiedProfile.title')}
@@ -258,7 +285,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                                     'billing.proPlan',
                                                 )}
                                                 style={{
-                                                    backgroundColor: '#6554df',
+                                                    backgroundColor: c.accent,
                                                     borderRadius: 7,
                                                     paddingHorizontal: 8,
                                                     paddingVertical: 4,
@@ -266,7 +293,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                             >
                                                 <Text
                                                     style={{
-                                                        color: '#fff',
+                                                        color: c.onAccent,
                                                         fontSize: 10,
                                                         fontWeight: '900',
                                                         letterSpacing: 0.7,
@@ -278,16 +305,16 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                         )}
                                     </View>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.accent,
                                             fontSize: 14,
                                             fontWeight: '600',
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {t('accountMenu.profile')} →
                                     </Text>
                                 </Pressable>
-                                <View style={{ paddingVertical: 12 }}>
+                                <View style={{ paddingTop: 12, paddingBottom: 24 }}>
                                     {rows.map((row) => (
                                         <Pressable
                                             key={row.key}
@@ -308,12 +335,12 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                             }}
                                         >
                                             <Text
-                                                style={{
+                                                style={[{
                                                     flex: 1,
                                                     fontSize: 16,
                                                     fontWeight: '600',
                                                     color: c.fg,
-                                                }}
+                                                }, c.dark && { color: c.cardText }]}
                                             >
                                                 {t(`accountMenu.${row.key}`)}
                                             </Text>
@@ -331,7 +358,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                                     <Text
                                                         style={{
                                                             color: c.dark
-                                                                ? '#0d1220'
+                                                                ? darkPalette.background
                                                                 : '#fff',
                                                             fontWeight: '700',
                                                             fontSize: 12,
@@ -358,6 +385,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                         )}
                                         onPress={() => navigate('/pro')}
                                         style={{
+                                            marginTop: 'auto',
                                             backgroundColor: c.tint,
                                             borderRadius: 22,
                                             padding: 20,
@@ -372,7 +400,7 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                                 fontWeight: '800',
                                             }}
                                         >
-                                            DJ PLANNER PRO
+                                            DJ PLANNER
                                         </Text>
                                         <Text
                                             style={{
@@ -406,7 +434,21 @@ export function AccountDrawerProvider({ children }: { children: ReactNode }) {
                                     </Pressable>
                                 )}
                             </ScrollView>
-                        </SafeAreaView>
+                            <View style={{ paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 1, borderColor: c.border }}>
+                                <Pressable
+                                    testID="account-menu-logout"
+                                    accessibilityRole="button"
+                                    accessibilityLabel={t('log_out')}
+                                    accessibilityState={{ disabled: signingOut, busy: signingOut }}
+                                    disabled={signingOut}
+                                    onPress={() => { void requestSignOut(); }}
+                                    style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: signingOut ? 0.6 : 1 }}
+                                >
+                                    {signingOut ? <ActivityIndicator size="small" color={c.muted} /> : <LogOut size={20} color={c.muted} />}
+                                    <Text style={{ color: c.fg, fontSize: 14, fontWeight: '600', flexShrink: 1 }}>{t('log_out')}</Text>
+                                </Pressable>
+                            </View>
+                        </View>
                     </Animated.View>
                     <Pressable
                         accessibilityRole="button"

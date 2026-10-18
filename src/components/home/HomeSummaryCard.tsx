@@ -1,5 +1,5 @@
+import { useDarkPalette } from '../../contexts/ThemeContext';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../contexts/ThemeContext';
 import { CurrencyTotals } from '../sessions/CurrencyTotals';
 
@@ -16,15 +16,16 @@ export function HomeSummaryCard({
     highlighted?: boolean;
     onPress: () => void;
 }) {
+    const darkPalette = useDarkPalette();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
-    const foreground = highlighted ? '#fff' : dark ? '#f3f4f8' : '#202538';
-    const muted = highlighted ? '#d4ceef' : dark ? '#a8b2c6' : '#6d7588';
+    const foreground = highlighted ? (dark ? darkPalette.onPrimary : '#fff') : dark ? darkPalette.onSurface : '#202538';
+    const muted = highlighted ? (dark ? darkPalette.onPrimary : '#d4ceef') : dark ? darkPalette.onSurface : '#6d7588';
     const content = (
         <>
             <Text
                 style={{
-                    color: highlighted ? '#e1dcff' : muted,
+                    color: highlighted ? (dark ? darkPalette.onPrimary : '#e1dcff') : muted,
                     fontSize: 12,
                     fontWeight: '600',
                     lineHeight: 17,
@@ -55,27 +56,17 @@ export function HomeSummaryCard({
             onPress={onPress}
             style={{ flex: 1 }}
         >
-            {highlighted ? (
-                <LinearGradient
-                    colors={['#202044', '#35316e', '#6250bb']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={layout}
-                >
-                    {content}
-                </LinearGradient>
-            ) : (
-                <View
-                    style={{
-                        ...layout,
-                        backgroundColor: dark ? '#171d2c' : '#fff',
-                        borderWidth: 1,
-                        borderColor: dark ? '#252d40' : '#e9ecf3',
-                    }}
-                >
-                    {content}
-                </View>
-            )}
+            <View
+                testID={highlighted ? 'home-agreed-fees' : 'home-completed-fees'}
+                style={{
+                    ...layout,
+                    backgroundColor: highlighted ? (dark ? darkPalette.primary : '#35316e') : (dark ? darkPalette.surface : '#fff'),
+                    borderWidth: dark || highlighted ? 0 : 1,
+                    borderColor: dark ? darkPalette.border : '#e9ecf3',
+                }}
+            >
+                {content}
+            </View>
         </TouchableOpacity>
     );
 }

@@ -35,7 +35,7 @@ export function BookingThreadScreen({
     access?: string;
     ownerId?: string;
 }) {
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale, numberLocale } = useTranslation();
     const router = useRouter();
     const cache = useQueryClient();
     const [body, setBody] = useState('');
@@ -147,7 +147,7 @@ export function BookingThreadScreen({
         />
     );
     const dateLabel = (date: string) =>
-        new Date(date + 'T12:00:00').toLocaleDateString(currentLanguage, {
+        new Date(date + 'T12:00:00').toLocaleDateString(dateLocale, {
             day: 'numeric',
             month: 'long',
             year: 'numeric',
@@ -197,7 +197,7 @@ export function BookingThreadScreen({
                         <BookingText muted>
                             {t('bookings.budget')}:{' '}
                             {Number(thread.request.budget).toLocaleString(
-                                currentLanguage,
+                                numberLocale,
                                 {
                                     style: 'currency',
                                     currency: thread.request.currency,
@@ -221,7 +221,7 @@ export function BookingThreadScreen({
                                 {p.venue} · {p.city}
                             </BookingText>
                             <BookingText large>
-                                {Number(p.fee).toLocaleString(currentLanguage, {
+                                {Number(p.fee).toLocaleString(numberLocale, {
                                     style: 'currency',
                                     currency: p.currency,
                                 })}
@@ -311,7 +311,7 @@ export function BookingThreadScreen({
                                                 {old.start_time} –{' '}
                                                 {old.end_time} ·{' '}
                                                 {Number(old.fee).toLocaleString(
-                                                    currentLanguage,
+                                                    numberLocale,
                                                     {
                                                         style: 'currency',
                                                         currency: old.currency,

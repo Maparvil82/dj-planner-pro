@@ -1,3 +1,35 @@
+# Entradas: contador de accesos por QR
+
+El acceso `+ → Entradas` y el acceso desde una sesión abren ahora un contador, no un flujo de emisión/venta.
+
+1. Seleccionar una sesión propia en curso o futura, excluyendo canceladas. Se ordenan por inicio, de la más próxima a la más lejana. La selección usa la hora de fin y la zona horaria de la sesión para conservar las actuaciones nocturnas tras medianoche. Desde el detalle de una sesión pasada se puede consultar su recuento sin registrar accesos nuevos.
+2. Ver el total de accesos registrados por QR y manualmente.
+3. Usar «Añadir acceso · +1» para accesos sin QR o acompañantes. Cada acción confirmada suma una persona; durante el guardado se bloquean pulsaciones repetidas. Un error ofrece reintento con el mismo identificador para evitar duplicación si el primer intento llegó al servidor.
+4. Escanear un QR: la primera lectura registra un acceso; otra lectura del mismo contenido en esa sesión no suma y muestra la fecha de la primera lectura.
+5. El contador se guarda en Supabase y se recupera al volver a entrar. Requiere conexión; un fallo de red no muestra éxito. Reintentar el mismo código es seguro.
+
+## Alcance
+
+- Acepta contenido QR de proveedores externos sin interpretar URLs ni abrirlas. Se conserva la huella SHA-256, no el contenido original. El código debe tener entre 1 y 16.384 unidades de texto.
+- Cuenta códigos, no valida compra, autenticidad, pago, evento de origen ni cancelación en la plataforma externa. Un QR arbitrario también se puede contabilizar. La interfaz dice «Acceso contabilizado», no «Entrada válida».
+- Un código = un acceso. Entradas de grupo y QR dinámicos/rotatorios no se pueden deduplicar por persona sin integración del proveedor. No se calcula aforo restante, ventas, cobros ni ingresos con este dato.
+- Escanear una entrada emitida por DJ Planner en este modo no modifica su estado de pago ni la marca de entrada del flujo antiguo/invitados. Son registros independientes y no se suman entre sí.
+- Solo el propietario de la sesión puede acceder. La deduplicación compartida entre sus dispositivos es atómica en el servidor; no se añaden permisos de personal de puerta.
+- Las sesiones canceladas son consultables pero no admiten registros nuevos. Eliminar la sesión elimina su recuento. Una cuenta en eliminación no puede escribir.
+- Tablas `event_entry_scans` y `event_manual_entries`, RLS de lectura, escritura exclusiva por RPC, clave única `(session_id, code_hash)`. Guardado activo mediante migraciones `external_entry_counter` y `manual_entry_counter`.
+
+## Verificación
+
+- `node tests/entryCounterDatabase.cjs`: códigos externos, reintentos, aislamiento por evento/propietario, permisos, sesión cancelada, cuenta en eliminación y borrado asociado.
+- `tests/browser/entryCounter.cjs`: interfaz, dos códigos distintos, repetición, envío solo de huella, recarga con contador guardado y acceso manual con reintento tras fallo de red sin duplicar (servidor simulado).
+- Falta probar la cámara con entradas reales en iOS/Android. No se afirma compatibilidad con todos los formatos visuales ni QR dinámicos.
+
+---
+
+## Implementación anterior conservada
+
+El flujo de emisión sigue programado en `/ticket-issuance`, fuera del menú principal. Los datos y las entradas anteriores no se borran. El escáner anterior conserva su validación para Invitados y para ese flujo; el contador entra al mismo escáner con `mode=counter`.
+
 # Entradas QR · primera versión
 
 ## Recorrido

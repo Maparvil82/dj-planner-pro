@@ -28,7 +28,7 @@ En la app: **Tú → Contrataciones → Ver mi página** permite previsualizar e
 - Los promotores acceden únicamente a la conversación identificada por una clave aleatoria de 256 bits; se conserva su hash en el esquema privado. Nunca reciben la agenda completa, identidad interna del propietario ni claves de otras consultas.
 - La página pública no incluye presupuesto, caché, contactos, mensajes, bloqueos ni sesiones sin publicación explícita.
 - Pro se verifica en el servidor contra RevenueCat usando el ID de Supabase. Los clientes no pueden autoasignarse Pro. La caché privada tiene un máximo de cinco minutos.
-- La aceptación respeta la cuota de 30 sesiones si Pro ha vencido. Un fallo de cuota no deja un acuerdo confirmado sin sesión.
+- La aceptación respeta la cuota de 15 sesiones si Pro ha vencido. Un fallo de cuota no deja un acuerdo confirmado sin sesión.
 - Las sesiones propias, participaciones aceptadas y bloqueos activos se comprueban con intervalos que incluyen sesiones que terminan al día siguiente. Dos intervalos contiguos no se solapan.
 - Los bloqueos se respetan al crear/editar sesiones y aceptar colaboraciones. Las operaciones utilizan el mismo bloqueo transaccional por DJ que la cuota existente.
 - La sesión creada conserva `booking_timezone` para interpretar el acuerdo si después cambian los ajustes. Las sesiones antiguas sin zona horaria se interpretan según los ajustes de su propietario, con Europe/Madrid como alternativa. Su interfaz anterior sigue utilizando horarios locales; no se ha migrado toda la agenda a fechas UTC.

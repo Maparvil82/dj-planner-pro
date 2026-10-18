@@ -1,3 +1,6 @@
+import { Platform } from 'react-native';
+import { useSubscription } from '../../hooks/useSubscription';
+import { subscriptionManagementUrl } from '../../utils/billingPresentation';
 import { Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
@@ -7,10 +10,11 @@ import { useSessionUsage } from '../../hooks/useSessionUsage';
 import { SessionFormSection } from '../sessions/SessionFormLayout';
 import { CommunityButton, useCommunityColors } from '../community/CommunityUI';
 export function SubscriptionPlan() {
-    const { t } = useTranslation();
+    const { t, dateLocale } = useTranslation();
     const c = useCommunityColors();
     const router = useRouter();
     const usage = useSessionUsage();
+    const { customerInfo } = useSubscription();
     useFocusEffect(
         useCallback(() => {
             void usage.refetch();
@@ -77,6 +81,7 @@ export function SubscriptionPlan() {
                             />
                         </View>
                     )}
+                    {usage.data.trial && usage.data.trial.status !== 'available' && <Text testID="account-trial-status" style={{ color: c.muted, fontSize: 13, lineHeight: 20 }}>{t(usage.data.trial.status === 'active' ? 'trial.activeUntil' : 'trial.expired', { date: usage.data.trial.expiresAt ? new Date(usage.data.trial.expiresAt).toLocaleDateString(dateLocale) : '' })} {t('trial.noRenewal')}</Text>}
                     <Text
                         style={{ color: c.muted, fontSize: 12, lineHeight: 19 }}
                     >
@@ -89,16 +94,16 @@ export function SubscriptionPlan() {
                     <CommunityButton
                         secondary
                         label={t(
-                            usage.data.isPro
+                            usage.data.paidPro
                                 ? 'billing.manage'
                                 : 'billing.seePro',
                         )}
                         onPress={() =>
-                            usage.data?.isPro
+                            usage.data?.paidPro
                                 ? void Linking.openURL(
-                                      'https://apps.apple.com/account/subscriptions',
+                                      subscriptionManagementUrl(Platform.OS, customerInfo?.managementURL),
                                   )
-                                : router.push('/pro')
+                                : router.push('/paywall')
                         }
                     />
                 </>

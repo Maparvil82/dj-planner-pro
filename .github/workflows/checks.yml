@@ -17,3 +17,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:community-safety-db
+      - run: npm run test:account-deletion-db
+      - run: npm run test:storage-db
+      - run: npm run test:performance-db
+      - run: npm run test:door-access-db

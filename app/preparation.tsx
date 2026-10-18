@@ -1,10 +1,9 @@
+import { useSessionToolContext } from '../src/hooks/useSessionToolContext';
 import { useRef, useState, useMemo, useEffect } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { Check, Trash2 } from 'lucide-react-native';
-import { useAllSessionsQuery } from '../src/hooks/useSessionsQuery';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { sessionTools } from '../src/services/sessionTools';
 import { sessionRange } from '../src/utils/sessionPlanning';
@@ -21,9 +20,8 @@ import {
 import { useTranslation } from '../src/i18n/useTranslation';
 import { confirmAction } from '../src/utils/confirmAction';
 export default function Preparation() {
-    const { sessionId } = useLocalSearchParams<{ sessionId?: string }>(),
-        [selected, setSelected] = useState(sessionId || ''),
-        [title, setTitle] = useState(''),
+    const { sessionId: selected, setSessionId: setSelected, isSessionBound, sessions } = useSessionToolContext();
+    const [title, setTitle] = useState(''),
         [busy, setBusy] = useState(false),
         [error, setError] = useState('');
     const lock = useRef(false),
@@ -31,8 +29,8 @@ export default function Preparation() {
         c = useCommunityColors(),
         { t } = useTranslation(),
         client = useQueryClient(),
-        user = useAuthStore((s) => s.session?.user.id),
-        sessions = useAllSessionsQuery();
+        user = useAuthStore((s) => s.session?.user.id);
+
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 60000);
@@ -107,7 +105,7 @@ export default function Preparation() {
                 <SessionChooser
                     sessions={choices}
                     onSelect={(s) => setSelected(s.id)}
-                    empty={t('tools.noFuture')}
+                    purpose="preparation"
                 />
             ) : !current ? (
                 <Text style={{ color: c.muted }}>
@@ -115,14 +113,14 @@ export default function Preparation() {
                 </Text>
             ) : (
                 <>
-                    <Pressable
+                    {!isSessionBound && <Pressable
                         accessibilityRole="button"
                         onPress={() => setSelected('')}
                     >
                         <Text style={{ color: c.accent }}>
                             {t('tools.changeSession')}
                         </Text>
-                    </Pressable>
+                    </Pressable>}
                     <Text
                         style={{ fontSize: 20, fontWeight: '800', color: c.fg }}
                     >

@@ -1,5 +1,6 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import { useState } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export function PosterThumbnail({
