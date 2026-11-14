@@ -1,6 +1,6 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import { useState } from 'react';
 import {
-    Image,
     Modal,
     Platform,
     ScrollView,
@@ -139,12 +139,12 @@ export function ProfileShareSheet({
                         }}
                     >
                         <Text
-                            style={{
+                            style={[{
                                 flex: 1,
                                 color: c.fg,
                                 fontSize: 20,
                                 fontWeight: '700',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {t('profileShare.title')}
                         </Text>
@@ -202,27 +202,27 @@ export function ProfileShareSheet({
                             )}
                         </View>
                         <Text
-                            style={{
+                            style={[{
                                 color: c.fg,
                                 fontSize: 22,
                                 fontWeight: '700',
                                 textAlign: 'center',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {person.artist_name}
                         </Text>
-                        <Text style={{ color: c.muted, fontSize: 13 }}>
+                        <Text style={[{ color: c.muted, fontSize: 13 }, c.dark && { color: c.cardText }]}>
                             {person.city}
                         </Text>
                     </View>
                     {Platform.OS !== 'web' && (
                         <Text
-                            style={{
+                            style={[{
                                 color: c.muted,
                                 fontSize: 12,
                                 lineHeight: 18,
                                 textAlign: 'center',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {t(
                                 url.startsWith('exp')
@@ -292,11 +292,11 @@ export function ProfileShareSheet({
                                 </View>
                                 <Text
                                     numberOfLines={2}
-                                    style={{
+                                    style={[{
                                         color: c.muted,
                                         fontSize: 11,
                                         textAlign: 'center',
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {option.label}
                                 </Text>
@@ -306,11 +306,11 @@ export function ProfileShareSheet({
                     {!!status && (
                         <Text
                             accessibilityLiveRegion="polite"
-                            style={{
+                            style={[{
                                 color: c.accent,
                                 fontSize: 13,
                                 textAlign: 'center',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {status}
                         </Text>

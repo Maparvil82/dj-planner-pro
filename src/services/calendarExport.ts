@@ -21,6 +21,6 @@ export async function exportSessionCalendar(session: Session): Promise<void> {
     if (!(await Sharing.isAvailableAsync())) throw new Error('calendar_export_unavailable');
     const file = new File(Paths.cache, filename);
     file.create({ overwrite: true });
-    file.write(content);
+    await file.write(content);
     await Sharing.shareAsync(file.uri, { mimeType: 'text/calendar', UTI: 'public.calendar-event' });
 }

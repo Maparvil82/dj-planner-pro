@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { sharedDJDestination } from '../../src/utils/communityNavigation';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
@@ -9,19 +10,18 @@ import {
     AuthShell,
     AuthField,
     AuthMessage,
+    AuthButton,
+    AUTH_COLORS,
+    AUTH_SCREEN_IMAGES,
 } from '../../src/components/auth/AuthUI';
-import {
-    CommunityButton,
-    useCommunityColors,
-} from '../../src/components/community/CommunityUI';
 import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function LoginScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const { dj } = useLocalSearchParams<{ dj?: string }>();
     const destination = sharedDJDestination(dj);
-    const c = useCommunityColors();
-    const passwordRef = useRef<TextInput>(null);
+    const c = AUTH_COLORS;
+    const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
     const submitting = useRef(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -59,15 +59,17 @@ export default function LoginScreen() {
     };
     return (
         <AuthShell
+            immersive
+            image={AUTH_SCREEN_IMAGES.login}
             title={t('authExperience.loginTitle')}
-            subtitle={t('authExperience.loginHint')}
             onBack={() => router.replace('/(auth)/welcome')}
         >
             {!!error && <AuthMessage>{error}</AuthMessage>}
-            <View style={{ gap: 18 }}>
+            <View style={{ gap: 18, marginTop: 6 }}>
                 <AuthField
                     label={t('email_placeholder')}
-                    placeholder="you@example.com"
+                    hideLabel
+                    placeholder={t('email_placeholder')}
                     value={email}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -93,7 +95,8 @@ export default function LoginScreen() {
                 <AuthField
                     ref={passwordRef}
                     label={t('password_placeholder')}
-                    placeholder={t('authExperience.passwordPlaceholder')}
+                    hideLabel
+                    placeholder={t('password_placeholder')}
                     password
                     value={password}
                     autoCapitalize="none"
@@ -108,13 +111,15 @@ export default function LoginScreen() {
                     }}
                     onSubmitEditing={() => void handleLogin()}
                 />
-                <Link href="/(auth)/forgot-password" asChild>
+                <Link href={destination
+                    ? { pathname: '/(auth)/forgot-password', params: { dj } }
+                    : '/(auth)/forgot-password'} asChild>
                     <TouchableOpacity
                         accessibilityRole="link"
                         disabled={loading}
                         style={{
                             alignSelf: 'flex-end',
-                            minHeight: 40,
+                            minHeight: 44,
                             justifyContent: 'center',
                         }}
                     >
@@ -122,7 +127,7 @@ export default function LoginScreen() {
                             style={{
                                 color: c.accent,
                                 fontSize: 13,
-                                fontWeight: '700',
+                                fontWeight: '500',
                             }}
                         >
                             {t('authExperience.forgotPassword')}
@@ -130,15 +135,15 @@ export default function LoginScreen() {
                     </TouchableOpacity>
                 </Link>
             </View>
-            <CommunityButton
+            <AuthButton
                 label={t('login')}
                 onPress={() => void handleLogin()}
                 disabled={!canSubmit}
                 busy={loading}
             />
-            <View style={{ gap: 8, alignItems: 'center', paddingVertical: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, alignItems: 'center', paddingVertical: 0 }}>
                 <Text style={{ color: c.muted, fontSize: 14 }}>
-                    {t('no_account')}
+                    {t('authExperience.noAccountCompact')}
                 </Text>
                 <Link
                     href={
@@ -157,7 +162,7 @@ export default function LoginScreen() {
                             style={{
                                 color: c.accent,
                                 fontSize: 15,
-                                fontWeight: '800',
+                                fontWeight: '600',
                             }}
                         >
                             {t('authExperience.createAccount')}

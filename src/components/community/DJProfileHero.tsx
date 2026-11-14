@@ -1,5 +1,6 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
     Headphones,
@@ -45,7 +46,7 @@ export function DJProfileHero({
                 }}
             >
                 <LinearGradient
-                    colors={['#302765', '#6554df', '#906aad']}
+                    colors={c.dark ? [c.card, c.tint, c.bg] : ['#302765', '#6554df', '#906aad']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={{ position: 'absolute', inset: 0 }}
@@ -274,7 +275,7 @@ export function DJProfileDetails({ person }: { person: CommunityProfile }) {
                                         minHeight: 72,
                                         backgroundColor: c.card,
                                         borderColor: c.border,
-                                        borderWidth: 1,
+                                        borderWidth: c.dark ? 0 : 1,
                                         borderRadius: 20,
                                         padding: 15,
                                         flexDirection: 'row',
@@ -284,12 +285,12 @@ export function DJProfileDetails({ person }: { person: CommunityProfile }) {
                                 >
                                     <Icon size={21} color={c.accent} />
                                     <Text
-                                        style={{
+                                        style={[{
                                             flex: 1,
                                             color: c.fg,
                                             fontSize: 13,
                                             fontWeight: '700',
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {label}
                                     </Text>

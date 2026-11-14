@@ -1,6 +1,22 @@
+import { ResearchInvitationCard, ResearchInvitationModal, useResearchInvitation } from '../../src/components/research/ResearchInvitation';
+import { useScreenMonitoring } from '../../src/hooks/useScreenMonitoring';
+import { StatisticsExport } from '../../src/components/dashboard/StatisticsExport';
+import { dashboardAdvancedAnalytics } from '../../src/utils/dashboardAdvancedAnalytics';
+import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
+import { sessionEarnings } from '../../src/utils/sessionPlanning';
+import type { StatisticsReport } from '../../src/utils/statisticsReport';
+import { SessionAttendanceBadges } from '../../src/components/sessions/SessionAttendanceBadges';
+import { SessionExpenseBadge } from '../../src/components/sessions/SessionExpenses';
+import { SessionTaskBadge } from '../../src/components/sessions/SessionTaskBadge';
+import { SessionPartialPaymentSummary } from '../../src/components/sessions/SessionPartialPaymentSummary';
+import { DashboardAnalytics } from '../../src/components/dashboard/DashboardAnalytics';
+import { DashboardProPreview } from '../../src/components/dashboard/DashboardProPreview';
+import { useSessionUsage } from '../../src/hooks/useSessionUsage';
+import { useSubscription } from '../../src/hooks/useSubscription';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
 import { SessionStatusBadge } from '../../src/components/sessions/SessionStatusBadge';
-import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
-import { PageHeader } from '../../src/components/ui/PageHeader';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { ScrollPageHeader } from '../../src/components/ui/ScrollPageHeader';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     View,
@@ -15,7 +31,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
     ArrowUpRight,
     ChevronLeft,
@@ -24,9 +39,9 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import {useSessionRangeQuery,useSessionScreenContext,useDashboardExpenses,useNextSessionQuery} from '../../src/hooks/useSessionScreens';
+import {dashboardWindow} from '../../src/utils/dashboardWindow';
 import { useVenuesQuery } from '../../src/hooks/useVenuesQuery';
-import { useAllExpensesQuery } from '../../src/hooks/useExpensesQuery';
 import {
     dashboardInsights,
     dashboardMetrics,
@@ -49,18 +64,20 @@ function MetricCard({
     accent: string;
     dark: boolean;
 }) {
+    const darkPalette = useDarkPalette();
     return (
         <View
             style={[
                 styles.metric,
                 {
-                    backgroundColor: dark ? '#171d2c' : '#fff',
-                    borderColor: dark ? '#252d40' : '#e9ecf3',
+                    backgroundColor: dark ? darkPalette.surface : '#fff',
+                    borderWidth: dark ? 0 : 1,
+                    borderColor: dark ? darkPalette.border : '#e9ecf3',
                 },
             ]}
         >
             <Text
-                style={[styles.label, { color: dark ? '#a8b2c6' : '#6d7588' }]}
+                style={[[styles.label, { color: dark ? darkPalette.muted : '#6d7588' }], dark && { color: darkPalette.onSurface }]}
             >
                 {label}
             </Text>
@@ -68,19 +85,19 @@ function MetricCard({
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.65}
-                style={[
+                style={[[
                     styles.metricValue,
-                    { color: dark ? '#f6f7fb' : '#182039' },
-                ]}
+                    { color: dark ? darkPalette.text : '#182039' },
+                ], dark && { color: darkPalette.onSurface }]}
             >
                 {value}
             </Text>
             {hint ? (
                 <Text
-                    style={[
+                    style={[[
                         styles.hint,
-                        { color: dark ? '#9aa6bd' : '#778095' },
-                    ]}
+                        { color: dark ? darkPalette.muted : '#778095' },
+                    ], dark && { color: darkPalette.onSurface }]}
                 >
                     {hint}
                 </Text>
@@ -89,11 +106,15 @@ function MetricCard({
     );
 }
 export default function DashboardScreen() {
-    const onTabScroll = useTabBarScroll();
-    const { t, i18n } = useTranslation();
+    const darkPalette = useDarkPalette();
+    const { progress: headerProgress, onScroll: onTabScroll, onScrollBeginDrag: onTabScrollBeginDrag } = useScrollHeader('hide');
+    const { t, i18n, formatMoney, numberLocale, defaultCurrency } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
     const router = useRouter();
+    const usage = useSessionUsage();
+    const { isPro: storeIsPro } = useSubscription();
+    const isPro = storeIsPro || usage.data?.isPro === true;
     const { width } = useWindowDimensions();
     const [period, setPeriod] = useState<DashboardPeriod>('month');
     const [anchor, setAnchor] = useState(() => new Date());
@@ -111,34 +132,29 @@ export default function DashboardScreen() {
             listener.remove();
         };
     }, []);
-    const sessionsQuery = useAllSessionsQuery();
-    const expensesQuery = useAllExpensesQuery();
+    const window=dashboardWindow(anchor,period,now);
+    const mainQuery=useSessionRangeQuery(window.main.from,window.main.to);
+    const nextWindow=useSessionRangeQuery(window.upcoming.from,window.upcoming.to);
+    const upcomingQuery=useNextSessionQuery();
+    const contextQuery=useSessionScreenContext(true);
+    const invitation = useResearchInvitation(Object.keys(contextQuery.data?.firstCompleted || {}).length > 0);
+    const sessionsQuery={...mainQuery,isLoading:mainQuery.isLoading||nextWindow.isLoading||contextQuery.isLoading||upcomingQuery.isLoading,
+        isError:mainQuery.isError||nextWindow.isError||contextQuery.isError||upcomingQuery.isError,
+        isSuccess:mainQuery.isSuccess&&nextWindow.isSuccess&&contextQuery.isSuccess&&upcomingQuery.isSuccess,
+        isFetching:mainQuery.isFetching||nextWindow.isFetching||contextQuery.isFetching||upcomingQuery.isFetching,
+        refetch:()=>Promise.all([mainQuery.refetch(),nextWindow.refetch(),contextQuery.refetch(),upcomingQuery.refetch()])};
+    const expensesQuery = useDashboardExpenses(window.main.from,window.main.to);
+    useScreenMonitoring('dashboard', sessionsQuery.isLoading || expensesQuery.isLoading, sessionsQuery.isError || expensesQuery.isError);
     const venuesQuery = useVenuesQuery();
     const [expandedCity, setExpandedCity] = useState<string | null>(null);
-    const sessions = sessionsQuery.data;
+    const sessions=useMemo(()=>[...new Map([...(mainQuery.data||[]),...(nextWindow.data||[]),...(upcomingQuery.data?[upcomingQuery.data]:[])].map(s=>[s.id,s])).values()],[mainQuery.data,nextWindow.data,upcomingQuery.data]);
     const expenses = expensesQuery.data;
-    const text = dark ? '#f6f7fb' : '#182039';
-    const muted = dark ? '#a8b2c6' : '#6d7588';
-    const surface = dark ? '#171d2c' : '#fff';
-    const line = dark ? '#252d40' : '#e9ecf3';
+    const text = dark ? darkPalette.text : '#182039';
+    const muted = dark ? darkPalette.muted : '#6d7588';
+    const surface = dark ? darkPalette.surface : '#fff';
+    const line = dark ? darkPalette.border : '#e9ecf3';
     const label = (key: string) => t(`insights.${key}`);
-    const currencies = useMemo(() => {
-        const values = [
-            ...new Set([
-                ...(sessions || [])
-                    .filter(
-                        (s) =>
-                            s.status !== 'cancelled' &&
-                            s.earning_type !== 'free',
-                    )
-                    .map((s) => currencyCode(s.currency)),
-                ...(expenses || []).map((e) =>
-                    currencyCode(e.currency || 'EUR'),
-                ),
-            ]),
-        ].sort();
-        return values.length ? values : ['EUR'];
-    }, [sessions, expenses]);
+    const currencies=contextQuery.data?.currencies?.length?contextQuery.data.currencies:[defaultCurrency];
     const currency = currencies.includes(chosenCurrency)
         ? chosenCurrency
         : currencies[0];
@@ -163,8 +179,9 @@ export default function DashboardScreen() {
                 period,
                 currency,
                 now,
+                contextQuery.data?.firstCompleted,
             ),
-        [sessions, venuesQuery.data, anchor, period, currency, now],
+        [sessions, venuesQuery.data, anchor, period, currency, now,contextQuery.data],
     );
     const previous = useMemo(
         () =>
@@ -206,21 +223,10 @@ export default function DashboardScreen() {
         [metrics.paymentPending],
     );
     const number = (n: number, digits = 0) =>
-        new Intl.NumberFormat(i18n.language, {
+        new Intl.NumberFormat(numberLocale, {
             maximumFractionDigits: digits,
         }).format(n);
-    const money = (n: number, decimals = 0) => {
-        try {
-            return new Intl.NumberFormat(i18n.language, {
-                style: 'currency',
-                currency,
-                minimumFractionDigits: 0,
-                maximumFractionDigits: decimals,
-            }).format(n);
-        } catch {
-            return `${number(n)} ${currency}`;
-        }
-    };
+    const money = (n: number) => formatMoney(n, currency);
     const dateLabel = new Intl.DateTimeFormat(i18n.language, {
         ...(period === 'month' ? { month: 'long' as const } : {}),
         year: 'numeric',
@@ -232,6 +238,45 @@ export default function DashboardScreen() {
                       100,
               )
             : null;
+    const exportReport = (): StatisticsReport => {
+        const advanced = dashboardAdvancedAnalytics(sessions || [], expenses || [], venuesQuery.data || [], anchor, period, currency, now,contextQuery.data?.aging);
+        const a = (key: string) => t(`advancedAnalytics.${key}`);
+        const rows = [
+            [label('revenue'), money(metrics.revenue)],
+            [label('pending'), money(metrics.pendingBalance)],
+            [t('expenses'), metrics.costs === null ? '—' : money(metrics.costs)],
+            [label('balance'), metrics.balance === null ? '—' : money(metrics.balance)],
+            [label('sessions'), number(metrics.active.length)],
+            [label('hours'), `${number(metrics.hours, 1)} h`],
+            [label('played'), `${number(metrics.playedHours, 1)} h`],
+            [label('average'), metrics.averageFee === null ? '—' : money(metrics.averageFee)],
+            [label('perHour'), metrics.hourlyFee === null ? '—' : money(metrics.hourlyFee)],
+            [label('venues'), number(metrics.venueCount)],
+            [label('cancelled'), number(metrics.cancelled)],
+        ];
+        return {
+            title: t('statisticsPdf.reportTitle'), period: dateLabel, currency,
+            generated: `${t('statisticsPdf.generated')}: ${new Intl.DateTimeFormat(numberLocale, { dateStyle: 'medium', timeStyle: 'short' }).format(now)}`,
+            chartTitle: `${label('activity')} · ${label('sessions')} / ${label('revenue')}`,
+            chart: chart.map(row => ({ label: new Intl.DateTimeFormat(numberLocale, { month: 'short', year: 'numeric' }).format(row.date), count: row.count, revenue: money(row.revenue) })),
+            sections: [
+                { title: t('statisticsPdf.summary'), hint: `${label('revenueHint')} ${label('totalsHint')}`, rows },
+                { title: a('margin'), hint: a('marginHint'), rows: [
+                    [a('registeredMargin'), money(advanced.margin)], [a('linkedExpenses'), money(advanced.costs)],
+                    [a('hourlyMargin'), advanced.hourlyMargin === null ? '—' : `${money(advanced.hourlyMargin)}/h`],
+                    [a('marginPercent'), advanced.marginPercent === null ? '—' : `${number(advanced.marginPercent, 1)} %`],
+                ] },
+                { title: a('venues'), headers: [label('venues'), label('sessions'), a('registeredMargin'), a('hourlyMargin')], rows: advanced.venues.map(v => [v.name || '—', number(v.rows.length), money(v.margin), v.hourlyMargin === null ? '—' : `${money(v.hourlyMargin)}/h`]) },
+                { title: label('patterns'), rows: [[label('averageDuration'), insights.averageDuration === null ? '—' : `${number(insights.averageDuration, 1)} h`], [label('repeatVenues'), insights.repeatRate === null ? '—' : `${number(insights.repeatRate, 1)} %`], [label('cancellationRate'), insights.cancellationRate === null ? '—' : `${number(insights.cancellationRate, 1)} %`], [label('paidSessions'), `${number(insights.paid)} / ${number(metrics.active.length)}`]] },
+                { title: a('concentration'), hint: a('concentrationHint'), headers: [label('venues'), label('revenue'), '%'], rows: advanced.concentration.map(v => [v.name || '—', money(v.fee), `${number(v.share, 1)} %`]) },
+                { title: a('trend'), hint: a('trendHint'), headers: [t('statisticsPdf.date'), t('statisticsPdf.medianFee'), a('medianHourly')], rows: advanced.trend.map(row => [new Intl.DateTimeFormat(numberLocale, { month: 'short', year: 'numeric' }).format(row.date), row.medianFee === null ? '—' : money(row.medianFee), row.medianHourly === null ? '—' : `${money(row.medianHourly)}/h`]) },
+                { title: label('cities'), headers: [label('cities'), label('sessions'), label('hours'), label('revenue')], rows: insights.cities.map(city => [city.name, number(city.count), `${number(city.hours, 1)} h`, money(city.revenue)]) },
+                { title: a('aging'), hint: a('agingHint'), rows: advanced.aging.map(row => [a(row.key), money(row.amount)]) },
+                { title: t('statisticsPdf.details'), hint: t('statisticsPdf.currencyHint'), headers: [t('statisticsPdf.date'), label('sessions'), label('revenue')], rows: metrics.selected.map(session => [session.date.slice(0, 10), `${sessionDisplayTitle(session, t)} · ${session.venue || ''} · ${t(`workflow.${session.status}`)}`, `${formatMoney(sessionEarnings(session), session.currency || currency)}`]) },
+            ],
+        };
+    };
+    const exportAction = <StatisticsExport enabled={isPro} ready={sessionsQuery.isSuccess && expensesQuery.isSuccess && venuesQuery.isSuccess && !sessionsQuery.isFetching && !expensesQuery.isFetching && !venuesQuery.isFetching && !refreshing} report={exportReport} />;
     const maxChart = Math.max(1, ...chart.map((b) => b[chartMode]));
     const shift = (direction: number) =>
         setAnchor(
@@ -249,6 +294,7 @@ export default function DashboardScreen() {
                 sessionsQuery.refetch(),
                 expensesQuery.refetch(),
                 venuesQuery.refetch(),
+                usage.refetch(),
             ]);
         } finally {
             setRefreshing(false);
@@ -256,13 +302,13 @@ export default function DashboardScreen() {
     };
     const cardStyle = [
         styles.card,
-        { backgroundColor: surface, borderColor: line },
+        { backgroundColor: surface, borderColor: line, borderWidth: dark ? 0 : 1 },
     ];
     const heading = (title: string, hint?: string) => (
         <View style={{ marginBottom: 20 }}>
-            <Text style={[styles.sectionTitle, { color: text }]}>{title}</Text>
+            <Text style={[styles.sectionTitle, { color: dark ? darkPalette.onSurface : text }]}>{title}</Text>
             {hint ? (
-                <Text style={[styles.hint, { color: muted, marginTop: 5 }]}>
+                <Text style={[styles.hint, { color: dark ? darkPalette.onSurface : muted, marginTop: 5 }]}>
                     {hint}
                 </Text>
             ) : null}
@@ -271,7 +317,7 @@ export default function DashboardScreen() {
     const errorBanner = (
         <View style={[cardStyle, { gap: 12 }]}>
             <AlertCircle color="#f59e0b" size={22} />
-            <Text style={{ color: text }}>{label('loadingError')}</Text>
+            <Text style={{ color: dark ? darkPalette.onSurface : text }}>{label('loadingError')}</Text>
             <TouchableOpacity
                 accessibilityRole="button"
                 onPress={refresh}
@@ -288,17 +334,17 @@ export default function DashboardScreen() {
             <SafeAreaView
                 style={[
                     styles.screen,
-                    { backgroundColor: dark ? '#0d1220' : '#f5f6fa' },
+                    { backgroundColor: dark ? darkPalette.background : '#f5f6fa' },
                 ]}
                 edges={['top']}
             >
-                <PageHeader title={t('dashboard')} subtitle={label('intro')} />
+                <ScrollPageHeader showAccount variant="hide" progress={headerProgress} title={t('dashboard')} subtitle={label('intro')} action={exportAction} />
                 <View style={{ paddingHorizontal: 24, gap: 18 }}>
                     <View
                         style={{
                             height: 190,
                             borderRadius: 28,
-                            backgroundColor: dark ? '#20273b' : '#e4e7f0',
+                            backgroundColor: dark ? darkPalette.raised : '#e4e7f0',
                             justifyContent: 'center',
                         }}
                     >
@@ -311,13 +357,14 @@ export default function DashboardScreen() {
         <SafeAreaView
             style={[
                 styles.screen,
-                { backgroundColor: dark ? '#0d1220' : '#f5f6fa' },
+                { backgroundColor: dark ? darkPalette.background : '#f5f6fa' },
             ]}
             edges={['top']}
         >
-            <PageHeader title={t('dashboard')} subtitle={label('intro')} />
+            <ScrollPageHeader showAccount variant="hide" progress={headerProgress} title={t('dashboard')} subtitle={label('intro')} action={exportAction} />
             <ScrollView
-                onScroll={onTabScroll}
+                testID="dashboard-scroll-view"
+                onScrollBeginDrag={onTabScrollBeginDrag} onTouchStart={() => { onTabScrollBeginDrag(); invitation.cancel(); }} onScroll={onTabScroll} onScrollEndDrag={invitation.afterConsultation} onMomentumScrollBegin={invitation.cancel} onMomentumScrollEnd={invitation.afterConsultation}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -339,13 +386,13 @@ export default function DashboardScreen() {
                 <View
                     style={[
                         styles.controls,
-                        { backgroundColor: surface, borderColor: line },
+                        { backgroundColor: surface, borderColor: line, borderWidth: dark ? 0 : 1 },
                     ]}
                 >
                     <View
                         style={[
                             styles.segment,
-                            { backgroundColor: dark ? '#0d1220' : '#f0f2f7' },
+                            { backgroundColor: dark ? darkPalette.background : '#f0f2f7' },
                         ]}
                     >
                         {(['month', 'year'] as const).map((p) => (
@@ -358,7 +405,7 @@ export default function DashboardScreen() {
                                     styles.segmentButton,
                                     period === p && {
                                         backgroundColor: dark
-                                            ? '#34304f'
+                                            ? darkPalette.tint
                                             : '#fff',
                                     },
                                 ]}
@@ -368,7 +415,7 @@ export default function DashboardScreen() {
                                         color:
                                             period === p
                                                 ? dark
-                                                    ? '#c0b7ff'
+                                                    ? darkPalette.primary
                                                     : '#6354d9'
                                                 : muted,
                                         fontWeight: '700',
@@ -396,12 +443,12 @@ export default function DashboardScreen() {
                             style={{ flex: 1, alignItems: 'center' }}
                         >
                             <Text
-                                style={{
+                                style={[{
                                     color: text,
                                     fontSize: 16,
                                     fontWeight: '700',
                                     textTransform: 'capitalize',
-                                }}
+                                }, dark && { color: darkPalette.onSurface }]}
                             >
                                 {dateLabel}
                             </Text>
@@ -436,11 +483,11 @@ export default function DashboardScreen() {
                                         {
                                             backgroundColor:
                                                 c === currency
-                                                    ? '#6554df'
+                                                    ? (dark ? darkPalette.primary : '#6554df')
                                                     : surface,
                                             borderColor:
                                                 c === currency
-                                                    ? '#6554df'
+                                                    ? (dark ? darkPalette.primary : '#6554df')
                                                     : line,
                                         },
                                     ]}
@@ -448,7 +495,7 @@ export default function DashboardScreen() {
                                     <Text
                                         style={{
                                             color:
-                                                c === currency ? '#fff' : muted,
+                                                c === currency ? (dark ? darkPalette.onPrimary : '#fff') : muted,
                                             fontWeight: '700',
                                             fontSize: 12,
                                         }}
@@ -468,13 +515,10 @@ export default function DashboardScreen() {
                 ) : (
                     <>
                         {expensesQuery.isError ? errorBanner : null}
-                        <LinearGradient
-                            colors={['#202044', '#35316e', '#6250bb']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.hero}
+                        <View
+                            testID="dashboard-agreed-fees"
+                            style={[styles.hero, { backgroundColor: dark ? darkPalette.primary : '#35316e' }]}
                         >
-                            <View style={styles.heroOrb} pointerEvents="none" />
                             <View style={styles.heroTop}>
                                 <View
                                     style={{
@@ -485,7 +529,7 @@ export default function DashboardScreen() {
                                 >
                                     <Text
                                         style={{
-                                            color: '#e1dcff',
+                                            color: dark ? darkPalette.onPrimary : '#e1dcff',
                                             fontWeight: '600',
                                             fontSize: 14,
                                         }}
@@ -493,7 +537,7 @@ export default function DashboardScreen() {
                                         {label('revenue')}
                                     </Text>
                                 </View>
-                                <Text style={styles.heroCurrency}>
+                                <Text style={[styles.heroCurrency, dark && { color: darkPalette.surface, backgroundColor: darkPalette.muted }]}>
                                     {currency}
                                 </Text>
                             </View>
@@ -501,13 +545,13 @@ export default function DashboardScreen() {
                                 numberOfLines={1}
                                 adjustsFontSizeToFit
                                 minimumFontScale={0.6}
-                                style={styles.heroValue}
+                                style={[styles.heroValue, dark && { color: darkPalette.onPrimary }]}
                             >
                                 {money(metrics.revenue)}
                             </Text>
                             <Text
                                 style={{
-                                    color: '#c7c1e7',
+                                    color: dark ? darkPalette.onPrimary : '#c7c1e7',
                                     fontSize: 12,
                                     lineHeight: 18,
                                 }}
@@ -519,7 +563,7 @@ export default function DashboardScreen() {
                                     <Text
                                         style={{
                                             color:
-                                                growth !== null && growth < 0
+                                                dark ? darkPalette.onPrimary : growth !== null && growth < 0
                                                     ? '#ffd4e2'
                                                     : '#c6f7e4',
                                             fontSize: 12,
@@ -533,7 +577,7 @@ export default function DashboardScreen() {
                                 </View>
                                 <Text
                                     style={{
-                                        color: '#cec9ea',
+                                        color: dark ? darkPalette.onPrimary : '#cec9ea',
                                         fontSize: 11,
                                         flex: 1,
                                     }}
@@ -544,7 +588,7 @@ export default function DashboardScreen() {
                             {metrics.pendingBalance > 0 ? (
                                 <Text
                                     style={{
-                                        color: '#d9d2f5',
+                                        color: dark ? darkPalette.onPrimary : '#d9d2f5',
                                         fontSize: 12,
                                         marginTop: 13,
                                     }}
@@ -553,7 +597,7 @@ export default function DashboardScreen() {
                                     {money(metrics.pendingBalance)}
                                 </Text>
                             ) : null}
-                        </LinearGradient>
+                        </View>
                         <View style={cardStyle}>
                             {heading(label('next30'), label('next30Hint'))}
                             <View
@@ -588,19 +632,19 @@ export default function DashboardScreen() {
                                         <Text
                                             numberOfLines={1}
                                             adjustsFontSizeToFit
-                                            style={{
+                                            style={[{
                                                 color: text,
                                                 fontSize: 24,
                                                 fontWeight: '800',
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {item.value}
                                         </Text>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: muted,
                                                 fontSize: 11,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {item.name}
                                         </Text>
@@ -608,16 +652,16 @@ export default function DashboardScreen() {
                                 ))}
                             </View>
                             <Text
-                                style={[
+                                style={[[
                                     styles.hint,
                                     { color: muted, marginTop: 16 },
-                                ]}
+                                ], dark && { color: darkPalette.onSurface }]}
                             >
                                 {insights.nextPaymentPending}{' '}
                                 {label('pending').toLowerCase()}
                             </Text>
                         </View>
-                        <View style={styles.grid}>
+                        <View testID="dashboard-basic-statistics" style={styles.grid}>
                             <MetricCard
                                 label={label('sessions')}
                                 value={number(metrics.active.length)}
@@ -661,7 +705,9 @@ export default function DashboardScreen() {
                                 dark={dark}
                             />
                         </View>
-                        <View style={cardStyle}>
+                        {isPro ? <View testID="dashboard-pro-statistics" style={{ gap: 18 }}>
+                        <ResearchInvitationCard invitation={invitation} />
+                        <View testID="dashboard-activity" style={cardStyle}>
                             {heading(
                                 label('activity'),
                                 period === 'year'
@@ -673,7 +719,7 @@ export default function DashboardScreen() {
                                     styles.segment,
                                     {
                                         backgroundColor: dark
-                                            ? '#0d1220'
+                                            ? darkPalette.background
                                             : '#f0f2f7',
                                         marginBottom: 22,
                                     },
@@ -691,7 +737,7 @@ export default function DashboardScreen() {
                                             styles.segmentButton,
                                             mode === chartMode && {
                                                 backgroundColor: dark
-                                                    ? '#34304f'
+                                                    ? darkPalette.tint
                                                     : '#fff',
                                             },
                                         ]}
@@ -701,7 +747,7 @@ export default function DashboardScreen() {
                                                 color:
                                                     mode === chartMode
                                                         ? dark
-                                                            ? '#c0b7ff'
+                                                            ? darkPalette.primary
                                                             : '#6354d9'
                                                         : muted,
                                                 fontWeight: '700',
@@ -760,22 +806,22 @@ export default function DashboardScreen() {
                                                             selected
                                                                 ? '#7462e3'
                                                                 : dark
-                                                                  ? '#343955'
+                                                                  ? darkPalette.raised
                                                                   : '#dcd9f1',
                                                     }}
                                                 />
                                             </View>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: selected
-                                                        ? '#8b78f0'
+                                                        ? (dark ? darkPalette.primary : '#8b78f0')
                                                         : muted,
                                                     marginTop: 10,
                                                     fontSize: 11,
                                                     fontWeight: selected
                                                         ? '800'
                                                         : '500',
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {new Intl.DateTimeFormat(
                                                     i18n.language,
@@ -787,11 +833,11 @@ export default function DashboardScreen() {
                                             <Text
                                                 numberOfLines={1}
                                                 adjustsFontSizeToFit
-                                                style={{
+                                                style={[{
                                                     color: text,
                                                     fontSize: 10,
                                                     marginTop: 5,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {chartMode === 'count'
                                                     ? number(value)
@@ -802,54 +848,15 @@ export default function DashboardScreen() {
                                 })}
                             </ScrollView>
                             <Text
-                                style={[
+                                style={[[
                                     styles.hint,
                                     { color: muted, marginTop: 18 },
-                                ]}
+                                ], dark && { color: darkPalette.onSurface }]}
                             >
                                 {label('chartHint')}
                             </Text>
                         </View>
-                        {metrics.selected.length === 0 ? (
-                            <View
-                                style={[
-                                    cardStyle,
-                                    { alignItems: 'center', gap: 12 },
-                                ]}
-                            >
-                                <Text
-                                    style={[
-                                        styles.sectionTitle,
-                                        { color: text },
-                                    ]}
-                                >
-                                    {label('emptyTitle')}
-                                </Text>
-                                <Text
-                                    style={[
-                                        styles.hint,
-                                        { color: muted, textAlign: 'center' },
-                                    ]}
-                                >
-                                    {label('emptyBody')}
-                                </Text>
-                                <TouchableOpacity
-                                    accessibilityRole="button"
-                                    onPress={() => router.push('/add-session')}
-                                    style={styles.primaryButton}
-                                >
-                                    <Text
-                                        style={{
-                                            color: '#fff',
-                                            fontWeight: '700',
-                                        }}
-                                    >
-                                        {label('add')}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : null}
-                        <View style={cardStyle}>
+                        <View testID="dashboard-payment-status" style={cardStyle}>
                             {heading(label('statusTitle'))}
                             <View
                                 style={{
@@ -864,7 +871,7 @@ export default function DashboardScreen() {
                                     ? [
                                           {
                                               count: metrics.settled.length,
-                                              color: '#8b78e6',
+                                              color: dark ? darkPalette.primary : '#8b78e6',
                                           },
                                           {
                                               count: metrics.paymentPending
@@ -899,7 +906,7 @@ export default function DashboardScreen() {
                                     {
                                         key: 'confirmed',
                                         count: metrics.settled.length,
-                                        color: '#8b78e6',
+                                        color: dark ? darkPalette.primary : '#8b78e6',
                                     },
                                     {
                                         key: 'pending',
@@ -914,20 +921,20 @@ export default function DashboardScreen() {
                                 ].map((s) => (
                                     <View key={s.key} style={{ flex: 1 }}>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 fontSize: 23,
                                                 color: text,
                                                 fontWeight: '800',
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {s.count}
                                         </Text>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 fontSize: 11,
                                                 color: muted,
                                                 marginTop: 5,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {label(s.key)}
                                         </Text>
@@ -935,28 +942,28 @@ export default function DashboardScreen() {
                                 ))}
                             </View>
                             <View style={[styles.facts, { borderColor: line }]}>
-                                <Text style={{ color: muted, fontSize: 12 }}>
+                                <Text style={[{ color: muted, fontSize: 12 }, dark && { color: darkPalette.onSurface }]}>
                                     {label('venues')}:{' '}
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: text,
                                             fontWeight: '700',
-                                        }}
+                                        }, dark && { color: darkPalette.onSurface }]}
                                     >
                                         {metrics.venueCount}
                                     </Text>
                                 </Text>
-                                <Text style={{ color: muted, fontSize: 12 }}>
+                                <Text style={[{ color: muted, fontSize: 12 }, dark && { color: darkPalette.onSurface }]}>
                                     {label('perHour')}:{' '}
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: text,
                                             fontWeight: '700',
-                                        }}
+                                        }, dark && { color: darkPalette.onSurface }]}
                                     >
                                         {metrics.hourlyFee === null
                                             ? '—'
-                                            : money(metrics.hourlyFee, 2)}
+                                            : money(metrics.hourlyFee)}
                                     </Text>
                                 </Text>
                             </View>
@@ -1016,14 +1023,14 @@ export default function DashboardScreen() {
                                 />
                             </View>
                             <Text
-                                style={[
+                                style={[[
                                     styles.sectionTitle,
                                     {
                                         color: text,
                                         marginTop: 24,
                                         fontSize: 15,
                                     },
-                                ]}
+                                ], dark && { color: darkPalette.onSurface }]}
                             >
                                 {label('busyDays')}
                             </Text>
@@ -1071,20 +1078,20 @@ export default function DashboardScreen() {
                                                             : 3,
                                                         backgroundColor:
                                                             value === max
-                                                                ? '#8b78e6'
+                                                                ? (dark ? darkPalette.primary : '#8b78e6')
                                                                 : dark
-                                                                  ? '#343955'
+                                                                  ? darkPalette.raised
                                                                   : '#dcd9f1',
                                                         borderRadius: 6,
                                                     }}
                                                 />
                                             </View>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: muted,
                                                     fontSize: 10,
                                                     marginTop: 9,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {new Intl.DateTimeFormat(
                                                     i18n.language,
@@ -1100,12 +1107,12 @@ export default function DashboardScreen() {
                                                     .replace('.', '')}
                                             </Text>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: text,
                                                     fontSize: 12,
                                                     fontWeight: '700',
                                                     marginTop: 4,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {value}
                                             </Text>
@@ -1130,30 +1137,30 @@ export default function DashboardScreen() {
                                 >
                                     <View style={{ flex: 1, gap: 5 }}>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: muted,
                                                 fontSize: 11,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {label('bestRate')}
                                         </Text>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: text,
                                                 fontWeight: '700',
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {insights.bestRate.name}
                                         </Text>
                                     </View>
                                     <Text
-                                        style={{
-                                            color: '#8b78e6',
+                                        style={[{
+                                            color: dark ? darkPalette.primary : '#8b78e6',
                                             fontWeight: '800',
                                             fontSize: 18,
-                                        }}
+                                        }, dark && { color: darkPalette.onSurface }]}
                                     >
-                                        {money(insights.bestRate.rate, 2)}/h
+                                        {money(insights.bestRate.rate)}/h
                                     </Text>
                                 </TouchableOpacity>
                             ) : null}
@@ -1161,10 +1168,10 @@ export default function DashboardScreen() {
                         <View style={cardStyle}>
                             {heading(label('cities'), label('citiesHint'))}
                             {venuesQuery.isLoading ? (
-                                <ActivityIndicator color="#8b78e6" />
+                                <ActivityIndicator color={dark ? darkPalette.primary : "#8b78e6"} />
                             ) : venuesQuery.isError ? (
                                 <>
-                                    <Text style={{ color: muted }}>
+                                    <Text style={[{ color: muted }, dark && { color: darkPalette.onSurface }]}>
                                         {label('loadingError')}
                                     </Text>
                                     <TouchableOpacity
@@ -1173,10 +1180,10 @@ export default function DashboardScreen() {
                                         style={styles.retry}
                                     >
                                         <Text
-                                            style={{
-                                                color: '#8b78e6',
+                                            style={[{
+                                                color: dark ? darkPalette.primary : '#8b78e6',
                                                 fontWeight: '700',
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {label('retry')}
                                         </Text>
@@ -1185,20 +1192,20 @@ export default function DashboardScreen() {
                             ) : (
                                 <>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: text,
                                             fontSize: 29,
                                             fontWeight: '800',
                                             marginBottom: 12,
-                                        }}
+                                        }, dark && { color: darkPalette.onSurface }]}
                                     >
                                         {insights.cities.length}{' '}
                                         <Text
-                                            style={{
+                                            style={[{
                                                 fontSize: 13,
                                                 color: muted,
                                                 fontWeight: '500',
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {label('citiesActive')}
                                         </Text>
@@ -1230,19 +1237,19 @@ export default function DashboardScreen() {
                                                 >
                                                     <Text
                                                         numberOfLines={1}
-                                                        style={{
+                                                        style={[{
                                                             color: text,
                                                             fontWeight: '700',
                                                             fontSize: 15,
-                                                        }}
+                                                        }, dark && { color: darkPalette.onSurface }]}
                                                     >
                                                         {city.name}
                                                     </Text>
                                                     <Text
-                                                        style={{
+                                                        style={[{
                                                             color: muted,
                                                             fontSize: 11,
-                                                        }}
+                                                        }, dark && { color: darkPalette.onSurface }]}
                                                     >
                                                         {city.count}{' '}
                                                         {label(
@@ -1254,11 +1261,11 @@ export default function DashboardScreen() {
                                                     </Text>
                                                 </View>
                                                 <Text
-                                                    style={{
+                                                    style={[{
                                                         color: text,
                                                         fontSize: 13,
                                                         fontWeight: '700',
-                                                    }}
+                                                    }, dark && { color: darkPalette.onSurface }]}
                                                 >
                                                     {money(city.revenue)}
                                                 </Text>
@@ -1311,20 +1318,20 @@ export default function DashboardScreen() {
                                                                   }}
                                                               >
                                                                   <Text
-                                                                      style={{
+                                                                      style={[{
                                                                           color: text,
                                                                           fontSize: 13,
                                                                           fontWeight:
                                                                               '600',
-                                                                      }}
+                                                                      }, dark && { color: darkPalette.onSurface }]}
                                                                   >
                                                                       {s.title}
                                                                   </Text>
                                                                   <Text
-                                                                      style={{
+                                                                      style={[{
                                                                           color: muted,
                                                                           fontSize: 11,
-                                                                      }}
+                                                                      }, dark && { color: darkPalette.onSurface }]}
                                                                   >
                                                                       {new Intl.DateTimeFormat(
                                                                           i18n.language,
@@ -1342,7 +1349,7 @@ export default function DashboardScreen() {
                                                                   </Text>
                                                               </View>
                                                               <ArrowUpRight
-                                                                  color="#8b78e6"
+                                                                  color={dark ? darkPalette.primary : "#8b78e6"}
                                                                   size={17}
                                                               />
                                                           </TouchableOpacity>
@@ -1361,14 +1368,14 @@ export default function DashboardScreen() {
                                                 padding: 14,
                                                 borderRadius: 14,
                                                 backgroundColor: dark
-                                                    ? '#282744'
+                                                    ? darkPalette.tint
                                                     : '#f0edfb',
                                             }}
                                         >
                                             <Text
                                                 style={{
                                                     color: dark
-                                                        ? '#bdb3ec'
+                                                        ? darkPalette.primary
                                                         : '#6554b1',
                                                     fontSize: 12,
                                                     lineHeight: 19,
@@ -1384,10 +1391,10 @@ export default function DashboardScreen() {
                                     {!insights.cities.length &&
                                     !insights.unknownCity ? (
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: muted,
                                                 fontSize: 13,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {label('noCities')}
                                         </Text>
@@ -1413,19 +1420,19 @@ export default function DashboardScreen() {
                                         <View style={{ flex: 1, gap: 5 }}>
                                             <Text
                                                 numberOfLines={1}
-                                                style={{
+                                                style={[{
                                                     color: text,
                                                     fontWeight: '700',
                                                     fontSize: 14,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {s.title}
                                             </Text>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: muted,
                                                     fontSize: 12,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {new Intl.DateTimeFormat(
                                                     i18n.language,
@@ -1448,7 +1455,7 @@ export default function DashboardScreen() {
                                     </TouchableOpacity>
                                 ))
                             ) : (
-                                <Text style={{ color: muted, fontSize: 13 }}>
+                                <Text style={[{ color: muted, fontSize: 13 }, dark && { color: darkPalette.onSurface }]}>
                                     {label('noPending')}
                                 </Text>
                             )}
@@ -1477,14 +1484,14 @@ export default function DashboardScreen() {
                                                 styles.rank,
                                                 {
                                                     backgroundColor: dark
-                                                        ? '#282744'
+                                                        ? darkPalette.tint
                                                         : '#f0edfb',
                                                 },
                                             ]}
                                         >
                                             <Text
                                                 style={{
-                                                    color: '#8b78e6',
+                                                    color: dark ? darkPalette.primary : '#8b78e6',
                                                     fontWeight: '800',
                                                 }}
                                             >
@@ -1497,19 +1504,19 @@ export default function DashboardScreen() {
                                         <View style={{ flex: 1, gap: 5 }}>
                                             <Text
                                                 numberOfLines={1}
-                                                style={{
+                                                style={[{
                                                     color: text,
                                                     fontWeight: '700',
                                                     fontSize: 14,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {v.name}
                                             </Text>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: muted,
                                                     fontSize: 12,
-                                                }}
+                                                }, dark && { color: darkPalette.onSurface }]}
                                             >
                                                 {v.count}{' '}
                                                 {label(
@@ -1522,7 +1529,7 @@ export default function DashboardScreen() {
                                     </TouchableOpacity>
                                 ))
                             ) : (
-                                <Text style={{ color: muted, fontSize: 13 }}>
+                                <Text style={[{ color: muted, fontSize: 13 }, dark && { color: darkPalette.onSurface }]}>
                                     {label('noVenues')}
                                 </Text>
                             )}
@@ -1547,22 +1554,22 @@ export default function DashboardScreen() {
                                         }}
                                     >
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: text,
                                                 fontSize: 19,
                                                 fontWeight: '800',
                                                 flex: 1,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {nextSession.title}
                                         </Text>
                                         <ArrowUpRight
-                                            color="#8b78e6"
+                                            color={dark ? darkPalette.primary : "#8b78e6"}
                                             size={22}
                                         />
                                     </View>
                                     <Text
-                                        style={{ color: muted, fontSize: 13 }}
+                                        style={[{ color: muted, fontSize: 13 }, dark && { color: darkPalette.onSurface }]}
                                     >
                                         {new Intl.DateTimeFormat(
                                             i18n.language,
@@ -1587,11 +1594,11 @@ export default function DashboardScreen() {
                                         }}
                                     >
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: muted,
                                                 fontSize: 13,
                                                 flex: 1,
-                                            }}
+                                            }, dark && { color: darkPalette.onSurface }]}
                                         >
                                             {nextSession.venue}
                                         </Text>
@@ -1600,16 +1607,36 @@ export default function DashboardScreen() {
                                             compact
                                         />
                                     </View>
+                                    <SessionPartialPaymentSummary session={nextSession} />
+                                    <SessionExpenseBadge session={nextSession} />
+                                    <SessionTaskBadge session={nextSession} />
+                                    <SessionAttendanceBadges session={nextSession} />
                                 </TouchableOpacity>
                             ) : (
-                                <Text style={{ color: muted, fontSize: 13 }}>
+                                <Text style={[{ color: muted, fontSize: 13 }, dark && { color: darkPalette.onSurface }]}>
                                     {label('noUpcoming')}
                                 </Text>
                             )}
                         </View>
+                        <DashboardAnalytics
+                            historicalAging={contextQuery.data?.aging}
+                            agingAsOf={contextQuery.data?.asOf}
+                            sessions={sessions || []}
+                            expenses={expensesQuery.data || []}
+                            venues={venuesQuery.data || []}
+                            anchor={anchor}
+                            period={period}
+                            currency={currency}
+                            now={now}
+                            expensesReady={expensesQuery.isSuccess}
+                            expensesLoading={expensesQuery.isPending}
+                            onRetryExpenses={() => { void expensesQuery.refetch(); }}
+                        />
+                        </View> : <DashboardProPreview beforeActivity={<ResearchInvitationCard invitation={invitation} />} />}
                     </>
                 )}
             </ScrollView>
+            <ResearchInvitationModal invitation={invitation} />
         </SafeAreaView>
     );
 }
@@ -1638,16 +1665,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     hero: { borderRadius: 28, padding: 25, overflow: 'hidden' },
-    heroOrb: {
-        position: 'absolute',
-        width: 180,
-        height: 180,
-        borderRadius: 90,
-        borderWidth: 30,
-        borderColor: '#ffffff08',
-        right: -40,
-        bottom: -70,
-    },
     heroTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',

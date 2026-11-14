@@ -1,24 +1,29 @@
 import { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import {
     AuthShell,
     AuthField,
     AuthMessage,
+    AuthButton,
+    AUTH_COLORS,
+    AUTH_SCREEN_IMAGES,
 } from '../../src/components/auth/AuthUI';
-import {
-    CommunityButton,
-    useCommunityColors,
-} from '../../src/components/community/CommunityUI';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { supabase } from '../../src/lib/supabase';
 import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
+import { sharedDJDestination } from '../../src/utils/communityNavigation';
 
 export default function ForgotPasswordScreen() {
     const { t } = useTranslation();
-    const c = useCommunityColors();
+    const c = AUTH_COLORS;
     const router = useRouter();
+    const params = useLocalSearchParams<{ dj?: string }>();
+    const dj = sharedDJDestination(params.dj) ? params.dj : undefined;
+    const loginRoute = dj
+        ? { pathname: '/(auth)/login' as const, params: { dj } }
+        : '/(auth)/login' as const;
     const [email, setEmail] = useState('');
     const [sent, setSent] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -34,7 +39,7 @@ export default function ForgotPasswordScreen() {
                 await supabase.auth.resetPasswordForEmail(
                     email.trim().toLowerCase(),
                     {
-                        redirectTo: Linking.createURL('reset-password'),
+                        redirectTo: Linking.createURL('reset-password', dj ? { queryParams: { dj } } : undefined),
                     },
                 );
             if (failure) setError(t(authErrorKey(failure)));
@@ -48,6 +53,7 @@ export default function ForgotPasswordScreen() {
     };
     return (
         <AuthShell
+            image={AUTH_SCREEN_IMAGES.recovery}
             title={t(
                 sent
                     ? 'authExperience.recoverySentTitle'
@@ -58,7 +64,7 @@ export default function ForgotPasswordScreen() {
                     ? 'authExperience.recoverySentHint'
                     : 'authExperience.recoveryHint',
             )}
-            onBack={() => router.replace('/(auth)/login')}
+            onBack={() => router.replace(loginRoute)}
             compact
         >
             {!!error && <AuthMessage>{error}</AuthMessage>}
@@ -69,9 +75,9 @@ export default function ForgotPasswordScreen() {
                     >
                         {t('authExperience.checkInbox')}
                     </Text>
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.returnLogin')}
-                        onPress={() => router.replace('/(auth)/login')}
+                        onPress={() => router.replace(loginRoute)}
                     />
                     <TouchableOpacity
                         accessibilityRole="button"
@@ -103,7 +109,7 @@ export default function ForgotPasswordScreen() {
                         returnKeyType="send"
                         onSubmitEditing={() => void send()}
                     />
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.sendRecovery')}
                         onPress={() => void send()}
                         busy={busy}

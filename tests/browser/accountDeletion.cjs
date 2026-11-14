@@ -1,0 +1,40 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const assert=require('node:assert/strict');
+let browser;
+(async()=>{
+browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM});
+const user={id:'00000000-0000-4000-8000-000000000001',email:'test@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T00:00:00Z'};
+const enc=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const session={access_token:`${enc({alg:'HS256',typ:'JWT'})}.${enc({sub:user.id,exp:Math.floor(Date.now()/1000)+3600,role:'authenticated'})}.${enc('fixture')}`,refresh_token:'fixture',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user};
+let pending=false,complete=false,fail=true,deletes=0,starts=0;const errors=[];
+const context=await browser.newContext({viewport:{width:390,height:844},locale:'es-ES'});
+await context.addInitScript(({session})=>{localStorage.setItem('@theme','light');localStorage.setItem('sb-voyurnwckmateohuzbab-auth-token',JSON.stringify(session));localStorage.setItem('dj-auth-storage-v2',JSON.stringify({state:{session,user:session.user,profile:null,hasSeenOnboarding:true},version:0}));},{session});
+const respondFixture=async route=>{const req=route.request(),url=new URL(req.url());let body=[];
+if(url.pathname.includes('/auth/v1/user'))body=user;
+else if(url.pathname.includes('/auth/v1/token'))body=session;
+else if(url.pathname.endsWith('/account_deletion_pending'))body=pending;
+else if(url.pathname.endsWith('/delete-account')){const input=req.postDataJSON();
+ if(input.action==='start'){pending=true;starts++;body={receipt:'00000000-0000-4000-8000-000000000099',complete:false};}
+ else if(input.action==='receipt')body={complete};
+ else{assert(input.confirm);deletes++;if(fail){fail=false;await route.fulfill({status:503,json:{error:'DELETION_RETRY'}});return;}if(deletes===2)body={complete:false,removed:100};else{complete=true;pending=false;body={complete:true,removed:5};}}
+}else if(url.pathname.includes('/users_profile'))body={id:user.id,artist_name:'Test DJ',avatar_url:null};
+else if(url.pathname.includes('/subscription-access'))body={count:2,limit:30,remaining:28,isPro:false};
+else if(url.pathname.endsWith('/community_safety'))body={version:'2026-10-09',accepted:true,moderator:false,restricted:false};
+await route.fulfill({status:200,json:body});};
+await context.route('**/*.supabase.co/**',respondFixture);
+const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://localhost:8081/delete-account');
+const button=page.getByRole('button',{name:'Eliminar Permanentemente',exact:true});await button.waitFor();assert.equal(await button.isDisabled(),true);assert.equal(starts,0);await page.getByRole('checkbox').click();await button.click();
+await page.getByText('No hemos podido terminar. Puedes reintentar: continuaremos con lo que falta.',{exact:true}).waitFor();assert.equal(complete,false);
+await page.getByRole('button',{name:'Continuar eliminación',exact:true}).click();await page.getByText('Tu cuenta y datos han sido eliminados correctamente.',{exact:true}).waitFor();assert(complete);assert.equal(deletes,3);assert.equal(starts,2);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('dj-auth-storage-v2')).state.session),null);
+await page.screenshot({path:'/private/tmp/djplanner-account-deleted.png'});
+const publicContext=await browser.newContext({viewport:{width:390,height:844},locale:'es-ES'});
+await publicContext.route('**/*.supabase.co/**',respondFixture);
+const publicPage=await publicContext.newPage();publicPage.on('pageerror',e=>errors.push(e.message));
+await publicPage.goto('http://localhost:8081/delete-account');
+await publicPage.getByText('Inicia sesión para eliminar tu cuenta sin instalar la app.',{exact:true}).waitFor();
+const before=starts;
+await publicPage.getByRole('textbox',{name:'Correo electrónico',exact:true}).fill('test@example.invalid');
+await publicPage.getByRole('textbox',{name:'Contraseña',exact:true}).fill('fixture-password');
+await publicPage.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+await publicPage.getByRole('checkbox').waitFor();assert.equal(starts,before,'login alone never starts deletion');
+assert.equal(errors.length,0,errors.join('\n'));console.log('PASS: explicit confirmation, server failure shown, resumable deletion, multiple file batches, success only after completion, local credentials cleared, no runtime errors.');await browser.close();
+})().catch(async e=>{console.error(e);await browser?.close();process.exitCode=1;});

@@ -1,3 +1,4 @@
+import { useCommunityTerms } from './CommunityTerms';
 import { useCallback, useState } from 'react';
 import { View, Text } from 'react-native';
 import {
@@ -72,6 +73,7 @@ export function ProfileMixes({
                 ? pages.length * MIX_PAGE_SIZE
                 : undefined,
     });
+    const requireTerms = useCommunityTerms();
     const mutation = useMutation({
         mutationFn: async (
             action: { kind: 'save' } | { kind: 'remove'; id: string },
@@ -80,6 +82,7 @@ export function ProfileMixes({
             if (action.kind === 'remove')
                 return profileMixesService.remove(userId, action.id);
             if (!draft || !canAdd) throw new Error('Profile incomplete');
+            if (!(await requireTerms())) throw new Error('COMMUNITY_CANCELLED');
             return profileMixesService.save(
                 userId,
                 draft.title,

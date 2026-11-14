@@ -7,7 +7,24 @@ export interface SessionTask {
     completed: boolean;
     created_at: string;
 }
+export interface TaskSummary { completed: number; pending: number; }
 export const sessionTools = {
+    async taskSummaries(userId: string): Promise<Record<string, TaskSummary>> {
+        const summaries: Record<string, TaskSummary> = {};
+        // One shared read of counts for all cards; no task names are requested.
+        for (let offset = 0; ; offset += 1000) {
+            const { data, error } = await supabase.from('session_tasks')
+                .select('session_id,completed').eq('user_id', userId)
+                .order('id').range(offset, offset + 999);
+            if (error) throw error;
+            for (const row of data || []) {
+                const summary = summaries[row.session_id] ||= { completed: 0, pending: 0 };
+                if (row.completed) summary.completed++;
+                else summary.pending++;
+            }
+            if (!data || data.length < 1000) return summaries;
+        }
+    },
     async tasks(sessionId: string): Promise<SessionTask[]> {
         const { data, error } = await supabase
             .from('session_tasks')

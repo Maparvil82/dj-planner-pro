@@ -1,10 +1,11 @@
+import { useSessionToolContext } from '../src/hooks/useSessionToolContext';
+import { StorageImage as Image } from '../src/components/ui/StorageImage';
+import { formatRegionalDate } from '../src/i18n/regionalDates';
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { Calendar } from 'react-native-calendars';
-import { useAllSessionsQuery } from '../src/hooks/useSessionsQuery';
 import { useAllExpensesQuery } from '../src/hooks/useExpensesQuery';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { expenseService } from '../src/services/expenses';
@@ -34,9 +35,8 @@ interface Form {
     included: boolean;
 }
 export default function Expenses() {
-    const { sessionId } = useLocalSearchParams<{ sessionId?: string }>(),
-        [selected, setSelected] = useState(sessionId || ''),
-        [form, setForm] = useState<Form | null>(null),
+    const { sessionId: selected, setSessionId: setSelected, isSessionBound, sessions } = useSessionToolContext();
+    const [form, setForm] = useState<Form | null>(null),
         [busy, setBusy] = useState(false),
         [error, setError] = useState(''),
         [photo, setPhoto] = useState<{
@@ -48,10 +48,9 @@ export default function Expenses() {
         [showDate, setShowDate] = useState(false),
         lock = useRef(false);
     const c = useCommunityColors(),
-        { t, i18n } = useTranslation(),
+        { t, dateLocale, firstDay, formatMoney, defaultCurrency } = useTranslation(),
         client = useQueryClient(),
         user = useAuthStore((s) => s.session?.user.id),
-        sessions = useAllSessionsQuery(),
         expenses = useAllExpensesQuery();
     const current = sessions.data?.find(
         (s) => s.id === selected && s.user_id === user && !s.is_guest,
@@ -67,16 +66,13 @@ export default function Expenses() {
         ? expenses.data?.find((e) => e.id === form.id)
         : undefined;
     const currency = currencyCode(
-        current?.currency || existingExpense?.currency || 'EUR',
+        current?.currency || existingExpense?.currency || defaultCurrency,
     );
     const rows = (expenses.data || []).filter(
         (e) => selected === 'all' || e.session_id === selected,
     );
     const money = (n: number, code = currency) =>
-        new Intl.NumberFormat(i18n.language, {
-            style: 'currency',
-            currency: code,
-        }).format(n);
+        formatMoney(n, code);
     const refresh = () => client.invalidateQueries({ queryKey: ['expenses'] });
     const start = (e?: Expense) => {
         setError('');
@@ -315,15 +311,15 @@ export default function Expenses() {
                 />
             ) : !selected ? (
                 <>
-                    <CommunityButton
+                    {!!expenses.data?.length && <CommunityButton
                         label={t('tools.allExpenses')}
                         secondary
                         onPress={() => setSelected('all')}
-                    />
+                    />}
                     <SessionChooser
                         sessions={choices}
                         onSelect={(s) => setSelected(s.id)}
-                        empty={t('tools.noSessions')}
+                        purpose="expenses"
                     />
                 </>
             ) : selected !== 'all' && !current ? (
@@ -363,15 +359,16 @@ export default function Expenses() {
                             gap: 8,
                         }}
                     >
-                        <Text style={{ color: c.muted }}>
+                        <Text style={[{ color: c.muted }, c.dark && { color: c.cardText }]}>
                             {t('tools.expenseDate')}
                         </Text>
-                        <Text style={{ color: c.fg, fontWeight: '700' }}>
-                            {form.date}
+                        <Text style={[{ color: c.fg, fontWeight: '700' }, c.dark && { color: c.cardText }]}>
+                            {formatRegionalDate(form.date, dateLocale)}
                         </Text>
                     </Pressable>
                     {showDate ? (
                         <Calendar
+                            firstDay={firstDay}
                             current={form.date}
                             markedDates={{
                                 [form.date]: {
@@ -509,7 +506,7 @@ export default function Expenses() {
                                     <Text style={{ color: '#fff' }}>✓</Text>
                                 ) : null}
                             </View>
-                            <Text style={{ color: c.fg, flex: 1 }}>
+                            <Text style={[{ color: c.fg, flex: 1 }, c.dark && { color: c.cardText }]}>
                                 {t('tools.alreadyDeducted')}
                             </Text>
                         </Pressable>
@@ -533,7 +530,7 @@ export default function Expenses() {
                 </>
             ) : (
                 <>
-                    <Pressable
+                    {!isSessionBound && <Pressable
                         accessibilityRole="button"
                         disabled={busy}
                         onPress={() => setSelected('')}
@@ -541,7 +538,7 @@ export default function Expenses() {
                         <Text style={{ color: c.accent }}>
                             {t('tools.changeSession')}
                         </Text>
-                    </Pressable>
+                    </Pressable>}
                     {current ? (
                         <>
                             <Text
@@ -615,29 +612,29 @@ export default function Expenses() {
                                 <View style={{ flexDirection: 'row', gap: 12 }}>
                                     <View style={{ flex: 1, gap: 5 }}>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: c.fg,
                                                 fontWeight: '700',
                                                 fontSize: 16,
-                                            }}
+                                            }, c.dark && { color: c.cardText }]}
                                         >
                                             {e.description}
                                         </Text>
                                         <Text
-                                            style={{
+                                            style={[{
                                                 color: c.muted,
                                                 fontSize: 12,
-                                            }}
+                                            }, c.dark && { color: c.cardText }]}
                                         >
                                             {e.date}
                                         </Text>
                                     </View>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.fg,
                                             fontWeight: '800',
                                             fontSize: 17,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {money(
                                             Number(e.amount),
@@ -647,7 +644,7 @@ export default function Expenses() {
                                 </View>
                                 {e.included_in_agreement ? (
                                     <Text
-                                        style={{ color: c.muted, fontSize: 12 }}
+                                        style={[{ color: c.muted, fontSize: 12 }, c.dark && { color: c.cardText }]}
                                     >
                                         {t('tools.alreadyDeducted')}
                                     </Text>

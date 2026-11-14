@@ -1,3 +1,4 @@
+import darkPalette from '../../theme/darkPalette.json';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -23,9 +24,9 @@ export function NotificationButton() {
             style={{
                 padding: 18,
                 borderRadius: 24,
-                borderWidth: 1,
-                borderColor: dark ? '#263247' : '#e6e9f2',
-                backgroundColor: dark ? '#151e2e' : '#fff',
+                borderWidth: dark ? 0 : 1,
+                borderColor: dark ? darkPalette.border : '#e6e9f2',
+                backgroundColor: dark ? darkPalette.surface : '#fff',
                 flexDirection: 'row',
                 gap: 12,
                 alignItems: 'center',
@@ -33,20 +34,20 @@ export function NotificationButton() {
         >
             <View style={{ flex: 1, gap: 5 }}>
                 <Text
-                    style={{
-                        color: dark ? '#f3f4f8' : '#202538',
+                    style={[{
+                        color: dark ? darkPalette.text : '#202538',
                         fontSize: 15,
                         fontWeight: '700',
-                    }}
+                    }, dark && { color: darkPalette.onSurface }]}
                 >
                     {t('notifications.title')}
                 </Text>
                 <Text
-                    style={{
-                        color: dark ? '#a8b2c6' : '#6d7588',
+                    style={[{
+                        color: dark ? darkPalette.muted : '#6d7588',
                         fontSize: 12,
                         lineHeight: 18,
-                    }}
+                    }, dark && { color: darkPalette.onSurface }]}
                 >
                     {t('notifications.intro')}
                 </Text>
@@ -74,7 +75,7 @@ export function NotificationButton() {
                     </Text>
                 </View>
             )}
-            <ChevronRight size={17} color={dark ? '#a8b2c6' : '#6d7588'} />
+            <ChevronRight size={17} color={dark ? darkPalette.muted : '#6d7588'} />
         </TouchableOpacity>
     );
 }

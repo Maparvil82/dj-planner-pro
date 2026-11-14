@@ -1,3 +1,7 @@
+import { sessionScreens } from './sessionScreens';
+import { DEFAULT_SESSION_COLOR } from '../theme/colors';
+import { optimizedImage } from './optimizedImage';
+import { storageError } from '../utils/storageLimits';
 import { exceedsSessionLimit, SessionLimitError } from '../utils/sessionLimit';
 import { getSessionUsage, syncSubscriptionAccess } from './subscriptionAccess';
 import { Platform } from 'react-native';
@@ -36,7 +40,7 @@ export const sessionService = {
         input: CreateSessionInput,
         userId: string,
     ): Promise<Session> {
-        input = validateSessionInput(input);
+        input = validateSessionInput({ ...input, color: input.color || DEFAULT_SESSION_COLOR });
         if (
             input.earning_type === 'agreement' &&
             !(await syncSubscriptionAccess()).isPro
@@ -54,7 +58,7 @@ export const sessionService = {
             .rpc('create_session_series', {
                 input: {
                     ...input,
-                    color: input.color || getColorForString(input.title),
+                    color: input.color || DEFAULT_SESSION_COLOR,
                 },
                 session_dates: dates,
             })
@@ -207,81 +211,24 @@ export const sessionService = {
         month: number,
         userId: string,
     ): Promise<Session[]> {
-        // Construct YYYY-MM prefix for filtering
-        const jsMonth = String(month).padStart(2, '0');
-        const startPath = `${year}-${jsMonth}-01`;
-
-        // Next month logic
-        const nextMonthYear = month === 12 ? year + 1 : year;
-        const nextMonthStr = String(month === 12 ? 1 : month + 1).padStart(
-            2,
-            '0',
-        );
-        const endPath = `${nextMonthYear}-${nextMonthStr}-01`;
-
-        const { data, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('user_id', userId)
-            .gte('date', startPath)
-            .lt('date', endPath)
-            .order('date', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching sessions:', error);
-            throw new Error(
-                error.message === 'booking_hold_conflict'
-                    ? 'bookings.errors.booking_hold_conflict'
-                    : error.message,
-            );
-        }
-
-        const guests = (await collaborationService.agenda()).filter(
-            (session) => session.date >= startPath && session.date < endPath,
-        );
-        return [...(data || []).map(withVenueCity), ...guests].sort((a, b) =>
-            a.date.localeCompare(b.date),
-        );
+        const from = `${year}-${String(month).padStart(2,'0')}-01`;
+        const to = `${month===12?year+1:year}-${String(month===12?1:month+1).padStart(2,'0')}-01`;
+        return (await sessionScreens.range(from,to)).sort((a,b)=>a.date.localeCompare(b.date));
     },
-
     async getUpcomingSessions(userId: string): Promise<Session[]> {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const today = localDateString(yesterday);
-
-        const { data, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('user_id', userId)
-            .gte('date', today)
-            .or('status.is.null,status.neq.cancelled')
-            .order('date', { ascending: true })
-            .order('start_time', { ascending: true })
-            .limit(100);
-
-        if (error) {
-            console.error('Error fetching upcoming sessions:', error);
-            throw new Error(
-                error.message === 'booking_hold_conflict'
-                    ? 'bookings.errors.booking_hold_conflict'
-                    : error.message,
-            );
-        }
-
-        const guests = (await collaborationService.agenda()).filter(
-            (session) =>
-                session.date >= today && session.status !== 'cancelled',
-        );
-        return [...(data || []).map(withVenueCity), ...guests]
-            .sort(
-                (a, b) =>
-                    a.date.localeCompare(b.date) ||
-                    a.start_time.localeCompare(b.start_time),
-            )
-            .filter(
-                (session: Session) => sessionRange(session).end > new Date(),
-            )
-            .slice(0, 30);
+        const earliest = new Date(); earliest.setDate(earliest.getDate()-2);
+        const rows: Session[] = [];
+        let cursor = null as import('./sessionScreens').SessionCursor | null;
+        do {
+            const page = await sessionScreens.page({from:localDateString(earliest),upcoming:true},cursor,undefined,true,undefined,100);
+            rows.push(...page.sessions);
+            rows.sort((a,b)=>a.date.localeCompare(b.date)||a.start_time.localeCompare(b.start_time));
+            cursor = page.nextCursor;
+            // Finish the boundary day before choosing the first 30, because
+            // keyset pages use date/id while this view orders by start time.
+            if (rows.length>=30 && cursor && cursor.date>rows[29].date) break;
+        } while (cursor);
+        return rows.slice(0,30);
     },
 
     async getUserTags(
@@ -392,6 +339,8 @@ export const sessionService = {
             throw new Error('agreement.singleSession');
         const allowed = [
             'title',
+            'event_type',
+            'notes',
             'venue',
             'venue_id',
             'booking_timezone',
@@ -456,45 +405,10 @@ export const sessionService = {
         dimensions?: { width: number; height: number },
     ): Promise<string | null> {
         try {
-            const ImageManipulator = await import('expo-image-manipulator');
-
             if (!userId) throw new Error('User required');
-            // Limit both axes without upscaling or cropping the artwork.
-            const longest = Math.max(
-                dimensions?.width || 0,
-                dimensions?.height || 0,
-            );
-            const resize =
-                longest > 1600
-                    ? [
-                          {
-                              resize:
-                                  dimensions!.width >= dimensions!.height
-                                      ? { width: 1600 }
-                                      : { height: 1600 },
-                          },
-                      ]
-                    : longest
-                      ? []
-                      : [{ resize: { width: 1200 } }];
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                imageUri,
-                resize,
-                {
-                    compress: 0.8,
-                    format: ImageManipulator.SaveFormat.JPEG,
-                    base64: false,
-                },
-            );
+            const bytes = await optimizedImage(imageUri, 1600, dimensions);
 
-            const bytes =
-                Platform.OS === 'web'
-                    ? await (await fetch(manipulatedImage.uri)).arrayBuffer()
-                    : await new (await import('expo-file-system')).File(
-                          manipulatedImage.uri,
-                      ).arrayBuffer();
-
-            const filePath = `${userId}/poster_${Date.now()}.jpg`;
+            const filePath = `${userId}/poster_${(await import('expo-crypto')).randomUUID()}.jpg`;
             const contentType = 'image/jpeg';
 
             // 2. Upload to storage
@@ -505,7 +419,7 @@ export const sessionService = {
                     upsert: false,
                 });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) throw storageError(uploadError);
 
             // 3. Get public URL
             const { data: publicUrlData } = supabase.storage
@@ -514,6 +428,11 @@ export const sessionService = {
 
             return publicUrlData.publicUrl;
         } catch (error) {
+            if (
+                error instanceof Error &&
+                error.message.startsWith('storageSafety.')
+            )
+                throw error;
             console.error('Upload Session Poster Error:', error);
             return null;
         }

@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { conditionalBreakdown } from '../../utils/conditionalBreakdown';
 import { useRef, useState } from 'react';
 import {
@@ -57,7 +58,7 @@ export function ConditionalAgreementEditor({
     onClose: () => void;
 }) {
     const c = useCommunityColors(),
-        { t, currentLanguage } = useTranslation(),
+        { t, formatMoney } = useTranslation(),
         keyboard = useKeyboardVisible();
     const ownerName = useAuthStore((state) => state.profile?.artist_name || '');
     const normalizeName = (name: string) =>
@@ -99,9 +100,9 @@ export function ConditionalAgreementEditor({
     const [busy, setBusy] = useState(false),
         [error, setError] = useState('');
     const saving = useRef(false),
-        scroll = useRef<ScrollView>(null);
+        scroll = useRef<ComponentRef<typeof ScrollView>>(null);
     const money = (n: number) =>
-        `${new Intl.NumberFormat(currentLanguage, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} ${currency}`;
+        formatMoney(n, currency);
     const field: TextStyle = {
         color: c.fg,
         backgroundColor: c.field,
@@ -1534,12 +1535,12 @@ export function ConditionalAgreementEditor({
                                 padding: 20,
                                 borderRadius: 22,
                                 backgroundColor: c.card,
-                                borderWidth: 1,
+                                borderWidth: c.dark ? 0 : 1,
                                 borderColor: c.border,
                                 gap: 14,
                             }}
                         >
-                            <Text style={{ color: c.muted, fontSize: 13 }}>
+                            <Text style={[{ color: c.muted, fontSize: 13 }, c.dark && { color: c.cardText }]}>
                                 {t(
                                     mode === 'actual'
                                         ? 'conditionalFlow.yourResult'
@@ -1549,11 +1550,11 @@ export function ConditionalAgreementEditor({
                             {result ? (
                                 <>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.accent,
                                             fontSize: 36,
                                             fontWeight: '800',
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {money(result.owner)}
                                     </Text>
@@ -1580,11 +1581,11 @@ export function ConditionalAgreementEditor({
                                                     }}
                                                 >
                                                     <Text
-                                                        style={{
+                                                        style={[{
                                                             color: c.fg,
                                                             fontWeight: '800',
                                                             fontSize: 16,
-                                                        }}
+                                                        }, c.dark && { color: c.cardText }]}
                                                     >
                                                         {t(
                                                             `conditionalLedger.${title}`,
@@ -1602,11 +1603,11 @@ export function ConditionalAgreementEditor({
                                                             }}
                                                         >
                                                             <Text
-                                                                style={{
+                                                                style={[{
                                                                     color: c.muted,
                                                                     flex: 1,
                                                                     lineHeight: 20,
-                                                                }}
+                                                                }, c.dark && { color: c.cardText }]}
                                                             >
                                                                 {row.concept ||
                                                                     t(
@@ -1614,14 +1615,14 @@ export function ConditionalAgreementEditor({
                                                                     )}
                                                             </Text>
                                                             <Text
-                                                                style={{
+                                                                style={[{
                                                                     color: c.fg,
                                                                     fontWeight:
                                                                         row.key ===
                                                                         'pool'
                                                                             ? '800'
                                                                             : '600',
-                                                                }}
+                                                                }, c.dark && { color: c.cardText }]}
                                                             >
                                                                 {money(
                                                                     row.amount,
@@ -1634,11 +1635,11 @@ export function ConditionalAgreementEditor({
                                         });
                                     })()}
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.muted,
                                             fontSize: 12,
                                             lineHeight: 18,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {t('conditionalLedger.remainderHint')}
                                     </Text>
@@ -1654,10 +1655,10 @@ export function ConditionalAgreementEditor({
                                                 }}
                                             >
                                                 <Text
-                                                    style={{
+                                                    style={[{
                                                         color: c.fg,
                                                         flex: 1,
-                                                    }}
+                                                    }, c.dark && { color: c.cardText }]}
                                                 >
                                                     {i === 0
                                                         ? t('agreement.you')
@@ -1665,10 +1666,10 @@ export function ConditionalAgreementEditor({
                                                               .name}
                                                 </Text>
                                                 <Text
-                                                    style={{
+                                                    style={[{
                                                         color: c.fg,
                                                         fontWeight: '800',
-                                                    }}
+                                                    }, c.dark && { color: c.cardText }]}
                                                 >
                                                     {money(share)}
                                                 </Text>
@@ -1678,10 +1679,10 @@ export function ConditionalAgreementEditor({
                             ) : (
                                 <Text
                                     accessibilityRole="alert"
-                                    style={{
+                                    style={[{
                                         color: c.muted,
                                         lineHeight: 20,
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {t('conditionalFlow.simulationBlocked')}{' '}
                                     {t(calculationError)}

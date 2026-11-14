@@ -1,22 +1,25 @@
+import { useCommunityTerms } from '../components/community/CommunityTerms';
 import {
     useInfiniteQuery,
+    useQueries,
     useMutation,
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query';
 import { useAuthStore } from '../store/useAuthStore';
+import { prefetchCommunityImages } from '../services/communityImages';
 import {
     communityService,
     CommunityProfileInput,
     CommunityFilters,
     PAGE_SIZE,
 } from '../services/community';
-export function useCommunityProfile(id?: string) {
+export function useCommunityProfile(id?: string, enabled = true) {
     const viewer = useAuthStore((state) => state.session?.user.id);
     return useQuery({
         queryKey: ['community', 'profile', viewer, id],
         queryFn: () => communityService.profile(id!),
-        enabled: !!viewer && !!id,
+        enabled: enabled && !!viewer && !!id,
     });
 }
 export function useCommunityFollowing(enabled = true) {
@@ -43,8 +46,11 @@ export function useCommunityDiscover(
             filters?.genre || '',
         ],
         initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            communityService.discover(search, pageParam, filters),
+        queryFn: async ({ pageParam }) => {
+            const profiles = await communityService.discover(search, pageParam, filters);
+            prefetchCommunityImages(profiles);
+            return profiles;
+        },
         enabled: enabled && !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
@@ -103,8 +109,11 @@ export function useCommunityFollowedDjs(
             filters?.genre || '',
         ],
         initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            communityService.followedDjs(search, pageParam, filters),
+        queryFn: async ({ pageParam }) => {
+            const profiles = await communityService.followedDjs(search, pageParam, filters);
+            prefetchCommunityImages(profiles);
+            return profiles;
+        },
         enabled: enabled && !!userId,
         getNextPageParam: (last, pages) =>
             last.length === PAGE_SIZE && pages.length * PAGE_SIZE <= 5000
@@ -133,6 +142,7 @@ export function useCommunityShare(sessionId: string) {
     });
 }
 export function useCommunityMutation() {
+    const requireTerms = useCommunityTerms();
     const userId = useAuthStore((state) => state.session?.user.id);
     const client = useQueryClient();
     return useMutation({
@@ -143,6 +153,13 @@ export function useCommunityMutation() {
                 | { kind: 'share'; sessionId: string; enabled: boolean },
         ) => {
             if (!userId) throw new Error('Unauthenticated');
+            if (
+                (action.kind === 'profile' && action.input.is_visible) ||
+                (action.kind !== 'profile' && action.enabled)
+            ) {
+                if (!(await requireTerms()))
+                    throw new Error('COMMUNITY_CANCELLED');
+            }
             if (action.kind === 'profile')
                 return communityService.saveProfile(userId, action.input);
             if (action.kind === 'follow')
@@ -169,13 +186,34 @@ export function useCommunityMutation() {
 
 export function useCommunitySessionCounts(ids: string[], enabled = true) {
     const viewer = useAuthStore((state) => state.session?.user.id);
-    const sortedIds = [...new Set(ids)].sort();
-    return useQuery({
-        queryKey: ['community', 'session-counts', viewer, sortedIds],
-        queryFn: () => communityService.sessionCounts(sortedIds),
-        enabled: enabled && !!viewer && sortedIds.length > 0,
-        staleTime: 60000,
+    const client = useQueryClient();
+    // Stable page-sized groups: adding a page does not refetch previous counts.
+    const unique = [...new Set(ids)];
+    const batches = Array.from(
+        { length: Math.ceil(unique.length / PAGE_SIZE) },
+        (_, i) => unique.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE),
+    );
+    const results = useQueries({
+        queries: batches.map((batch) => ({
+            queryKey: ['community', 'session-counts', viewer, batch],
+            queryFn: () => communityService.sessionCounts(batch),
+            enabled: enabled && !!viewer,
+            staleTime: 60000,
+        })),
     });
+    return {
+        data: Object.assign(
+            {},
+            ...results.map((result) => result.data || {}),
+        ) as Record<string, number>,
+        isPending: results.some((result) => result.isPending),
+        isError: results.some((result) => result.isError),
+        refetch: () =>
+            client.refetchQueries({
+                queryKey: ['community', 'session-counts', viewer],
+                type: 'active',
+            }),
+    };
 }
 
 export function useCommunityPosters(author: string) {

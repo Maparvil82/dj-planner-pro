@@ -1,3 +1,6 @@
+import { useSessionUsage } from '../../hooks/useSessionUsage';
+import { isProCreationAction } from '../../config/proFeatures';
+import darkPalette from '../../theme/darkPalette.json';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Modal,
@@ -157,6 +160,7 @@ function CreationIcon({ kind, color }: { kind: string; color: string }) {
 
 export function AddSessionButton() {
     const router = useRouter();
+    const usage = useSessionUsage();
     const { t } = useTranslation();
     const c = useCommunityColors();
     const insets = useSafeAreaInsets();
@@ -201,20 +205,21 @@ export function AddSessionButton() {
             href === '/tickets' ||
             href === '/guests' ||
             href === '/expenses' ||
-            href === '/preparation'
+            href === '/preparation' ||
+            (typeof href === 'string' && href.startsWith('/paywall'))
         )
             router.push(href);
         else destination.current = href;
     };
     const actions = [
         { key: 'session', color: '#2783ef', href: '/add-session' },
-        { key: 'conditional', color: '#ee9b21', href: '/conditional-session' },
-        { key: 'mix', color: '#7b50e8', href: '/add-mix' },
-        { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
-        { key: 'tickets', color: '#e35d72', href: '/tickets' },
-        { key: 'guests', color: '#16a5ad', href: '/guests' },
+        { key: 'conditional', color: '#ee9b21', href: usage.data?.isPro ? '/conditional-session' : '/paywall?reason=conditional' },
+        { key: 'guests', color: '#16a5ad', href: usage.data?.isPro ? '/guests' : '/paywall?reason=guests' },
+        { key: 'tickets', color: '#e35d72', href: usage.data?.isPro ? '/tickets' : '/paywall?reason=access' },
         { key: 'expenses', color: '#df7743', href: '/expenses' },
         { key: 'preparation', color: '#5973cb', href: '/preparation' },
+        { key: 'mix', color: '#7b50e8', href: '/add-mix' },
+        { key: 'venue', color: '#06ad85', href: '/venues?create=1' },
     ] as const;
     return (
         <>
@@ -229,12 +234,12 @@ export function AddSessionButton() {
                     height: 46,
                     width: 46,
                     borderRadius: 16,
-                    backgroundColor: '#6554df',
+                    backgroundColor: c.accent,
                     justifyContent: 'center',
                     alignItems: 'center',
                 }}
             >
-                <Plus size={24} color="#fff" />
+                <Plus size={24} color={c.onAccent} />
             </Pressable>
             <Modal
                 visible={open}
@@ -259,7 +264,7 @@ export function AddSessionButton() {
                     <View
                         accessibilityViewIsModal
                         style={{
-                            backgroundColor: c.dark ? '#202538' : '#e9eaf1',
+                            backgroundColor: c.dark ? darkPalette.raised : '#e9eaf1',
                             borderTopLeftRadius: 28,
                             borderTopRightRadius: 28,
                             paddingTop: 28,
@@ -315,34 +320,46 @@ export function AddSessionButton() {
                                                 style={{
                                                     width: 58,
                                                     height: 58,
-                                                    borderRadius: 29,
-                                                    backgroundColor: c.card,
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
+                                                    position: 'relative',
                                                 }}
                                             >
-                                                <CreationIcon
-                                                    kind={action.key}
-                                                    color={action.color}
-                                                />
-                                            </View>
-                                            {action.key === 'conditional' && (
-                                                <Text
+                                                <View
                                                     style={{
-                                                        position: 'absolute',
-                                                        top: 46,
-                                                        backgroundColor:
-                                                            '#ee9b21',
-                                                        color: '#fff',
-                                                        borderRadius: 5,
-                                                        paddingHorizontal: 4,
-                                                        fontSize: 8,
-                                                        fontWeight: '800',
+                                                        width: 58,
+                                                        height: 58,
+                                                        borderRadius: 29,
+                                                        backgroundColor: c.card,
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
                                                     }}
                                                 >
-                                                    PRO
-                                                </Text>
-                                            )}
+                                                    <CreationIcon
+                                                        kind={action.key}
+                                                        color={action.color}
+                                                    />
+                                                </View>
+                                                {isProCreationAction(action.key) && (
+                                                    <Text
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: -12,
+                                                            right: -12,
+                                                            height: 14,
+                                                            minWidth: 28,
+                                                            backgroundColor: c.accent,
+                                                            color: c.onAccent,
+                                                            borderRadius: 5,
+                                                            paddingHorizontal: 4,
+                                                            fontSize: 8,
+                                                            lineHeight: 14,
+                                                            fontWeight: '800',
+                                                            textAlign: 'center',
+                                                        }}
+                                                    >
+                                                        PRO
+                                                    </Text>
+                                                )}
+                                            </View>
                                             <Text
                                                 numberOfLines={1}
                                                 adjustsFontSizeToFit

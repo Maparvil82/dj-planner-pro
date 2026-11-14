@@ -1,6 +1,6 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Image,
     PanResponder,
     View,
     type ImageStyle,

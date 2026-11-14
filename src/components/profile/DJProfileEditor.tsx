@@ -1,7 +1,7 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import {
     View,
     Text,
-    Image,
     ScrollView,
     TextInput,
     TouchableOpacity,

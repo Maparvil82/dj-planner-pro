@@ -1,24 +1,34 @@
+import { useIsFocused } from 'expo-router';
 import { cityLabel } from '../../src/utils/cities';
-import { CommunitySessionShelves } from '../../src/components/community/CommunitySessionShelves';
-import { CommunityActivityFeed } from '../../src/components/community/CommunityActivityFeed';
+import {
+    CommunitySessionShelves,
+    CommunityShelfCard,
+} from '../../src/components/community/CommunitySessionShelves';
+import { useCommunityActivityRenderer } from '../../src/components/community/CommunityActivityFeed';
 import { CommunityWelcome } from '../../src/components/community/CommunityWelcome';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
 import { CommunityFiltersBar } from '../../src/components/community/CommunityFiltersBar';
-import type { CommunityFilters } from '../../src/services/community';
-import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
-import { useCallback, useEffect, useState } from 'react';
+import type {
+    CommunityFilters,
+    CommunityActivity,
+    CommunitySession,
+    CommunityProfile,
+} from '../../src/services/community';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { useEffect, useState } from 'react';
 import {
     View,
     Text,
-    ScrollView,
+    FlatList,
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Tabs, useFocusEffect, useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Users } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useTranslation } from '../../src/i18n/useTranslation';
+import { SegmentedTabs } from '../../src/components/ui/SegmentedTabs';
 import { PageHeader } from '../../src/components/ui/PageHeader';
 import {
     CommunityButton,
@@ -37,7 +47,8 @@ import {
     useCommunityProfile,
 } from '../../src/hooks/useCommunityQuery';
 export default function CommunityScreen() {
-    const onTabScroll = useTabBarScroll();
+    const focused = useIsFocused();
+    const { progress: headerProgress, onScroll: onTabScroll, onScrollBeginDrag: onTabScrollBeginDrag } = useScrollHeader('hide');
     const c = useCommunityColors();
     const { t } = useTranslation();
     const router = useRouter();
@@ -54,8 +65,8 @@ export default function CommunityScreen() {
     const activityView = tab === 'following';
     const listView = tab === 'djs';
     const [refreshing, setRefreshing] = useState(false);
-    const own = useCommunityProfile(userId);
-    const socialReady = !own.isError && canUseDJProfile(own.data);
+    const own = useCommunityProfile(userId, focused);
+    const socialReady = focused && !own.isError && canUseDJProfile(own.data);
     const filterOptions = useCommunityFilterOptions(
         activityView ? 'activity' : tab === 'sessions' ? 'sessions' : 'djs',
         socialReady,
@@ -111,6 +122,12 @@ export default function CommunityScreen() {
         followingFilters,
         socialReady && activityView,
     );
+    const renderActivity = useCommunityActivityRenderer({
+        items: activity.data?.pages.flat() || [],
+        enabled: socialReady && activityView,
+    });
+    const [selectedSession, setSelectedSession] =
+        useState<CommunitySession | null>(null);
     const mutation = useCommunityMutation();
     const active =
         tab === 'sessions' ? feed : tab === 'following' ? activity : discover;
@@ -126,28 +143,6 @@ export default function CommunityScreen() {
             : tab === 'following'
               ? setFollowingFilters
               : setDjFilters;
-    useFocusEffect(
-        useCallback(() => {
-            void own.refetch();
-            if (!socialReady) return;
-            void following.refetch();
-            void active.refetch();
-            if (tab === 'sessions') {
-                void followedSessions.refetch();
-                void citySessions.refetch();
-            }
-            void filterOptions.refetch();
-        }, [
-            socialReady,
-            own.refetch,
-            following.refetch,
-            active.refetch,
-            followedSessions.refetch,
-            citySessions.refetch,
-            tab,
-            filterOptions.refetch,
-        ]),
-    );
     const error =
         mutation.isError || active.isError || own.isError || following.isError;
     const retry = () => {
@@ -203,6 +198,10 @@ export default function CommunityScreen() {
                     ),
                 }}
             />
+            <PageHeader showAccount progress={headerProgress}
+                title={t('community.title')}
+                subtitle={t('community.intro')}
+            />
             {own.isPending || own.isError || !canUseDJProfile(own.data) ? (
                 own.isPending ? (
                     <CommunityMessage title={t('community.loading')} loading />
@@ -218,13 +217,280 @@ export default function CommunityScreen() {
                 )
             ) : (
                 <>
-                    <PageHeader
-                        title={t('community.title')}
-                        subtitle={t('community.intro')}
-                        action={null}
-                    />
-                    <ScrollView
-                        onScroll={onTabScroll}
+                    <FlatList<
+                        | { kind: 'djs'; profiles: CommunityProfile[] }
+                        | { kind: 'activity'; item: CommunityActivity }
+                        | { kind: 'session'; item: CommunitySession }
+                    >
+                        key={tab}
+                        data={
+                            listView
+                                ? Array.from(
+                                      {
+                                          length: Math.ceil(
+                                              profiles.length / 2,
+                                          ),
+                                      },
+                                      (_, i) => ({
+                                          kind: 'djs' as const,
+                                          profiles: profiles.slice(
+                                              i * 2,
+                                              i * 2 + 2,
+                                          ),
+                                      }),
+                                  )
+                                : activityView
+                                  ? (activity.data?.pages.flat() || []).map(
+                                        (item) => ({
+                                            kind: 'activity' as const,
+                                            item,
+                                        }),
+                                    )
+                                  : (feed.data?.pages.flat() || []).map(
+                                        (item) => ({
+                                            kind: 'session' as const,
+                                            item,
+                                        }),
+                                    )
+                        }
+                        keyExtractor={(row) =>
+                            row.kind === 'djs'
+                                ? row.profiles.map((p) => p.user_id).join(':')
+                                : row.kind === 'session'
+                                  ? row.item.session_id
+                                  : `${row.item.kind}-${row.item.id}`
+                        }
+                        initialNumToRender={6}
+                        maxToRenderPerBatch={6}
+                        windowSize={5}
+                        renderItem={({ item: row }) =>
+                            row.kind === 'activity' ? (
+                                renderActivity(row.item)
+                            ) : row.kind === 'session' ? (
+                                <CommunityShelfCard
+                                    item={row.item}
+                                    square={false}
+                                    onSelect={setSelectedSession}
+                                />
+                            ) : (
+                                <View
+                                    style={{
+                                        flexDirection: 'row',
+                                        gap: 12,
+                                    }}
+                                >
+                                    {row.profiles.map((profile) => (
+                                        <CommunityProfileCard
+                                            sessionCount={
+                                                counts.data?.[profile.user_id]
+                                            }
+                                            key={profile.user_id}
+                                            profile={profile}
+                                            own={profile.user_id === userId}
+                                            following={
+                                                following.data?.includes(
+                                                    profile.user_id,
+                                                ) || false
+                                            }
+                                            busy={
+                                                mutation.isPending &&
+                                                mutation.variables?.kind ===
+                                                    'follow' &&
+                                                mutation.variables.target ===
+                                                    profile.user_id
+                                            }
+                                            disabled={
+                                                mutation.isPending ||
+                                                following.isPending ||
+                                                following.isError ||
+                                                own.isPending ||
+                                                own.isError ||
+                                                !canUseDJProfile(own.data)
+                                            }
+                                            onFollow={() => {
+                                                if (
+                                                    !following.data?.includes(
+                                                        profile.user_id,
+                                                    ) &&
+                                                    !canUseDJProfile(own.data)
+                                                )
+                                                    router.push(
+                                                        '/edit-dj-profile?edit=1',
+                                                    );
+                                                else
+                                                    mutation.mutate({
+                                                        kind: 'follow',
+                                                        target: profile.user_id,
+                                                        enabled:
+                                                            !following.data?.includes(
+                                                                profile.user_id,
+                                                            ),
+                                                    });
+                                            }}
+                                        />
+                                    ))}
+                                    {row.profiles.length === 1 && (
+                                        <View style={{ flex: 1 }} />
+                                    )}
+                                </View>
+                            )
+                        }
+                        ItemSeparatorComponent={() => (
+                            <View style={{ height: 12 }} />
+                        )}
+                        ListFooterComponent={
+                            <View style={{ marginTop: 16 }}>
+                                {active.hasNextPage && (
+                                    <CommunityButton
+                                        label={t('community.loadMore')}
+                                        secondary
+                                        busy={active.isFetchingNextPage}
+                                        onPress={() => {
+                                            void active.fetchNextPage();
+                                        }}
+                                    />
+                                )}
+                            </View>
+                        }
+                        ListHeaderComponent={
+                            <View
+                                style={{
+                                    width: '100%',
+                                    maxWidth: 900,
+                                    alignSelf: 'center',
+                                    gap: 16,
+                                    paddingBottom: 16,
+                                }}
+                            >
+                                <SegmentedTabs
+                                    label={t('community.title')}
+                                    options={(['djs', 'sessions', 'following'] as const).map(value => ({ value, label: t(`community.${value}`) }))}
+                                    value={tab}
+                                    onChange={value => { setTab(value); setDebounced(searches[value]); }}
+                                />
+                                <CommunityFiltersBar
+                                    value={activeFilters}
+                                    onChange={setFilters}
+                                    mode={
+                                        activityView
+                                            ? 'activity'
+                                            : listView
+                                              ? 'djs'
+                                              : 'sessions'
+                                    }
+                                    options={filterOptions.data}
+                                    loading={filterOptions.isPending}
+                                    error={filterOptions.isError}
+                                    retry={() => {
+                                        void filterOptions.refetch();
+                                    }}
+                                    search={search}
+                                    onSearch={(text) =>
+                                        setSearches({
+                                            ...searches,
+                                            [tab]: text,
+                                        })
+                                    }
+                                    placeholder={t(
+                                        activityView
+                                            ? 'communityActivity.search'
+                                            : tab === 'sessions'
+                                              ? 'community.searchSessions'
+                                              : 'community.search',
+                                    )}
+                                />
+                                {error && (
+                                    <CommunityMessage
+                                        title={t('community.error')}
+                                        retry={retry}
+                                    />
+                                )}
+                                {active.isPending ? (
+                                    <CommunityMessage
+                                        title={t('community.loading')}
+                                        loading
+                                    />
+                                ) : activityView ? (
+                                    activity.data?.pages.flat().length ? (
+                                        null
+                                    ) : (
+                                        !activity.isError && (
+                                            <CommunityMessage
+                                                title={t(
+                                                    activeFilters.city ||
+                                                        activeFilters.genre ||
+                                                        search.trim()
+                                                        ? 'communityFilters.noResults'
+                                                        : 'communityActivity.empty',
+                                                )}
+                                                hint={t(
+                                                    activeFilters.city ||
+                                                        activeFilters.genre ||
+                                                        search.trim()
+                                                        ? 'communityFilters.noResultsHint'
+                                                        : 'communityActivity.emptyHint',
+                                                )}
+                                            />
+                                        )
+                                    )
+                                ) : listView ? (
+                                    profiles.length ? null : (
+                                        !active.isError && (
+                                            <CommunityMessage
+                                                title={t(
+                                                    activeFilters.city ||
+                                                        activeFilters.genre ||
+                                                        search.trim()
+                                                        ? 'communityFilters.noResults'
+                                                        : 'community.noDjs',
+                                                )}
+                                                hint={t(
+                                                    activeFilters.city ||
+                                                        activeFilters.genre ||
+                                                        search.trim()
+                                                        ? 'communityFilters.noResultsHint'
+                                                        : 'community.noDjsHint',
+                                                )}
+                                            />
+                                        )
+                                    )
+                                ) : (
+                                    <CommunitySessionShelves
+                                        virtualRest
+                                        selectedItem={selectedSession}
+                                        onSelect={setSelectedSession}
+                                        following={followedSessions}
+                                        city={citySessions}
+                                        rest={feed}
+                                        homeCity={shelfCity}
+                                        filtered={
+                                            !!(
+                                                sessionFilters.city ||
+                                                sessionFilters.genre ||
+                                                search.trim()
+                                            )
+                                        }
+                                    />
+                                )}
+                                {tab === 'following' &&
+                                    !activity.data?.pages.flat().length &&
+                                    !search.trim() &&
+                                    !followingFilters.city &&
+                                    !followingFilters.genre &&
+                                    !active.isPending &&
+                                    !active.isError && (
+                                        <CommunityButton
+                                            label={t('community.discoverDjs')}
+                                            secondary
+                                            onPress={() => {
+                                                setTab('djs');
+                                                setDebounced(searches.djs);
+                                            }}
+                                        />
+                                    )}
+                            </View>
+                        }
+                        onScrollBeginDrag={onTabScrollBeginDrag} onTouchStart={onTabScrollBeginDrag} onScroll={onTabScroll}
                         scrollEventThrottle={16}
                         keyboardShouldPersistTaps="handled"
                         refreshControl={
@@ -236,298 +502,16 @@ export default function CommunityScreen() {
                                 tintColor={c.accent}
                             />
                         }
+                        style={{
+                            width: '100%',
+                            maxWidth: 940,
+                            alignSelf: 'center',
+                        }}
                         contentContainerStyle={{
                             paddingHorizontal: 20,
                             paddingBottom: 108,
                         }}
-                    >
-                        <View
-                            style={{
-                                width: '100%',
-                                maxWidth: 900,
-                                alignSelf: 'center',
-                                gap: 16,
-                            }}
-                        >
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    padding: 5,
-                                    backgroundColor: c.dark
-                                        ? '#20273b'
-                                        : '#e9eaf3',
-                                    borderRadius: 16,
-                                    gap: 4,
-                                }}
-                            >
-                                {(
-                                    ['djs', 'sessions', 'following'] as const
-                                ).map((value) => (
-                                    <TouchableOpacity
-                                        key={value}
-                                        accessibilityRole="button"
-                                        accessibilityState={{
-                                            selected: tab === value,
-                                        }}
-                                        onPress={() => {
-                                            setTab(value);
-                                            setDebounced(searches[value]);
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            borderRadius: 12,
-                                            paddingVertical: 12,
-                                            alignItems: 'center',
-                                            backgroundColor:
-                                                tab === value
-                                                    ? c.card
-                                                    : 'transparent',
-                                        }}
-                                    >
-                                        <Text
-                                            style={{
-                                                color:
-                                                    tab === value
-                                                        ? c.accent
-                                                        : c.muted,
-                                                fontSize: 12,
-                                                fontWeight: '700',
-                                            }}
-                                        >
-                                            {t(`community.${value}`)}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                            <CommunityFiltersBar
-                                value={activeFilters}
-                                onChange={setFilters}
-                                mode={
-                                    activityView
-                                        ? 'activity'
-                                        : listView
-                                          ? 'djs'
-                                          : 'sessions'
-                                }
-                                options={filterOptions.data}
-                                loading={filterOptions.isPending}
-                                error={filterOptions.isError}
-                                retry={() => {
-                                    void filterOptions.refetch();
-                                }}
-                                search={search}
-                                onSearch={(text) =>
-                                    setSearches({ ...searches, [tab]: text })
-                                }
-                                placeholder={t(
-                                    activityView
-                                        ? 'communityActivity.search'
-                                        : tab === 'sessions'
-                                          ? 'community.searchSessions'
-                                          : 'community.search',
-                                )}
-                            />
-                            {error && (
-                                <CommunityMessage
-                                    title={t('community.error')}
-                                    retry={retry}
-                                />
-                            )}
-                            {active.isPending ? (
-                                <CommunityMessage
-                                    title={t('community.loading')}
-                                    loading
-                                />
-                            ) : activityView ? (
-                                activity.data?.pages.flat().length ? (
-                                    <CommunityActivityFeed
-                                        items={activity.data.pages.flat()}
-                                    />
-                                ) : (
-                                    !activity.isError && (
-                                        <CommunityMessage
-                                            title={t(
-                                                activeFilters.city ||
-                                                    activeFilters.genre ||
-                                                    search.trim()
-                                                    ? 'communityFilters.noResults'
-                                                    : 'communityActivity.empty',
-                                            )}
-                                            hint={t(
-                                                activeFilters.city ||
-                                                    activeFilters.genre ||
-                                                    search.trim()
-                                                    ? 'communityFilters.noResultsHint'
-                                                    : 'communityActivity.emptyHint',
-                                            )}
-                                        />
-                                    )
-                                )
-                            ) : listView ? (
-                                profiles.length ? (
-                                    <View style={{ gap: 12 }}>
-                                        {Array.from(
-                                            {
-                                                length: Math.ceil(
-                                                    profiles.length / 2,
-                                                ),
-                                            },
-                                            (_, row) => (
-                                                <View
-                                                    key={row}
-                                                    style={{
-                                                        flexDirection: 'row',
-                                                        gap: 12,
-                                                    }}
-                                                >
-                                                    {profiles
-                                                        .slice(
-                                                            row * 2,
-                                                            row * 2 + 2,
-                                                        )
-                                                        .map((profile) => (
-                                                            <CommunityProfileCard
-                                                                sessionCount={
-                                                                    counts
-                                                                        .data?.[
-                                                                        profile
-                                                                            .user_id
-                                                                    ]
-                                                                }
-                                                                key={
-                                                                    profile.user_id
-                                                                }
-                                                                profile={
-                                                                    profile
-                                                                }
-                                                                own={
-                                                                    profile.user_id ===
-                                                                    userId
-                                                                }
-                                                                following={
-                                                                    following.data?.includes(
-                                                                        profile.user_id,
-                                                                    ) || false
-                                                                }
-                                                                busy={
-                                                                    mutation.isPending &&
-                                                                    mutation
-                                                                        .variables
-                                                                        ?.kind ===
-                                                                        'follow' &&
-                                                                    mutation
-                                                                        .variables
-                                                                        .target ===
-                                                                        profile.user_id
-                                                                }
-                                                                disabled={
-                                                                    mutation.isPending ||
-                                                                    following.isPending ||
-                                                                    following.isError ||
-                                                                    own.isPending ||
-                                                                    own.isError
-                                                                }
-                                                                onFollow={() => {
-                                                                    if (
-                                                                        !following.data?.includes(
-                                                                            profile.user_id,
-                                                                        ) &&
-                                                                        !canUseDJProfile(
-                                                                            own.data,
-                                                                        )
-                                                                    )
-                                                                        router.push(
-                                                                            '/edit-dj-profile?edit=1',
-                                                                        );
-                                                                    else
-                                                                        mutation.mutate(
-                                                                            {
-                                                                                kind: 'follow',
-                                                                                target: profile.user_id,
-                                                                                enabled:
-                                                                                    !following.data?.includes(
-                                                                                        profile.user_id,
-                                                                                    ),
-                                                                            },
-                                                                        );
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    {profiles.slice(
-                                                        row * 2,
-                                                        row * 2 + 2,
-                                                    ).length === 1 && (
-                                                        <View
-                                                            style={{ flex: 1 }}
-                                                        />
-                                                    )}
-                                                </View>
-                                            ),
-                                        )}
-                                    </View>
-                                ) : (
-                                    !active.isError && (
-                                        <CommunityMessage
-                                            title={t(
-                                                activeFilters.city ||
-                                                    activeFilters.genre ||
-                                                    search.trim()
-                                                    ? 'communityFilters.noResults'
-                                                    : 'community.noDjs',
-                                            )}
-                                            hint={t(
-                                                activeFilters.city ||
-                                                    activeFilters.genre ||
-                                                    search.trim()
-                                                    ? 'communityFilters.noResultsHint'
-                                                    : 'community.noDjsHint',
-                                            )}
-                                        />
-                                    )
-                                )
-                            ) : (
-                                <CommunitySessionShelves
-                                    following={followedSessions}
-                                    city={citySessions}
-                                    rest={feed}
-                                    homeCity={shelfCity}
-                                    filtered={
-                                        !!(
-                                            sessionFilters.city ||
-                                            sessionFilters.genre ||
-                                            search.trim()
-                                        )
-                                    }
-                                />
-                            )}
-                            {tab === 'following' &&
-                                !activity.data?.pages.flat().length &&
-                                !search.trim() &&
-                                !followingFilters.city &&
-                                !followingFilters.genre &&
-                                !active.isPending &&
-                                !active.isError && (
-                                    <CommunityButton
-                                        label={t('community.discoverDjs')}
-                                        secondary
-                                        onPress={() => {
-                                            setTab('djs');
-                                            setDebounced(searches.djs);
-                                        }}
-                                    />
-                                )}
-                            {tab !== 'sessions' && active.hasNextPage && (
-                                <CommunityButton
-                                    label={t('community.loadMore')}
-                                    secondary
-                                    busy={active.isFetchingNextPage}
-                                    onPress={() => {
-                                        void active.fetchNextPage();
-                                    }}
-                                />
-                            )}
-                        </View>
-                    </ScrollView>
+                    />
                 </>
             )}
         </SafeAreaView>

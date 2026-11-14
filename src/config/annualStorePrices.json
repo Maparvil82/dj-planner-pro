@@ -1,0 +1,877 @@
+{
+  "AFG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ALB": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "DEU": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "AGO": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "AIA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ATG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "SAU": {
+    "currency": "SAR",
+    "standard": 99.99,
+    "promotion": 59.99
+  },
+  "DZA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ARG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ARM": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "AUS": {
+    "currency": "AUD",
+    "standard": 39.99,
+    "promotion": 22.99
+  },
+  "AUT": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "AZE": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "BHS": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "BRB": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "BHR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "BEL": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "BLZ": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BEN": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "BMU": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BLR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "MMR": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BOL": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BIH": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "BWA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BRA": {
+    "currency": "BRL",
+    "standard": 149.9,
+    "promotion": 99.9
+  },
+  "BRN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BGR": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "BFA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "BTN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "CPV": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "KHM": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "CMR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "CAN": {
+    "currency": "CAD",
+    "standard": 34.99,
+    "promotion": 19.99
+  },
+  "QAT": {
+    "currency": "QAR",
+    "standard": 99.99,
+    "promotion": 49.99
+  },
+  "TCD": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "CHL": {
+    "currency": "CLP",
+    "standard": 29990.0,
+    "promotion": 17990.0
+  },
+  "CHN": {
+    "currency": "CNY",
+    "standard": 168.0,
+    "promotion": 98.0
+  },
+  "CYP": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "COL": {
+    "currency": "COP",
+    "standard": 119900.0,
+    "promotion": 69900.0
+  },
+  "COG": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "COD": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "CIV": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "CRI": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "HRV": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "DNK": {
+    "currency": "DKK",
+    "standard": 199.0,
+    "promotion": 129.0
+  },
+  "DMA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ECU": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "EGY": {
+    "currency": "EGP",
+    "standard": 1299.99,
+    "promotion": 799.99
+  },
+  "SLV": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ARE": {
+    "currency": "AED",
+    "standard": 99.99,
+    "promotion": 59.99
+  },
+  "SVK": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "SVN": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "ESP": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "USA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "EST": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "SWZ": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "PHL": {
+    "currency": "PHP",
+    "standard": 1490.0,
+    "promotion": 999.0
+  },
+  "FIN": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "FJI": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "FRA": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "GAB": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "GMB": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "GEO": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "GHA": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "GRD": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "GRC": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "GTM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "GNB": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "GUY": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "HND": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "HKG": {
+    "currency": "HKD",
+    "standard": 188.0,
+    "promotion": 118.0
+  },
+  "HUN": {
+    "currency": "HUF",
+    "standard": 9990.0,
+    "promotion": 6990.0
+  },
+  "IND": {
+    "currency": "INR",
+    "standard": 2499.0,
+    "promotion": 1499.0
+  },
+  "IDN": {
+    "currency": "IDR",
+    "standard": 499000.0,
+    "promotion": 299000.0
+  },
+  "IRQ": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "IRL": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "ISL": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "CYM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "SLB": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "TCA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "VGB": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ISR": {
+    "currency": "ILS",
+    "standard": 79.9,
+    "promotion": 49.9
+  },
+  "ITA": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "JAM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "JPN": {
+    "currency": "JPY",
+    "standard": 4000.0,
+    "promotion": 2500.0
+  },
+  "JOR": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "KAZ": {
+    "currency": "KZT",
+    "standard": 14990.0,
+    "promotion": 8990.0
+  },
+  "KEN": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "KGZ": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "XKS": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "KWT": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "LAO": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "LVA": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "LBN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "LBR": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "LBY": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "LTU": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "LUX": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "MAC": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MKD": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MDG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MYS": {
+    "currency": "MYR",
+    "standard": 119.9,
+    "promotion": 69.9
+  },
+  "MWI": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MDV": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MLI": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MLT": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "MAR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "MUS": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "MRT": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MEX": {
+    "currency": "MXN",
+    "standard": 499.0,
+    "promotion": 299.0
+  },
+  "FSM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MDA": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "MNG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MNE": {
+    "currency": "EUR",
+    "standard": 24.99,
+    "promotion": 12.99
+  },
+  "MSR": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "MOZ": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NAM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NRU": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NPL": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "NIC": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NER": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NGA": {
+    "currency": "NGN",
+    "standard": 39900.0,
+    "promotion": 24900.0
+  },
+  "NOR": {
+    "currency": "NOK",
+    "standard": 299.0,
+    "promotion": 199.0
+  },
+  "NZL": {
+    "currency": "NZD",
+    "standard": 49.99,
+    "promotion": 29.99
+  },
+  "OMN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "NLD": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "PAK": {
+    "currency": "PKR",
+    "standard": 6900.0,
+    "promotion": 3900.0
+  },
+  "PLW": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "PAN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "PNG": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "PRY": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "PER": {
+    "currency": "PEN",
+    "standard": 99.9,
+    "promotion": 69.9
+  },
+  "POL": {
+    "currency": "PLN",
+    "standard": 99.99,
+    "promotion": 69.99
+  },
+  "PRT": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "GBR": {
+    "currency": "GBP",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "CZE": {
+    "currency": "CZK",
+    "standard": 699.0,
+    "promotion": 399.0
+  },
+  "KOR": {
+    "currency": "KRW",
+    "standard": 44000.0,
+    "promotion": 25000.0
+  },
+  "DOM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "RWA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ROU": {
+    "currency": "RON",
+    "standard": 129.99,
+    "promotion": 79.99
+  },
+  "RUS": {
+    "currency": "RUB",
+    "standard": 2290.0,
+    "promotion": 1290.0
+  },
+  "KNA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "VCT": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "LCA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "STP": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "SEN": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "SRB": {
+    "currency": "EUR",
+    "standard": 29.99,
+    "promotion": 15.99
+  },
+  "SYC": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "SLE": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "SGP": {
+    "currency": "SGD",
+    "standard": 34.98,
+    "promotion": 19.98
+  },
+  "LKA": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ZAF": {
+    "currency": "ZAR",
+    "standard": 499.99,
+    "promotion": 299.99
+  },
+  "SWE": {
+    "currency": "SEK",
+    "standard": 299.0,
+    "promotion": 199.0
+  },
+  "CHE": {
+    "currency": "CHF",
+    "standard": 20.0,
+    "promotion": 14.0
+  },
+  "SUR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "THA": {
+    "currency": "THB",
+    "standard": 999.0,
+    "promotion": 499.0
+  },
+  "TWN": {
+    "currency": "TWD",
+    "standard": 790.0,
+    "promotion": 490.0
+  },
+  "TZA": {
+    "currency": "TZS",
+    "standard": 69900.0,
+    "promotion": 39900.0
+  },
+  "TJK": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "TON": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "TTO": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "TUN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "TKM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "TUR": {
+    "currency": "TRY",
+    "standard": 1299.99,
+    "promotion": 799.99
+  },
+  "UKR": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "UGA": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "URY": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "UZB": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 14.99
+  },
+  "VUT": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "VEN": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "VNM": {
+    "currency": "VND",
+    "standard": 799000.0,
+    "promotion": 499000.0
+  },
+  "YEM": {
+    "currency": "USD",
+    "standard": 24.99,
+    "promotion": 14.99
+  },
+  "ZMB": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  },
+  "ZWE": {
+    "currency": "USD",
+    "standard": 29.99,
+    "promotion": 17.99
+  }
+}

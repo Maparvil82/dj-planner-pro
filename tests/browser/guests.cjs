@@ -332,8 +332,15 @@ const errors = [];
     await button(labels.guests.upcoming).click();
     events = [];
     await page.reload();
-    await page.getByText(labels.guests.noUpcoming, { exact: true }).waitFor();
-    await button(labels.guests.createSession).waitFor();
+    for (const [route, purpose] of [['guests', 'guests'], ['tickets', 'entries'], ['expenses', 'expenses'], ['preparation', 'preparation']]) {
+        await page.goto(`http://localhost:8081/${route}`);
+        await page.getByText(labels.sessionSelection.emptyTitle, { exact: true }).waitFor();
+        await page.getByText(labels.sessionSelection[purpose], { exact: true }).waitFor();
+        assert.equal(await page.getByRole('textbox').count(), 0, `${route}: no empty search`);
+        await button(labels.sessionSelection.create).click();
+        await page.waitForURL('**/add-session');
+        if (route === 'preparation') await page.screenshot({ path: '/private/tmp/djplanner-session-selection-empty.png', animations: 'disabled' });
+    }
     assert.deepEqual(errors, []);
     console.log(
         'Guest list browser: menu, session selection, creation, +3, partial admission, undo, edit, normalized search, duplicate warning, deletion and no-session state passed.',

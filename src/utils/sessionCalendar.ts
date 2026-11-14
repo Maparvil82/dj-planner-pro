@@ -27,7 +27,7 @@ export function buildSessionCalendar(session: Session, now = new Date(), display
     const end = `${endDate.toISOString().slice(0, 10).replace(/-/g, '')}T${endTime.slice(0, 5).replace(':', '')}00`;
     const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     return [
-        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DJ Planner Pro//Sessions//EN', 'CALSCALE:GREGORIAN',
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DJ Planner//Sessions//EN', 'CALSCALE:GREGORIAN',
         'BEGIN:VEVENT', `UID:${session.id}@djplannerpro`, `DTSTAMP:${stamp}`,
         // Floating local times preserve the hours entered in the app, which has no venue timezone field.
         `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escapeText(displayTitle)}`, `LOCATION:${escapeText(session.venue)}`,

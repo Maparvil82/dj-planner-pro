@@ -1,3 +1,8 @@
+import { AccountLogoutButton } from '../src/components/navigation/AccountDrawer';
+import { AnalyticsPreferences } from '../src/analytics/AnalyticsPreferences';
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
+import { StorageImage as Image } from '../src/components/ui/StorageImage';
+import { useCommunityTerms } from '../src/components/community/CommunityTerms';
 import { DJProfileEditor } from '../src/components/profile/DJProfileEditor';
 import type { CityLocation } from '../src/utils/cities';
 import {
@@ -17,7 +22,6 @@ import {
     Switch,
     Platform,
     KeyboardAvoidingView,
-    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -44,6 +48,7 @@ import {
 } from '../src/hooks/useCommunityQuery';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { useTheme } from '../src/contexts/ThemeContext';
+import { AppearancePicker } from '../src/components/profile/AppearancePicker';
 import { profileService } from '../src/services/profile';
 import { DJ_PLATFORMS, normalizeDJLink } from '../src/utils/communityLinks';
 import { SubscriptionPlan } from '../src/components/profile/SubscriptionPlan';
@@ -107,8 +112,9 @@ export default function ProfileScreen({
 }) {
     const { t } = useTranslation();
     const c = useCommunityColors();
-    const { theme, setTheme } = useTheme();
-    const { session, profile, signOut, setProfile } = useAuthStore();
+    const { theme } = useTheme();
+    const [appearanceOpen, setAppearanceOpen] = useState(false);
+    const { session, profile, setProfile, initialized } = useAuthStore();
     const userId = session?.user.id;
     const router = useRouter();
     const params = useLocalSearchParams<{
@@ -134,6 +140,7 @@ export default function ProfileScreen({
     });
     const [editingDraft, setEditing] = useState(false);
     const editing = editorOnly || editingDraft;
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader(editing ? 'hide' : 'compact');
     const [draftHydrated, setDraftHydrated] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -213,6 +220,7 @@ export default function ProfileScreen({
             void social.refetch();
         }, [account.refetch, social.refetch]),
     );
+    const requireTerms = useCommunityTerms();
     const handleUpdateProfile = async () => {
         if (!userId || !artistName.trim() || busy) return;
         if (
@@ -226,6 +234,7 @@ export default function ProfileScreen({
         setSaveError('');
         setNotice('');
         try {
+            if ((visible || communitySetup) && !(await requireTerms())) return;
             const normalized = { ...links };
             for (const platform of DJ_PLATFORMS) {
                 try {
@@ -283,7 +292,9 @@ export default function ProfileScreen({
         } catch (error) {
             setSaveError(
                 error instanceof Error
-                    ? error.message
+                    ? error.message.startsWith('storageSafety.')
+                        ? t(error.message)
+                        : error.message
                     : t('community.saveError'),
             );
         } finally {
@@ -343,11 +354,11 @@ export default function ProfileScreen({
         }
     };
     const handleRateApp = async () => {
-        const ITUNES_ID = '6444444444'; // PLACEHOLDER: Replace with real Apple ID
+        const ITUNES_ID = '6760347919'; // DJ Planner App Store Connect ID
         const PACKAGE_NAME = 'com.djplannerpro.app';
 
         const url = Platform.select({
-            ios: `itms-apps://itunes.apple.com/app/id${ITUNES_ID}?action=write-review`,
+            ios: `https://apps.apple.com/app/id${ITUNES_ID}?action=write-review`,
             android: `market://details?id=${PACKAGE_NAME}`,
             default: `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`,
         });
@@ -359,38 +370,13 @@ export default function ProfileScreen({
             // Fallback to web URLs
             const webUrl =
                 Platform.OS === 'ios'
-                    ? `https://apps.apple.com/app/id${ITUNES_ID}`
+                    ? `https://apps.apple.com/app/id${ITUNES_ID}?action=write-review`
                     : `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`;
             await Linking.openURL(webUrl);
         }
     };
 
-    const handleDeleteAccount = () => {
-        Alert.alert(t('confirm_delete_account'), t('delete_account_warning'), [
-            { text: t('cancel'), style: 'cancel' },
-            {
-                text: t('delete_permanently'),
-                style: 'destructive',
-                onPress: async () => {
-                    if (session?.user?.id) {
-                        const success = await profileService.deleteAccount(
-                            session.user.id,
-                        );
-                        if (success) {
-                            Alert.alert(
-                                t('success'),
-                                t('delete_account_success') ||
-                                    'Account deleted.',
-                            );
-                            signOut();
-                        } else {
-                            Alert.alert(t('error'), t('error_saving_session'));
-                        }
-                    }
-                },
-            },
-        ]);
-    };
+    const handleDeleteAccount = () => router.push('/delete-account');
 
     const field = (
         label: string,
@@ -428,6 +414,7 @@ export default function ProfileScreen({
             />
         </View>
     );
+    if (!initialized) return <View style={{ flex: 1, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={c.accent} /></View>;
     if (!session) return <Redirect href="/(auth)/login" />;
     if (!editorOnly && profilePage && params.edit === '1')
         return (
@@ -537,7 +524,7 @@ export default function ProfileScreen({
             edges={['top', 'bottom']}
             style={{ flex: 1, backgroundColor: c.bg }}
         >
-            <PageHeader
+            <PageHeader progress={headerProgress}
                 showPlaces={false}
                 title={t(
                     settingsPage
@@ -584,7 +571,7 @@ export default function ProfileScreen({
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                <ScrollView
+                <ScrollView onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                     scrollEventThrottle={16}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
@@ -1136,7 +1123,7 @@ export default function ProfileScreen({
                                 />
                             </SessionFormSection>
                         )}
-                        {planPage && <SubscriptionPlan />}
+                        {(planPage || (settingsPage && !editing)) && <SubscriptionPlan />}
                         {!!saveError && (
                             <CommunityMessage
                                 title={t('community.saveError')}
@@ -1154,41 +1141,22 @@ export default function ProfileScreen({
                                     title={t('settings_app_section')}
                                     kind="settings"
                                 >
+                                    <SettingItem label={t('currencySettings.title')} onPress={() => router.push('/currency-settings')} />
                                     <SettingItem
                                         label={t('appearance')}
                                         value={t(`theme_${theme}`)}
-                                        onPress={() => {
-                                            Alert.alert(
-                                                t('appearance'),
-                                                t('appearance'),
-                                                [
-                                                    {
-                                                        text: t('theme_light'),
-                                                        onPress: () =>
-                                                            setTheme('light'),
-                                                    },
-                                                    {
-                                                        text: t('theme_dark'),
-                                                        onPress: () =>
-                                                            setTheme('dark'),
-                                                    },
-                                                    {
-                                                        text: t('theme_system'),
-                                                        onPress: () =>
-                                                            setTheme('system'),
-                                                    },
-                                                    {
-                                                        text: t('cancel'),
-                                                        style: 'cancel',
-                                                    },
-                                                ],
-                                            );
-                                        }}
+                                        onPress={() => setAppearanceOpen(true)}
+                                    />
+                                    <SettingItem
+                                        label={t('feedbackCard.title')}
+                                        onPress={() => router.push('/feedback')}
                                     />
                                     <SettingItem
                                         label={t('rate_app')}
                                         onPress={handleRateApp}
                                     />
+                                    <AnalyticsPreferences />
+                                    <AccountLogoutButton />
                                 </SessionFormSection>
                                 <SessionFormSection
                                     title={t('settings_legal_section')}
@@ -1212,12 +1180,6 @@ export default function ProfileScreen({
                                     />
                                 </SessionFormSection>
                                 <View style={{ paddingHorizontal: 18 }}>
-                                    <SettingItem
-                                        label={t('log_out')}
-                                        onPress={() => {
-                                            void signOut();
-                                        }}
-                                    />
                                     <SettingItem
                                         label={t('delete_account')}
                                         onPress={handleDeleteAccount}
@@ -1286,6 +1248,7 @@ export default function ProfileScreen({
                     </View>
                 )}
             </KeyboardAvoidingView>
+            <AppearancePicker visible={appearanceOpen} onClose={() => setAppearanceOpen(false)} />
             {accountEditing && (
                 <AccountEditor
                     currentEmail={session.user.email || ''}

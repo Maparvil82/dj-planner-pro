@@ -2,20 +2,41 @@ import {
     useInfiniteQuery,
     useMutation,
     useQuery,
+    useQueries,
     useQueryClient,
 } from '@tanstack/react-query';
 import { useAuthStore } from '../store/useAuthStore';
 import { savedMixesService, SAVED_MIX_PAGE_SIZE } from '../services/savedMixes';
-export function useSavedMixFlags(ids: string[]) {
+export function useSavedMixFlags(ids: string[], enabled = true) {
     const { session, initialized } = useAuthStore();
     const viewer = session?.user.id;
-    const stableIds = [...new Set(ids)].sort();
-    return useQuery({
-        queryKey: ['saved-mixes', 'flags', viewer, stableIds.join(',')],
-        enabled: !!viewer && initialized && !!ids.length,
-        queryFn: () => savedMixesService.flags(viewer!, stableIds),
-        staleTime: 60000,
+    const client = useQueryClient();
+    const unique = [...new Set(ids)];
+    const batches = Array.from(
+        { length: Math.ceil(unique.length / 20) },
+        (_, i) => unique.slice(i * 20, i * 20 + 20),
+    );
+    const results = useQueries({
+        queries: batches.map((batch) => ({
+            queryKey: ['saved-mixes', 'flags', viewer, batch],
+            enabled: enabled && !!viewer && initialized,
+            queryFn: () => savedMixesService.flags(viewer!, batch),
+            staleTime: 60000,
+        })),
     });
+    return {
+        data: Object.assign(
+            {},
+            ...results.map((result) => result.data || {}),
+        ) as Record<string, boolean>,
+        isPending: results.some((result) => result.isPending),
+        isError: results.some((result) => result.isError),
+        refetch: () =>
+            client.refetchQueries({
+                queryKey: ['saved-mixes', 'flags', viewer],
+                type: 'active',
+            }),
+    };
 }
 export function useSavedMixList() {
     const { session, initialized } = useAuthStore();

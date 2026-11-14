@@ -1,3 +1,12 @@
+import { CurrencyPicker } from '../../src/components/ui/CurrencyPicker';
+import { recordReviewUse } from '../../src/services/appReview';
+import type { ComponentRef } from 'react';
+import { SessionNotesField } from '../../src/components/sessions/SessionNotesField';
+import { SessionTextInput as TextInput } from '../../src/components/sessions/SessionTextInput';
+import { SessionTypePicker } from '../../src/components/sessions/SessionTypePicker';
+import type { SessionEventType } from '../../src/types/session';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
 import { confirmBlockedDays } from '../../src/utils/confirmBlockedDays';
 import { relatedSessionTargets } from '../../src/utils/sessionWorkflow';
 import { FEATURES } from '../../src/config/features';
@@ -23,7 +32,8 @@ import {
     SessionFormFooter,
 } from '../../src/components/sessions/SessionFormLayout';
 import { showError } from '../../src/utils/showError';
-import { SessionStatusControl } from '../../src/components/sessions/SessionStatusControl';
+import { SessionColorPicker } from '../../src/components/sessions/SessionColorPicker';
+import { SessionEditManagement } from '../../src/components/sessions/SessionEditManagement';
 import { SessionScheduleSummary } from '../../src/components/sessions/SessionScheduleSummary';
 import {
     parseSessionAmount,
@@ -32,9 +42,9 @@ import {
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     ScrollView,
+    KeyboardAvoidingView,
     Alert,
     ActivityIndicator,
     Switch,
@@ -70,6 +80,8 @@ import { sessionService } from '../../src/services/sessions';
 setupCalendarLocales();
 
 export default function EditSessionScreen() {
+    const darkPalette = useDarkPalette();
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const { id: rawId } = useLocalSearchParams();
     const id = Array.isArray(rawId) ? rawId[0] : rawId;
     const {
@@ -78,7 +90,8 @@ export default function EditSessionScreen() {
         isError: isSessionError,
     } = useSessionByIdQuery(id);
     const router = useRouter();
-    const { t, currentLanguage } = useTranslation();
+    const notesScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+    const { t, currentLanguage, dateLocale, firstDay, numberLocale, defaultCurrency } = useTranslation();
     const keyboardVisible = useKeyboardVisible();
     const { session: authSession } = useAuthStore();
     const createVenueMutation = useCreateVenueMutation();
@@ -97,6 +110,8 @@ export default function EditSessionScreen() {
         ((all: boolean) => Promise<void>) | null
     >(null);
     const [title, setTitle] = useState('');
+    const [notes, setNotes] = useState('');
+    const [eventType, setEventType] = useState<SessionEventType | null>(null);
     const [venue, setVenue] = useState('');
     const [timezone, setTimezone] = useState(
         Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -114,11 +129,10 @@ export default function EditSessionScreen() {
     const [feeAgreement, setFeeAgreement] = useState<FeeAgreement | null>(null);
     const usage = useSessionUsage();
     const [earningAmount, setEarningAmount] = useState('');
-    const [currency, setCurrency] = useState('€');
+    const [currency, setCurrency] = useState(defaultCurrency);
     const [sessionDate, setSessionDate] = useState(localDateString());
     const [showCalendar, setShowCalendar] = useState(false);
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
-    const [isColorModalVisible, setIsColorModalVisible] = useState(false);
     const [isCollective, setIsCollective] = useState(false);
     const [djInput, setDjInput] = useState('');
     const [selectedDjs, setSelectedDjs] = useState<string[]>([]);
@@ -161,6 +175,8 @@ export default function EditSessionScreen() {
             loadedId.current = remoteSession.id;
             setInitialSession(remoteSession);
             setTitle(remoteSession.title || '');
+            setNotes(remoteSession.notes || '');
+            setEventType(remoteSession.event_type || null);
             setVenue(remoteSession.venue || '');
             setTimezone(
                 remoteSession.booking_timezone ||
@@ -264,7 +280,7 @@ export default function EditSessionScreen() {
                   Number(dateParts[2]),
               )
             : new Date();
-    const weekday = dateObj.toLocaleDateString(currentLanguage, {
+    const weekday = dateObj.toLocaleDateString(dateLocale, {
         weekday: 'long',
     });
     LocaleConfig.defaultLocale = currentLanguage;
@@ -294,7 +310,10 @@ export default function EditSessionScreen() {
                     error instanceof Error &&
                         error.message === 'poster_permission'
                         ? 'form.posterPermission'
-                        : 'error_uploading',
+                        : error instanceof Error &&
+                            error.message.startsWith('storageSafety.')
+                          ? error.message
+                          : 'error_uploading',
                 ),
             );
         } finally {
@@ -346,6 +365,8 @@ export default function EditSessionScreen() {
         const fullInput = {
             date: sessionDate,
             title: title.trim(),
+            event_type: eventType,
+            notes: notes.trim() || null,
             venue: venue.trim(),
             venue_id: venueId,
             booking_timezone: timezone,
@@ -382,6 +403,10 @@ export default function EditSessionScreen() {
         // 2. Diffing logic: only include fields that actually changed
         const getChangedFields = () => {
             const changes: any = {};
+            if ((notes.trim() || null) !== (initialSession?.notes || null))
+                changes.notes = notes.trim() || null;
+            if (eventType !== (initialSession?.event_type || null))
+                changes.event_type = eventType;
             if (timezone !== initialSession?.booking_timezone)
                 changes.booking_timezone = timezone;
             if (title.trim() !== initialSession?.title)
@@ -509,6 +534,7 @@ export default function EditSessionScreen() {
                     updateAll,
                 });
 
+                if (authSession?.user.id) await recordReviewUse(authSession.user.id, true);
                 if (router.canGoBack()) router.back();
                 else router.replace(`/session/${id}`);
             } catch (error: any) {
@@ -558,7 +584,8 @@ export default function EditSessionScreen() {
 
     if (isLoadingSession || (!initialSession && remoteSession)) {
         return (
-            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-djDark-background"
+                  style={{ backgroundColor: isDark ? darkPalette.background : '#f9fafb' }}>
                 <ActivityIndicator size="large" color="#7666df" />
             </View>
         );
@@ -566,8 +593,10 @@ export default function EditSessionScreen() {
 
     if (!initialSession) {
         return (
-            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <Text className="text-gray-500 dark:text-gray-400">
+            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-djDark-background"
+                  style={{ backgroundColor: isDark ? darkPalette.background : '#f9fafb' }}>
+                <Text className="text-gray-500 dark:text-djDark-muted"
+                      style={{ color: isDark ? darkPalette.muted : '#6b7280' }}>
                     {t(
                         isSessionError
                             ? 'error_loading_session'
@@ -580,7 +609,7 @@ export default function EditSessionScreen() {
 
     return (
         <SafeAreaView
-            style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }}
+            style={{ flex: 1, backgroundColor: isDark ? darkPalette.background : '#f5f6fa' }}
             edges={
                 keyboardVisible
                     ? ['top', 'left', 'right']
@@ -603,7 +632,7 @@ export default function EditSessionScreen() {
                 >
                     <View
                         style={{
-                            backgroundColor: isDark ? '#111827' : '#fff',
+                            backgroundColor: isDark ? darkPalette.background : '#fff',
                             borderRadius: 22,
                             padding: 24,
                             gap: 16,
@@ -611,14 +640,14 @@ export default function EditSessionScreen() {
                     >
                         <Text
                             style={{
-                                color: isDark ? '#fff' : '#111827',
+                                color: isDark ? darkPalette.text : '#111827',
                                 fontWeight: '700',
                                 fontSize: 18,
                             }}
                         >
                             {t('workflow.seriesTitle')}
                         </Text>
-                        <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
+                        <Text style={{ color: isDark ? darkPalette.muted : '#475569' }}>
                             {t('workflow.seriesChoice')}
                         </Text>
                         {[false, true].map((all) => (
@@ -667,14 +696,14 @@ export default function EditSessionScreen() {
                     </View>
                 </View>
             </Modal>
-            <SessionFormHeader
+            <SessionFormHeader progress={headerProgress}
                 title={t('edit_session')}
                 subtitle={t('form.editIntro')}
                 onClose={() => router.back()}
             />
 
-            <View style={{ flex: 1 }}>
-                <ScrollView
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <ScrollView ref={notesScrollRef} scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                     style={{ flex: 1 }}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -685,13 +714,14 @@ export default function EditSessionScreen() {
                         alignSelf: 'center',
                     }}
                     showsVerticalScrollIndicator={false}
-                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                 >
                     <SessionFormSection kind="event" title={t('form.event')}>
+                        <SessionTypePicker value={eventType} onChange={setEventType} />
                         <View className="z-50">
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text mb-2 ml-1 "
+                                  style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                 {t('sessionNaming.label')}
                             </Text>
                             {filteredTitleTags.length > 0 && (
@@ -707,13 +737,15 @@ export default function EditSessionScreen() {
                                     {filteredTitleTags.map((tag) => (
                                         <TouchableOpacity
                                             key={tag.name}
-                                            className="bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full mr-2 border border-gray-100 dark:border-gray-700"
+                                            className="bg-gray-50 dark:bg-djDark-raised px-4 py-2 rounded-full mr-2 border border-gray-100 dark:border-djDark-border"
+                                            style={{ backgroundColor: isDark ? darkPalette.raised : '#f9fafb', borderColor: isDark ? darkPalette.border : '#f3f4f6' }}
                                             onPress={() => {
                                                 setTitle(tag.name);
                                                 Keyboard.dismiss();
                                             }}
                                         >
-                                            <Text className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+                                            <Text className="text-gray-700 dark:text-djDark-text text-sm font-medium"
+                                                  style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                                 {tag.name}
                                             </Text>
                                         </TouchableOpacity>
@@ -721,10 +753,12 @@ export default function EditSessionScreen() {
                                 </ScrollView>
                             )}
                             <View
-                                className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-[#8270e4] bg-[#f8f9fd] dark:bg-[#111625]' : 'border-[#e9ecf3] dark:border-[#252d40] bg-[#f8f9fd] dark:bg-[#111625]'}`}
+                                className={`rounded-2xl border-2 ${focusedInput === 'title' ? 'border-[#8270e4] bg-[#f8f9fd] dark:bg-djDark-field' : 'border-[#e9ecf3] dark:border-djDark-border bg-[#f8f9fd] dark:bg-djDark-field'}`}
+                                style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: focusedInput === 'title' ? (isDark ? darkPalette.primary : '#8270e4') : (isDark ? darkPalette.border : '#e9ecf3') }}
                             >
                                 <TextInput
-                                    className="px-5 py-4 text-gray-900 dark:text-white text-base font-medium"
+                                    className="px-5 py-4 text-gray-900 dark:text-djDark-text text-base font-medium"
+                                    style={{ color: isDark ? darkPalette.text : '#111827' }}
                                     accessibilityLabel={t(
                                         'sessionNaming.label',
                                     )}
@@ -736,12 +770,14 @@ export default function EditSessionScreen() {
                                     autoCapitalize="words"
                                 />
                             </View>
-                            <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2 ml-1">
+                            <Text className="text-xs text-gray-500 dark:text-djDark-muted mt-2 ml-1"
+                                  style={{ color: isDark ? darkPalette.muted : '#6b7280' }}>
                                 {t('sessionNaming.hint')}
                             </Text>
                         </View>
                         <View className="z-40">
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text mb-2 ml-1 "
+                                  style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                 {t('venue')} *
                             </Text>
 
@@ -751,16 +787,22 @@ export default function EditSessionScreen() {
                                     Keyboard.dismiss();
                                     setIsVenueModalVisible(true);
                                 }}
-                                className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-[#8270e4] bg-[#f0edfc]' : 'border-[#e9ecf3] dark:border-[#252d40] bg-[#f8f9fd] dark:bg-[#111625]'}`}
+                                className={`flex-row items-center rounded-2xl border-2 py-4 px-5 ${venueId ? 'border-[#8270e4] bg-[#f0edfc]' : 'border-[#e9ecf3] dark:border-djDark-border bg-[#f8f9fd] dark:bg-djDark-field'}`}
+                                testID="session-venue-field"
+                                style={{
+                                    backgroundColor: isDark ? darkPalette.field : venueId ? '#f0edfc' : '#f8f9fd',
+                                    borderColor: venueId ? (isDark ? darkPalette.primary : '#8270e4') : (isDark ? darkPalette.border : '#e9ecf3'),
+                                }}
                             >
                                 <Text
-                                    className={`flex-1 text-base font-medium ${venue ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}
+                                    className={`flex-1 text-base font-medium ${venue ? 'text-gray-900 dark:text-djDark-text' : 'text-gray-400'}`}
+                                    style={{ color: isDark ? (venue ? darkPalette.text : darkPalette.muted) : venue ? '#111827' : '#9CA3AF' }}
                                 >
                                     {venue || t('venue_placeholder')}
                                 </Text>
                                 <ChevronRight
                                     size={20}
-                                    color={isDark ? '#4B5563' : '#D1D5DB'}
+                                    color={isDark ? darkPalette.muted : '#D1D5DB'}
                                 />
                             </TouchableOpacity>
 
@@ -788,48 +830,53 @@ export default function EditSessionScreen() {
                     >
                         <View className="z-40">
                             <View className="flex-row justify-between items-end mb-2">
-                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1 ">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text ml-1 "
+                                      style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                     {t('date') || 'Date'} *
                                 </Text>
                             </View>
-                            <TouchableOpacity
+                            <TouchableOpacity testID="session-date-field"
                                 activeOpacity={0.8}
                                 onPress={() => {
                                     Keyboard.dismiss();
                                     setShowCalendar(!showCalendar);
                                 }}
-                                className="flex-row items-center bg-[#f8f9fd] dark:bg-[#111625] border border-[#e9ecf3] dark:border-[#252d40] rounded-xl px-4 py-3.5"
+                                className="flex-row items-center bg-[#f8f9fd] dark:bg-djDark-field border border-[#e9ecf3] dark:border-djDark-border rounded-xl px-4 py-3.5"
+                                style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                             >
-                                <Text className="flex-1 text-base text-gray-900 dark:text-white font-medium">
-                                    {`${weekday}, ${dateObj.toLocaleDateString(currentLanguage, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+                                <Text className="flex-1 text-base text-gray-900 dark:text-djDark-text font-medium"
+                                      style={{ color: isDark ? darkPalette.text : '#111827' }}>
+                                    {`${weekday}, ${dateObj.toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}`}
                                 </Text>
                             </TouchableOpacity>
 
                             {showCalendar && (
-                                <View className="mt-4 bg-[#f8f9fd] dark:bg-[#111625] rounded-3xl p-3 border border-gray-100 dark:border-gray-800 overflow-hidden">
+                                <View className="mt-4 bg-[#f8f9fd] dark:bg-djDark-field rounded-3xl p-3 border border-gray-100 dark:border-djDark-border overflow-hidden"
+                                      style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: isDark ? darkPalette.border : '#f3f4f6' }}>
                                     <Calendar
+                                        firstDay={firstDay}
                                         markingType={'custom'}
                                         theme={{
                                             backgroundColor: 'transparent',
                                             calendarBackground: 'transparent',
                                             textSectionTitleColor: isDark
-                                                ? '#9CA3AF'
+                                                ? darkPalette.muted
                                                 : '#6B7280',
                                             selectedDayBackgroundColor:
                                                 '#7666df',
                                             selectedDayTextColor: '#ffffff',
                                             todayTextColor: '#7666df',
                                             dayTextColor: isDark
-                                                ? '#D1D5DB'
+                                                ? darkPalette.muted
                                                 : '#111827',
                                             textDisabledColor: isDark
-                                                ? '#4B5563'
+                                                ? darkPalette.muted
                                                 : '#374151',
                                             arrowColor: isDark
-                                                ? '#bdb0f5'
+                                                ? darkPalette.primary
                                                 : '#7666df',
                                             monthTextColor: isDark
-                                                ? '#F9FAFB'
+                                                ? darkPalette.text
                                                 : '#111827',
                                             textDayFontWeight: '500',
                                             textMonthFontWeight: 'bold',
@@ -861,26 +908,30 @@ export default function EditSessionScreen() {
                         </View>
                         <View className="flex-row space-x-4">
                             <View className="flex-1 mr-2">
-                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text mb-2 ml-1 "
+                                      style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                     {t('start_time')}
                                 </Text>
                                 {Platform.OS === 'web' ? (
-                                    <TextInput
+                                    <TextInput testID="session-start-time-field"
                                         accessibilityLabel={t('start_time')}
                                         value={startTime}
                                         onChangeText={setStartTime}
                                         placeholder="HH:MM"
                                         maxLength={5}
-                                        className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl px-4 py-4 text-gray-900 dark:text-white border border-[#e9ecf3] dark:border-[#252d40]"
+                                        className="bg-[#f8f9fd] dark:bg-djDark-field rounded-2xl px-4 py-4 text-gray-900 dark:text-djDark-text border border-[#e9ecf3] dark:border-djDark-border"
+                                        style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', color: isDark ? darkPalette.text : '#111827', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                                     />
                                 ) : (
-                                    <TouchableOpacity
+                                    <TouchableOpacity testID="session-start-time-field"
                                         onPress={() =>
                                             setShowStartTimePicker(true)
                                         }
-                                        className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-[#252d40] py-4"
+                                        className="bg-[#f8f9fd] dark:bg-djDark-field rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-djDark-border py-4"
+                                        style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                                     >
-                                        <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">
+                                        <Text className="ml-3 text-gray-900 dark:text-djDark-text font-medium text-base"
+                                              style={{ color: isDark ? darkPalette.text : '#111827' }}>
                                             {startTime}
                                         </Text>
                                     </TouchableOpacity>
@@ -907,7 +958,8 @@ export default function EditSessionScreen() {
                                                     )
                                                 }
                                             >
-                                                <View className="bg-[#f8f9fd] dark:bg-[#111625] m-5 p-5 rounded-3xl w-full max-w-[300px]">
+                                                <View className="bg-[#f8f9fd] dark:bg-djDark-field m-5 p-5 rounded-3xl w-full max-w-[300px]"
+                                                      style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd' }}>
                                                     <DateTimePicker
                                                         value={getTimeDate(
                                                             startTime,
@@ -915,6 +967,7 @@ export default function EditSessionScreen() {
                                                         mode="time"
                                                         is24Hour={true}
                                                         display="spinner"
+                                                        themeVariant={isDark ? 'dark' : 'light'}
                                                         onChange={
                                                             onStartTimeChange
                                                         }
@@ -946,26 +999,30 @@ export default function EditSessionScreen() {
                                     ))}
                             </View>
                             <View className="flex-1 ml-2">
-                                <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                                <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text mb-2 ml-1 "
+                                      style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                     {t('end_time')}
                                 </Text>
                                 {Platform.OS === 'web' ? (
-                                    <TextInput
+                                    <TextInput testID="session-end-time-field"
                                         accessibilityLabel={t('end_time')}
                                         value={endTime}
                                         onChangeText={setEndTime}
                                         placeholder="HH:MM"
                                         maxLength={5}
-                                        className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl px-4 py-4 text-gray-900 dark:text-white border border-[#e9ecf3] dark:border-[#252d40]"
+                                        className="bg-[#f8f9fd] dark:bg-djDark-field rounded-2xl px-4 py-4 text-gray-900 dark:text-djDark-text border border-[#e9ecf3] dark:border-djDark-border"
+                                        style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', color: isDark ? darkPalette.text : '#111827', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                                     />
                                 ) : (
-                                    <TouchableOpacity
+                                    <TouchableOpacity testID="session-end-time-field"
                                         onPress={() =>
                                             setShowEndTimePicker(true)
                                         }
-                                        className="bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-[#252d40] py-4"
+                                        className="bg-[#f8f9fd] dark:bg-djDark-field rounded-2xl flex-row items-center pl-4 border border-[#e9ecf3] dark:border-djDark-border py-4"
+                                        style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                                     >
-                                        <Text className="ml-3 text-gray-900 dark:text-white font-medium text-base">
+                                        <Text className="ml-3 text-gray-900 dark:text-djDark-text font-medium text-base"
+                                              style={{ color: isDark ? darkPalette.text : '#111827' }}>
                                             {endTime}
                                         </Text>
                                     </TouchableOpacity>
@@ -990,7 +1047,8 @@ export default function EditSessionScreen() {
                                                     setShowEndTimePicker(false)
                                                 }
                                             >
-                                                <View className="bg-[#f8f9fd] dark:bg-[#111625] m-5 p-5 rounded-3xl w-full max-w-[300px]">
+                                                <View className="bg-[#f8f9fd] dark:bg-djDark-field m-5 p-5 rounded-3xl w-full max-w-[300px]"
+                                                      style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd' }}>
                                                     <DateTimePicker
                                                         value={getTimeDate(
                                                             endTime,
@@ -998,6 +1056,7 @@ export default function EditSessionScreen() {
                                                         mode="time"
                                                         is24Hour={true}
                                                         display="spinner"
+                                                        themeVariant={isDark ? 'dark' : 'light'}
                                                         onChange={
                                                             onEndTimeChange
                                                         }
@@ -1043,7 +1102,8 @@ export default function EditSessionScreen() {
                             </Text>
                         ) : null}
                         <View style={{ gap: 8, marginTop: 16 }}>
-                            <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                            <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text"
+                                  style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                 {t('location.timezone')}
                             </Text>
                             <TextInput
@@ -1053,7 +1113,8 @@ export default function EditSessionScreen() {
                                 autoCorrect={false}
                                 maxLength={80}
                                 accessibilityLabel={t('location.timezone')}
-                                className="rounded-2xl p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                                className="rounded-2xl p-4 bg-gray-50 dark:bg-djDark-surface text-gray-900 dark:text-djDark-text"
+                                style={{ backgroundColor: isDark ? darkPalette.surface : '#f9fafb', color: isDark ? darkPalette.text : '#111827' }}
                             />
                             <Text className="text-xs text-gray-500">
                                 {t('location.timezoneHint')}
@@ -1068,14 +1129,15 @@ export default function EditSessionScreen() {
                                 feeAgreement?.version === 2
                             ) && (
                                 <>
-                                    <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1 ">
+                                    <Text className="text-sm font-semibold text-gray-700 dark:text-djDark-text mb-2 ml-1 "
+                                          style={{ color: isDark ? darkPalette.text : '#374151' }}>
                                         {t('earning_type')}
                                     </Text>
                                     <View
                                         style={{
                                             flexDirection: 'row',
                                             backgroundColor: isDark
-                                                ? '#252d40'
+                                                ? darkPalette.border
                                                 : '#e9ecf3',
                                             borderRadius: 12,
                                             padding: 4,
@@ -1091,7 +1153,7 @@ export default function EditSessionScreen() {
                                                 backgroundColor:
                                                     earningType === 'free'
                                                         ? isDark
-                                                            ? '#292743'
+                                                            ? darkPalette.tint
                                                             : '#f0edfc'
                                                         : 'transparent',
                                             }}
@@ -1105,10 +1167,10 @@ export default function EditSessionScreen() {
                                                     color:
                                                         earningType === 'free'
                                                             ? isDark
-                                                                ? '#bdb0f5'
+                                                                ? darkPalette.primary
                                                                 : '#6554df'
                                                             : isDark
-                                                              ? '#9CA3AF'
+                                                              ? darkPalette.muted
                                                               : '#6B7280',
                                                 }}
                                             >
@@ -1124,7 +1186,7 @@ export default function EditSessionScreen() {
                                                 backgroundColor:
                                                     earningType === 'hourly'
                                                         ? isDark
-                                                            ? '#292743'
+                                                            ? darkPalette.tint
                                                             : '#f0edfc'
                                                         : 'transparent',
                                             }}
@@ -1138,10 +1200,10 @@ export default function EditSessionScreen() {
                                                     color:
                                                         earningType === 'hourly'
                                                             ? isDark
-                                                                ? '#bdb0f5'
+                                                                ? darkPalette.primary
                                                                 : '#6554df'
                                                             : isDark
-                                                              ? '#9CA3AF'
+                                                              ? darkPalette.muted
                                                               : '#6B7280',
                                                 }}
                                             >
@@ -1157,7 +1219,7 @@ export default function EditSessionScreen() {
                                                 backgroundColor:
                                                     earningType === 'fixed'
                                                         ? isDark
-                                                            ? '#292743'
+                                                            ? darkPalette.tint
                                                             : '#f0edfc'
                                                         : 'transparent',
                                             }}
@@ -1171,10 +1233,10 @@ export default function EditSessionScreen() {
                                                     color:
                                                         earningType === 'fixed'
                                                             ? isDark
-                                                                ? '#bdb0f5'
+                                                                ? darkPalette.primary
                                                                 : '#6554df'
                                                             : isDark
-                                                              ? '#9CA3AF'
+                                                              ? darkPalette.muted
                                                               : '#6B7280',
                                                 }}
                                             >
@@ -1216,10 +1278,10 @@ export default function EditSessionScreen() {
                                         backgroundColor:
                                             earningType === 'agreement'
                                                 ? isDark
-                                                    ? '#292743'
+                                                    ? darkPalette.tint
                                                     : '#f0edfc'
                                                 : isDark
-                                                  ? '#252d40'
+                                                  ? darkPalette.border
                                                   : '#e9ecf3',
                                         marginBottom: 16,
                                     }}
@@ -1227,7 +1289,7 @@ export default function EditSessionScreen() {
                                     <Text
                                         style={{
                                             color: isDark
-                                                ? '#bdb0f5'
+                                                ? darkPalette.primary
                                                 : '#6554df',
                                             fontWeight: '800',
                                         }}
@@ -1237,13 +1299,13 @@ export default function EditSessionScreen() {
                                     <ProLabel />
                                 </TouchableOpacity>
                             )}
+                            <CurrencyPicker value={currency} onChange={setCurrency} />
                             {(FEATURES.feeAgreements ||
                                 feeAgreement?.version === 2) &&
                                 earningType === 'agreement' && (
                                     <FeeAgreementCard
                                         value={feeAgreement}
                                         onChange={setFeeAgreement}
-                                        onCurrency={setCurrency}
                                         currency={currency}
                                         names={isCollective ? selectedDjs : []}
                                     />
@@ -1257,14 +1319,14 @@ export default function EditSessionScreen() {
                                             ? 'flex'
                                             : 'none',
                                     backgroundColor: isDark
-                                        ? '#111625'
+                                        ? darkPalette.field
                                         : '#f8f9fd',
                                     borderRadius: 16,
                                     flexDirection: 'row',
                                     alignItems: 'center',
                                     paddingLeft: 20,
                                     borderWidth: 1,
-                                    borderColor: isDark ? '#252d40' : '#e9ecf3',
+                                    borderColor: isDark ? darkPalette.border : '#e9ecf3',
                                 }}
                             >
                                 <Text
@@ -1279,17 +1341,17 @@ export default function EditSessionScreen() {
                                             : 'form.fixedAmount',
                                     )}
                                     placeholder={new Intl.NumberFormat(
-                                        currentLanguage,
+                                        numberLocale,
                                         { minimumFractionDigits: 2 },
                                     ).format(0)}
                                     placeholderTextColor={
-                                        isDark ? '#657089' : '#afb5c5'
+                                        isDark ? darkPalette.muted : '#afb5c5'
                                     }
                                     style={{
                                         flex: 1,
                                         paddingHorizontal: 16,
                                         paddingVertical: 16,
-                                        color: isDark ? '#FFFFFF' : '#111827',
+                                        color: isDark ? darkPalette.text : '#111827',
                                         fontSize: 16,
                                         fontWeight: '500',
                                     }}
@@ -1308,32 +1370,28 @@ export default function EditSessionScreen() {
                         />
                     </SessionFormSection>
 
-                    <SessionFormSection
-                        kind="booking"
-                        title={t('workflow.bookingState')}
-                    >
-                        <SessionStatusControl
-                            value={status}
-                            onChange={setStatus}
-                            allowCancelled
-                            showHeading={false}
-                        />
+
+
+                    <SessionFormSection kind="notes" title={t('sessionNotes.title')}>
+                        <SessionNotesField value={notes} onChange={setNotes} scrollRef={notesScrollRef} />
                     </SessionFormSection>
 
                     <SessionFormSection
                         kind="participants"
                         title={t('form.participants')}
                     >
-                        <View className="flex-row items-center justify-between bg-[#f8f9fd] dark:bg-[#111625] rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
+                        <View className="flex-row items-center justify-between bg-[#f8f9fd] dark:bg-djDark-field rounded-2xl p-4 border border-gray-100 dark:border-djDark-border"
+                              style={{ backgroundColor: isDark ? darkPalette.field : '#f8f9fd', borderColor: isDark ? darkPalette.border : '#f3f4f6' }}>
                             <View className="flex-row items-center">
-                                <Text className="text-base font-semibold text-gray-900 dark:text-white">
+                                <Text className="text-base font-semibold text-gray-900 dark:text-djDark-text"
+                                      style={{ color: isDark ? darkPalette.text : '#111827' }}>
                                     {t('collective_session')}
                                 </Text>
                             </View>
                             <Switch
                                 accessibilityLabel={t('collective_session')}
                                 trackColor={{
-                                    false: isDark ? '#343d52' : '#d9dce8',
+                                    false: isDark ? darkPalette.raised : '#d9dce8',
                                     true: '#8270e4',
                                 }}
                                 value={isCollective}
@@ -1377,31 +1435,33 @@ export default function EditSessionScreen() {
                                 <TouchableOpacity
                                     onPress={handlePickPoster}
                                     disabled={isUploadingPoster}
-                                    className="w-full h-40 bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-[#e9ecf3] dark:border-[#252d40] rounded-3xl items-center justify-center p-6"
+                                    className="w-full h-40 bg-gray-50 dark:bg-djDark-surface border-2 border-dashed border-[#e9ecf3] dark:border-djDark-border rounded-3xl items-center justify-center p-6 dark:border-0"
+                                    style={{ backgroundColor: isDark ? darkPalette.surface : '#f9fafb', borderColor: isDark ? darkPalette.border : '#e9ecf3' }}
                                 >
                                     {isUploadingPoster ? (
                                         <ActivityIndicator
                                             color={
-                                                isDark ? '#bdb0f5' : '#7666df'
+                                                isDark ? darkPalette.primary : '#7666df'
                                             }
                                         />
                                     ) : (
                                         <>
-                                            <View className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full items-center justify-center mb-4 shadow-sm">
+                                            <View className="w-16 h-16 bg-white dark:bg-djDark-raised rounded-full items-center justify-center mb-4 shadow-sm"
+                                                  style={{ backgroundColor: isDark ? darkPalette.raised : '#ffffff' }}>
                                                 <Camera
                                                     size={28}
                                                     color={
                                                         isDark
-                                                            ? '#D1D5DB'
+                                                            ? darkPalette.muted
                                                             : '#4B5563'
                                                     }
                                                     strokeWidth={1.5}
                                                 />
                                             </View>
-                                            <Text className="text-gray-900 dark:text-white font-bold text-lg mb-1">
+                                            <Text style={isDark && { color: darkPalette.onSurface }} className="text-gray-900 dark:text-djDark-text font-bold text-lg mb-1">
                                                 {t('add_poster')}
                                             </Text>
-                                            <Text className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                                            <Text style={isDark && { color: darkPalette.onSurface }} className="text-gray-500 dark:text-djDark-muted text-sm text-center">
                                                 {t('form.posterHint')}
                                             </Text>
                                         </>
@@ -1410,6 +1470,12 @@ export default function EditSessionScreen() {
                             )}
                         </View>
                     </SessionFormSection>
+                    <SessionFormSection kind="settings" title={t('choose_color')}>
+                        <SessionColorPicker value={selectedColor} onChange={setSelectedColor} />
+                    </SessionFormSection>
+                    {remoteSession && !remoteSession.is_guest && remoteSession.user_id === authSession?.user.id && <SessionFormSection kind="settings" title={t('sessionManagement.title')}>
+                        <SessionEditManagement session={remoteSession} status={status} onStatusChange={setStatus} busy={isChecking || isUploadingPoster || updateSessionMutation.isPending} />
+                    </SessionFormSection>}
                 </ScrollView>
 
                 {!keyboardVisible && (
@@ -1424,7 +1490,7 @@ export default function EditSessionScreen() {
                         onSave={handleSave}
                     />
                 )}
-            </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

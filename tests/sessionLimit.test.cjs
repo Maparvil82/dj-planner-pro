@@ -55,11 +55,11 @@ const input = {
     earning_type: 'free',
     earning_amount: 0,
 };
-function reset(count = 29) {
+function reset(count = 14) {
     usage = {
         count,
-        limit: 30,
-        remaining: Math.max(0, 30 - count),
+        limit: 15,
+        remaining: Math.max(0, 15 - count),
         isPro: false,
     };
     verified = usage;
@@ -67,26 +67,26 @@ function reset(count = 29) {
     creates = 0;
     rpcError = null;
 }
-test('30th creation stays free without requiring RevenueCat availability', async () => {
+test('15th creation stays free without requiring RevenueCat availability', async () => {
     reset();
     await sessionService.createSession(input, 'owner');
     assert.equal(creates, 1);
     assert.equal(syncCalls, 0);
 });
-test('31st free session triggers paywall error without creating any record', async () => {
-    reset(30);
+test('16th free session triggers paywall error without creating any record', async () => {
+    reset(15);
     await assert.rejects(
         () => sessionService.createSession(input, 'owner'),
         (e) =>
             e instanceof SessionLimitError &&
             e.requested === 1 &&
-            e.usage.count === 30,
+            e.usage.count === 15,
     );
     assert.equal(syncCalls, 1);
     assert.equal(creates, 0);
 });
 test('full recurring series is checked, and an exact fit is allowed', async () => {
-    reset(28);
+    reset(13);
     const recurring = {
         ...input,
         recurrence_type: 'daily',
@@ -97,7 +97,7 @@ test('full recurring series is checked, and an exact fit is allowed', async () =
         (e) => e instanceof SessionLimitError && e.requested === 3,
     );
     assert.equal(creates, 0);
-    reset(27);
+    reset(12);
     await sessionService.createSession(recurring, 'owner');
     assert.equal(creates, 1);
     assert.equal(syncCalls, 0);
@@ -110,7 +110,7 @@ test('verified paid account can create above quota across devices', async () => 
     assert.equal(creates, 1);
 });
 test('subscription outages cause retryable errors without downgrading or saving', async () => {
-    reset(30);
+    reset(15);
     verified = new Error('billing.verificationError');
     await assert.rejects(
         () => sessionService.createSession(input, 'owner'),
@@ -119,7 +119,7 @@ test('subscription outages cause retryable errors without downgrading or saving'
     assert.equal(creates, 0);
 });
 test('server race that consumes the final slot still returns the quota error', async () => {
-    reset(29);
+    reset(14);
     rpcError = { message: 'session_limit_reached' };
     await assert.rejects(
         () => sessionService.createSession(input, 'owner'),

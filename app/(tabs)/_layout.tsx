@@ -1,9 +1,10 @@
+import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable, isGlassEffectAPIAvailable } from 'expo-glass-effect';
+import { StyleSheet } from 'react-native';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
 import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
 import {
     AccountDrawerProvider,
-    AccountAvatarButton,
-    useOpenAccountMenu,
-    useAccountIsPro,
 } from '../../src/components/navigation/AccountDrawer';
 import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
 import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
@@ -14,6 +15,7 @@ import {
     MapPin,
     LayoutDashboard,
     Users,
+    Image as PosterIcon,
 } from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
@@ -21,6 +23,13 @@ import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
 import { FEATURES } from '../../src/config/features';
+
+// In SDK 58, href:null also redirects away from the route. Secondary pages
+// must stay registered; hide only their bottom-bar button and its space.
+const secondaryTabOptions = {
+    tabBarButton: () => null,
+    tabBarItemStyle: { display: 'none' as const },
+};
 
 export default function TabLayout() {
     return (
@@ -33,13 +42,13 @@ export default function TabLayout() {
 }
 
 function TabLayoutContent() {
+    const darkPalette = useDarkPalette();
     const { t } = useTranslation();
-    const openAccountMenu = useOpenAccountMenu();
-    const isPro = useAccountIsPro();
     const { width } = useWindowDimensions();
     const { session, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
+    const nativeGlass = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
     if (!initialized) {
         return (
@@ -48,7 +57,7 @@ function TabLayoutContent() {
                     flex: 1,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: isDark ? '#111827' : '#FFFFFF',
+                    backgroundColor: isDark ? darkPalette.background : '#FFFFFF',
                 }}
             >
                 <ActivityIndicator size="large" color="#2563EB" />
@@ -65,16 +74,23 @@ function TabLayoutContent() {
             tabBar={(props) => <ScrollTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: isDark ? '#bdb0f5' : '#6554df',
-                tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF', // gray-500 : gray-400
+                tabBarActiveTintColor: isDark ? darkPalette.primary : '#6554df',
+                tabBarInactiveTintColor: isDark ? darkPalette.muted : '#9CA3AF', // gray-500 : gray-400
                 tabBarStyle: {
-                    backgroundColor: isDark ? '#111827' : '#fbfbfbff', // gray-900 : white
-                    borderTopWidth: 1,
-                    borderTopColor: isDark ? '#1F2937' : '#F3F4F6', // gray-800 : gray-100
+                    backgroundColor: 'transparent',
+                    borderTopWidth: 0,
                     elevation: 0,
-                    paddingBottom: 5,
-                    height: 80,
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    height: 60,
                 },
+                tabBarBackground: () => nativeGlass ? (
+                    <GlassView glassEffectStyle="regular" colorScheme={isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
+                ) : (
+                    <BlurView intensity={85} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill}>
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(24,24,38,0.48)' : 'rgba(255,255,255,0.45)' }]} />
+                    </BlurView>
+                ),
                 tabBarLabelStyle: {
                     fontSize: width < 360 ? 9 : 10,
                     fontWeight: '600',
@@ -114,7 +130,7 @@ function TabLayoutContent() {
                                 flex: 1,
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                paddingBottom: 16,
+                                paddingBottom: 0,
                             }}
                         >
                             <AddSessionButton />
@@ -136,16 +152,15 @@ function TabLayoutContent() {
                 }}
             />
 
+            <ExpoTabs.Screen name="calendar" options={secondaryTabOptions} />
             <ExpoTabs.Screen
                 name="history"
-                options={{
-                    href: null,
-                }}
+                options={secondaryTabOptions}
             />
             <ExpoTabs.Screen
                 name="venues"
                 options={{
-                    href: null,
+                    ...secondaryTabOptions,
                     title: t('venues_title'),
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
@@ -163,19 +178,13 @@ function TabLayoutContent() {
                 }}
             />
             <ExpoTabs.Screen
-                name="account"
-                listeners={{
-                    tabPress: (event) => {
-                        event.preventDefault();
-                        openAccountMenu();
-                    },
-                }}
+                name="carteles"
                 options={{
-                    title: isPro ? `${t('tab_you')} · Pro` : t('tab_you'),
-                    tabBarAccessibilityLabel: t('accountMenu.open'),
-                    tabBarIcon: () => <AccountAvatarButton tab />,
+                    title: t('accountMenu.posters'),
+                    tabBarIcon: ({ color, size }) => <PosterIcon color={color} size={size} />,
                 }}
             />
+            <ExpoTabs.Screen name="account" options={secondaryTabOptions} />
         </ExpoTabs>
     );
 }

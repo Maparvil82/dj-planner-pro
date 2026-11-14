@@ -51,15 +51,15 @@ export function SessionCollaborationDetails({ session }: { session: Session }) {
                 borderRadius: 24,
                 backgroundColor: c.card,
                 borderColor: c.border,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
             }}
         >
-            <Text style={{ color: c.fg, fontSize: 17, fontWeight: '800' }}>
+            <Text style={[{ color: c.fg, fontSize: 17, fontWeight: '800' }, c.dark && { color: c.cardText }]}>
                 {t('collaboration.sessionTeam')}
             </Text>
             {session.is_guest ? (
                 <>
-                    <Text style={{ color: c.muted, lineHeight: 21 }}>
+                    <Text style={[{ color: c.muted, lineHeight: 21 }, c.dark && { color: c.cardText }]}>
                         {t('collaboration.guestHint', {
                             name: session.owner_name || 'DJ',
                         })}
@@ -126,27 +126,27 @@ export function SessionCollaborationDetails({ session }: { session: Session }) {
                                     style={{ flex: 1, paddingVertical: 10 }}
                                 >
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.accent,
                                             fontSize: 14,
                                             fontWeight: '600',
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {profile.artist_name}
                                     </Text>
                                 </TouchableOpacity>
                             ) : (
                                 <Text
-                                    style={{
+                                    style={[{
                                         color: c.fg,
                                         fontSize: 14,
                                         flex: 1,
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {person.artist_name}
                                 </Text>
                             )}
-                            <Text style={{ color: c.muted, fontSize: 11 }}>
+                            <Text style={[{ color: c.muted, fontSize: 11 }, c.dark && { color: c.cardText }]}>
                                 {t(`collaboration.${person.status}`)}
                             </Text>
                         </View>

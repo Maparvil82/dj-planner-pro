@@ -1,3 +1,7 @@
+import { useSessionToolBack } from '../src/hooks/useSessionToolBack';
+import { useSessionToolContext } from '../src/hooks/useSessionToolContext';
+import { ScrollHeaderScope } from '../src/components/ui/ScrollHeaderScope';
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -19,7 +23,6 @@ import {
 import {
     Redirect,
     useFocusEffect,
-    useLocalSearchParams,
     useRouter,
 } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,13 +31,13 @@ import { guestSessions } from '../src/utils/guestSessions';
 import { sessionPhase } from '../src/utils/sessionWorkflow';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { useTranslation } from '../src/i18n/useTranslation';
-import { sessionService } from '../src/services/sessions';
 import {
     guestService,
     guestSearch,
     type EventGuest,
 } from '../src/services/guests';
 import { sessionDisplayTitle } from '../src/utils/sessionNaming';
+import { SessionSelectionEmpty } from '../src/components/sessionTools/SessionSelectionEmpty';
 import { SessionFormHeader } from '../src/components/sessions/SessionFormLayout';
 import {
     CommunityButton,
@@ -106,16 +109,19 @@ function Stepper({
 }
 
 export default function GuestsScreen() {
+    const goBack = useSessionToolBack();
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const router = useRouter(),
         c = useCommunityColors(),
-        { t, currentLanguage } = useTranslation(),
+        { t, currentLanguage, dateLocale } = useTranslation(),
         insets = useSafeAreaInsets(),
         { height } = useWindowDimensions();
     const userId = useAuthStore((s) => s.session?.user.id),
         qc = useQueryClient();
-    const params = useLocalSearchParams<{ sessionId?: string }>();
-    const [sessionId, setSessionId] = useState(params.sessionId || ''),
-        [search, setSearch] = useState('');
+    const ready = useAuthStore((s) => s.initialized && s.hasHydrated);
+    const { sessionId, setSessionId, isSessionBound, sessions } = useSessionToolContext();
+    const [search, setSearch] = useState('');
+
     const [view, setView] = useState<'upcoming' | 'history'>('upcoming'),
         [correctionSession, setCorrectionSession] = useState(''),
         [now, setNow] = useState(() => Date.now());
@@ -137,19 +143,13 @@ export default function GuestsScreen() {
     const lock = useRef(false),
         newId = useRef(''),
         request = useRef<{ signature: string; id: string } | null>(null);
-    const sessions = useQuery({
-        queryKey: ['sessions', 'all', userId],
-        queryFn: () => sessionService.getAllSessions(userId!),
-        enabled: !!userId,
-        staleTime: 0,
-    });
     const event = sessions.data?.find(
         (s) => s.id === sessionId && s.user_id === userId && !s.is_guest,
     );
     const history = useQuery({
         queryKey: ['guest-history', userId],
         queryFn: () => guestService.sessionsWithLists(),
-        enabled: !!userId && !event && view === 'history',
+        enabled: !!userId && !isSessionBound && !event && view === 'history',
         staleTime: 0,
     });
     const candidates = useMemo(
@@ -295,23 +295,24 @@ export default function GuestsScreen() {
             request.current = null;
         }, true);
     }
+    if (!ready) return <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}><ActivityIndicator color={c.accent} /></SafeAreaView>;
     if (!userId) return <Redirect href="/(auth)/login" />;
     return (
         <SafeAreaView
             edges={['top', 'bottom']}
             style={{ flex: 1, backgroundColor: c.bg }}
         >
-            <SessionFormHeader
+            <SessionFormHeader navigationBack progress={headerProgress}
                 title={t('guests.title')}
                 subtitle={
                     event
                         ? sessionDisplayTitle(event, t)
-                        : t('guests.selectSession')
+                        : isSessionBound ? '' : t('guests.selectSession')
                 }
-                onClose={() => router.back()}
+                onClose={goBack}
             />
             {!event ? (
-                <ScrollView
+                <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{ padding: 20, gap: 12 }}
                 >
@@ -324,9 +325,11 @@ export default function GuestsScreen() {
                                 void sessions.refetch();
                             }}
                         />
+                    ) : isSessionBound ? (
+                        <CommunityMessage title={t('tools.invalidSession')} />
                     ) : (
                         <>
-                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <View style={{ flexDirection: 'row', gap: 10, display: sessions.data?.some(s => s.user_id === userId && !s.is_guest) ? 'flex' : 'none' }}>
                                 {(['upcoming', 'history'] as const).map(
                                     (key) => (
                                         <View key={key} style={{ flex: 1 }}>
@@ -352,28 +355,11 @@ export default function GuestsScreen() {
                                     }}
                                 />
                             ) : candidates.length === 0 ? (
-                                <>
-                                    <CommunityMessage
-                                        title={t(
-                                            view === 'history'
-                                                ? 'guests.emptyHistory'
-                                                : 'guests.noUpcoming',
-                                        )}
-                                        hint={t(
-                                            view === 'history'
-                                                ? 'guests.emptyHistoryHint'
-                                                : 'guests.noSessionsHint',
-                                        )}
-                                    />
-                                    {view === 'upcoming' && (
-                                        <CommunityButton
-                                            label={t('guests.createSession')}
-                                            onPress={() =>
-                                                router.push('/add-session')
-                                            }
-                                        />
-                                    )}
-                                </>
+                                view === 'history' ? (
+                                    <CommunityMessage title={t('guests.emptyHistory')} hint={t('guests.emptyHistoryHint')} />
+                                ) : (
+                                    <SessionSelectionEmpty purpose="guests" />
+                                )
                             ) : (
                                 <>
                                     <TextInput
@@ -405,7 +391,7 @@ export default function GuestsScreen() {
                                                     padding: 18,
                                                     borderRadius: 18,
                                                     backgroundColor: c.card,
-                                                    borderWidth: 1,
+                                                    borderWidth: c.dark ? 0 : 1,
                                                     borderColor: c.border,
                                                     gap: 6,
                                                 }}
@@ -420,7 +406,7 @@ export default function GuestsScreen() {
                                                     {new Date(
                                                         `${s.date}T12:00:00`,
                                                     ).toLocaleDateString(
-                                                        currentLanguage,
+                                                        dateLocale,
                                                         {
                                                             day: 'numeric',
                                                             month: 'short',
@@ -539,7 +525,7 @@ export default function GuestsScreen() {
                                     onPress={openAdd}
                                 />
                             </View>
-                            <CommunityButton
+                            {!isSessionBound && <CommunityButton
                                 secondary
                                 label={t('guests.changeSession')}
                                 onPress={() => {
@@ -547,7 +533,7 @@ export default function GuestsScreen() {
                                     setCorrectionSession('');
                                     setSearch('');
                                 }}
-                            />
+                            />}
                         </View>
                         <TextInput
                             style={field}
@@ -558,7 +544,7 @@ export default function GuestsScreen() {
                             onChangeText={setSearch}
                         />
                     </View>
-                    <FlatList
+                    <FlatList scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                         data={rows.filter((g) =>
                             guestSearch(g.full_name).includes(
                                 guestSearch(search),
@@ -613,7 +599,7 @@ export default function GuestsScreen() {
                                 style={{
                                     backgroundColor: c.card,
                                     borderRadius: 18,
-                                    borderWidth: 1,
+                                    borderWidth: c.dark ? 0 : 1,
                                     borderColor: c.border,
                                     padding: 16,
                                     gap: 10,
@@ -708,7 +694,7 @@ export default function GuestsScreen() {
                             paddingBottom: Math.max(insets.bottom, 20),
                         }}
                     >
-                        <SessionFormHeader
+                        <ScrollHeaderScope>{({progress:modalProgress,onScroll:onModalScroll,onScrollBeginDrag:onModalBeginDrag}) => <><SessionFormHeader progress={modalProgress}
                             title={
                                 mode === 'access'
                                     ? selected?.full_name || t('guests.title')
@@ -726,7 +712,7 @@ export default function GuestsScreen() {
                             }
                             onClose={close}
                         />
-                        <ScrollView
+                        <ScrollView onScrollBeginDrag={onModalBeginDrag} onTouchStart={onModalBeginDrag} onScroll={onModalScroll} scrollEventThrottle={16}
                             keyboardShouldPersistTaps="handled"
                             automaticallyAdjustKeyboardInsets={false}
                             contentContainerStyle={{
@@ -917,7 +903,7 @@ export default function GuestsScreen() {
                                     )}
                                 </>
                             )}
-                        </ScrollView>
+                        </ScrollView></>}</ScrollHeaderScope>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>

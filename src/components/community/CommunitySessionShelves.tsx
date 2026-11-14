@@ -1,6 +1,8 @@
+import { StorageImage as Image } from '../ui/StorageImage';
+import { CommunitySafetyMenu } from './CommunitySafetyMenu';
 import { useState } from 'react';
 import {
-    Image,
+    FlatList,
     Modal,
     ScrollView,
     Text,
@@ -20,59 +22,35 @@ import {
     CommunityMessage,
     useCommunityColors,
 } from './CommunityUI';
-type Shelf = ReturnType<typeof useCommunitySessionShelf>;
-export function CommunitySessionShelves({
-    following,
-    city,
-    rest,
-    homeCity,
-    filtered,
+export function CommunityShelfCard({
+    item,
+    square,
+    onSelect,
 }: {
-    following: Shelf;
-    city: Shelf;
-    rest: Shelf;
-    homeCity: string;
-    filtered: boolean;
+    item: CommunitySession;
+    square: boolean;
+    onSelect: (item: CommunitySession) => void;
 }) {
     const c = useCommunityColors();
-    const { t, currentLanguage } = useTranslation();
-    const router = useRouter();
-    const [selected, setSelected] = useState<CommunitySession | null>(null);
+    const { t, dateLocale } = useTranslation();
     const dateLabel = (item: CommunitySession) =>
-        new Date(`${item.date}T12:00:00`).toLocaleDateString(currentLanguage, {
+        new Date(`${item.date}T12:00:00`).toLocaleDateString(dateLocale, {
             day: 'numeric',
             month: 'short',
         });
-    const groups = [
-        {
-            query: following,
-            title: t('sessionShelves.following'),
-            square: true,
-        },
-        {
-            query: city,
-            title: t('sessionShelves.city', { city: homeCity }),
-            square: true,
-        },
-        { query: rest, title: t('sessionShelves.rest'), square: false },
-    ];
-    const empty = groups.every(
-        (group) =>
-            group.query.isSuccess && !group.query.data.pages.flat().length,
-    );
-    const card = (item: CommunitySession, square: boolean) => (
+    return (
         <TouchableOpacity
             key={item.session_id}
             accessibilityRole="button"
             accessibilityLabel={`${t('sessionShelves.open')}: ${sessionDisplayTitle(item, t)}`}
-            onPress={() => setSelected(item)}
+            onPress={() => onSelect(item)}
             style={{
                 width: square ? 200 : '100%',
                 height: square ? 200 : 112,
                 borderRadius: 20,
                 overflow: 'hidden',
                 backgroundColor: c.card,
-                borderWidth: square ? 0 : 1,
+                borderWidth: c.dark ? 0 : square ? 0 : 1,
                 borderColor: c.border,
             }}
         >
@@ -94,7 +72,7 @@ export function CommunitySessionShelves({
                             />
                         ) : (
                             <LinearGradient
-                                colors={['#6554df', '#302765']}
+                                colors={c.dark ? [c.card, c.tint] : ['#6554df', '#302765']}
                                 style={{ flex: 1 }}
                             />
                         )}
@@ -111,7 +89,7 @@ export function CommunitySessionShelves({
                         }}
                     >
                         <Text
-                            style={{
+                            style={[{
                                 alignSelf: 'flex-start',
                                 color: '#fff',
                                 backgroundColor: 'rgba(0,0,0,0.4)',
@@ -120,25 +98,25 @@ export function CommunitySessionShelves({
                                 paddingVertical: 5,
                                 fontSize: 12,
                                 fontWeight: '800',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {dateLabel(item)}
                         </Text>
                         <View style={{ gap: 4 }}>
                             <Text
                                 numberOfLines={2}
-                                style={{
+                                style={[{
                                     color: '#fff',
                                     fontSize: 18,
                                     lineHeight: 22,
                                     fontWeight: '800',
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {sessionDisplayTitle(item, t)}
                             </Text>
                             <Text
                                 numberOfLines={1}
-                                style={{ color: '#edeaf8', fontSize: 11 }}
+                                style={[{ color: '#edeaf8', fontSize: 11 }, c.dark && { color: c.cardText }]}
                             >
                                 {[item.venue, item.city]
                                     .filter(Boolean)
@@ -146,11 +124,11 @@ export function CommunitySessionShelves({
                             </Text>
                             <Text
                                 numberOfLines={1}
-                                style={{
+                                style={[{
                                     color: '#fff',
                                     fontSize: 12,
                                     fontWeight: '600',
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {item.artist_name}
                             </Text>
@@ -186,11 +164,11 @@ export function CommunitySessionShelves({
                     )}
                     <View style={{ flex: 1, gap: 4 }}>
                         <Text
-                            style={{
+                            style={[{
                                 color: c.accent,
                                 fontSize: 11,
                                 fontWeight: '800',
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {dateLabel(item)}
                             {item.start_time
@@ -199,17 +177,17 @@ export function CommunitySessionShelves({
                         </Text>
                         <Text
                             numberOfLines={1}
-                            style={{
+                            style={[{
                                 color: c.fg,
                                 fontWeight: '800',
                                 fontSize: 16,
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {sessionDisplayTitle(item, t)}
                         </Text>
                         <Text
                             numberOfLines={1}
-                            style={{ color: c.muted, fontSize: 12 }}
+                            style={[{ color: c.muted, fontSize: 12 }, c.dark && { color: c.cardText }]}
                         >
                             {[item.venue, item.city]
                                 .filter(Boolean)
@@ -217,7 +195,7 @@ export function CommunitySessionShelves({
                         </Text>
                         <Text
                             numberOfLines={1}
-                            style={{ color: c.fg, fontSize: 11 }}
+                            style={[{ color: c.fg, fontSize: 11 }, c.dark && { color: c.cardText }]}
                         >
                             {item.artist_name}
                         </Text>
@@ -225,6 +203,65 @@ export function CommunitySessionShelves({
                 </View>
             )}
         </TouchableOpacity>
+    );
+}
+
+type Shelf = ReturnType<typeof useCommunitySessionShelf>;
+export function CommunitySessionShelves({
+    following,
+    city,
+    rest,
+    homeCity,
+    filtered,
+    virtualRest = false,
+    selectedItem,
+    onSelect,
+}: {
+    following: Shelf;
+    city: Shelf;
+    rest: Shelf;
+    homeCity: string;
+    filtered: boolean;
+    virtualRest?: boolean;
+    selectedItem?: CommunitySession | null;
+    onSelect?: (item: CommunitySession | null) => void;
+}) {
+    const c = useCommunityColors();
+    const { t, currentLanguage, dateLocale } = useTranslation();
+    const router = useRouter();
+    const [internalSelected, setInternalSelected] =
+        useState<CommunitySession | null>(null);
+    const selected = onSelect ? selectedItem : internalSelected;
+    const setSelected = onSelect || setInternalSelected;
+    const dateLabel = (item: CommunitySession) =>
+        new Date(`${item.date}T12:00:00`).toLocaleDateString(dateLocale, {
+            day: 'numeric',
+            month: 'short',
+        });
+    const groups = [
+        {
+            query: following,
+            title: t('sessionShelves.following'),
+            square: true,
+        },
+        {
+            query: city,
+            title: t('sessionShelves.city', { city: homeCity }),
+            square: true,
+        },
+        { query: rest, title: t('sessionShelves.rest'), square: false },
+    ];
+    const empty = groups.every(
+        (group) =>
+            group.query.isSuccess && !group.query.data.pages.flat().length,
+    );
+    const card = (item: CommunitySession, square: boolean) => (
+        <CommunityShelfCard
+            key={item.session_id}
+            item={item}
+            square={square}
+            onSelect={setSelected}
+        />
     );
     return (
         <View style={{ gap: 24 }}>
@@ -254,34 +291,47 @@ export function CommunitySessionShelves({
                                     void query.refetch();
                                 }}
                             />
-                        ) : square ? (
-                            <ScrollView
+                        ) : !square && virtualRest ? null : square ? (
+                            <FlatList
                                 horizontal
+                                data={items}
+                                keyExtractor={(item) => item.session_id}
+                                initialNumToRender={5}
+                                maxToRenderPerBatch={5}
+                                windowSize={3}
                                 showsHorizontalScrollIndicator={false}
+                                renderItem={({ item }) => card(item, true)}
                                 contentContainerStyle={{
                                     gap: 12,
                                     paddingBottom: 4,
                                 }}
-                            >
-                                {items.map((item) => card(item, true))}
-                                {query.hasNextPage && (
-                                    <View
-                                        style={{
-                                            width: 100,
-                                            justifyContent: 'center',
-                                        }}
-                                    >
-                                        <CommunityButton
-                                            secondary
-                                            label={t('community.loadMore')}
-                                            busy={query.isFetchingNextPage}
-                                            onPress={() => {
-                                                void query.fetchNextPage();
-                                            }}
-                                        />
-                                    </View>
-                                )}
-                            </ScrollView>
+                                ListFooterComponent={
+                                    <>
+                                        {' '}
+                                        {query.hasNextPage && (
+                                            <View
+                                                style={{
+                                                    width: 100,
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
+                                                <CommunityButton
+                                                    secondary
+                                                    label={t(
+                                                        'community.loadMore',
+                                                    )}
+                                                    busy={
+                                                        query.isFetchingNextPage
+                                                    }
+                                                    onPress={() => {
+                                                        void query.fetchNextPage();
+                                                    }}
+                                                />
+                                            </View>
+                                        )}
+                                    </>
+                                }
+                            />
                         ) : (
                             <View style={{ gap: 10 }}>
                                 {items.map((item) => card(item, false))}
@@ -334,6 +384,19 @@ export function CommunitySessionShelves({
                             onPress={() => setSelected(null)}
                         />
                         {selected && (
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <CommunitySafetyMenu
+                                    target={{
+                                        kind: 'session',
+                                        id: selected.session_id,
+                                        authorId: selected.author_id,
+                                        name: selected.artist_name,
+                                    }}
+                                    onHidden={() => setSelected(null)}
+                                />
+                            </View>
+                        )}
+                        {selected && (
                             <>
                                 {selected.poster_url && (
                                     <Image
@@ -368,7 +431,7 @@ export function CommunitySessionShelves({
                                 >
                                     {new Date(
                                         `${selected.date}T12:00:00`,
-                                    ).toLocaleDateString(currentLanguage, {
+                                    ).toLocaleDateString(dateLocale, {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric',

@@ -1,3 +1,7 @@
+import { Animated } from 'react-native';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { ScrollHeaderContainer } from '../../src/components/ui/ScrollHeaderContainer';
+import { CommunitySafetyMenu } from '../../src/components/community/CommunitySafetyMenu';
 import { ProfileShareSheet } from '../../src/components/community/ProfileShareSheet';
 import { ProfileMixes } from '../../src/components/community/ProfileMixes';
 import { canUseDJProfile } from '../../src/utils/communityProfile';
@@ -41,6 +45,7 @@ import {
     useCommunityProfile,
 } from '../../src/hooks/useCommunityQuery';
 export default function CommunityProfileScreen() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const params = useLocalSearchParams<{ id: string; preview?: string }>();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const c = useCommunityColors();
@@ -91,17 +96,13 @@ export default function CommunityProfileScreen() {
                     scrolled || !person ? (c.dark ? 'light' : 'dark') : 'light'
                 }
             />
-            <View
+            <ScrollHeaderContainer progress={headerProgress} hasIcons style={{position:'absolute',top:0,left:0,right:0,zIndex:10,backgroundColor:scrolled ? c.bg : 'transparent'}}>
+<View
                 style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 10,
                     paddingHorizontal: 20,
                     paddingTop: insets.top + 10,
                     paddingBottom: 10,
-                    backgroundColor: scrolled || !person ? c.bg : 'transparent',
+                    backgroundColor: 'transparent',
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 12,
@@ -132,23 +133,24 @@ export default function CommunityProfileScreen() {
                         color={scrolled || !person ? c.fg : '#fff'}
                     />
                 </TouchableOpacity>
-                <Text
+                <Animated.Text
                     style={{
                         color: c.fg,
-                        opacity: scrolled || !person ? 1 : 0,
+                        opacity: 1,
                         fontSize: 15,
                         fontWeight: '700',
                         flex: 1,
                     }}
                 >
-                    {scrolled && person
+                    {person
                         ? person.artist_name
                         : t(
                               own
                                   ? 'unifiedProfile.previewTitle'
                                   : 'community.djProfile',
                           )}
-                </Text>
+                </Animated.Text>
+                {person && !own && <CommunitySafetyMenu light={!scrolled} target={{kind:'profile',id,authorId:id,name:person.artist_name}} onHidden={() => router.replace('/(tabs)/community')} />}
                 {person?.is_visible && (
                     <TouchableOpacity
                         accessibilityRole="button"
@@ -169,6 +171,7 @@ export default function CommunityProfileScreen() {
                     </TouchableOpacity>
                 )}
             </View>
+</ScrollHeaderContainer>
             {person?.is_visible && (
                 <ProfileShareSheet
                     person={person}
@@ -177,12 +180,12 @@ export default function CommunityProfileScreen() {
                 />
             )}
             <ScrollView
-                onScroll={(event) => {
+                onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={event=>{onHeaderScroll(event);((event) => {
                     const next = event.nativeEvent.contentOffset.y > 170;
                     setScrolled((previous) =>
                         previous === next ? previous : next,
                     );
-                }}
+                })(event);}}
                 scrollEventThrottle={16}
                 refreshControl={
                     <RefreshControl

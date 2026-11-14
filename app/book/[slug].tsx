@@ -1,7 +1,8 @@
+import { StorageImage as Image } from '../../src/components/ui/StorageImage';
 import { FEATURES } from '../../src/config/features';
 import { sessionDisplayTitle } from '../../src/utils/sessionNaming';
 import { useRef, useState } from 'react';
-import { View, Image, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -39,7 +40,7 @@ function PublicBookingContent() {
         preview?: string;
     }>();
     const own = useAuthStore((s) => s.user?.id);
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale } = useTranslation();
     const [showForm, setShowForm] = useState(false);
     const [externalError, setExternalError] = useState<Error | null>(null);
     const [form, setForm] = useState({
@@ -256,7 +257,7 @@ function PublicBookingContent() {
                                         {s.title?.trim() ? `${s.venue} · ` : ''}
                                         {new Date(
                                             s.date + 'T12:00:00',
-                                        ).toLocaleDateString(currentLanguage)}
+                                        ).toLocaleDateString(dateLocale)}
                                     </BookingText>
                                 </BookingCard>
                             ))}

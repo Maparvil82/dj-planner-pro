@@ -1,3 +1,4 @@
+import { useDarkPalette } from '../../contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import type { Session } from '../../types/session';
@@ -11,8 +12,9 @@ import {
 import { confirmAction } from '../../utils/confirmAction';
 import { useTheme } from '../../contexts/ThemeContext';
 
-export function SessionPayments({ session }: { session: Session }) {
-    const { t, currentLanguage } = useTranslation();
+export function SessionPayments({ session, embedded = false }: { session: Session; embedded?: boolean }) {
+    const darkPalette = useDarkPalette();
+    const { t, formatMoney, numberLocale } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
     const update = useUpdateSessionMutation();
@@ -25,7 +27,7 @@ export function SessionPayments({ session }: { session: Session }) {
         session.earning_type === 'agreement' && !session.fee_agreement?.settled;
     const cancelled = session.status === 'cancelled';
     const money = (value: number) =>
-        `${value.toLocaleString(currentLanguage, { maximumFractionDigits: 2 })} ${session.currency || '€'}`;
+        formatMoney(value, session.currency || '€');
     const save = async (amount: number) => {
         if (!Number.isFinite(amount) || amount < 0 || amount > 9999999999.99) {
             Alert.alert(t('error'), t('paymentState.invalid'));
@@ -40,29 +42,9 @@ export function SessionPayments({ session }: { session: Session }) {
             Alert.alert(t('error'), t('error_saving_session'));
         }
     };
-    const changeCancellation = async () => {
-        if (
-            !cancelled &&
-            !(await confirmAction(
-                t('paymentState.cancelAction'),
-                t('paymentState.cancelConfirm'),
-                t('cancel'),
-                t('paymentState.cancelAction'),
-            ))
-        )
-            return;
-        try {
-            await update.mutateAsync({
-                sessionId: session.id,
-                input: { status: cancelled ? 'confirmed' : 'cancelled' },
-            });
-        } catch {
-            Alert.alert(t('error'), t('error_saving_session'));
-        }
-    };
     if (session.is_guest) return null;
-    const fg = dark ? '#f5f5fa' : '#222438';
-    const muted = dark ? '#a6afc1' : '#737b8d';
+    const fg = dark ? darkPalette.text : '#222438';
+    const muted = dark ? darkPalette.muted : '#737b8d';
     const button = {
         borderRadius: 14,
         paddingVertical: 13,
@@ -73,18 +55,18 @@ export function SessionPayments({ session }: { session: Session }) {
     return (
         <View
             style={{
-                marginBottom: 24,
+                marginBottom: embedded ? 0 : 24,
                 borderRadius: 22,
-                borderWidth: 1,
-                borderColor: dark ? '#293044' : '#e9eaf2',
-                backgroundColor: dark ? '#171c2b' : '#fff',
-                padding: 20,
+                borderWidth: embedded || dark ? 0 : 1,
+                borderColor: dark ? darkPalette.border : '#e9eaf2',
+                backgroundColor: dark ? darkPalette.surface : '#fff',
+                padding: embedded ? 0 : 20,
                 gap: 16,
             }}
         >
-            <Text style={{ fontSize: 17, fontWeight: '800', color: fg }}>
+            {!embedded && <Text style={[{ fontSize: 17, fontWeight: '800', color: fg }, dark && { color: darkPalette.onSurface }]}>
                 {t('paymentState.title')}
-            </Text>
+            </Text>}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
                 {[
                     [t('paymentState.agreed'), total],
@@ -95,20 +77,20 @@ export function SessionPayments({ session }: { session: Session }) {
                 ].map(([label, value]) => (
                     <View key={String(label)} style={{ flexGrow: 1 }}>
                         <Text
-                            style={{
+                            style={[{
                                 fontSize: 11,
                                 color: muted,
                                 marginBottom: 5,
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {String(label)}
                         </Text>
                         <Text
-                            style={{
+                            style={[{
                                 fontSize: 18,
                                 fontWeight: '800',
                                 color: fg,
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {unsettled && label !== t('payment_received')
                                 ? '—'
@@ -117,14 +99,13 @@ export function SessionPayments({ session }: { session: Session }) {
                     </View>
                 ))}
             </View>
-            <Text style={{ color: muted, fontSize: 12, lineHeight: 18 }}>
+            <Text style={[{ color: muted, fontSize: 12, lineHeight: 18 }, dark && { color: darkPalette.onSurface }]}>
                 {session.earning_type === 'agreement'
                     ? t(unsettled ? 'agreement.pending' : 'agreement.settled')
                     : session.earning_type === 'hourly'
                       ? t('calc_hourly', {
-                            amount: session.earning_amount,
-                            currency: session.currency || '€',
-                            hours: sessionDuration(session).toFixed(1),
+                            amount: money(session.earning_amount),
+                            hours: new Intl.NumberFormat(numberLocale, { maximumFractionDigits: 2 }).format(sessionDuration(session)),
                         })
                       : t(
                             session.earning_type === 'free'
@@ -133,13 +114,13 @@ export function SessionPayments({ session }: { session: Session }) {
                         )}
             </Text>
             {cancelled && (
-                <Text style={{ fontSize: 12, lineHeight: 18, color: muted }}>
+                <Text style={[{ fontSize: 12, lineHeight: 18, color: muted }, dark && { color: darkPalette.onSurface }]}>
                     {t('paymentState.cancelledMoney')}
                 </Text>
             )}
             {(total > 0 || Number(session.amount_paid) > 0) && (
                 <>
-                    <Text style={{ fontSize: 12, color: muted }}>
+                    <Text style={[{ fontSize: 12, color: muted }, dark && { color: darkPalette.onSurface }]}>
                         {t('paymentState.receivedHint')}
                     </Text>
                     <TextInput
@@ -150,7 +131,7 @@ export function SessionPayments({ session }: { session: Session }) {
                         accessibilityLabel={t('payment_total_received')}
                         style={{
                             borderWidth: 1,
-                            borderColor: dark ? '#374151' : '#e5e7ef',
+                            borderColor: dark ? darkPalette.raised : '#e5e7ef',
                             borderRadius: 13,
                             padding: 14,
                             fontSize: 16,
@@ -169,12 +150,12 @@ export function SessionPayments({ session }: { session: Session }) {
                         }
                         style={{
                             ...button,
-                            backgroundColor: dark ? '#302a4e' : '#f0edff',
+                            backgroundColor: dark ? darkPalette.tint : '#f0edff',
                         }}
                     >
                         <Text
                             style={{
-                                color: dark ? '#b9abff' : '#6954df',
+                                color: dark ? darkPalette.primary : '#6954df',
                                 fontWeight: '700',
                             }}
                         >
@@ -198,34 +179,16 @@ export function SessionPayments({ session }: { session: Session }) {
                                 )
                                     await save(total);
                             }}
-                            style={{ ...button, backgroundColor: '#6954df' }}
+                            style={{ ...button, backgroundColor: dark ? darkPalette.primary : '#6954df' }}
                         >
-                            <Text style={{ color: '#fff', fontWeight: '700' }}>
+                            <Text style={{ color: dark ? darkPalette.onPrimary : '#fff', fontWeight: '700' }}>
                                 {t('payment_mark_paid')}
                             </Text>
                         </TouchableOpacity>
                     )}
                 </>
             )}
-            <TouchableOpacity
-                disabled={update.isPending}
-                accessibilityRole="button"
-                onPress={changeCancellation}
-                style={button}
-            >
-                <Text
-                    style={{
-                        color: cancelled ? '#6954df' : '#c35671',
-                        fontWeight: '700',
-                    }}
-                >
-                    {t(
-                        cancelled
-                            ? 'paymentState.reactivate'
-                            : 'paymentState.cancelAction',
-                    )}
-                </Text>
-            </TouchableOpacity>
+
         </View>
     );
 }

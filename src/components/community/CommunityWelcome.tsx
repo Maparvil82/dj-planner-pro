@@ -1,10 +1,5 @@
-import {
-    View,
-    Text,
-    Image,
-    ScrollView,
-    useWindowDimensions,
-} from 'react-native';
+import { StorageImage as Image } from '../ui/StorageImage';
+import { View, Text, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -38,16 +33,16 @@ export function CommunityWelcome() {
                         height: Math.min(310, Math.max(185, height * 0.31)),
                         borderRadius: 30,
                         overflow: 'hidden',
-                        backgroundColor: '#211539',
+                        backgroundColor: '#171717',
                     }}
                 >
                     <Image
-                        source={require('../../../assets/community/dj-welcome.jpg')}
+                        source={require('../../../assets/community/community-booth-photo.jpg')}
                         resizeMode="cover"
                         style={{ width: '100%', height: '100%' }}
                     />
                     <LinearGradient
-                        colors={['transparent', 'rgba(23,12,43,.65)']}
+                        colors={['transparent', 'rgba(0,0,0,.65)']}
                         style={{
                             position: 'absolute',
                             bottom: 0,

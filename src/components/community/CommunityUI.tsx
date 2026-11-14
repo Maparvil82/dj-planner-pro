@@ -1,41 +1,24 @@
+import darkPalette from '../../theme/darkPalette.json';
+import { StorageImage as Image } from '../ui/StorageImage';
+import { CommunitySafetyMenu } from './CommunitySafetyMenu';
 import {
     sessionDisplayTitle,
     sessionDisplaySubtitle,
 } from '../../utils/sessionNaming';
 import { PosterFrameImage } from '../sessions/PosterFrameImage';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ActivityIndicator,
-    Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronRight, CalendarDays } from 'lucide-react-native';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Avatar } from '../ui/Avatar';
 import type {
     CommunityProfile,
     CommunitySession,
 } from '../../services/community';
-export function useCommunityColors() {
-    const { activeTheme } = useTheme();
-    const dark = activeTheme === 'dark';
-    return {
-        dark,
-        bg: dark ? '#0d1220' : '#f5f6fa',
-        card: dark ? '#171d2c' : '#fff',
-        field: dark ? '#111625' : '#f8f9fd',
-        fg: dark ? '#f3f4f8' : '#202538',
-        muted: dark ? '#a8b2c6' : '#6d7588',
-        border: dark ? '#252d40' : '#e9ecf3',
-        accent: dark ? '#bdb0f5' : '#6554df',
-        tint: dark ? '#292743' : '#f0edfc',
-    };
-}
+export { useCommunityColors } from './communityColors';
+import { useCommunityColors } from './communityColors';
 export function CommunityButton({
     label,
     onPress,
@@ -72,7 +55,7 @@ export function CommunityButton({
                     ? 'transparent'
                     : secondary
                       ? c.tint
-                      : '#6554df',
+                      : c.accent,
                 borderWidth: outlined ? 1 : 0,
                 borderColor: c.accent,
                 alignItems: 'center',
@@ -82,12 +65,12 @@ export function CommunityButton({
         >
             {busy ? (
                 <ActivityIndicator
-                    color={secondary || outlined ? c.accent : '#fff'}
+                    color={secondary || outlined ? c.accent : c.onAccent}
                 />
             ) : (
                 <Text
                     style={{
-                        color: secondary || outlined ? c.accent : '#fff',
+                        color: secondary || outlined ? c.accent : c.onAccent,
                         fontSize: compact ? 12 : 13,
                         fontWeight: '700',
                         textAlign: 'center',
@@ -118,7 +101,7 @@ export function CommunityMessage({
                 padding: 24,
                 borderRadius: 24,
                 backgroundColor: c.card,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
                 borderColor: c.border,
                 alignItems: 'center',
                 gap: 12,
@@ -126,22 +109,22 @@ export function CommunityMessage({
         >
             {loading && <ActivityIndicator color={c.accent} />}
             <Text
-                style={{
+                style={[{
                     color: c.fg,
                     fontSize: 16,
                     fontWeight: '700',
                     textAlign: 'center',
-                }}
+                }, c.dark && { color: c.cardText }]}
             >
                 {title}
             </Text>
             {hint && (
                 <Text
-                    style={{
+                    style={[{
                         color: c.muted,
                         lineHeight: 20,
                         textAlign: 'center',
-                    }}
+                    }, c.dark && { color: c.cardText }]}
                 >
                     {hint}
                 </Text>
@@ -184,7 +167,7 @@ export function CommunityProfileCard({
                 flex: 1,
                 backgroundColor: c.card,
                 borderRadius: 18,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
                 borderColor: c.border,
                 overflow: 'hidden',
             }}
@@ -196,7 +179,7 @@ export function CommunityProfileCard({
             >
                 <View style={{ height: 56, backgroundColor: c.tint }}>
                     <LinearGradient
-                        colors={[c.tint, c.dark ? '#463467' : '#dcd5f6']}
+                        colors={[c.tint, c.dark ? darkPalette.raised : '#dcd5f6']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={{ position: 'absolute', inset: 0 }}
@@ -291,25 +274,25 @@ export function CommunityProfileCard({
                     </View>
                     <Text
                         numberOfLines={2}
-                        style={{
+                        style={[{
                             color: c.fg,
                             fontSize: 14,
                             lineHeight: 18,
                             minHeight: 36,
                             fontWeight: '700',
                             textAlign: 'center',
-                        }}
+                        }, c.dark && { color: c.cardText }]}
                     >
                         {profile.artist_name}
                     </Text>
                     <Text
                         numberOfLines={1}
-                        style={{
+                        style={[{
                             color: c.muted,
                             fontSize: 11,
                             lineHeight: 15,
                             textAlign: 'center',
-                        }}
+                        }, c.dark && { color: c.cardText }]}
                     >
                         {[profile.city, profile.city_location?.country]
                             .filter(Boolean)
@@ -317,12 +300,12 @@ export function CommunityProfileCard({
                     </Text>
                     <Text
                         numberOfLines={1}
-                        style={{
+                        style={[{
                             color: c.accent,
                             fontSize: 11,
                             lineHeight: 15,
                             textAlign: 'center',
-                        }}
+                        }, c.dark && { color: c.cardText }]}
                     >
                         {profile.genres}
                     </Text>
@@ -346,12 +329,12 @@ export function CommunityProfileCard({
                     />
                 ) : (
                     <Text
-                        style={{
+                        style={[{
                             color: c.muted,
                             fontSize: 12,
                             textAlign: 'center',
                             paddingVertical: 14,
-                        }}
+                        }, c.dark && { color: c.cardText }]}
                     >
                         {t('community.myProfile')}
                     </Text>
@@ -371,13 +354,13 @@ export function CommunitySessionCard({
     activityLabel?: string;
 }) {
     const c = useCommunityColors();
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale } = useTranslation();
     const router = useRouter();
     const subtitle = sessionDisplaySubtitle(item);
     const date = new Date(`${item.date}T12:00:00`);
     const dateLabel = Number.isNaN(date.getTime())
         ? item.date
-        : date.toLocaleDateString(currentLanguage, {
+        : date.toLocaleDateString(dateLocale, {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
@@ -387,46 +370,85 @@ export function CommunitySessionCard({
             style={{
                 backgroundColor: c.card,
                 borderRadius: 24,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
                 borderColor: c.border,
                 overflow: 'hidden',
             }}
         >
-            {showAuthor && (
-                <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('community.viewProfile')}: ${item.artist_name}`}
-                    onPress={() => router.push(`/community/${item.author_id}`)}
+            {showAuthor ? (
+                <View
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 10,
-                        padding: 18,
+                        paddingRight: 8,
                     }}
                 >
-                    <Avatar name={item.artist_name} url={item.avatar_url} />
-                    <View style={{ flex: 1 }}>
-                        <Text
-                            style={{
-                                color: c.fg,
-                                fontWeight: '700',
-                                fontSize: 14,
-                            }}
-                        >
-                            {item.artist_name}
-                        </Text>
-                        <Text
-                            style={{
-                                color: c.muted,
-                                fontSize: 11,
-                                marginTop: 3,
-                            }}
-                        >
-                            {activityLabel || t('community.sharedSession')}
-                        </Text>
-                    </View>
-                    <ChevronRight size={17} color={c.muted} />
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t('community.viewProfile')}: ${item.artist_name}`}
+                        onPress={() =>
+                            router.push(`/community/${item.author_id}`)
+                        }
+                        style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: 18,
+                        }}
+                    >
+                        <Avatar name={item.artist_name} url={item.avatar_url} />
+                        <View style={{ flex: 1 }}>
+                            <Text
+                                style={[{
+                                    color: c.fg,
+                                    fontWeight: '700',
+                                    fontSize: 14,
+                                }, c.dark && { color: c.cardText }]}
+                            >
+                                {item.artist_name}
+                            </Text>
+                            <Text
+                                style={[{
+                                    color: c.muted,
+                                    fontSize: 11,
+                                    marginTop: 3,
+                                }, c.dark && { color: c.cardText }]}
+                            >
+                                {activityLabel || t('community.sharedSession')}
+                            </Text>
+                        </View>
+                        <ChevronRight size={17} color={c.muted} />
+                    </TouchableOpacity>
+                    <CommunitySafetyMenu
+                        target={{
+                            kind: 'session',
+                            id: item.session_id,
+                            authorId: item.author_id,
+                            name: item.artist_name,
+                        }}
+                    />
+                </View>
+            ) : (
+                <View
+                    style={{
+                        alignItems: 'flex-end',
+                        position: 'absolute',
+                        right: 6,
+                        top: 6,
+                        zIndex: 2,
+                    }}
+                >
+                    <CommunitySafetyMenu
+                        light={!!item.poster_url}
+                        target={{
+                            kind: 'session',
+                            id: item.session_id,
+                            authorId: item.author_id,
+                            name: item.artist_name,
+                        }}
+                    />
+                </View>
             )}
             {!!item.poster_url && (
                 <PosterFrameImage
@@ -443,12 +465,12 @@ export function CommunitySessionCard({
                 }}
             >
                 <Text
-                    style={{
+                    style={[{
                         color: c.fg,
                         fontSize: 21,
                         fontWeight: '800',
                         letterSpacing: -0.5,
-                    }}
+                    }, c.dark && { color: c.cardText }]}
                 >
                     {sessionDisplayTitle(item, t)}
                 </Text>
@@ -460,7 +482,7 @@ export function CommunitySessionCard({
                             gap: 8,
                         }}
                     >
-                        <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
+                        <Text style={[{ color: c.muted, fontSize: 13, flex: 1 }, c.dark && { color: c.cardText }]}>
                             {subtitle}
                             {item.title?.trim() && item.city
                                 ? ` · ${item.city}`
@@ -475,7 +497,7 @@ export function CommunitySessionCard({
                         gap: 8,
                     }}
                 >
-                    <Text style={{ color: c.fg, fontSize: 13 }}>
+                    <Text style={[{ color: c.fg, fontSize: 13 }, c.dark && { color: c.cardText }]}>
                         {dateLabel}
                     </Text>
                 </View>
@@ -488,7 +510,7 @@ export function CommunitySessionCard({
                             alignItems: 'center',
                         }}
                     >
-                        <Text style={{ color: c.muted, fontSize: 12 }}>
+                        <Text style={[{ color: c.muted, fontSize: 12 }, c.dark && { color: c.cardText }]}>
                             {t('collaboration.with')}
                         </Text>
                         {item.collaborators.map((person) => (
@@ -527,7 +549,7 @@ export function CommunitySessionCard({
                             gap: 8,
                         }}
                     >
-                        <Text style={{ color: c.muted, fontSize: 13, flex: 1 }}>
+                        <Text style={[{ color: c.muted, fontSize: 13, flex: 1 }, c.dark && { color: c.cardText }]}>
                             {item.start_time}
                             {item.end_time ? ` – ${item.end_time}` : ''}
                             {item.end_time && item.end_time <= item.start_time

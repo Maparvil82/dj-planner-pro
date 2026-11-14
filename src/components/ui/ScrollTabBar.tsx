@@ -1,41 +1,35 @@
-import { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
     BottomTabBar,
     type BottomTabBarProps,
-} from 'expo-router/build/react-navigation/bottom-tabs';
-import { useTabBarVisibility } from '../../contexts/TabBarVisibilityContext';
+} from 'expo-router/build/react-navigation/bottom-tabs/index.js';
 
 export function ScrollTabBar(props: BottomTabBarProps) {
-    const { hidden, setHidden } = useTabBarVisibility();
-    const translateY = useRef(new Animated.Value(0)).current;
-    useEffect(() => {
-        setHidden(false);
-    }, [props.state.index, setHidden]);
-    useEffect(() => {
-        const animation = Animated.timing(translateY, {
-            toValue: hidden ? 100 : 0,
-            duration: 180,
-            useNativeDriver: true,
-        });
-        animation.start();
-        return () => animation.stop();
-    }, [hidden, translateY]);
+    const insets = useSafeAreaInsets();
+    const { activeTheme } = useTheme();
+    const dark = activeTheme === 'dark';
+    const bottom = Math.max(insets.bottom - 16, 8);
     return (
-        <Animated.View
-            aria-hidden={hidden}
-            accessibilityElementsHidden={hidden}
-            importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+        <View
+            testID="scroll-tab-bar"
             style={{
-                pointerEvents: hidden ? 'none' : 'auto',
                 position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                transform: [{ translateY }],
+                bottom,
+                left: 24,
+                right: 24,
+                borderRadius: 30,
+                shadowColor: '#000',
+                shadowOpacity: dark ? 0.3 : 0.12,
+                shadowRadius: 20,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 8,
             }}
         >
-            <BottomTabBar {...props} />
-        </Animated.View>
+            <View style={{ borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.7)' }}>
+                <BottomTabBar {...props} insets={{ ...props.insets, bottom: 0 }} />
+            </View>
+        </View>
     );
 }

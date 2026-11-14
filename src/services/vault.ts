@@ -1,3 +1,5 @@
+import { randomUUID } from 'expo-crypto';
+import { validateDocument, storageError } from '../utils/storageLimits';
 import { supabase } from '../lib/supabase';
 import { VaultFolder, VaultFile } from '../types/session';
 
@@ -13,7 +15,11 @@ export const vaultService = {
         return data || [];
     },
 
-    async getFoldersByAssociation(userId: string, type: 'session' | 'venue', id: string): Promise<VaultFolder[]> {
+    async getFoldersByAssociation(
+        userId: string,
+        type: 'session' | 'venue',
+        id: string,
+    ): Promise<VaultFolder[]> {
         const { data, error } = await supabase
             .from('vault_folders')
             .select('*')
@@ -26,14 +32,19 @@ export const vaultService = {
         return data || [];
     },
 
-    async createFolder(userId: string, name: string, type: 'session' | 'venue' | 'general' = 'general', associatedId?: string): Promise<VaultFolder> {
+    async createFolder(
+        userId: string,
+        name: string,
+        type: 'session' | 'venue' | 'general' = 'general',
+        associatedId?: string,
+    ): Promise<VaultFolder> {
         const { data, error } = await supabase
             .from('vault_folders')
             .insert({
                 user_id: userId,
                 name,
                 associated_type: type,
-                associated_id: associatedId || null
+                associated_id: associatedId || null,
             })
             .select()
             .single();
@@ -48,13 +59,27 @@ export const vaultService = {
 
         // 2. Delete files from storage
         if (files.length > 0) {
-            const storagePaths = files.map(file => {
-                const parts = file.url.split('/public/vault/')[1]?.split('?')[0];
-                return parts ? decodeURIComponent(parts) : null;
-            }).filter(Boolean) as string[];
+            const storagePaths = files
+                .map((file) => {
+                    if (file.path) return file.path;
+                    const parts = file.url
+                        .split('/public/vault/')[1]
+                        ?.split('?')[0];
+                    return parts ? decodeURIComponent(parts) : null;
+                })
+                .filter(Boolean) as string[];
 
             if (storagePaths.length > 0) {
-                await supabase.storage.from('vault').remove(storagePaths);
+                for (
+                    let offset = 0;
+                    offset < storagePaths.length;
+                    offset += 100
+                ) {
+                    const { error } = await supabase.storage
+                        .from('vault')
+                        .remove(storagePaths.slice(offset, offset + 100));
+                    if (error) throw error;
+                }
             }
         }
 
@@ -78,14 +103,23 @@ export const vaultService = {
         return data || [];
     },
 
-    async uploadFile(userId: string, folderId: string, name: string, fileData: any, contentType: string, size: number): Promise<VaultFile> {
-        const filePath = `${userId}/${folderId}/${Date.now()}_${name}`;
+    async uploadFile(
+        userId: string,
+        folderId: string,
+        name: string,
+        fileData: any,
+        contentType: string,
+        size: number,
+    ): Promise<VaultFile> {
+        const actualSize = fileData?.byteLength ?? fileData?.size ?? size;
+        validateDocument(contentType, actualSize);
+        const filePath = `${userId}/${folderId}/${randomUUID()}`;
 
         const { error: uploadError } = await supabase.storage
             .from('vault')
             .upload(filePath, fileData, { contentType });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) throw storageError(uploadError);
 
         const { data: publicUrlData } = supabase.storage
             .from('vault')
@@ -100,12 +134,20 @@ export const vaultService = {
                 url: publicUrlData.publicUrl,
                 path: filePath,
                 file_type: contentType,
-                size: size
+                size: actualSize,
             })
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            // Keep the insertion error visible; cleanup failure is retried by maintenance.
+            try {
+                await supabase.storage.from('vault').remove([filePath]);
+            } catch {
+                /* background maintenance retries */
+            }
+            throw error;
+        }
         return data;
     },
 
@@ -128,7 +170,11 @@ export const vaultService = {
         return data.signedUrl;
     },
 
-    async deleteFile(fileId: string, filePath: string, fileUrl?: string): Promise<void> {
+    async deleteFile(
+        fileId: string,
+        filePath: string,
+        fileUrl?: string,
+    ): Promise<void> {
         let storagePath = filePath;
 
         // Fallback: If path is missing, try to extract from URL
@@ -139,7 +185,10 @@ export const vaultService = {
 
         // 1. Delete from storage if we have a path
         if (storagePath) {
-            await supabase.storage.from('vault').remove([storagePath]);
+            const { error } = await supabase.storage
+                .from('vault')
+                .remove([storagePath]);
+            if (error) throw error;
         }
 
         // 2. Delete from DB
@@ -149,5 +198,5 @@ export const vaultService = {
             .eq('id', fileId);
 
         if (error) throw error;
-    }
+    },
 };

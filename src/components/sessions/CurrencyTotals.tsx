@@ -1,20 +1,28 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
+import { moneyCurrencyCode } from '../../i18n/money';
 
 export function CurrencyTotals({
     totals,
     projected = false,
     color,
+    fontSize,
 }: {
     totals: Record<string, number>;
     projected?: boolean;
     color?: string;
+    fontSize?: number;
 }) {
-    const { currentLanguage } = useTranslation();
-    const entries = Object.entries(totals);
+    const { formatMoney, defaultCurrency } = useTranslation();
+    const combined: Record<string, number> = {};
+    for (const [currency, amount] of Object.entries(totals)) {
+        const code = moneyCurrencyCode(currency);
+        combined[code] = (combined[code] || 0) + amount;
+    }
+    const entries = Object.entries(combined);
     return (
         <View className="mt-5">
-            {(entries.length ? entries : [['€', 0] as const]).map(
+            {(entries.length ? entries : [[defaultCurrency, 0] as const]).map(
                 ([currency, value]) => (
                     <Text
                         key={currency}
@@ -24,18 +32,16 @@ export function CurrencyTotals({
                         className={
                             projected
                                 ? 'text-neutral-400 dark:text-emerald-400'
-                                : 'text-gray-900 dark:text-white'
+                                : 'text-gray-900 dark:text-djDark-text'
                         }
                         style={{
-                            fontSize: entries.length > 1 ? 22 : 32,
+                            fontSize: fontSize ?? (entries.length > 1 ? 22 : 32),
+                            fontVariant: ['tabular-nums'],
                             fontWeight: '800',
                             ...(color ? { color } : {}),
                         }}
                     >
-                        {value.toLocaleString(currentLanguage, {
-                            maximumFractionDigits: 2,
-                        })}{' '}
-                        {currency}
+                        {formatMoney(value, currency)}
                     </Text>
                 ),
             )}

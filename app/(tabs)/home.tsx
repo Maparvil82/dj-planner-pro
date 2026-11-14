@@ -1,8 +1,13 @@
+import { useScreenMonitoring } from '../../src/hooks/useScreenMonitoring';
+import {useSessionRangeQuery,useSessionScreenContext} from '../../src/hooks/useSessionScreens';
+import { useAppReview } from '../../src/hooks/useAppReview';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
+import { useLiveSessions } from '../../src/hooks/useLiveSessions';
 import { sessionDisplayTitle, sessionDisplaySubtitle } from '../../src/utils/sessionNaming';
 import type { Session } from '../../src/types/session';
 import { useSessionDeletion } from '../../src/hooks/useSessionDeletion';
-import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
-import { PageHeader } from '../../src/components/ui/PageHeader';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
+import { ScrollPageHeader } from '../../src/components/ui/ScrollPageHeader';
 import { HomeSummaryCard } from '../../src/components/home/HomeSummaryCard';
 import { SessionPreviewCard } from '../../src/components/sessions/SessionPreviewCard';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Platform } from 'react-native';
@@ -12,8 +17,8 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useRouter } from 'expo-router';
 import { sessionRange, sessionEarnings, earningsByCurrency } from '../../src/utils/sessionPlanning';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { useSessionsQuery, useUpcomingSessionsQuery, useAllSessionsQuery } from '../../src/hooks/useSessionsQuery';
-import { ChevronRight, X, Calendar } from 'lucide-react-native';
+import { useSessionsQuery, useUpcomingSessionsQuery } from '../../src/hooks/useSessionsQuery';
+import { ChevronRight, X, Calendar, Radio } from 'lucide-react-native';
 import { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { setupCalendarLocales } from '../../src/i18n/calendarLocales';
@@ -22,23 +27,32 @@ import { es, enUS, de, fr, it, ptBR, ja } from 'date-fns/locale';
 import { FlatList, Dimensions, useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
-    const onTabScroll = useTabBarScroll();
+    const darkPalette = useDarkPalette();
+    const { progress: headerProgress, onScroll: onTabScroll, onScrollBeginDrag: onTabScrollBeginDrag } = useScrollHeader('compact');
     const { width: windowWidth } = useWindowDimensions();
     const CALENDAR_WIDTH = windowWidth > 1024 ? 1024 - 32 : windowWidth - 32;
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale, firstDay, formatMoney } = useTranslation();
     const { session, profile } = useAuthStore();
     const router = useRouter();
     const themeCtx = useContext(ThemeContext);
 
     const isDark = themeCtx?.activeTheme === 'dark';
-    const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('all');
+    const [sessionFilter, setSessionFilter] = useState<'all' | 'month'>('month');
     const [isEarningsModalVisible, setIsEarningsModalVisible] = useState(false);
     const [isProjectedModalVisible, setIsProjectedModalVisible] = useState(false);
     const [visibleDate, setVisibleDate] = useState(startOfToday());
     // Calendar localization is now handled where the calendar is used
 
-    const { data: upcomingSessions, isLoading: isUpcomingLoading } = useUpcomingSessionsQuery();
-    const { data: allSessions } = useAllSessionsQuery();
+    const upcomingQuery = useUpcomingSessionsQuery();
+    const { data: upcomingSessions, isLoading: isUpcomingLoading } = upcomingQuery;
+
+    const live = useLiveSessions();
+    const reviewContext=useSessionScreenContext();
+    useAppReview(session?.user.id,live.data,isEarningsModalVisible||isProjectedModalVisible||!reviewContext.isSuccess,reviewContext.data?.reviewCount);
+    const weekFrom=addWeeks(startOfWeek(visibleDate,{weekStartsOn:firstDay}),-1);
+    const weekTo=addWeeks(weekFrom,3);
+    const weekQuery=useSessionRangeQuery(format(weekFrom,'yyyy-MM-dd'),format(weekTo,'yyyy-MM-dd'));
+    const allSessions=weekQuery.data;
     const deletion = useSessionDeletion();
     const queuedDeletion = useRef<Session | null>(null);
     const showQueuedDeletion = () => {
@@ -60,11 +74,13 @@ export default function HomeScreen() {
     const currentMonthName = new Intl.DateTimeFormat(currentLanguage, { month: 'long' }).format(now);
     const capitalizedMonthName = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
 
-    const { data: monthSessions, isLoading: isMonthLoading } = useSessionsQuery(currentYear, currentMonth);
+    const monthQuery = useSessionsQuery(currentYear, currentMonth);
+    const { data: monthSessions, isLoading: isMonthLoading } = monthQuery;
 
     const { initialized } = useAuthStore();
     const isLoadingUpcoming = isUpcomingLoading || !initialized;
     const isLoadingMonth = isMonthLoading || !initialized;
+    useScreenMonitoring('home', isLoadingUpcoming || isLoadingMonth || weekQuery.isLoading, upcomingQuery.isError || monthQuery.isError || weekQuery.isError);
 
     const calculateSessionEarnings = sessionEarnings;
 
@@ -142,15 +158,26 @@ export default function HomeScreen() {
         }
     }, [currentLanguage]);
 
+    const currentDay = format(now, 'yyyy-MM-dd');
+    const sessionsByDay = useMemo(() => {
+        const grouped = new Map<string, Session[]>();
+        for (const session of allSessions || []) {
+            if (session.status === 'cancelled') continue;
+            const day = grouped.get(session.date) || [];
+            day.push(session);
+            grouped.set(session.date, day);
+        }
+        return grouped;
+    }, [allSessions]);
     const weeks = useMemo(() => {
         // Generate 52 weeks around the current date (26 before, 26 after)
-        const currentWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+        const currentWeekStart = startOfWeek(now, { weekStartsOn: firstDay });
         return Array.from({ length: 53 }).map((_, i) => {
             const weekStart = addWeeks(currentWeekStart, i - 26);
             return Array.from({ length: 7 }).map((_, dayIndex) => {
                 const date = addDays(weekStart, dayIndex);
                 const dateStr = format(date, 'yyyy-MM-dd');
-                const daySessions = allSessions?.filter((s: any) => s.date === dateStr) || [];
+                const daySessions = sessionsByDay.get(dateStr) || [];
 
                 return {
                     date,
@@ -162,7 +189,7 @@ export default function HomeScreen() {
                 };
             });
         });
-    }, [currentLanguage, allSessions]);
+    }, [locale, firstDay, sessionsByDay, currentDay]);
 
     const renderWeek = ({ item: weekDays }: { item: any[] }) => (
         <View style={{ width: CALENDAR_WIDTH }} className="flex-row justify-between mb-2 mt-4">
@@ -175,12 +202,14 @@ export default function HomeScreen() {
                                 router.push(`/session/${day.sessions[0].id}` as any);
                             }
                         }}
-                        className={`w-11 h-16 items-center justify-center rounded-3xl relative ${day.isToday ? 'bg-white dark:bg-[#292743] border border-[#dcd6f8] dark:border-[#4a4178]' : 'bg-transparent'}`}
+                        testID={day.isToday ? 'home-calendar-today' : undefined}
+                        style={{ backgroundColor: day.isToday ? (isDark ? darkPalette.tint : '#fff') : 'transparent', borderWidth: day.isToday ? 1 : 0, borderColor: isDark ? darkPalette.border : '#dcd6f8' }}
+                        className="w-11 h-16 items-center justify-center rounded-3xl relative"
                     >
-                        <Text className={`text-[10px] font-normal mb-1 ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
+                        <Text style={{ color: day.isToday ? (isDark ? darkPalette.primary : '#7666df') : (isDark ? darkPalette.muted : '#9ca3af') }} className="text-[10px] font-normal mb-1">
                             {day.dayName}
                         </Text>
-                        <Text className={`text-md font-normal ${day.isToday ? 'text-[#7666df] dark:text-[#bdb0f5]' : 'text-gray-400 dark:text-[#a8b2c6]'}`}>
+                        <Text style={{ color: day.isToday ? (isDark ? darkPalette.primary : '#7666df') : (isDark ? darkPalette.muted : '#9ca3af') }} className="text-md font-normal">
                             {day.dayNumber}
                         </Text>
                         {day.sessions.length > 0 && (
@@ -200,19 +229,29 @@ export default function HomeScreen() {
         </View>
     );
 
+    const loadError = (retry:()=>unknown) => <View style={{padding:16,gap:10}}><Text accessibilityRole="alert" style={{color:isDark?darkPalette.text:'#202538'}}>{t('insights.loadingError')}</Text><TouchableOpacity accessibilityRole="button" onPress={()=>void retry()}><Text style={{color:isDark?darkPalette.primary:'#7666df',fontWeight:'700'}}>{t('insights.retry')}</Text></TouchableOpacity></View>;
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} edges={['top']}>
-            <PageHeader showPlaces title={t('community.sessions')} subtitle={t('workflow.homeIntro')}>
-                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('history')} onPress={() => router.push('/history')} style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: isDark ? '#20273b' : '#e9eaf3', alignItems: 'center', justifyContent: 'center' }}>
-                    <Calendar size={20} color={isDark ? '#f3f4f8' : '#202538'} />
-                </TouchableOpacity>
-            </PageHeader>
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? darkPalette.background : '#f5f6fa' }} edges={['top']}>
+            <ScrollPageHeader variant="hide" progress={headerProgress} showAccount title={t('community.sessions')} subtitle={t('workflow.homeIntro')}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('view_calendar')} onPress={() => router.push('/history')} style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? darkPalette.raised : '#e9eaf3', alignItems: 'center', justifyContent: 'center' }}><Calendar size={20} color={isDark ? darkPalette.text : '#202538'} /></View>
+                        </TouchableOpacity>
+                {live.live.length > 0 && (
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('live.title')} onPress={() => router.push('/live')}
+                        style={{width:46,height:46,borderRadius:16,backgroundColor:isDark ? '#332131' : '#fdeaf0',alignItems:'center',justifyContent:'center',gap:2}}>
+                        <Radio size={19} color={isDark ? '#ff8da9' : '#c63259'}/>
+                        <Text style={{fontSize:9,fontWeight:'800',color:isDark ? '#ff8da9' : '#c63259'}}>Live</Text>
+                    </TouchableOpacity>
+                )}
+            </ScrollPageHeader>
 
-            <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ flex: 1, backgroundColor: isDark ? '#0d1220' : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <ScrollView testID="sessions-scroll-view" onScrollBeginDrag={onTabScrollBeginDrag} onTouchStart={onTabScrollBeginDrag} onScroll={onTabScroll} scrollEventThrottle={16} style={{ flex: 1, backgroundColor: isDark ? darkPalette.background : '#f5f6fa' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View className="max-w-5xl w-full mx-auto px-4">
 
 
                     {/* WEEKLY CALENDAR */}
+                    {weekQuery.isError && loadError(()=>weekQuery.refetch())}
+                    {weekQuery.isLoading && <ActivityIndicator color={isDark?darkPalette.primary:'#7666df'} />}
                     <View className="mb-8">
                         <FlatList
                             ref={flatListRef}
@@ -241,69 +280,69 @@ export default function HomeScreen() {
                     </View>
 
 
-                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 28, paddingHorizontal: 4 }}>
-                        <HomeSummaryCard title={t('workflow.completedFees')} totals={earnedTotals} caption={`${capitalizedMonthName} · ${earnedCount} ${t(earnedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} onPress={() => setIsEarningsModalVisible(true)} />
-                        <HomeSummaryCard title={t('insights.revenue')} totals={projectedTotals} caption={`${capitalizedMonthName} · ${projectedCount} ${t(projectedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} highlighted onPress={() => setIsProjectedModalVisible(true)} />
-                    </View>
+                    {isLoadingMonth ? <ActivityIndicator style={{marginBottom:32}} color={isDark?darkPalette.primary:'#7666df'} /> : monthQuery.isError ? loadError(()=>monthQuery.refetch()) : <View style={{ flexDirection: 'row', gap: 12, marginBottom: 32, paddingHorizontal: 4 }}>
+                        <HomeSummaryCard title={t('workflow.completedFees')} subtitle={t('workflow.paidSessionsHint')} totals={earnedTotals} caption={`${capitalizedMonthName} · ${earnedCount} ${t(earnedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} onPress={() => setIsEarningsModalVisible(true)} />
+                        <HomeSummaryCard title={t('insights.revenue')} subtitle={t('workflow.unpaidSessionsHint')} totals={projectedTotals} caption={`${capitalizedMonthName} · ${projectedCount} ${t(projectedCount === 1 ? 'session' : 'sessions').toLowerCase()}`} highlighted onPress={() => setIsProjectedModalVisible(true)} />
+                    </View>}
 
                     {/* UPCOMING SESSIONS */}
                     <View style={{ paddingHorizontal: 4 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
-                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1, minWidth: 0, fontSize: windowWidth < 360 ? 14 : 17, fontWeight: '700', color: isDark ? '#fff' : '#202538', letterSpacing: -0.3 }}>
+                            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1, minWidth: 0, fontSize: windowWidth < 360 ? 14 : 17, fontWeight: '700', color: isDark ? darkPalette.text : '#202538', letterSpacing: -0.3 }}>
                                 {t('upcoming_sessions')}
                             </Text>
-
-                            <View style={{ flexShrink: 0 }} className="flex-row bg-white dark:bg-[#171d2c] rounded-2xl p-1 border border-[#e9ecf3] dark:border-[#252d40]">
-                                <TouchableOpacity
-                                    onPress={() => setSessionFilter('all')}
-                                    className="px-3 py-1.5 rounded-xl"
-                                    style={{
-                                        backgroundColor: sessionFilter === 'all' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
-                                    }}
-                                >
-                                    <Text className="text-xs font-bold"
-                                        style={{
-                                            color: sessionFilter === 'all' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
-                                        }}>
-                                        {t('filter_all') || 'Todas'}
-                                    </Text>
-                                </TouchableOpacity>
+                            <View testID="home-session-filter" style={{ flexShrink: 0, backgroundColor: isDark ? darkPalette.surface : '#fff', borderWidth: isDark ? 0 : 1, borderColor: '#e9ecf3' }} className="flex-row rounded-2xl p-1">
                                 <TouchableOpacity
                                     onPress={() => setSessionFilter('month')}
                                     className="px-3 py-1.5 rounded-xl"
                                     style={{
-                                        backgroundColor: sessionFilter === 'month' ? (isDark ? '#292743' : '#f0edfc') : 'transparent',
+                                        backgroundColor: sessionFilter === 'month' ? (isDark ? darkPalette.tint : '#f0edfc') : 'transparent',
                                     }}
                                 >
                                     <Text className="text-xs font-bold"
                                         style={{
-                                            color: sessionFilter === 'month' ? (isDark ? '#bdb0f5' : '#7666df') : (isDark ? '#a8b2c6' : '#6d7588')
+                                            color: sessionFilter === 'month' ? (isDark ? darkPalette.primary : '#7666df') : (isDark ? darkPalette.onSurface : '#6d7588')
                                         }}>
                                         {t('filter_this_month') || 'Este Mes'}
                                     </Text>
                                 </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => setSessionFilter('all')}
+                                    className="px-3 py-1.5 rounded-xl"
+                                    style={{
+                                        backgroundColor: sessionFilter === 'all' ? (isDark ? darkPalette.tint : '#f0edfc') : 'transparent',
+                                    }}
+                                >
+                                    <Text className="text-xs font-bold"
+                                        style={{
+                                            color: sessionFilter === 'all' ? (isDark ? darkPalette.primary : '#7666df') : (isDark ? darkPalette.onSurface : '#6d7588')
+                                        }}>
+                                        {t('filter_all') || 'Todas'}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
+
                         </View>
 
                         {isLoadingUpcoming ? (
                             <View className="items-center justify-center p-8">
-                                <ActivityIndicator size="large" color={isDark ? '#60A5FA' : '#3B82F6'} />
+                                <ActivityIndicator size="large" color={isDark ? darkPalette.primary : '#3B82F6'} />
                             </View>
-                        ) : filteredUpcomingSessions && filteredUpcomingSessions.length > 0 ? (
+                        ) : upcomingQuery.isError ? loadError(()=>upcomingQuery.refetch()) : filteredUpcomingSessions && filteredUpcomingSessions.length > 0 ? (
                             <View>
                                 {(() => {
                                     const groups: { [key: string]: any[] } = {};
                                     filteredUpcomingSessions.forEach(session => {
                                         const [y, m] = session.date.split('-');
                                         const dateObj = new Date(Number(y), Number(m) - 1, 1);
-                                        const monthLabel = dateObj.toLocaleDateString(currentLanguage, { month: 'long', year: 'numeric' }).toUpperCase();
+                                        const monthLabel = dateObj.toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' }).toUpperCase();
                                         if (!groups[monthLabel]) groups[monthLabel] = [];
                                         groups[monthLabel].push(session);
                                     });
 
                                     return Object.keys(groups).map((monthLabel) => (
                                         <View key={monthLabel} className="mb-6">
-                                            <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-4 mb-4 uppercase tracking-wider ml-1">
+                                            <Text className="text-xs font-bold text-gray-500 dark:text-djDark-muted mt-4 mb-4 uppercase tracking-wider ml-1">
                                                 {monthLabel}
                                             </Text>
                                             <View className="flex-row flex-wrap gap-4">
@@ -325,13 +364,14 @@ export default function HomeScreen() {
                                 })()}
                             </View>
                         ) : (
-                            <View className="bg-white dark:bg-gray-900 items-center justify-center rounded-3xl p-10 mt-2 border border-gray-100 dark:border-gray-800">
-                                <Text className="text-gray-900 dark:text-white font-bold text-lg mb-2">
-                                    {t('no_sessions_yet')}
+                            <View testID="home-sessions-empty" style={{ backgroundColor: isDark ? darkPalette.surface : '#fff', borderWidth: isDark ? 0 : 1, borderColor: '#f3f4f6' }} className="items-center justify-center rounded-3xl p-10 mt-2">
+                                <Text style={{ color: isDark ? darkPalette.onSurface : '#111827' }} className="font-bold text-lg mb-2">
+                                    {t(sessionFilter === 'month' ? 'home_empty_month' : 'home_empty_upcoming')}
                                 </Text>
-                                <Text className="text-gray-500 dark:text-gray-400 text-center">
-                                    {t('sync_calendars_empty_state')}
+                                <Text style={{ color: isDark ? darkPalette.onSurface : '#6b7280' }} className="text-center">
+                                    {t('home_empty_hint')}
                                 </Text>
+
                             </View>
                         )}
                     </View>
@@ -348,16 +388,16 @@ export default function HomeScreen() {
                 onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
-                    <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
-                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                    <View className="bg-white dark:bg-djDark-surface rounded-t-3xl max-h-[85%]">
+                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-djDark-border">
+                            <Text style={isDark && { color: darkPalette.onSurface }} className="text-xl font-bold text-gray-900 dark:text-djDark-text">
                                 {t('workflow.completedFees')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsEarningsModalVisible(false)}
-                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full"
+                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-djDark-raised rounded-full"
                             >
-                                <X size={20} color={isDark ? '#D1D5DB' : '#4B5563'} />
+                                <X size={20} color={isDark ? darkPalette.muted : '#4B5563'} />
                             </TouchableOpacity>
                         </View>
 
@@ -374,28 +414,28 @@ export default function HomeScreen() {
                                                 router.push(`/session/${session.id}` as any);
                                             }}
                                             onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'earnings')}
-                                            className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                            className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-djDark-border/50 pb-4"
                                         >
                                             <View className="flex-1 pr-4">
-                                                <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-base font-bold text-gray-900 dark:text-djDark-text mb-1">
                                                     {sessionDisplayTitle(session, t)}
                                                 </Text>
-                                                <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-sm text-gray-500 dark:text-djDark-muted">
                                                     {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                 </Text>
                                             </View>
                                             <View className="flex-row items-center">
-                                                <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
-                                                    +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
+                                                    +{formatMoney(session.calculatedEarned, session.currency || '€')}
                                                 </Text>
-                                                <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                <ChevronRight size={16} color={isDark ? darkPalette.muted : '#9CA3AF'} />
                                             </View>
                                         </TouchableOpacity>
                                     );
                                 })
                             ) : (
-                                <Text className="text-center text-gray-500 dark:text-gray-400 mt-10">
-                                    No hay ingresos registrados este mes todavía.
+                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-center text-gray-500 dark:text-djDark-muted mt-10">
+                                    {t('homeEmpty.revenue')}
                                 </Text>
                             )}
                         </ScrollView>
@@ -411,16 +451,16 @@ export default function HomeScreen() {
                 onDismiss={showQueuedDeletion}
             >
                 <View className="flex-1 justify-end bg-black/50">
-                    <View className="bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85%]">
-                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-                            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+                    <View className="bg-white dark:bg-djDark-surface rounded-t-3xl max-h-[85%]">
+                        <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-djDark-border">
+                            <Text style={isDark && { color: darkPalette.onSurface }} className="text-xl font-bold text-gray-900 dark:text-djDark-text">
                                 {t('insights.revenue')} - {capitalizedMonthName}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => setIsProjectedModalVisible(false)}
-                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full"
+                                className="w-8 h-8 items-center justify-center bg-gray-100 dark:bg-djDark-raised rounded-full"
                             >
-                                <X size={20} color={isDark ? '#D1D5DB' : '#4B5563'} />
+                                <X size={20} color={isDark ? darkPalette.muted : '#4B5563'} />
                             </TouchableOpacity>
                         </View>
 
@@ -428,7 +468,7 @@ export default function HomeScreen() {
 
                             {/* PENDING SESSIONS */}
                             <View className="mb-6">
-                                <Text className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-xs font-bold text-gray-500 dark:text-djDark-muted uppercase tracking-wider mb-4">
                                     {t('workflow.confirmedUpcoming')} ({pendingSessionsList.length})
                                 </Text>
                                 {pendingSessionsList.length > 0 ? (
@@ -443,35 +483,35 @@ export default function HomeScreen() {
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
                                                 onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
-                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-djDark-border/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
-                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-base font-bold text-gray-900 dark:text-djDark-text mb-1">
                                                         {sessionDisplayTitle(session, t)}
                                                     </Text>
-                                                    <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-sm text-gray-500 dark:text-djDark-muted">
                                                         {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
-                                                    <Text className="text-lg font-bold text-gray-400 dark:text-gray-500 mr-2">
-                                                        +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-lg font-bold text-gray-400 dark:text-djDark-muted mr-2">
+                                                        +{formatMoney(session.calculatedEarned, session.currency || '€')}
                                                     </Text>
-                                                    <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                    <ChevronRight size={16} color={isDark ? darkPalette.muted : '#9CA3AF'} />
                                                 </View>
                                             </TouchableOpacity>
                                         );
                                     })
                                 ) : (
-                                    <Text className="text-sm text-gray-500 dark:text-gray-400 italic mb-4">
-                                        No hay sesiones pendientes.
+                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-sm text-gray-500 dark:text-djDark-muted italic mb-4">
+                                        {t('homeEmpty.pending')}
                                     </Text>
                                 )}
                             </View>
 
                             {/* EARNED SESSIONS */}
                             <View>
-                                <Text className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-4">
+                                <Text style={isDark && { color: darkPalette.onSurface }} className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-4">
                                     {t('workflow.finished')} ({earnedSessionsList.length})
                                 </Text>
                                 {earnedSessionsList.length > 0 ? (
@@ -486,28 +526,28 @@ export default function HomeScreen() {
                                                     router.push(`/session/${session.id}` as any);
                                                 }}
                                                 onLongPress={session.is_guest ? undefined : () => requestListDelete(session, 'projected')}
-                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-gray-800/50 pb-4"
+                                                className="flex-row items-center justify-between mb-4 border-b border-gray-50 dark:border-djDark-border/50 pb-4"
                                             >
                                                 <View className="flex-1 pr-4">
-                                                    <Text className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-base font-bold text-gray-900 dark:text-djDark-text mb-1">
                                                         {sessionDisplayTitle(session, t)}
                                                     </Text>
-                                                    <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-sm text-gray-500 dark:text-djDark-muted">
                                                         {d}/{m}/{y} • {sessionDisplaySubtitle(session)}
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center">
-                                                    <Text className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
-                                                        +{session.calculatedEarned.toFixed(0)} {session.currency || '€'}
+                                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-lg font-bold text-green-600 dark:text-green-500 opacity-90 mr-2">
+                                                        +{formatMoney(session.calculatedEarned, session.currency || '€')}
                                                     </Text>
-                                                    <ChevronRight size={16} color={isDark ? '#4B5563' : '#9CA3AF'} />
+                                                    <ChevronRight size={16} color={isDark ? darkPalette.muted : '#9CA3AF'} />
                                                 </View>
                                             </TouchableOpacity>
                                         );
                                     })
                                 ) : (
-                                    <Text className="text-sm text-gray-500 dark:text-gray-400 italic">
-                                        No hay sesiones completadas aún.
+                                    <Text style={isDark && { color: darkPalette.onSurface }} className="text-sm text-gray-500 dark:text-djDark-muted italic">
+                                        {t('homeEmpty.completed')}
                                     </Text>
                                 )}
                             </View>

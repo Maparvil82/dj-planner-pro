@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useBlockedDays } from '../../hooks/useBlockedDays';
@@ -10,9 +10,11 @@ import { confirmAction } from '../../utils/confirmAction';
 export function BlockDayButton({
     date,
     hasSessions,
+    compact = false,
 }: {
     date: string;
     hasSessions: boolean;
+    compact?: boolean;
 }) {
     const { t } = useTranslation(),
         c = useCommunityColors(),
@@ -49,6 +51,12 @@ export function BlockDayButton({
             lock.current = false;
         }
     };
+    if (compact) return <View style={{ maxWidth: '45%', gap: 6 }}>
+        <Pressable accessibilityRole="button" disabled={busy || days.isLoading || days.isError} onPress={() => void toggle()} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 14, backgroundColor: c.field, opacity: busy || days.isLoading || days.isError ? 0.5 : 1 }}>
+            {busy || days.isLoading ? <ActivityIndicator color={c.accent} /> : <Text style={{ color: c.accent, fontSize: 12, fontWeight: '600' }}>{t(blocked ? 'tools.unblockDay' : 'tools.blockDay')}</Text>}
+        </Pressable>
+        {error || days.isError ? <Text accessibilityRole="alert" style={{ color: '#d44455', fontSize: 12 }}>{t('tools.saveError')}</Text> : null}
+    </View>;
     return (
         <View style={{ gap: 8, marginBottom: 16 }}>
             {blocked ? (

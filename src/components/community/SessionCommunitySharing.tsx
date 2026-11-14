@@ -19,7 +19,7 @@ import {
 import { CommunityButton, useCommunityColors } from './CommunityUI';
 import { confirmAction } from '../../utils/confirmAction';
 import type { Session } from '../../types/session';
-export function SessionCommunitySharing({ session }: { session: Session }) {
+export function SessionCommunitySharing({ session, embedded = false }: { session: Session; embedded?: boolean }) {
     const [repair, setRepair] = useState(false);
     const venues = useVenuesQuery();
     const createVenue = useCreateVenueMutation();
@@ -64,16 +64,16 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
         <>
             <View
                 style={{
-                    marginTop: 24,
-                    padding: 20,
+                    marginTop: embedded ? 0 : 24,
+                    padding: embedded ? 0 : 20,
                     backgroundColor: c.card,
                     borderColor: c.border,
-                    borderWidth: 1,
+                    borderWidth: embedded || c.dark ? 0 : 1,
                     borderRadius: 24,
                     gap: 13,
                 }}
             >
-                <View
+                {!embedded && <View
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
@@ -81,12 +81,12 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
                     }}
                 >
                     <Text
-                        style={{ color: c.fg, fontWeight: '800', fontSize: 17 }}
+                        style={[{ color: c.fg, fontWeight: '800', fontSize: 17 }, c.dark && { color: c.cardText }]}
                     >
                         {t('community.title')}
                     </Text>
-                </View>
-                <Text style={{ color: c.muted, fontSize: 13, lineHeight: 20 }}>
+                </View>}
+                <Text style={[{ color: c.muted, fontSize: 13, lineHeight: 20 }, c.dark && { color: c.cardText }]}>
                     {t(
                         active
                             ? 'community.sessionPublic'
@@ -95,18 +95,18 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
                               : 'community.sessionPrivate',
                     )}
                 </Text>
-                <Text style={{ color: c.muted, fontSize: 12, lineHeight: 19 }}>
+                <Text style={[{ color: c.muted, fontSize: 12, lineHeight: 19 }, c.dark && { color: c.cardText }]}>
                     {t('community.publishMessage')}
                 </Text>
                 {!share.data && !session.venue_city?.trim() && (
                     <Text
-                        style={{ color: c.muted, fontSize: 12, lineHeight: 19 }}
+                        style={[{ color: c.muted, fontSize: 12, lineHeight: 19 }, c.dark && { color: c.cardText }]}
                     >
                         {t('location.completeBeforeSharing')}
                     </Text>
                 )}
                 {!confirmed && (
-                    <Text style={{ color: c.accent, fontSize: 12 }}>
+                    <Text style={[{ color: c.accent, fontSize: 12 }, c.dark && { color: c.cardText }]}>
                         {t('community.confirmFirst')}
                     </Text>
                 )}
@@ -114,7 +114,7 @@ export function SessionCommunitySharing({ session }: { session: Session }) {
                     <>
                         <Text
                             accessibilityLiveRegion="polite"
-                            style={{ color: '#d76f7d', fontSize: 12 }}
+                            style={[{ color: '#d76f7d', fontSize: 12 }, c.dark && { color: c.cardText }]}
                         >
                             {t('community.error')}
                         </Text>

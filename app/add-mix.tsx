@@ -1,3 +1,9 @@
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
+import { PageHeader } from '../src/components/ui/PageHeader';
+import {
+    CommunityTermsProvider,
+    useCommunityTerms,
+} from '../src/components/community/CommunityTerms';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -25,6 +31,15 @@ import {
 import { useTranslation } from '../src/i18n/useTranslation';
 
 export default function AddMixScreen() {
+    return (
+        <CommunityTermsProvider presentation="inline">
+            <AddMixForm />
+        </CommunityTermsProvider>
+    );
+}
+
+function AddMixForm() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const router = useRouter(),
         c = useCommunityColors(),
         { t } = useTranslation();
@@ -43,9 +58,11 @@ export default function AddMixScreen() {
     }
     const close = () =>
         router.canGoBack() ? router.back() : router.replace('/home');
+    const requireTerms = useCommunityTerms();
     const mutation = useMutation({
-        mutationFn: () => {
+        mutationFn: async () => {
             if (!userId || !canAdd) throw new Error('Profile incomplete');
+            if (!(await requireTerms())) throw new Error('COMMUNITY_CANCELLED');
             return profileMixesService.save(userId, title, url);
         },
         onSuccess: () => {
@@ -92,26 +109,7 @@ export default function AddMixScreen() {
                         marginBottom: 18,
                     }}
                 />
-                <View
-                    style={{
-                        paddingHorizontal: 24,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginBottom: 24,
-                    }}
-                >
-                    <Text
-                        style={{
-                            flex: 1,
-                            color: c.fg,
-                            fontSize: 26,
-                            fontWeight: '800',
-                            letterSpacing: -0.6,
-                        }}
-                    >
-                        {t('profileMixes.add')}
-                    </Text>
-                    <Pressable
+                <PageHeader progress={headerProgress} title={t('profileMixes.add')} subtitle={''} action={<Pressable
                         accessibilityRole="button"
                         accessibilityLabel={t('accountMenu.close')}
                         disabled={mutation.isPending}
@@ -126,9 +124,8 @@ export default function AddMixScreen() {
                         }}
                     >
                         <X size={22} color={c.fg} />
-                    </Pressable>
-                </View>
-                <ScrollView
+                    </Pressable>} />
+                <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         paddingHorizontal: 24,

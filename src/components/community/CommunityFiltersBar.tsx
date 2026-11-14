@@ -97,7 +97,7 @@ export function CommunityFiltersBar({
                     alignItems: 'center',
                     minHeight: 52,
                     backgroundColor: c.card,
-                    borderWidth: 1,
+                    borderWidth: c.dark ? 0 : 1,
                     borderColor: c.border,
                     borderRadius: 17,
                     paddingLeft: 14,
@@ -157,11 +157,11 @@ export function CommunityFiltersBar({
                     />
                     {!!count && (
                         <Text
-                            style={{
+                            style={[{
                                 color: c.accent,
                                 fontWeight: '800',
                                 fontSize: 12,
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {count}
                         </Text>
@@ -275,12 +275,12 @@ export function CommunityFiltersBar({
                                     </Pressable>
                                 )}
                                 <Text
-                                    style={{
+                                    style={[{
                                         flex: 1,
                                         fontSize: 24,
                                         fontWeight: '800',
                                         color: c.fg,
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {t(
                                         panel === 'filters'
@@ -308,11 +308,11 @@ export function CommunityFiltersBar({
                             {panel !== 'filters' && (
                                 <>
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.muted,
                                             fontSize: 13,
                                             lineHeight: 19,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {t(
                                             panel === 'city'
@@ -382,10 +382,10 @@ export function CommunityFiltersBar({
                                     >
                                         <View style={{ flex: 1, gap: 5 }}>
                                             <Text
-                                                style={{
+                                                style={[{
                                                     color: c.muted,
                                                     fontSize: 12,
-                                                }}
+                                                }, c.dark && { color: c.cardText }]}
                                             >
                                                 {t(
                                                     kind === 'genre' &&
@@ -397,13 +397,13 @@ export function CommunityFiltersBar({
                                             </Text>
                                             <Text
                                                 numberOfLines={2}
-                                                style={{
+                                                style={[{
                                                     color: draft[kind]
                                                         ? c.accent
                                                         : c.fg,
                                                     fontWeight: '600',
                                                     fontSize: 15,
-                                                }}
+                                                }, c.dark && { color: c.cardText }]}
                                             >
                                                 {draft[kind] ||
                                                     t(
@@ -433,11 +433,11 @@ export function CommunityFiltersBar({
                                     }}
                                 >
                                     <Text
-                                        style={{
+                                        style={[{
                                             color: c.accent,
                                             fontWeight: '600',
                                             fontSize: 13,
-                                        }}
+                                        }, c.dark && { color: c.cardText }]}
                                     >
                                         {t('communityFilters.clear')}
                                     </Text>
@@ -515,7 +515,7 @@ export function CommunityFiltersBar({
                                 )}
                                 {!loading && !error && !choices.length && (
                                     <Text
-                                        style={{ color: c.muted, padding: 15 }}
+                                        style={[{ color: c.muted, padding: 15 }, c.dark && { color: c.cardText }]}
                                     >
                                         {t('communityFilters.noOptions')}
                                     </Text>

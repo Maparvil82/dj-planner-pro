@@ -166,6 +166,7 @@ export function dashboardInsights(
     period: DashboardPeriod,
     currency: string,
     now = new Date(),
+    historicalFirstCompleted?: Record<string,number>,
 ) {
     const summary = dashboardMetrics(
         sessions,
@@ -187,7 +188,7 @@ export function dashboardInsights(
         s.venue_id && !s.is_guest ? byId.get(s.venue_id) : undefined;
     const venueKey = (s: Session) =>
         resolveVenue(s)?.id || s.venue_id || normalize(s.venue || '');
-    const firstCompleted = new Map<string, number>();
+    const firstCompleted = new Map<string, number>(Object.entries(historicalFirstCompleted || {}));
     sessions.forEach((s) => {
         if (s.status === 'pending' || s.status === 'cancelled' || !s.date)
             return;

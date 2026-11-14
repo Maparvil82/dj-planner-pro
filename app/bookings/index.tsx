@@ -37,7 +37,7 @@ export default function BookingsScreen() {
 }
 
 function BookingsScreenContent() {
-    const { t, currentLanguage } = useTranslation();
+    const { t, dateLocale, numberLocale } = useTranslation();
     const router = useRouter();
     const c = useCommunityColors();
     const client = useQueryClient();
@@ -281,7 +281,7 @@ function BookingsScreenContent() {
                                     {t(`bookings.states.${r.state}`)} ·{' '}
                                     {new Date(
                                         r.date + 'T12:00:00',
-                                    ).toLocaleDateString(currentLanguage)}
+                                    ).toLocaleDateString(dateLocale)}
                                 </BookingText>
                                 <BookingText large>{r.event_title}</BookingText>
                                 <BookingText>
@@ -290,7 +290,7 @@ function BookingsScreenContent() {
                                 <BookingText muted>
                                     {r.start_time} – {r.end_time} ·{' '}
                                     {Number(r.budget).toLocaleString(
-                                        currentLanguage,
+                                        numberLocale,
                                         {
                                             style: 'currency',
                                             currency: r.currency,

@@ -205,3 +205,12 @@ export function sessionPaymentState(session: Session) {
     if (total <= 0) return received > 0 ? 'received' : 'free';
     return received >= total ? 'paid' : received > 0 ? 'partial' : 'unpaid';
 }
+
+// A live session must be owned by the viewer; accepted collaborations have no door permissions.
+export function liveSessions(sessions: Session[], userId: string, now = new Date()): Session[] {
+    return sessions.filter(session => {
+        if (session.user_id !== userId || session.is_guest || session.status === 'cancelled') return false;
+        const range = sessionRange(session);
+        return range.start <= now && now < range.end;
+    }).sort((a,b) => sessionRange(a).start.getTime() - sessionRange(b).start.getTime());
+}

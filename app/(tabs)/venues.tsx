@@ -1,7 +1,10 @@
+import type { ComponentRef } from 'react';
+import { ScrollHeaderScope } from '../../src/components/ui/ScrollHeaderScope';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
 import { useKeyboardVisible } from '../../src/hooks/useKeyboardVisible';
 import { CityInput } from '../../src/components/profile/CityInput';
 import { cityKey, cityLabel, type CityLocation } from '../../src/utils/cities';
-import { useTabBarScroll } from '../../src/contexts/TabBarVisibilityContext';
+import { useScrollHeader } from '../../src/hooks/useScrollHeader';
 import React, { useState, useMemo, useRef, useContext } from 'react';
 import {
     View,
@@ -49,7 +52,8 @@ const normalized = (value: string) =>
         .toLocaleLowerCase();
 
 export default function VenuesScreen() {
-    const onTabScroll = useTabBarScroll();
+    const darkPalette = useDarkPalette();
+    const { progress: headerProgress, onScroll: onTabScroll, onScrollBeginDrag: onTabScrollBeginDrag } = useScrollHeader('compact');
     const keyboardVisible = useKeyboardVisible();
     const { t } = useTranslation();
     const themeCtx = useContext(ThemeContext);
@@ -64,7 +68,7 @@ export default function VenuesScreen() {
     }, [params.create, router]);
     const [includeArchived, setIncludeArchived] = useState(false);
     const [menuTop, setMenuTop] = useState<number | null>(null);
-    const screenRef = useRef<View>(null);
+    const screenRef = useRef<ComponentRef<typeof View>>(null);
     const menuButtonRef =
         useRef<React.ElementRef<typeof TouchableOpacity>>(null);
     const {
@@ -88,11 +92,12 @@ export default function VenuesScreen() {
     const [newAddress, setNewAddress] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const saving = useRef(false);
-    const text = isDark ? '#f3f4f8' : '#202538',
-        muted = isDark ? '#a8b2c6' : '#6d7588',
-        surface = isDark ? '#171d2c' : '#fff',
-        border = isDark ? '#252d40' : '#e9ecf3',
-        background = isDark ? '#0d1220' : '#f5f6fa';
+    const accent = isDark ? darkPalette.primary : '#8270e4';
+    const text = isDark ? darkPalette.text : '#202538',
+        muted = isDark ? darkPalette.muted : '#6d7588',
+        surface = isDark ? darkPalette.surface : '#fff',
+        border = isDark ? darkPalette.border : '#e9ecf3',
+        background = isDark ? darkPalette.background : '#f5f6fa';
     const filtered = useMemo(
         () =>
             [...venues]
@@ -165,7 +170,7 @@ export default function VenuesScreen() {
     const inputStyle = {
         borderWidth: 1,
         borderColor: border,
-        backgroundColor: isDark ? '#111625' : '#f8f9fd',
+        backgroundColor: isDark ? darkPalette.field : '#f8f9fd',
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 16,
@@ -178,7 +183,7 @@ export default function VenuesScreen() {
             style={{ flex: 1, backgroundColor: background }}
             edges={['top', 'left', 'right']}
         >
-            <PageHeader
+            <PageHeader progress={headerProgress}
                 title={t('venues_title')}
                 showPlaces={false}
                 leading={
@@ -281,7 +286,7 @@ export default function VenuesScreen() {
                     ) : null}
                 </View>
                 <ScrollView
-                    onScroll={onTabScroll}
+                    onScrollBeginDrag={onTabScrollBeginDrag} onTouchStart={onTabScrollBeginDrag} onScroll={onTabScroll}
                     scrollEventThrottle={16}
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -292,15 +297,15 @@ export default function VenuesScreen() {
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefetching}
-                            onRefresh={refetch}
-                            tintColor="#8270e4"
+                            onRefresh={() => { void refetch(); }}
+                            tintColor={accent}
                         />
                     }
                     showsVerticalScrollIndicator={false}
                 >
                     {isLoading ? (
                         <ActivityIndicator
-                            color="#8270e4"
+                            color={accent}
                             size="large"
                             style={{ marginTop: 32 }}
                         />
@@ -313,7 +318,7 @@ export default function VenuesScreen() {
                                 borderRadius: 24,
                             }}
                         >
-                            <Text style={{ color: muted }}>
+                            <Text style={[{ color: muted }, isDark && { color: darkPalette.onSurface }]}>
                                 {t('insights.loadingError')}
                             </Text>
                             <TouchableOpacity
@@ -321,10 +326,10 @@ export default function VenuesScreen() {
                                 onPress={() => refetch()}
                             >
                                 <Text
-                                    style={{
-                                        color: '#8270e4',
+                                    style={[{
+                                        color: accent,
                                         fontWeight: '700',
-                                    }}
+                                    }, isDark && { color: darkPalette.onSurface }]}
                                 >
                                     {t('insights.retry')}
                                 </Text>
@@ -343,12 +348,12 @@ export default function VenuesScreen() {
                             }}
                         >
                             <Text
-                                style={{
+                                style={[{
                                     color: text,
                                     fontSize: 16,
                                     fontWeight: '700',
                                     textAlign: 'center',
-                                }}
+                                }, isDark && { color: darkPalette.onSurface }]}
                             >
                                 {t(
                                     searchQuery
@@ -365,10 +370,10 @@ export default function VenuesScreen() {
                                 }
                             >
                                 <Text
-                                    style={{
-                                        color: '#8270e4',
+                                    style={[{
+                                        color: accent,
                                         fontWeight: '700',
-                                    }}
+                                    }, isDark && { color: darkPalette.onSurface }]}
                                 >
                                     {t(
                                         searchQuery
@@ -450,11 +455,11 @@ export default function VenuesScreen() {
                             }}
                         >
                             <Text
-                                style={{
+                                style={[{
                                     color: text,
                                     fontWeight: '600',
                                     fontSize: 14,
-                                }}
+                                }, isDark && { color: darkPalette.onSurface }]}
                             >
                                 {t('add_venue')}
                             </Text>
@@ -476,7 +481,7 @@ export default function VenuesScreen() {
                                 borderRadius: 12,
                                 backgroundColor: includeArchived
                                     ? isDark
-                                        ? '#292743'
+                                        ? darkPalette.tint
                                         : '#f0edfc'
                                     : 'transparent',
                             }}
@@ -491,7 +496,7 @@ export default function VenuesScreen() {
                                 {t('location.archived')}
                             </Text>
                             {includeArchived && (
-                                <Check size={18} color="#8270e4" />
+                                <Check size={18} color={accent} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -514,7 +519,7 @@ export default function VenuesScreen() {
                                 : ['top', 'bottom', 'left', 'right']
                         }
                     >
-                        <SessionFormHeader
+                        <ScrollHeaderScope>{({progress:modalProgress,onScroll:onModalScroll,onScrollBeginDrag:onModalBeginDrag}) => <><SessionFormHeader progress={modalProgress}
                             title={t('add_venue')}
                             subtitle={t('places.addIntro')}
                             onClose={() => {
@@ -522,7 +527,7 @@ export default function VenuesScreen() {
                             }}
                         />
                         <View style={{ flex: 1 }}>
-                            <ScrollView
+                            <ScrollView onScrollBeginDrag={onModalBeginDrag} onTouchStart={onModalBeginDrag} onScroll={onModalScroll} scrollEventThrottle={16}
                                 style={{ flex: 1 }}
                                 automaticallyAdjustKeyboardInsets={
                                     Platform.OS === 'ios'
@@ -557,7 +562,7 @@ export default function VenuesScreen() {
                                             placeholder={t('venue_placeholder')}
                                             placeholderTextColor={muted}
                                             className="focus:outline-none"
-                                            selectionColor="#8270e4"
+                                            selectionColor={accent}
                                             onFocus={() =>
                                                 setFocusedField('name')
                                             }
@@ -572,7 +577,7 @@ export default function VenuesScreen() {
                                                 {
                                                     borderColor:
                                                         focusedField === 'name'
-                                                            ? '#8270e4'
+                                                            ? accent
                                                             : border,
                                                 },
                                             ]}
@@ -618,7 +623,7 @@ export default function VenuesScreen() {
                                             )}
                                             placeholderTextColor={muted}
                                             className="focus:outline-none"
-                                            selectionColor="#8270e4"
+                                            selectionColor={accent}
                                             onFocus={() =>
                                                 setFocusedField('address')
                                             }
@@ -633,7 +638,7 @@ export default function VenuesScreen() {
                                                     borderColor:
                                                         focusedField ===
                                                         'address'
-                                                            ? '#8270e4'
+                                                            ? accent
                                                             : border,
                                                 },
                                             ]}
@@ -662,7 +667,7 @@ export default function VenuesScreen() {
                                     onSave={handleCreateVenue}
                                 />
                             )}
-                        </View>
+                        </View></>}</ScrollHeaderScope>
                     </SafeAreaView>
                 </SafeAreaProvider>
             </Modal>

@@ -1,7 +1,7 @@
+import { StorageImage as Image } from '../ui/StorageImage';
 import { useState } from 'react';
 import {
     ActivityIndicator,
-    Image,
     Modal,
     ScrollView,
     Text,
@@ -17,7 +17,7 @@ import { sessionDisplayTitle } from '../../utils/sessionNaming';
 import { CommunityButton, useCommunityColors } from './CommunityUI';
 export function ProfilePosters({ userId }: { userId: string }) {
     const c = useCommunityColors();
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale } = useTranslation();
     const insets = useSafeAreaInsets();
     const query = useCommunityPosters(userId);
     const [selected, setSelected] = useState<CommunitySession | null>(null);
@@ -85,7 +85,7 @@ export function ProfilePosters({ userId }: { userId: string }) {
                             >
                                 {failed[item.session_id] ? (
                                     <Text
-                                        style={{ color: c.muted, padding: 12 }}
+                                        style={[{ color: c.muted, padding: 12 }, c.dark && { color: c.cardText }]}
                                     >
                                         {sessionDisplayTitle(item, t)}
                                     </Text>
@@ -119,7 +119,7 @@ export function ProfilePosters({ userId }: { userId: string }) {
                             <Text style={{ color: c.muted, fontSize: 11 }}>
                                 {new Date(
                                     `${item.date}T12:00:00`,
-                                ).toLocaleDateString(currentLanguage, {
+                                ).toLocaleDateString(dateLocale, {
                                     day: 'numeric',
                                     month: 'short',
                                     year: 'numeric',

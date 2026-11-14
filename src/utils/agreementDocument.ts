@@ -4,12 +4,14 @@ import { conditionalBreakdown } from './conditionalBreakdown';
 import { conditionalSummary } from './conditionalPresentation';
 import { sessionDisplayTitle } from './sessionNaming';
 import { validateConditionalAgreement } from './feeAgreement';
+import { formatMoney } from '../i18n/money';
 
 export function buildAgreementHtml(
     session: Session,
     owner: string,
     language: string,
     t: TFunction,
+    numberLocale = language,
 ) {
     const a = session.fee_agreement;
     if (a?.version !== 2) throw new Error('agreement.invalid');
@@ -27,7 +29,7 @@ export function buildAgreementHtml(
                 })[c]!,
         );
     const money = (n: number) =>
-        `${new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} ${session.currency}`;
+        formatMoney(n, session.currency, numberLocale);
     const label = (key: string) => escape(t(`agreementPdf.${key}`));
     const row = (key: string, value: unknown) =>
         `<tr><td>${escape(key)}</td><td>${escape(value)}</td></tr>`;
@@ -96,7 +98,7 @@ export function buildAgreementHtml(
     return `<!doctype html><html lang="${escape(language)}"><head><meta charset="UTF-8"><title>${label('title')}</title><style>
     @page { size: A4; margin: 16mm; }
     *{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#23243b;margin:0;font-size:10.5px;line-height:1.4}header{border-bottom:3px solid #6851e8;padding-bottom:10px;margin-bottom:10px}.brand{color:#6851e8;font-size:12px;font-weight:bold;letter-spacing:1px}h1{font-size:23px;line-height:1.2;margin:12px 0}h2{font-size:14px;margin:10px 0 5px;break-after:avoid}.badge{display:inline-block;background:#efecfd;color:#6851e8;border-radius:5px;padding:5px 9px;font-weight:bold}p{margin:6px 0}.muted{color:#656b7a;font-size:10px}table{width:100%;border-collapse:collapse;margin:5px 0 7px;table-layout:fixed}td{padding:5px 10px;border-bottom:1px solid #e4e5ed;vertical-align:top;overflow-wrap:anywhere}td:first-child{width:66%}td:last-child{text-align:right;font-weight:bold}tr{break-inside:avoid}.party{border:1px solid #e4e5ed;padding:9px;margin:6px 0;break-inside:avoid}.line{margin-top:8px;border-bottom:1px solid #b9bdcb;height:15px}.signatures{break-inside:avoid;margin-top:16px}.signature{display:inline-block;width:47%;margin-right:2%;vertical-align:top}.signature .line{height:40px}footer{border-top:1px solid #e4e5ed;margin-top:16px;padding-top:8px;color:#656b7a;font-size:9px}.notes{white-space:pre-wrap;overflow-wrap:anywhere}
-    </style></head><body><header><div class="brand">DJ PLANNER · PRO</div><h1>${label('title')}</h1><span class="badge">${label('pending')}</span></header>
+    </style></head><body><header><div class="brand">DJ PLANNER</div><h1>${label('title')}</h1><span class="badge">${label('pending')}</span></header>
     ${heading('event')}<p><strong>${escape(sessionDisplayTitle(session, t))}</strong><br>${escape(session.venue)}${session.venue_city ? ' · ' + escape(session.venue_city) : ''}${session.venue_address ? '<br>' + escape(session.venue_address) : ''}<br>${escape(session.date)} · ${escape(session.start_time)} - ${escape(session.end_time)} · ${escape(a.timezone)}</p>
     <p class="muted">${label('reference')}: ${escape(session.id)}<br>${label('revision')}: ${escape(session.updated_at)}</p>
     ${heading('parties')}<div class="party"><strong>${label('dj')}: ${escape(names[0])}</strong><div class="muted">${label('identity')}</div><div class="line"></div></div><div class="party"><strong>${label('promoter')}: ${escape(session.venue)}</strong><div class="muted">${label('identity')}</div><div class="line"></div></div>

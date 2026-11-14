@@ -34,7 +34,7 @@ export function TicketPassSheet({
     onClose: () => void;
     onChange: (action: 'cancel' | 'paid') => Promise<void>;
 }) {
-    const { t } = useTranslation(),
+    const { t, formatMoney } = useTranslation(),
         c = useCommunityColors(),
         { width, height } = useWindowDimensions();
     const svg = useRef<Svg>(null);
@@ -90,7 +90,7 @@ export function TicketPassSheet({
                 });
                 const file = new File(Paths.cache, `DJ-Planner-${shortId}.png`);
                 file.create({ overwrite: true });
-                file.write(new Uint8Array(decode(data)));
+                await file.write(new Uint8Array(decode(data)));
                 if (!(await Sharing.isAvailableAsync())) throw new Error();
                 await Sharing.shareAsync(file.uri, {
                     mimeType: 'image/png',
@@ -122,7 +122,7 @@ export function TicketPassSheet({
             visible
             transparent
             animationType="slide"
-            onRequestClose={() => !busy && onClose()}
+            onRequestClose={() => { if (!busy) onClose(); }}
         >
             <View
                 style={{
@@ -235,8 +235,7 @@ export function TicketPassSheet({
                                     fontSize="13"
                                     fill="#6554df"
                                 >
-                                    {Number(kind.price).toFixed(2)}{' '}
-                                    {session.currency} ·{' '}
+                                    {formatMoney(Number(kind.price), session.currency)} ·{' '}
                                     {t(
                                         `tickets.${ticket.state === 'issued' ? ticket.payment_status : ticket.state}`,
                                     )}

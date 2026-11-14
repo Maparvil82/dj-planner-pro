@@ -27,10 +27,29 @@ export const collaborationService = {
             if (!data || data.length < 1000) return invitations;
         }
     },
-    async agenda(): Promise<Session[]> {
-        return (await this.inbox())
-            .filter((item) => item.status === 'accepted')
-            .map((item) => item.session);
+    async agenda(range?: { from: string; to?: string }): Promise<Session[]> {
+        const rows: Session[] = [];
+        for (let offset = 0; ; offset += 1000) {
+            const { data, error } = await supabase.rpc('session_agenda_range', {
+                from_date: range?.from || null,
+                to_date: range?.to || null,
+                page_offset: offset,
+            });
+            // Compatibility until the backend migration is activated; never hide network/permission errors.
+            if (error?.code === 'PGRST202' || error?.code === '42883') {
+                return (await this.inbox())
+                    .filter((item) => item.status === 'accepted')
+                    .map((item) => item.session)
+                    .filter(
+                        (session) =>
+                            (!range?.from || session.date >= range.from) &&
+                            (!range?.to || session.date < range.to),
+                    );
+            }
+            if (error) throw new Error(error.message);
+            rows.push(...(data || []));
+            if (!data || data.length < 1000) return rows;
+        }
     },
     async participants(sessionId: string): Promise<SessionCollaborator[]> {
         const { data, error } = await supabase

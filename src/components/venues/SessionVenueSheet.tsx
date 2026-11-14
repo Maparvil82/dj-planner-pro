@@ -183,11 +183,11 @@ export function SessionVenueSheet({
                         <View style={{ flex: 1, gap: 7 }}>
                             <Text
                                 accessibilityRole="header"
-                                style={{
+                                style={[{
                                     color: c.fg,
                                     fontSize: 24,
                                     fontWeight: '800',
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t(
                                     creating
@@ -196,11 +196,11 @@ export function SessionVenueSheet({
                                 )}
                             </Text>
                             <Text
-                                style={{
+                                style={[{
                                     color: c.muted,
                                     fontSize: 14,
                                     lineHeight: 20,
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t(
                                     creating
@@ -234,11 +234,11 @@ export function SessionVenueSheet({
                     >
                         {creating && (
                             <Text
-                                style={{
+                                style={[{
                                     color: c.fg,
                                     fontWeight: '700',
                                     fontSize: 13,
-                                }}
+                                }, c.dark && { color: c.cardText }]}
                             >
                                 {t('venue_name')}
                             </Text>
@@ -288,7 +288,7 @@ export function SessionVenueSheet({
                                     onLocation={setCityLocation}
                                     disabled={busy}
                                 />
-                                <Text style={{ color: c.muted, fontSize: 12 }}>
+                                <Text style={[{ color: c.muted, fontSize: 12 }, c.dark && { color: c.cardText }]}>
                                     {t('location.addressOptional')}
                                 </Text>
                                 <TextInput
@@ -315,7 +315,7 @@ export function SessionVenueSheet({
                         {error && (
                             <Text
                                 accessibilityRole="alert"
-                                style={{ color: '#dc4545', fontSize: 14 }}
+                                style={[{ color: '#dc4545', fontSize: 14 }, c.dark && { color: c.cardText }]}
                             >
                                 {t('venuePicker.saveError')}
                             </Text>
@@ -380,12 +380,12 @@ export function SessionVenueSheet({
                                 ))
                             ) : (
                                 <Text
-                                    style={{
+                                    style={[{
                                         color: c.muted,
                                         fontSize: 14,
                                         lineHeight: 21,
                                         paddingVertical: 18,
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {t(
                                         venues.length
@@ -428,11 +428,11 @@ export function SessionVenueSheet({
                             }}
                         >
                             {busy ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator color={c.onAccent} />
                             ) : (
                                 <Text
                                     style={{
-                                        color: '#fff',
+                                        color: c.onAccent,
                                         fontWeight: '800',
                                         fontSize: 16,
                                         textAlign: 'center',
@@ -457,11 +457,11 @@ export function SessionVenueSheet({
                                 }}
                             >
                                 <Text
-                                    style={{
+                                    style={[{
                                         color: c.muted,
                                         fontSize: 14,
                                         fontWeight: '600',
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {t('venuePicker.back')}
                                 </Text>

@@ -1,3 +1,4 @@
+import darkPalette from '../../theme/darkPalette.json';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -24,7 +25,7 @@ export function SessionStatusControl({
             {showHeading ? (
                 <Text
                     style={{
-                        color: dark ? '#d1d5db' : '#374151',
+                        color: dark ? darkPalette.muted : '#374151',
                         fontWeight: '700',
                         fontSize: 13,
                         marginBottom: 12,
@@ -49,7 +50,7 @@ export function SessionStatusControl({
                                 status === value
                                     ? '#8270e4'
                                     : dark
-                                      ? '#374151'
+                                      ? darkPalette.raised
                                       : '#e5e7eb',
                             backgroundColor:
                                 status === value
@@ -57,7 +58,7 @@ export function SessionStatusControl({
                                         ? '#2b2645'
                                         : '#f2effc'
                                     : dark
-                                      ? '#111827'
+                                      ? darkPalette.background
                                       : '#fff',
                             borderRadius: 15,
                             padding: 14,
@@ -78,7 +79,7 @@ export function SessionStatusControl({
                             <Text
                                 style={{
                                     fontWeight: '700',
-                                    color: dark ? '#f3f4f6' : '#27233c',
+                                    color: dark ? darkPalette.text : '#27233c',
                                     fontSize: 13,
                                 }}
                             >
@@ -90,7 +91,7 @@ export function SessionStatusControl({
                             </Text>
                             <Text
                                 style={{
-                                    color: dark ? '#a8b2c6' : '#6d7588',
+                                    color: dark ? darkPalette.muted : '#6d7588',
                                     fontSize: 11,
                                     lineHeight: 17,
                                     marginTop: 3,
@@ -108,7 +109,7 @@ export function SessionStatusControl({
             </View>
             <Text
                 style={{
-                    color: dark ? '#a8b2c6' : '#6d7588',
+                    color: dark ? darkPalette.muted : '#6d7588',
                     fontSize: 11,
                     lineHeight: 17,
                     marginTop: 10,

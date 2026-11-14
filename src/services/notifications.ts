@@ -3,8 +3,10 @@ export interface SocialNotification {
     id: string;
     recipient_id: string;
     actor_id: string | null;
+    poster_job_id?: string | null;
     booking_id?: string | null;
     kind:
+        | 'poster_ready'
         | 'follow'
         | 'shared_session'
         | 'session_invitation'

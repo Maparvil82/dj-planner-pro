@@ -1,3 +1,5 @@
+import { useScrollHeader } from '../../hooks/useScrollHeader';
+import { ScrollHeaderContainer } from '../ui/ScrollHeaderContainer';
 import { ReactNode, useState } from 'react';
 import {
     View,
@@ -25,6 +27,7 @@ export function BookingPage({
     children: ReactNode;
     guest?: boolean;
 }) {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader(guest ? 'hide' : 'compact');
     const c = useCommunityColors();
     const router = useRouter();
     return (
@@ -37,7 +40,7 @@ export function BookingPage({
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 {guest ? (
-                    <View style={{ padding: 24, gap: 10 }}>
+                    <ScrollHeaderContainer progress={headerProgress} hasIcons={false}><View style={{ padding: 24, gap: 10 }}>
                         <Text
                             style={{
                                 color: c.accent,
@@ -46,7 +49,7 @@ export function BookingPage({
                                 letterSpacing: 2,
                             }}
                         >
-                            DJ PLANNER PRO
+                            DJ PLANNER
                         </Text>
                         <Text
                             accessibilityRole="header"
@@ -62,9 +65,9 @@ export function BookingPage({
                         <Text style={{ color: c.muted, lineHeight: 21 }}>
                             {subtitle}
                         </Text>
-                    </View>
+                    </View></ScrollHeaderContainer>
                 ) : (
-                    <SessionFormHeader
+                    <SessionFormHeader progress={headerProgress}
                         title={title}
                         subtitle={subtitle}
                         onClose={() =>
@@ -74,7 +77,7 @@ export function BookingPage({
                         }
                     />
                 )}
-                <ScrollView
+                <ScrollView onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll} scrollEventThrottle={16}
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         paddingHorizontal: 20,
@@ -99,7 +102,7 @@ export function BookingCard({ children }: { children: ReactNode }) {
                 padding: 20,
                 gap: 14,
                 borderRadius: 24,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
                 borderColor: c.border,
                 backgroundColor: c.card,
             }}
@@ -197,7 +200,7 @@ export function BookingDate({
     onChange: (v: string) => void;
 }) {
     const c = useCommunityColors();
-    const { t, currentLanguage } = useTranslation();
+    const { t, currentLanguage, dateLocale, firstDay } = useTranslation();
     const [open, setOpen] = useState(false);
     return (
         <View style={{ gap: 10 }}>
@@ -209,7 +212,7 @@ export function BookingDate({
                 label={
                     value
                         ? new Date(value + 'T12:00:00').toLocaleDateString(
-                              currentLanguage,
+                              dateLocale,
                               {
                                   weekday: 'short',
                                   day: 'numeric',
@@ -223,6 +226,7 @@ export function BookingDate({
             />
             {open && (
                 <Calendar
+                    firstDay={firstDay}
                     key={c.dark ? 'dark' : 'light'}
                     current={value || undefined}
                     onDayPress={(d) => {
@@ -260,7 +264,7 @@ export function BookingCurrency({
     onChange: (v: string) => void;
 }) {
     const c = useCommunityColors();
-    const { t } = useTranslation();
+    const { t, dateLocale } = useTranslation();
     return (
         <View style={{ gap: 8 }}>
             <Text style={{ color: c.fg, fontSize: 13, fontWeight: '700' }}>
@@ -292,7 +296,7 @@ export function BookingCurrency({
     );
 }
 export function BookingError({ error }: { error: unknown }) {
-    const { t } = useTranslation();
+    const { t, dateLocale } = useTranslation();
     return (
         <BookingCard>
             <Text

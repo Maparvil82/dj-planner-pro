@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useCommunityColors } from '../community/CommunityUI';
+import { formatTimezoneOffset } from '../../utils/timezoneOffset';
 
 export function SessionTimezoneField({
     value,
@@ -13,21 +14,10 @@ export function SessionTimezoneField({
     date: string;
 }) {
     const [editing, setEditing] = useState(false);
-    const { t, currentLanguage } = useTranslation();
+    const { t } = useTranslation();
     const c = useCommunityColors();
     const city = value.split('/').pop()?.replace(/_/g, ' ') || value;
-    let offset = '';
-    try {
-        offset =
-            new Intl.DateTimeFormat(currentLanguage, {
-                timeZone: value,
-                timeZoneName: 'shortOffset',
-            })
-                .formatToParts(new Date(`${date}T12:00:00Z`))
-                .find((part) => part.type === 'timeZoneName')?.value || '';
-    } catch {
-        /* Validation also runs before saving. */
-    }
+    const offset = formatTimezoneOffset(value, date);
     return (
         <View style={{ gap: 8, marginTop: 12 }}>
             <View

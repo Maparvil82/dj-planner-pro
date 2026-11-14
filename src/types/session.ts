@@ -2,11 +2,16 @@ import type { CityLocation } from '../utils/cities';
 import type { FeeAgreement } from '../utils/feeAgreement';
 import { UserProfile } from '../services/profile';
 
+export const SESSION_EVENT_TYPES = ['club', 'festival', 'wedding', 'corporate', 'residency'] as const;
+export type SessionEventType = typeof SESSION_EVENT_TYPES[number];
+
 export interface Session {
     id: string; // uuid
     user_id: string; // uuid
     date: string; // date 'YYYY-MM-DD'
     title: string;
+    event_type?: SessionEventType | null;
+    notes?: string | null;
     venue: string;
     venue_city?: string | null; // Event location snapshot, independent of the place record.
     venue_city_location?: CityLocation | null;
@@ -48,6 +53,8 @@ export interface CreateSessionInput {
     booking_timezone?: string | null;
     date: string;
     title: string;
+    event_type?: SessionEventType | null;
+    notes?: string | null;
     venue: string;
     start_time: string;
     end_time: string;

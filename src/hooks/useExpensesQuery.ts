@@ -43,6 +43,8 @@ export const useCreateExpenseMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            queryClient.invalidateQueries({ queryKey: ['session-tasks','card-summary'] });
+            queryClient.invalidateQueries({ queryKey: ['sessions','screen-context'] });
         },
     });
 };
@@ -56,6 +58,8 @@ export const useUpdateExpenseMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            queryClient.invalidateQueries({ queryKey: ['session-tasks','card-summary'] });
+            queryClient.invalidateQueries({ queryKey: ['sessions','screen-context'] });
         },
     });
 };
@@ -69,6 +73,8 @@ export const useDeleteExpenseMutation = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            queryClient.invalidateQueries({ queryKey: ['session-tasks','card-summary'] });
+            queryClient.invalidateQueries({ queryKey: ['sessions','screen-context'] });
         },
     });
 };

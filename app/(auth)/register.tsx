@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { sharedDJDestination } from '../../src/utils/communityNavigation';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
@@ -10,20 +11,19 @@ import {
     AuthShell,
     AuthField,
     AuthMessage,
+    AuthButton,
+    AUTH_COLORS,
+    AUTH_SCREEN_IMAGES,
 } from '../../src/components/auth/AuthUI';
-import {
-    CommunityButton,
-    useCommunityColors,
-} from '../../src/components/community/CommunityUI';
 import { authErrorKey, validAuthEmail } from '../../src/utils/authExperience';
 export default function RegisterScreen() {
     const { t } = useTranslation();
     const router = useRouter();
     const { dj } = useLocalSearchParams<{ dj?: string }>();
     const destination = sharedDJDestination(dj);
-    const c = useCommunityColors();
-    const emailRef = useRef<TextInput>(null),
-        passwordRef = useRef<TextInput>(null);
+    const c = AUTH_COLORS;
+    const emailRef = useRef<ComponentRef<typeof TextInput>>(null),
+        passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
     const submitting = useRef(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -74,11 +74,13 @@ export default function RegisterScreen() {
     };
     return (
         <AuthShell
+            immersive
+            image={AUTH_SCREEN_IMAGES.register}
             compact
             title={t(
                 confirmed
                     ? 'authExperience.confirmTitle'
-                    : 'authExperience.registerTitle',
+                    : 'authExperience.createAccount',
             )}
             subtitle={t(
                 confirmed
@@ -99,7 +101,7 @@ export default function RegisterScreen() {
                         style={{
                             padding: 20,
                             backgroundColor: c.card,
-                            borderWidth: 1,
+                            borderWidth: c.dark ? 0 : 1,
                             borderColor: c.border,
                             borderRadius: 20,
                             gap: 12,
@@ -107,25 +109,25 @@ export default function RegisterScreen() {
                     >
                         <Text
                             selectable
-                            style={{
+                            style={[{
                                 color: c.fg,
-                                fontWeight: '800',
+                                fontWeight: '600',
                                 fontSize: 16,
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {email.trim()}
                         </Text>
                         <Text
-                            style={{
+                            style={[{
                                 color: c.muted,
                                 lineHeight: 22,
                                 fontSize: 14,
-                            }}
+                            }, c.dark && { color: c.cardText }]}
                         >
                             {t('authExperience.checkInbox')}
                         </Text>
                     </View>
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.returnLogin')}
                         onPress={() =>
                             router.replace(
@@ -138,7 +140,7 @@ export default function RegisterScreen() {
                             )
                         }
                     />
-                    <CommunityButton
+                    <AuthButton
                         secondary
                         label={t('authExperience.changeEmail')}
                         onPress={() => {
@@ -150,7 +152,7 @@ export default function RegisterScreen() {
             ) : (
                 <>
                     {!!error && <AuthMessage>{error}</AuthMessage>}
-                    <View style={{ gap: 16 }}>
+                    <View style={{ gap: 10 }}>
                         <AuthField
                             label={t('artist_name')}
                             placeholder={t('authExperience.namePlaceholder')}
@@ -220,7 +222,7 @@ export default function RegisterScreen() {
                             onSubmitEditing={() => void handleRegister()}
                         />
                     </View>
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.createAccount')}
                         onPress={() => void handleRegister()}
                         disabled={!canSubmit}
@@ -228,7 +230,10 @@ export default function RegisterScreen() {
                     />
                     <View
                         style={{
-                            gap: 8,
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
+                            gap: 6,
                             alignItems: 'center',
                             paddingVertical: 4,
                         }}
@@ -259,7 +264,7 @@ export default function RegisterScreen() {
                                     style={{
                                         color: c.accent,
                                         fontSize: 15,
-                                        fontWeight: '800',
+                                        fontWeight: '600',
                                     }}
                                 >
                                     {t('login')}

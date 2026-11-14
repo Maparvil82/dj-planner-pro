@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { View, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -6,19 +7,19 @@ import {
     AuthShell,
     AuthField,
     AuthMessage,
+    AuthButton,
+    AUTH_COLORS,
+    AUTH_SCREEN_IMAGES,
 } from '../../src/components/auth/AuthUI';
-import {
-    CommunityButton,
-    useCommunityColors,
-} from '../../src/components/community/CommunityUI';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { supabase } from '../../src/lib/supabase';
 import { authErrorKey } from '../../src/utils/authExperience';
 import { recoveryCredentials } from '../../src/utils/recoveryLink';
+import { sharedDJDestination } from '../../src/utils/communityNavigation';
 
 export default function ResetPasswordScreen() {
     const { t } = useTranslation();
-    const c = useCommunityColors();
+    const c = AUTH_COLORS;
     const router = useRouter();
     const link = Linking.useLinkingURL();
     const params = useLocalSearchParams<{
@@ -27,10 +28,16 @@ export default function ResetPasswordScreen() {
         type?: string;
         error?: string;
         error_code?: string;
+        dj?: string;
     }>();
+    // Keep only the validated destination when recovery credentials are scrubbed.
+    const dj = useRef(sharedDJDestination(params.dj) ? params.dj : undefined).current;
+    const loginRoute = dj
+        ? { pathname: '/(auth)/login' as const, params: { dj } }
+        : '/(auth)/login' as const;
     const submitting = useRef(false);
     const consumed = useRef(false);
-    const confirmRef = useRef<TextInput>(null);
+    const confirmRef = useRef<ComponentRef<typeof TextInput>>(null);
     const [state, setState] = useState<
         'checking' | 'invalid' | 'ready' | 'done'
     >('checking');
@@ -67,7 +74,7 @@ export default function ResetPasswordScreen() {
                     window.history.replaceState(
                         window.history.state,
                         '',
-                        window.location.pathname,
+                        window.location.pathname + (dj ? `?dj=${encodeURIComponent(dj)}` : ''),
                     );
             } catch {
                 if (active) setState('invalid');
@@ -86,7 +93,7 @@ export default function ResetPasswordScreen() {
     ]);
     const back = async () => {
         if (state === 'ready') await supabase.auth.signOut({ scope: 'local' });
-        router.replace('/(auth)/login');
+        router.replace(loginRoute);
     };
     const save = async () => {
         if (
@@ -125,6 +132,7 @@ export default function ResetPasswordScreen() {
     };
     return (
         <AuthShell
+            image={AUTH_SCREEN_IMAGES.recovery}
             title={t(
                 state === 'done'
                     ? 'authExperience.passwordUpdated'
@@ -144,18 +152,18 @@ export default function ResetPasswordScreen() {
                     <AuthMessage>
                         {t('authExperience.recoveryExpired')}
                     </AuthMessage>
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.sendNewLink')}
                         onPress={() =>
-                            router.replace('/(auth)/forgot-password')
+                            router.replace(dj ? { pathname: '/(auth)/forgot-password', params: { dj } } : '/(auth)/forgot-password')
                         }
                     />
                 </>
             )}
             {state === 'done' && (
-                <CommunityButton
+                <AuthButton
                     label={t('authExperience.returnLogin')}
-                    onPress={() => router.replace('/(auth)/login')}
+                    onPress={() => router.replace(loginRoute)}
                 />
             )}
             {state === 'ready' && (
@@ -199,7 +207,7 @@ export default function ResetPasswordScreen() {
                             onSubmitEditing={() => void save()}
                         />
                     </View>
-                    <CommunityButton
+                    <AuthButton
                         label={t('authExperience.savePassword')}
                         onPress={() => void save()}
                         busy={busy}

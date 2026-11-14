@@ -1,36 +1,61 @@
-import React, { forwardRef, useState } from 'react';
+import type { ComponentRef } from 'react';
+import React, { createContext, forwardRef, useContext, useState } from 'react';
 import {
     View,
     Text,
     TextInput,
     TextInputProps,
+    ImageSourcePropType,
     TouchableOpacity,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
     ImageBackground,
     useWindowDimensions,
+    ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCommunityColors } from '../community/CommunityUI';
 import { useTranslation } from '../../i18n/useTranslation';
-export const AUTH_IMAGE = require('../../../assets/auth/welcome-dj-booth.jpg');
+import { AppLogo } from '../ui/AppLogo';
+import defaultPalette from '../../theme/darkPalette.json';
+export const AUTH_IMAGE = require('../../../assets/auth/welcome-resonance-hd-v1.png');
+export const AUTH_SCREEN_IMAGES = {
+    login: require('../../../assets/auth/login-honey-v1.jpg'),
+    register: require('../../../assets/auth/register-honey-v1.jpg'),
+    recovery: require('../../../assets/auth/recovery-honey-v1.jpg'),
+};
+export const AUTH_COLORS = {
+    dark: true,
+    bg: defaultPalette.background,
+    card: defaultPalette.surface,
+    cardText: defaultPalette.onSurface,
+    fg: defaultPalette.text,
+    muted: defaultPalette.muted,
+    accent: defaultPalette.primary,
+    border: defaultPalette.border,
+    tint: defaultPalette.tint,
+};
+const CompactAuthContext = createContext(false);
 export function AuthBrand({ light = false }: { light?: boolean }) {
-    const c = useCommunityColors();
+    const c = AUTH_COLORS;
     return (
-        <Text
-            style={{
-                color: light ? '#fff' : c.fg,
-                fontSize: 13,
-                fontWeight: '900',
-                letterSpacing: 2.2,
-            }}
-        >
-            DJ PLANNER PRO
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
+            <AppLogo size={40} decorative />
+            <Text
+                style={{
+                    color: light ? '#fff' : c.fg,
+                    fontSize: 10,
+                    fontWeight: '600',
+                    letterSpacing: 1.6,
+                    flexShrink: 1,
+                }}
+            >
+                DJ PLANNER
+            </Text>
+        </View>
     );
 }
 export function AuthShell({
@@ -39,21 +64,24 @@ export function AuthShell({
     subtitle,
     onBack,
     compact = false,
+    immersive = false,
+    image = AUTH_IMAGE,
 }: {
     children: React.ReactNode;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     onBack: () => void;
     compact?: boolean;
+    immersive?: boolean;
+    image?: ImageSourcePropType;
 }) {
-    const c = useCommunityColors();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const { width, height } = useWindowDimensions();
-    const desktop = width >= 900;
+    const small = height < 700;
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1, backgroundColor: c.bg }}
+        <CompactAuthContext.Provider value={immersive}><KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: AUTH_COLORS.bg }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <StatusBar style="light" />
@@ -63,181 +91,126 @@ export function AuthShell({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
                     flexGrow: 1,
-                    paddingBottom: Math.max(insets.bottom, 24),
-                    justifyContent: desktop ? 'center' : undefined,
+                    paddingTop: immersive ? 0 : insets.top + 12,
+                    paddingBottom: immersive ? 0 : Math.max(insets.bottom, 12),
+                    paddingHorizontal: immersive ? 0 : 16,
+                    alignItems: immersive ? 'stretch' : 'center',
+                    justifyContent: immersive ? 'flex-start' : 'center',
                 }}
             >
-                <View
+                <ImageBackground
+                    source={image}
+                    resizeMode="cover"
+                    imageStyle={{ width: '100%', height: immersive ? Math.max(340, height * (compact ? 0.62 : 0.72)) : '100%', borderRadius: immersive ? 0 : 28 }}
                     style={{
                         width: '100%',
-                        maxWidth: 1120,
-                        alignSelf: 'center',
-                        flexDirection: desktop ? 'row' : 'column',
-                        alignItems: desktop ? 'center' : 'stretch',
-                        gap: desktop ? 64 : 0,
-                        padding: desktop ? 40 : 0,
+                        maxWidth: immersive ? undefined : 480,
+                        minHeight: immersive ? height : Math.min(width >= 700 ? 900 : Infinity, Math.max(500, height - insets.top - Math.max(insets.bottom, 12) - 12)),
+                        backgroundColor: AUTH_COLORS.card,
+                        borderRadius: immersive ? 0 : 28,
+                        overflow: 'hidden',
+                        flexGrow: immersive || width < 700 ? 1 : 0,
                     }}
                 >
-                    <ImageBackground
-                        source={AUTH_IMAGE}
-                        resizeMode="cover"
-                        imageStyle={{ opacity: desktop ? 0.9 : 0.75 }}
-                        style={{
-                            backgroundColor: '#0b0815',
-                            overflow: 'hidden',
-                            borderRadius: desktop ? 28 : 0,
-                            width: desktop
-                                ? Math.min(width, 1120) - 564
-                                : '100%',
-                            height: desktop
-                                ? 640
-                                : Math.max(
-                                      compact ? 200 : 260,
-                                      height * (compact ? 0.27 : 0.34),
-                                  ) + insets.top,
-                            justifyContent: 'space-between',
-                        }}
-                    >
-                        <LinearGradient
-                            pointerEvents="none"
-                            colors={[
-                                'rgba(9,7,17,0.35)',
-                                'rgba(9,7,17,0.1)',
-                                'rgba(9,7,17,0.92)',
-                            ]}
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                right: 0,
-                                bottom: 0,
-                                left: 0,
-                            }}
-                        />
-                        <View
-                            style={{
-                                paddingTop: desktop ? 24 : insets.top + 16,
-                                paddingHorizontal: 24,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                            }}
+                    <LinearGradient
+                        pointerEvents="none"
+                        colors={['rgba(0,0,0,0.4)', 'transparent']}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 150 }}
+                    />
+                    <View style={{ padding: 16, paddingTop: immersive ? insets.top + 12 : 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityLabel={t('authExperience.back')}
+                            onPress={onBack}
+                            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(23,23,23,0.5)', borderRadius: 22 }}
                         >
-                            <TouchableOpacity
-                                accessibilityRole="button"
-                                accessibilityLabel={t('authExperience.back')}
-                                onPress={onBack}
-                                style={{
-                                    width: 44,
-                                    height: 44,
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    backgroundColor: 'rgba(255,255,255,0.12)',
-                                    borderRadius: 16,
-                                }}
-                            >
-                                <ArrowLeft size={21} color="#fff" />
-                            </TouchableOpacity>
-                            <AuthBrand light />
-                        </View>
-                        {desktop && (
-                            <View style={{ padding: 30, gap: 12 }}>
-                                <Text
-                                    style={{
-                                        color: '#fff',
-                                        fontSize: 38,
-                                        lineHeight: 43,
-                                        fontWeight: '900',
-                                        letterSpacing: -1.2,
-                                    }}
-                                >
-                                    {t('authExperience.welcomeTitle')}
-                                </Text>
-                                <Text
-                                    style={{
-                                        color: '#d0c8e2',
-                                        fontSize: 15,
-                                        lineHeight: 23,
-                                    }}
-                                >
-                                    {t('authExperience.welcomeHint')}
-                                </Text>
-                            </View>
-                        )}
-                    </ImageBackground>
+                            <ArrowLeft size={20} color={AUTH_COLORS.fg} />
+                        </TouchableOpacity>
+                        <AuthBrand light />
+                    </View>
+                    <View style={{ flex: 1, minHeight: immersive ? (small ? 140 : compact ? 180 : 240) : small ? 50 : compact ? 80 : 120 }} />
                     <View
-                        style={{
-                            width: desktop ? 420 : '100%',
-                            minWidth: 0,
-                            paddingHorizontal: desktop ? 0 : 24,
-                            paddingTop: desktop ? 0 : 24,
-                            gap: 24,
-                        }}
+                        style={{ backgroundColor: AUTH_COLORS.card, padding: immersive ? 20 : width < 360 ? 20 : 24, paddingTop: immersive ? 20 : 28, paddingBottom: immersive ? Math.max(insets.bottom, 16) : width < 360 ? 20 : 24, gap: immersive ? 12 : 18, borderTopLeftRadius: 26, borderTopRightRadius: 26 }}
                     >
-                        <View style={{ gap: 10 }}>
-                            <Text
-                                accessibilityRole="header"
-                                style={{
-                                    color: c.fg,
-                                    fontSize: 34,
-                                    fontWeight: '900',
-                                    letterSpacing: -1.2,
-                                }}
-                            >
+                        <View style={{ gap: immersive ? 4 : 10 }}>
+                            <Text accessibilityRole="header" style={{ color: AUTH_COLORS.fg, fontSize: immersive ? 24 : small ? 28 : 30, lineHeight: immersive ? 30 : small ? 32 : 35, fontWeight: immersive ? '600' : '500', letterSpacing: -0.6 }}>
                                 {title}
                             </Text>
-                            <Text
-                                style={{
-                                    color: c.muted,
-                                    fontSize: 14,
-                                    lineHeight: 22,
-                                }}
-                            >
+                            {!!subtitle && <Text style={{ color: AUTH_COLORS.muted, fontSize: 13, lineHeight: 20 }}>
                                 {subtitle}
-                            </Text>
+                            </Text>}
                         </View>
                         {children}
                     </View>
-                </View>
+                </ImageBackground>
             </ScrollView>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView></CompactAuthContext.Provider>
     );
 }
+
+export function AuthButton({ label, onPress, disabled = false, busy = false, secondary = false }: {
+    label: string;
+    onPress: () => void;
+    disabled?: boolean;
+    busy?: boolean;
+    secondary?: boolean;
+}) {
+    const dense = useContext(CompactAuthContext);
+    const foreground = secondary ? AUTH_COLORS.accent : AUTH_COLORS.card;
+    return (
+        <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{ disabled: disabled || busy, busy }}
+            disabled={disabled || busy}
+            onPress={onPress}
+            style={{ minHeight: dense ? 50 : 52, borderRadius: 16, padding: dense ? 14 : 16, alignItems: 'center', justifyContent: 'center', backgroundColor: secondary ? AUTH_COLORS.tint : AUTH_COLORS.accent, opacity: disabled || busy ? 0.5 : 1 }}
+        >
+            {busy ? <ActivityIndicator color={foreground} /> : <Text style={{ color: foreground, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>{label}</Text>}
+        </TouchableOpacity>
+    );
+}
+
 interface AuthFieldProps extends TextInputProps {
     label: string;
+    hideLabel?: boolean;
     error?: string;
     password?: boolean;
 }
-export const AuthField = forwardRef<TextInput, AuthFieldProps>(
-    function AuthField({ label, error, password, ...props }, ref) {
-        const c = useCommunityColors();
+export const AuthField = forwardRef<ComponentRef<typeof TextInput>, AuthFieldProps>(
+    function AuthField({ label, hideLabel = false, error, password, ...props }, ref) {
+        const c = AUTH_COLORS;
+        const dense = useContext(CompactAuthContext);
         const { t } = useTranslation();
         const [focused, setFocused] = useState(false);
         const [visible, setVisible] = useState(false);
         return (
-            <View style={{ gap: 8 }}>
-                <Text style={{ color: c.fg, fontSize: 13, fontWeight: '700' }}>
+            <View style={{ gap: dense ? 5 : 8 }}>
+                {!hideLabel && <Text style={{ color: c.fg, fontSize: 12, fontWeight: '500' }}>
                     {label}
-                </Text>
+                </Text>}
                 <View
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        backgroundColor: c.card,
-                        borderWidth: 1.5,
+                        backgroundColor: c.bg,
+                        borderWidth: 1,
                         borderColor: error
                             ? '#d76f7d'
                             : focused
                               ? c.accent
                               : c.border,
                         borderRadius: 16,
-                        minHeight: 56,
+                        minHeight: hideLabel ? 54 : dense ? 48 : 52,
                     }}
                 >
                     <TextInput
                         {...props}
                         ref={ref}
                         accessibilityLabel={label}
-                        placeholderTextColor={c.muted}
+                        placeholderTextColor="#92968C"
+                        keyboardAppearance="dark"
+                        selectionColor={c.accent}
                         secureTextEntry={password && !visible}
                         onFocus={(e) => {
                             setFocused(true);
@@ -253,7 +226,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(
                             outlineWidth: Platform.OS === 'web' ? 0 : undefined,
                             color: c.fg,
                             paddingHorizontal: 16,
-                            paddingVertical: 16,
+                            paddingVertical: hideLabel ? 15 : dense ? 12 : 14,
                             fontSize: 16,
                         }}
                     />
@@ -267,14 +240,14 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(
                             )}
                             accessibilityState={{ selected: visible }}
                             onPress={() => setVisible((v) => !v)}
-                            style={{ padding: 14 }}
+                            style={{ padding: dense ? 12 : 14, minHeight: 44, justifyContent: 'center' }}
                         >
                             <Text
-                                style={{
+                                style={[{
                                     color: c.accent,
-                                    fontWeight: '700',
+                                    fontWeight: '500',
                                     fontSize: 12,
-                                }}
+                                }]}
                             >
                                 {t(
                                     visible
@@ -302,7 +275,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(
     },
 );
 export function AuthMessage({ children }: { children: React.ReactNode }) {
-    const c = useCommunityColors();
+    const c = AUTH_COLORS;
     return (
         <View
             style={{

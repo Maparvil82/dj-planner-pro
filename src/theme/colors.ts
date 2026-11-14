@@ -1,3 +1,7 @@
+import darkPalette from './darkPalette.json';
+
+export const DEFAULT_SESSION_COLOR = '#34D399';
+
 export const colors = {
     light: {
         background: '#FFFFFF',
@@ -6,9 +10,6 @@ export const colors = {
         border: '#E5E7EB',
     },
     dark: {
-        background: '#111827',
-        text: '#FFFFFF',
-        primary: '#3B82F6',
-        border: '#374151',
+        ...darkPalette,
     },
 };

@@ -1,8 +1,8 @@
 import { normalizeCity } from '../utils/cities';
 import { supabase } from '../lib/supabase';
 import { Venue, CreateVenueInput } from '../types/venue';
-import { decode } from 'base64-arraybuffer';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { optimizedImage } from './optimizedImage';
+import { storageError } from '../utils/storageLimits';
 
 export const venueService = {
     async uploadVenueImage(
@@ -10,34 +10,20 @@ export const venueService = {
         imageUri: string,
     ): Promise<string | null> {
         try {
-            // 1. Compress & format image
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                imageUri,
-                [{ resize: { width: 1200 } }], // Larger than profile but still optimized
-                {
-                    compress: 0.8,
-                    format: ImageManipulator.SaveFormat.JPEG,
-                    base64: true,
-                },
-            );
-
-            if (!manipulatedImage.base64) {
-                throw new Error('Failed to get base64 string from image');
-            }
-
-            const filePath = `${userId}/venue_${Date.now()}.jpg`;
+            const bytes = await optimizedImage(imageUri, 1200);
+            const filePath = `${userId}/venue_${(await import('expo-crypto')).randomUUID()}.jpg`;
             const contentType = 'image/jpeg';
 
             // 2. Upload to storage
             const { error: uploadError } = await supabase.storage
                 .from('venues')
-                .upload(filePath, decode(manipulatedImage.base64), {
+                .upload(filePath, bytes, {
                     contentType,
                     upsert: true,
                 });
 
             if (uploadError) {
-                throw uploadError;
+                throw storageError(uploadError);
             }
 
             // 3. Get public URL
@@ -47,6 +33,11 @@ export const venueService = {
 
             return publicUrlData.publicUrl;
         } catch (error) {
+            if (
+                error instanceof Error &&
+                error.message.startsWith('storageSafety.')
+            )
+                throw error;
             console.error('Upload Venue Image Error:', error);
             return null;
         }

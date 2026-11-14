@@ -4,7 +4,13 @@ module.exports = {
     presets: [require("nativewind/preset")],
     darkMode: "class",
     theme: {
-        extend: {},
+        extend: {
+            colors: { djDark: {
+                ...require('./src/theme/darkPalette.json'),
+                primary: 'rgb(var(--dj-primary) / <alpha-value>)',
+                tint: 'rgb(var(--dj-tint) / <alpha-value>)',
+            } },
+        },
     },
     plugins: [],
 }

@@ -1,3 +1,5 @@
+import { useScrollHeader } from '../src/hooks/useScrollHeader';
+import { PageHeader } from '../src/components/ui/PageHeader';
 import { useCallback, useState } from 'react';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -14,6 +16,7 @@ import {
 import { MixListItem } from '../src/components/community/MixListItem';
 import { MixPlayer } from '../src/components/community/MixPlayer';
 export default function SavedMixesScreen() {
+    const { progress: headerProgress, onScroll: onHeaderScroll, onScrollBeginDrag: onHeaderScrollBeginDrag } = useScrollHeader('compact');
     const c = useCommunityColors(),
         { t } = useTranslation(),
         router = useRouter();
@@ -39,15 +42,7 @@ export default function SavedMixesScreen() {
     const rows = mixes.data?.pages.flat() || [];
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-            <View
-                style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 20,
-                }}
-            >
-                <TouchableOpacity
+            <PageHeader progress={headerProgress} title={t('savedMixes.title')} subtitle={t('savedMixes.private')} leading={<TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel={t('go_back')}
                     onPress={() =>
@@ -65,19 +60,8 @@ export default function SavedMixesScreen() {
                     }}
                 >
                     <ArrowLeft size={21} color={c.fg} />
-                </TouchableOpacity>
-                <View style={{ flex: 1, gap: 4 }}>
-                    <Text
-                        style={{ color: c.fg, fontSize: 23, fontWeight: '800' }}
-                    >
-                        {t('savedMixes.title')}
-                    </Text>
-                    <Text style={{ color: c.muted, fontSize: 12 }}>
-                        {t('savedMixes.private')}
-                    </Text>
-                </View>
-            </View>
-            <ScrollView
+                </TouchableOpacity>} />
+            <ScrollView scrollEventThrottle={16} onScrollBeginDrag={onHeaderScrollBeginDrag} onTouchStart={onHeaderScrollBeginDrag} onScroll={onHeaderScroll}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
                     padding: 20,
@@ -106,7 +90,7 @@ export default function SavedMixesScreen() {
                             style={{
                                 padding: 16,
                                 gap: 14,
-                                borderWidth: 1,
+                                borderWidth: c.dark ? 0 : 1,
                                 borderColor: c.border,
                                 borderRadius: 24,
                                 backgroundColor: c.card,
@@ -127,11 +111,11 @@ export default function SavedMixesScreen() {
                                 }}
                             >
                                 <Text
-                                    style={{
+                                    style={[{
                                         color: c.accent,
                                         fontWeight: '700',
                                         fontSize: 13,
-                                    }}
+                                    }, c.dark && { color: c.cardText }]}
                                 >
                                     {mix.artist_name}
                                 </Text>

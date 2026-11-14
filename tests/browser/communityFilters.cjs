@@ -162,6 +162,13 @@ const errors = [];
         city: 'Madrid',
         genres: 'Techno',
     };
+    const performanceOnly = process.env.PERFORMANCE_ONLY === '1';
+    const performanceDjs = [dj, otherDj, ...Array.from({ length: 78 }, (_, i) => ({ ...dj,
+        user_id: `00000000-0000-4000-8000-${String(i + 3000).padStart(12, '0')}`,
+        artist_name: `Performance DJ ${i + 3}`,
+    }))];
+    const countRequests = [];
+    const discoverRequests = [];
     const follows = new Set();
     const bookmarks = new Set();
     let failSave = true;
@@ -180,7 +187,14 @@ const errors = [];
         const req = route.request(),
             url = new URL(req.url());
         let body;
-        if (url.pathname.endsWith('/saved_mixes')) {
+        if (url.pathname.endsWith('/rpc/community_safety')) {
+            body = { version: '2026-10-09', accepted: true, restricted: false, moderator: false, contact: null };
+        } else if (performanceOnly && url.pathname.endsWith('/social_notifications') && req.method() === 'GET') {
+            const offset = Number(url.searchParams.get('offset') || 0), limit = Number(url.searchParams.get('limit') || 20);
+            body = Array.from({ length: 80 }, (_, i) => ({ id: `notification-${i}`, recipient_id: user.id, actor_id: dj.user_id,
+                actor_name: `Notification DJ ${i}`, kind: 'follow', session_id: null, session_title: null, response: null,
+                created_at: '2026-10-10T09:00:00Z', read_at: null })).slice(offset, offset + limit);
+        } else if (url.pathname.endsWith('/saved_mixes')) {
             if (req.method() === 'POST') {
                 assert.equal(req.postDataJSON().owner_id, user.id);
                 if (failSave) {
@@ -256,12 +270,13 @@ const errors = [];
             });
         } else if (
             url.pathname.endsWith('/rpc/community_profile_session_counts')
-        )
+        ) {
+            countRequests.push(req.postDataJSON().author_ids);
             body = req.postDataJSON().author_ids.map((user_id) => ({
                 user_id,
                 session_count: user_id === dj.user_id ? 27 : 0,
             }));
-        else if (url.pathname.endsWith('/rpc/community_following_activity')) {
+        } else if (url.pathname.endsWith('/rpc/community_following_activity')) {
             body = follows.has(dj.user_id)
                 ? [
                       {
@@ -305,7 +320,8 @@ const errors = [];
         ) {
             const args = req.postDataJSON();
             filters.push(args);
-            body = [dj, otherDj].filter(
+            if (url.pathname.endsWith('/rpc/community_discover_filtered')) discoverRequests.push(args);
+            body = (performanceOnly ? performanceDjs : [dj, otherDj]).filter(
                 (x) =>
                     (!url.pathname.endsWith('community_followed_djs') ||
                         follows.has(x.user_id)) &&
@@ -317,6 +333,7 @@ const errors = [];
                     (!args.filter_city || x.city === args.filter_city) &&
                     (!args.filter_genre || x.genres === args.filter_genre),
             );
+            if (performanceOnly) body = body.slice(args.page_offset, args.page_offset + args.page_size);
         } else if (
             url.pathname.endsWith('/community_profiles') &&
             url.searchParams.get('is_visible')
@@ -389,7 +406,42 @@ const errors = [];
     await page.goto('http://localhost:8081/community');
     await page
         .getByRole('button', { name: 'Ver perfil: Pepe', exact: true })
-        .waitFor();
+        .waitFor({ timeout: 120000 });
+    if (performanceOnly) {
+        await page.waitForTimeout(800);
+        assert.equal(countRequests.length, 1);
+        assert.equal(countRequests[0].length, 20);
+        for (let i = 0; i < 3; i++) {
+            await page.getByRole('button', { name: 'Ver más', exact: true }).click();
+            await page.waitForTimeout(600);
+        }
+        assert.equal(countRequests.length, 4);
+        assert.equal(new Set(countRequests.flat()).size, 80);
+        assert.equal(countRequests.flat().length, 80, 'Previous DJ counters are not requested again');
+        const mounted = await page.getByRole('button', { name: /^Ver perfil:/ }).count();
+        assert(mounted < 80, `Virtualized cards mounted ${mounted} of 80`);
+        const before = discoverRequests.length;
+        await page.getByRole('button', { name: labels.community.sessions, exact: true }).click();
+        await page.getByText('Techno Madrid', { exact: true }).waitFor();
+        await page.getByRole('button', { name: labels.community.djs, exact: true }).click();
+        await page.getByRole('button', { name: 'Ver perfil: Pepe', exact: true }).waitFor();
+        await page.waitForTimeout(600);
+        assert.equal(discoverRequests.length, before, 'Fresh cached tabs do not refetch every loaded page');
+        assert.deepEqual(errors, []);
+        await page.screenshot({ path: '/private/tmp/djplanner-performance-djs.png' });
+        await page.goto('http://localhost:8081/notifications');
+        await page.getByText(/^Notification DJ 0 ha empezado/).waitFor();
+        for (let i = 0; i < 3; i++) {
+            await page.getByRole('button', { name: 'Ver más', exact: true }).click();
+            await page.waitForTimeout(500);
+        }
+        const mountedNotifications = await page.getByText(/^Notification DJ /).count();
+        assert(mountedNotifications < 80, `Virtualized notifications mounted ${mountedNotifications} of 80`);
+        await page.screenshot({ path: '/private/tmp/djplanner-performance-notifications.png' });
+        await context.close(); await browser.close();
+        console.log(`PASS: 80 DJs paginated, each counter requested once, only ${mounted} cards mounted, cached tab return and no runtime errors. Mock APIs.`);
+        return;
+    }
     assert.equal(
         await page.getByText('House Málaga', { exact: true }).count(),
         0,

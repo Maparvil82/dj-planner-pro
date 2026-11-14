@@ -35,7 +35,7 @@ export function FeeAgreementEditor({
     onClose: () => void;
     names?: string[];
 }) {
-    const { t, currentLanguage } = useTranslation();
+    const { t, formatMoney } = useTranslation();
     const c = useCommunityColors();
     const initial = value || {
         ...emptyFeeAgreement(),
@@ -51,7 +51,7 @@ export function FeeAgreementEditor({
     const savingRef = useRef(false);
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const money = (v: number) =>
-        `${new Intl.NumberFormat(currentLanguage, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(v)} ${currency}`;
+        formatMoney(v, currency);
     const result = (() => {
         try {
             return calculateFeeAgreement(agreement, actual);
@@ -93,7 +93,7 @@ export function FeeAgreementEditor({
                     minHeight: 50,
                     paddingHorizontal: 15,
                     borderRadius: 14,
-                    borderWidth: 1,
+                    borderWidth: c.dark ? 0 : 1,
                     borderColor: c.border,
                     fontSize: 16,
                 }}
@@ -116,14 +116,14 @@ export function FeeAgreementEditor({
         <View
             style={{
                 backgroundColor: c.card,
-                borderWidth: 1,
+                borderWidth: c.dark ? 0 : 1,
                 borderColor: c.border,
                 padding: 20,
                 borderRadius: 24,
                 gap: 16,
             }}
         >
-            <Text style={{ color: c.fg, fontWeight: '800', fontSize: 19 }}>
+            <Text style={[{ color: c.fg, fontWeight: '800', fontSize: 19 }, c.dark && { color: c.cardText }]}>
                 {title}
             </Text>
             {children}

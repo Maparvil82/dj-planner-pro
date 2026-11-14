@@ -1,5 +1,7 @@
+import { useDarkPalette } from '../../contexts/ThemeContext';
+import { StorageImage as Image } from './StorageImage';
 import { useState } from 'react';
-import { Image, Text, View, type ColorValue } from 'react-native';
+import { Text, View, type ColorValue } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export function TabProfileIcon({
@@ -8,19 +10,22 @@ export function TabProfileIcon({
     size,
     color,
     focused,
-    hasUnread = false,
+    unreadCount = 0,
 }: {
     url?: string | null;
     name?: string | null;
     size: number;
     color: ColorValue;
     focused: boolean;
-    hasUnread?: boolean;
+    unreadCount?: number;
 }) {
+    const darkPalette = useDarkPalette();
     const { activeTheme } = useTheme();
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
     const showPhoto = !!url && failedUrl !== url;
-    const initial = name?.trim().charAt(0).toLocaleUpperCase() || '?';
+    const displayName = name?.trim() || '';
+    const artistName = displayName.replace(/^dj\s+/i, '').trim() || displayName;
+    const initials = artistName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => Array.from(part)[0]).join('').toLocaleUpperCase() || '?';
     return (
         <View style={{ width: size, height: size }}>
             <View
@@ -32,7 +37,7 @@ export function TabProfileIcon({
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor:
-                        activeTheme === 'dark' ? '#283142' : '#e5e7eb',
+                        activeTheme === 'dark' ? darkPalette.raised : '#e5e7eb',
                     borderColor: color,
                     borderWidth: focused ? 1.5 : 0,
                 }}
@@ -47,31 +52,39 @@ export function TabProfileIcon({
                 ) : (
                     <Text
                         style={{
-                            fontSize: Math.round(size * 0.5),
+                            fontSize: Math.round(size * (Array.from(initials).length > 1 ? 0.36 : 0.5)),
                             fontWeight: '700',
                             color,
                         }}
                     >
-                        {initial}
+                        {initials}
                     </Text>
                 )}
             </View>
-            {hasUnread && (
+            {unreadCount > 0 && (
                 <View
                     style={{
                         position: 'absolute',
-                        top: -2,
-                        right: -2,
-                        width: 9,
-                        height: 9,
-                        borderRadius: 5,
+                        top: -6,
+                        right: -7,
+                        minWidth: 20,
+                        height: 20,
+                        paddingHorizontal: 4,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2,
                         borderWidth: 2,
                         borderColor:
-                            activeTheme === 'dark' ? '#111827' : '#fbfbfb',
+                            activeTheme === 'dark' ? darkPalette.background : '#fbfbfb',
                         backgroundColor:
-                            activeTheme === 'dark' ? '#bdb0f5' : '#6554df',
+                            activeTheme === 'dark' ? darkPalette.primary : '#6554df',
                     }}
-                />
+                >
+                    <Text style={{ color: activeTheme === 'dark' ? '#171717' : '#fff', fontSize: 10, lineHeight: 12, fontWeight: '800' }}>
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                </View>
             )}
         </View>
     );

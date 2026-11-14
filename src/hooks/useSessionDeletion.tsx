@@ -1,3 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '../store/useAuthStore';
+import { sessionScreens } from '../services/sessionScreens';
+import { useDarkPalette } from '../contexts/ThemeContext';
 import { sessionDisplayTitle } from '../utils/sessionNaming';
 import { useState } from 'react';
 import {
@@ -9,7 +13,6 @@ import {
 } from 'react-native';
 import type { Session } from '../types/session';
 import {
-    useAllSessionsQuery,
     useDeleteSessionMutation,
 } from './useSessionsQuery';
 import { useTranslation } from '../i18n/useTranslation';
@@ -17,28 +20,21 @@ import { useTheme } from '../contexts/ThemeContext';
 
 // One confirmation flow for the detail page and every Home long-press entry point.
 export function useSessionDeletion(onDeleted?: () => void) {
+    const darkPalette = useDarkPalette();
     const [target, setTarget] = useState<Session | null>(null);
     const [failed, setFailed] = useState(false);
     const mutation = useDeleteSessionMutation();
-    const {
-        data: sessions = [],
-        isPending: loading,
-        isError: loadFailed,
-    } = useAllSessionsQuery();
+    const userId=useAuthStore(state=>state.session?.user.id);
+    const rootId=target?.parent_session_id || target?.id;
+    const knownSeries=Boolean(target?.parent_session_id || (target?.recurrence_type && target.recurrence_type!=='none'));
+    const check=useQuery({queryKey:['sessions','series-check',userId,rootId],enabled:Boolean(target && userId && !knownSeries),queryFn:()=>sessionScreens.hasSeries(userId!,rootId!)});
+    const loading=check.isLoading, loadFailed=check.isError;
     const { t, currentLanguage } = useTranslation();
     const { activeTheme } = useTheme();
     const dark = activeTheme === 'dark';
-    const fg = dark ? '#f5f5fa' : '#222438';
-    const muted = dark ? '#a6afc1' : '#737b8d';
-    const rootId = target?.parent_session_id || target?.id;
-    const series = sessions.filter(
-        (s) =>
-            !s.is_guest && (s.id === rootId || s.parent_session_id === rootId),
-    );
-    const hasSeries =
-        !!target?.parent_session_id ||
-        (!!target?.recurrence_type && target.recurrence_type !== 'none') ||
-        series.length > 1;
+    const fg = dark ? darkPalette.text : '#222438';
+    const muted = dark ? darkPalette.muted : '#737b8d';
+    const hasSeries=knownSeries || check.data===true;
     const close = () => {
         if (!mutation.isPending) setTarget(null);
     };
@@ -83,28 +79,28 @@ export function useSessionDeletion(onDeleted?: () => void) {
                         maxWidth: 440,
                         alignSelf: 'center',
                         borderRadius: 24,
-                        backgroundColor: dark ? '#171c2b' : '#fff',
+                        backgroundColor: dark ? darkPalette.surface : '#fff',
                         padding: 24,
                         gap: 16,
                     }}
                 >
                     <Text
-                        style={{ color: fg, fontSize: 22, fontWeight: '800' }}
+                        style={[{ color: fg, fontSize: 22, fontWeight: '800' }, dark && { color: darkPalette.onSurface }]}
                     >
                         {t('delete_session_title')}
                     </Text>
                     <View style={{ gap: 5 }}>
                         <Text
-                            style={{
+                            style={[{
                                 color: fg,
                                 fontSize: 16,
                                 fontWeight: '700',
-                            }}
+                            }, dark && { color: darkPalette.onSurface }]}
                         >
                             {target ? sessionDisplayTitle(target, t) : ''}
                         </Text>
                         {target && (
-                            <Text style={{ color: muted, fontSize: 13 }}>
+                            <Text style={[{ color: muted, fontSize: 13 }, dark && { color: darkPalette.onSurface }]}>
                                 {new Intl.DateTimeFormat(currentLanguage, {
                                     day: 'numeric',
                                     month: 'long',
@@ -114,7 +110,7 @@ export function useSessionDeletion(onDeleted?: () => void) {
                         )}
                     </View>
                     <Text
-                        style={{ color: muted, fontSize: 14, lineHeight: 21 }}
+                        style={[{ color: muted, fontSize: 14, lineHeight: 21 }, dark && { color: darkPalette.onSurface }]}
                     >
                         {t(
                             hasSeries
@@ -125,7 +121,7 @@ export function useSessionDeletion(onDeleted?: () => void) {
                     {failed && (
                         <Text
                             accessibilityRole="alert"
-                            style={{ color: '#c35671', fontSize: 13 }}
+                            style={[{ color: '#c35671', fontSize: 13 }, dark && { color: darkPalette.onSurface }]}
                         >
                             {t('sessionDeletion.error')}
                         </Text>
@@ -136,12 +132,12 @@ export function useSessionDeletion(onDeleted?: () => void) {
                         onPress={() => remove('single')}
                         style={{
                             ...actionStyle,
-                            backgroundColor: dark ? '#302a4e' : '#f0edff',
+                            backgroundColor: dark ? darkPalette.tint : '#f0edff',
                         }}
                     >
                         <Text
                             style={{
-                                color: dark ? '#b9abff' : '#6954df',
+                                color: dark ? darkPalette.primary : '#6954df',
                                 fontWeight: '700',
                             }}
                         >
@@ -171,11 +167,11 @@ export function useSessionDeletion(onDeleted?: () => void) {
                                 </Text>
                             </TouchableOpacity>
                             <Text
-                                style={{
+                                style={[{
                                     color: muted,
                                     fontSize: 12,
                                     lineHeight: 18,
-                                }}
+                                }, dark && { color: darkPalette.onSurface }]}
                             >
                                 {t('sessionDeletion.allDates')}
                             </Text>
@@ -185,7 +181,7 @@ export function useSessionDeletion(onDeleted?: () => void) {
                         <ActivityIndicator color="#6954df" />
                     )}
                     {!hasSeries && loadFailed && (
-                        <Text style={{ color: muted, fontSize: 12 }}>
+                        <Text style={[{ color: muted, fontSize: 12 }, dark && { color: darkPalette.onSurface }]}>
                             {t('sessionDeletion.singleSafe')}
                         </Text>
                     )}
@@ -201,7 +197,7 @@ export function useSessionDeletion(onDeleted?: () => void) {
                         onPress={close}
                         style={actionStyle}
                     >
-                        <Text style={{ color: muted, fontWeight: '700' }}>
+                        <Text style={[{ color: muted, fontWeight: '700' }, dark && { color: darkPalette.onSurface }]}>
                             {t('cancel')}
                         </Text>
                     </TouchableOpacity>

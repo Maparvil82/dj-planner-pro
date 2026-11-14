@@ -1,3 +1,4 @@
+import { useDarkPalette } from '../../contexts/ThemeContext';
 import { View, Text } from 'react-native';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,7 +17,8 @@ export function SessionScheduleSummary({
     amount: string;
     currency: string;
 }) {
-    const { t, i18n } = useTranslation();
+    const darkPalette = useDarkPalette();
+    const { t, formatMoney, numberLocale } = useTranslation();
     const { activeTheme } = useTheme();
     let total: number | null = null;
     try {
@@ -42,7 +44,7 @@ export function SessionScheduleSummary({
         >
             <Text
                 style={{
-                    color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                    color: activeTheme === 'dark' ? darkPalette.primary : '#7666cf',
                     fontWeight: '700',
                     fontSize: 13,
                 }}
@@ -51,12 +53,12 @@ export function SessionScheduleSummary({
                     ? t('workflow.invalidTime')
                     : equal
                       ? t('workflow.equalTimes')
-                      : `${t('duration')}: ${new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(sessionDuration({ start_time: start, end_time: end }))} h`}
+                      : `${t('duration')}: ${new Intl.NumberFormat(numberLocale, { maximumFractionDigits: 2 }).format(sessionDuration({ start_time: start, end_time: end }))} h`}
             </Text>
             {validTimes && !equal && end < start ? (
                 <Text
                     style={{
-                        color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                        color: activeTheme === 'dark' ? darkPalette.primary : '#7666cf',
                         fontSize: 12,
                     }}
                 >
@@ -66,15 +68,12 @@ export function SessionScheduleSummary({
             {validTimes && !equal && total !== null && type !== 'agreement' ? (
                 <Text
                     style={{
-                        color: activeTheme === 'dark' ? '#bdb0f5' : '#7666cf',
+                        color: activeTheme === 'dark' ? darkPalette.primary : '#7666cf',
                         fontSize: 12,
                     }}
                 >
                     {t('workflow.totalFee')}:{' '}
-                    {new Intl.NumberFormat(i18n.language, {
-                        maximumFractionDigits: 2,
-                    }).format(total)}{' '}
-                    {currency}
+                    {formatMoney(total, currency)}
                 </Text>
             ) : null}
         </View>

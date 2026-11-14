@@ -1,4 +1,5 @@
-import { View, Image, TouchableOpacity, Text } from 'react-native';
+import { StorageImage as Image } from './StorageImage';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { cn } from '../../theme/tw';
 
 interface AvatarProps {
@@ -9,7 +10,13 @@ interface AvatarProps {
     className?: string;
 }
 
-export function Avatar({ url, name, size = 'md', onPress, className }: AvatarProps) {
+export function Avatar({
+    url,
+    name,
+    size = 'md',
+    onPress,
+    className,
+}: AvatarProps) {
     const sizeClasses = {
         sm: 'w-8 h-8 rounded-full',
         md: 'w-10 h-10 rounded-full',
@@ -37,9 +44,9 @@ export function Avatar({ url, name, size = 'md', onPress, className }: AvatarPro
         <Container
             onPress={onPress}
             className={cn(
-                "bg-gray-200 dark:bg-gray-800 items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-700",
+                'bg-gray-200 dark:bg-djDark-raised items-center justify-center overflow-hidden border border-gray-100 dark:border-djDark-border',
                 sizeClasses[size],
-                className
+                className,
             )}
         >
             {url ? (
@@ -49,7 +56,12 @@ export function Avatar({ url, name, size = 'md', onPress, className }: AvatarPro
                     resizeMode="cover"
                 />
             ) : (
-                <Text className={cn("font-bold text-gray-500 dark:text-gray-400 tracking-wider", textSizes[size])}>
+                <Text
+                    className={cn(
+                        'font-bold text-gray-500 dark:text-djDark-muted tracking-wider',
+                        textSizes[size],
+                    )}
+                >
                     {name ? getInitials(name) : '?'}
                 </Text>
             )}
