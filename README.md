@@ -1,4 +1,4 @@
-# DJ Planner Pro
+# DJ Planner
 
 Aplicación Expo / React Native para organizar sesiones, locales, ingresos y documentos de DJs.
 
@@ -99,7 +99,7 @@ Antes de publicar la siguiente versión en las tiendas, comprobar en iPhone y An
 
 ## Plan Gratis y PRO
 
-- Gratis incluye todas las funciones actuales y hasta 30 sesiones propias guardadas en total. Cuentan historial, cancelaciones y cada fecha de una serie. Las sesiones recibidas como invitado no cuentan. Eliminar una sesión libera espacio.
+- Gratis incluye agenda, dashboard y analíticas, gastos, preparación, mixes, lugares y comunidad, con hasta 15 sesiones propias guardadas en total. Cuentan historial, cancelaciones y cada fecha de una serie. Las sesiones recibidas como invitado no cuentan. Eliminar una sesión libera espacio.
 - PRO permite sesiones ilimitadas. Las funciones avanzadas futuras se definirán antes de anunciarlas; la pantalla de pago solo ofrece funciones disponibles.
 - El registro entra directamente en la app. Al guardar una sesión o serie que exceda el límite, se abre `/paywall` sobre el formulario; cerrar conserva el borrador. Tras comprar/restaurar y verificar PRO, el usuario vuelve y pulsa Guardar para finalizar. No se guardan series a medias.
 - El perfil muestra «Mi plan», uso del límite y acceso a PRO o a la gestión de la suscripción de Apple. Una suscripción vencida conserva todas las sesiones existentes y permite consultarlas, editarlas y eliminarlas.
