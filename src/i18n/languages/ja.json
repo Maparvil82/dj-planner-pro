@@ -1245,6 +1245,7 @@
         "availability": "削除されたミックスや非公開プロフィールのミックスは、利用できない間は表示されません。"
     },
     "createMenu": {
+    "posters": "Posters",
         "title": "作成",
         "intro": "何を追加しますか？",
         "session": "通常",

@@ -1246,6 +1246,7 @@
         "availability": "I mix rimossi o di profili privati restano nascosti finché non sono disponibili."
     },
     "createMenu": {
+    "posters": "Posters",
         "title": "Crea",
         "intro": "Cosa vuoi aggiungere?",
         "session": "Semplice",

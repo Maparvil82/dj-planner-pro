@@ -1265,6 +1265,7 @@
         "availability": "Removed mixes and mixes from private profiles stay hidden while unavailable."
     },
     "createMenu": {
+    "posters": "Posters",
         "title": "Create",
         "intro": "What would you like to add?",
         "session": "Simple",

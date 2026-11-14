@@ -1244,6 +1244,7 @@
         "availability": "Les mixes supprimés ou de profils privés restent masqués tant qu’ils sont indisponibles."
     },
     "createMenu": {
+    "posters": "Posters",
         "title": "Créer",
         "intro": "Que souhaitez-vous ajouter ?",
         "session": "Simple",

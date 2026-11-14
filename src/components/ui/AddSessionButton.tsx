@@ -212,6 +212,7 @@ export function AddSessionButton() {
         else destination.current = href;
     };
     const actions = [
+        { key: 'posters', color: '#7b50e8', href: '/carteles' },
         { key: 'session', color: '#2783ef', href: '/add-session' },
         { key: 'conditional', color: '#ee9b21', href: usage.data?.isPro ? '/conditional-session' : '/paywall?reason=conditional' },
         { key: 'guests', color: '#16a5ad', href: usage.data?.isPro ? '/guests' : '/paywall?reason=guests' },

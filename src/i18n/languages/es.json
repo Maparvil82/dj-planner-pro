@@ -1261,6 +1261,7 @@
         "availability": "Los mixes retirados o de perfiles privados no aparecerán mientras no estén disponibles."
     },
     "createMenu": {
+    "posters": "Carteles",
         "title": "Crear",
         "intro": "¿Qué quieres añadir?",
         "session": "Simple",

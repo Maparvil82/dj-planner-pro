@@ -16,7 +16,8 @@
     "test:account-deletion-db": "node tests/accountDeletionDatabase.cjs",
     "test:storage-db": "node tests/storageSafetyDatabase.cjs",
     "test:performance-db": "node tests/queryPerformanceDatabase.cjs",
-    "test:door-access-db": "node tests/doorAccessDatabase.cjs"
+    "test:door-access-db": "node tests/doorAccessDatabase.cjs",
+    "start:carteles": "EXPO_NO_DOTENV=1 expo start --go --port 8096"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
