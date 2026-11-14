@@ -8,10 +8,10 @@ import Purchases, {
 } from 'react-native-purchases';
 
 // IMPORTANT: Using exactly this API Key as requested
-const API_KEY_IOS = 'appl_txIQHoyExsJQrrCekQjlfhNEOMs';
+const API_KEY_IOS = '';
 
 // Android must use the public Google SDK key from the same RevenueCat project.
-const API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '';
+const API_KEY_ANDROID = '';
 const API_KEY = Platform.OS === 'ios' ? API_KEY_IOS : Platform.OS === 'android' ? API_KEY_ANDROID : '';
 
 // Store entitlement identifier, independent of the public app name "DJ Planner".

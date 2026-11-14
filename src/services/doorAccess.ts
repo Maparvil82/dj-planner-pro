@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { labBackend, labOfflineFetch } from '../lib/labBackend';
 import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
@@ -6,7 +7,8 @@ import { authStorage } from '../lib/authStorage';
 import type { EntryCountResult } from './entryCounter';
 
 // Door credentials never replace the DJ's Auth session. This client is always anon.
-const doorClient = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL || '',process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',{
+const doorClient = createClient(labBackend.url,labBackend.anonKey,{
+    global: { fetch: labOfflineFetch },
     auth:{storageKey:'door-transport-v1',persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
 });
 export interface DoorCredential {id:string;secret:string}
