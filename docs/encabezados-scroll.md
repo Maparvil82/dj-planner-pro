@@ -1,5 +1,7 @@
 # Encabezados al desplazarse
 
+> **Decisión vigente (15 de noviembre de 2026): los encabezados y el menú inferior se quedan fijos.** La animación al desplazarse no era fluida y confundía, así que se retiró. `useScrollHeader` mantiene su interfaz (`progress`, `onScroll`, `onScrollBeginDrag`) para no tocar las pantallas, pero no anima nada, y ya ninguna pantalla usa `useTabBarScroll`. Las pruebas de `tests/scrollHeader.test.cjs` comprueban que el encabezado sigue expandido. Lo que sigue en este documento es el comportamiento anterior, conservado como historial.
+
 Todos los encabezados de navegación, con o sin iconos, se ocultan completamente al primer movimiento hacia abajo y reaparecen completos al primer movimiento hacia arriba, incluso lejos del inicio de la pantalla. Los cambios usan una transición suave de 240 ms. El menú inferior responde a la misma dirección con una transición de 240 ms. Detener el scroll no cambia el estado de ninguno.
 
 La detección compara los desplazamientos dentro de los límites actuales para no confundir la reducción del encabezado con un gesto. El rebote nativo al final tampoco muestra los menús: se ignora su recuperación hasta el inicio de un nuevo gesto. Cada ScrollView o FlatList conecta su inicio de arrastre y su inicio táctil a este controlador.

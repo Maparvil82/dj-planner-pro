@@ -4,43 +4,35 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
 const ts = require('typescript');
+
+// Decisión de producto (noviembre de 2026): los encabezados se quedan fijos.
+// La animación al desplazarse no era fluida y confundía. Ver docs/encabezados-scroll.md.
 function setup(mode) {
-    const visibility = [];
-    let focus, stops = 0, hidden = false, previous = 0;
     const filename = path.resolve(__dirname, '../src/hooks/useScrollHeader.ts');
     const loaded = new Module(filename, module);
-    loaded.require = request => request === 'react' ? { useCallback: fn => fn, useRef: value => ({ current: value }) }
-        : request === 'expo-router' ? { useFocusEffect: fn => { focus = fn; } }
-        : request === 'react-native-reanimated' ? {
-            useSharedValue: value => ({ value }),
-            cancelAnimation: () => { stops++; },
-            withTiming: value => value,
-            Easing: { quad: t => t ** 2, inOut: fn => fn },
-        }
-        : request.includes('TabBarVisibilityContext') ? { useTabBarScroll: () => ({ onScrollBeginDrag: () => {}, onScroll: event => { const y = Math.max(0, event.nativeEvent.contentOffset.y); const delta = y - previous; previous = y; if(delta) { hidden = delta > 0; visibility.push(hidden); } return delta; } }) } : require(request);
+    loaded.require = request => request === 'react' ? { useCallback: fn => fn }
+        : request === 'react-native-reanimated' ? { useSharedValue: value => ({ value }) }
+        : require(request);
     loaded._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, filename);
-    const hook = loaded.exports.useScrollHeader(mode); focus();
-    return { ...hook, focus, visibility, hidden: () => hidden, stops: () => stops };
+    return loaded.exports.useScrollHeader(mode);
 }
-const event = y => ({ nativeEvent: { contentOffset: { y } } });
+const event = y => ({ nativeEvent: { contentOffset: { y }, contentSize: { height: 2000 }, layoutMeasurement: { height: 800 } } });
+
 for (const mode of ['compact', 'hide']) {
-    test(`${mode} hides on the first downward pixel and reveals on the first upward pixel`, () => {
+    test(`${mode} keeps the header expanded while scrolling in both directions`, () => {
         const s = setup(mode);
-        s.onScrollBeginDrag();
-        s.onScroll(event(1)); assert.equal(s.progress.value, 1); assert.equal(s.hidden(), true);
-        s.onScroll(event(100)); assert.equal(s.progress.value, 1);
-        s.onScroll(event(99)); assert.equal(s.progress.value, 0); assert.equal(s.hidden(), false);
-        s.onScroll(event(100)); assert.equal(s.progress.value, 1);
-        s.onScroll(event(100)); assert.equal(s.progress.value, 1);
-        s.onScroll(event(0)); assert.equal(s.progress.value, 0);
-    });
-    test(`${mode} restores the header when returning from another screen`, () => {
-        const s = setup(mode);
-        s.progress.value = 1;
-        const stops = s.stops();
-        s.focus();
         assert.equal(s.progress.value, 0);
-        assert.equal(s.hidden(), false);
-        assert.equal(s.stops(), stops + 1);
+        s.onScrollBeginDrag();
+        for (const y of [1, 100, 99, 600, 1200, 0]) {
+            s.onScroll(event(y));
+            assert.equal(s.progress.value, 0, `progress changed at y=${y}`);
+        }
+    });
+
+    test(`${mode} keeps the scroll interface used by screens`, () => {
+        const s = setup(mode);
+        assert.equal(typeof s.onScroll, 'function');
+        assert.equal(typeof s.onScrollBeginDrag, 'function');
+        assert.ok('value' in s.progress);
     });
 }
