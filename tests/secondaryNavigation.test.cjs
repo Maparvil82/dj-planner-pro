@@ -6,7 +6,9 @@ function layout(signedIn=true){
  const React={createElement,useContext:()=>({activeTheme:'light'})};
  function Tabs(){}Tabs.Screen='screen';
  const dependencies={
- 'react':React,'react-native':{View:'view',ActivityIndicator:'loading',useWindowDimensions:()=>({width:390})},
+ 'react':React,'react-native':{View:'view',ActivityIndicator:'loading',useWindowDimensions:()=>({width:390}),StyleSheet:{create:styles=>styles,absoluteFill:{},absoluteFillObject:{},hairlineWidth:1}},
+ 'expo-blur':{BlurView:'blur'},
+ 'expo-glass-effect':{GlassView:'glass',isLiquidGlassAvailable:()=>false,isGlassEffectAPIAvailable:()=>false},
  'expo-router':{Tabs,Redirect:'redirect'},'lucide-react-native':{},
  '../../src/contexts/ThemeContext':{useDarkPalette:()=>({}),ThemeContext:{}},
  '../../src/components/ui/AddSessionButton':{AddSessionButton:'add'},
