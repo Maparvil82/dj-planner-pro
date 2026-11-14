@@ -6,16 +6,41 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d69b375931e3dd86d1a4031b1e540d0a@o4512334853439488.ingest.de.sentry.io/4512334866153552",
+        "EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN": "phc_tskPetcoXTwQVw2RW33QMk4jFrT7jCCsZwdSFP7xTPfP",
+        "EXPO_PUBLIC_POSTHOG_DEV_ENABLED": "false"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d69b375931e3dd86d1a4031b1e540d0a@o4512334853439488.ingest.de.sentry.io/4512334866153552",
+        "EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN": "phc_tskPetcoXTwQVw2RW33QMk4jFrT7jCCsZwdSFP7xTPfP",
+        "EXPO_PUBLIC_POSTHOG_DEV_ENABLED": "false"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://d69b375931e3dd86d1a4031b1e540d0a@o4512334853439488.ingest.de.sentry.io/4512334866153552",
+        "EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN": "phc_tskPetcoXTwQVw2RW33QMk4jFrT7jCCsZwdSFP7xTPfP",
+        "EXPO_PUBLIC_POSTHOG_DEV_ENABLED": "false"
+      }
+    },
+    "poster-sandbox": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_POSTER_STORE_TESTING": "true"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6760347919"
+      }
+    }
   }
 }

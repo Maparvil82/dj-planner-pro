@@ -1,24 +1,33 @@
 {
   "expo": {
-    "name": "DJ Planner PRO",
+    "name": "DJ Planner",
     "slug": "dj-planner-pro",
-    "version": "1.0.2",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "djplannerpro",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.djplannerpro.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleLocalizations": [
+          "es",
+          "en",
+          "de",
+          "fr",
+          "it",
+          "pt-BR",
+          "ja"
+        ],
         "NSCameraUsageDescription": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de facturas, carteles y perfiles.",
         "NSPhotoLibraryUsageDescription": "DJ Planner necesita acceso a tus fotos para añadir facturas, carteles y fotos de perfil."
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#171717",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "package": "com.djplannerpro.app",
@@ -30,6 +39,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ],
       "@react-native-community/datetimepicker",
       "expo-localization",
       "expo-sharing",
@@ -37,8 +52,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#171717"
         }
       ],
       "expo-status-bar",
@@ -55,6 +71,21 @@
           "cameraPermission": "DJ Planner necesita la cámara para escanear entradas QR y tomar fotos de facturas, carteles y perfiles.",
           "photosPermission": "DJ Planner necesita acceso a tus fotos para añadir facturas, carteles y fotos de perfil.",
           "microphonePermission": false
+        }
+      ],
+      "expo-mail-composer",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "DJ Planner necesita el micrófono para grabar tus notas de voz de hasta 20 segundos.",
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
         }
       ]
     ],
