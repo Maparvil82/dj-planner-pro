@@ -44,3 +44,17 @@ yarn-error.*
 
 # Supabase local CLI cache
 supabase/.temp/
+
+# Linked dependencies, local credentials and generated artifacts
+/node_modules
+.env.*
+!.env.example
+*.keystore
+*.ipa
+*.apk
+*.aab
+/outputs/
+/tmp/
+/build/
+__pycache__/
+*.py[cod]
