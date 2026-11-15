@@ -1,22 +1,65 @@
-import { View, ActivityIndicator } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable, isGlassEffectAPIAvailable } from 'expo-glass-effect';
+import { StyleSheet } from 'react-native';
+import { useDarkPalette } from '../../src/contexts/ThemeContext';
+import { AddSessionButton } from '../../src/components/ui/AddSessionButton';
+import {
+    AccountDrawerProvider,
+} from '../../src/components/navigation/AccountDrawer';
+import { TabBarVisibilityProvider } from '../../src/contexts/TabBarVisibilityContext';
+import { ScrollTabBar } from '../../src/components/ui/ScrollTabBar';
+import { View, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Tabs as ExpoTabs } from 'expo-router';
-import { Home, Calendar, MapPin, LayoutDashboard } from 'lucide-react-native';
+import {
+    CalendarDays,
+    MapPin,
+    LayoutDashboard,
+    Users,
+    Image as PosterIcon,
+} from 'lucide-react-native';
 import { useTranslation } from '../../src/i18n/useTranslation';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { Redirect } from 'expo-router';
 import { ThemeContext } from '../../src/contexts/ThemeContext';
 import { useContext } from 'react';
-import { Avatar } from '../../src/components/ui/Avatar';
+import { FEATURES } from '../../src/config/features';
+
+// In SDK 58, href:null also redirects away from the route. Secondary pages
+// must stay registered; hide only their bottom-bar button and its space.
+const secondaryTabOptions = {
+    tabBarButton: () => null,
+    tabBarItemStyle: { display: 'none' as const },
+};
 
 export default function TabLayout() {
+    return (
+        <TabBarVisibilityProvider>
+            <AccountDrawerProvider>
+                <TabLayoutContent />
+            </AccountDrawerProvider>
+        </TabBarVisibilityProvider>
+    );
+}
+
+function TabLayoutContent() {
+    const darkPalette = useDarkPalette();
     const { t } = useTranslation();
-    const { session, profile, initialized, hasSeenOnboarding } = useAuthStore();
+    const { width } = useWindowDimensions();
+    const { session, initialized } = useAuthStore();
     const themeCtx = useContext(ThemeContext);
     const isDark = themeCtx?.activeTheme === 'dark';
+    const nativeGlass = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
     if (!initialized) {
         return (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#111827' : '#FFFFFF' }}>
+            <View
+                style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isDark ? darkPalette.background : '#FFFFFF',
+                }}
+            >
                 <ActivityIndicator size="large" color="#2563EB" />
             </View>
         );
@@ -26,26 +69,30 @@ export default function TabLayout() {
         return <Redirect href="/(auth)/login" />;
     }
 
-    if (!hasSeenOnboarding) {
-        return <Redirect href="/(auth)/onboarding" />;
-    }
-
     return (
         <ExpoTabs
+            tabBar={(props) => <ScrollTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: isDark ? '#60A5FA' : '#2563EB', // blue-400 : blue-600
-                tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF', // gray-500 : gray-400
+                tabBarActiveTintColor: isDark ? darkPalette.primary : '#6554df',
+                tabBarInactiveTintColor: isDark ? darkPalette.muted : '#9CA3AF', // gray-500 : gray-400
                 tabBarStyle: {
-                    backgroundColor: isDark ? '#111827' : '#fbfbfbff', // gray-900 : white
-                    borderTopWidth: 1,
-                    borderTopColor: isDark ? '#1F2937' : '#F3F4F6', // gray-800 : gray-100
+                    backgroundColor: 'transparent',
+                    borderTopWidth: 0,
                     elevation: 0,
-                    paddingBottom: 5,
-                    height: 80,
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    height: 60,
                 },
+                tabBarBackground: () => nativeGlass ? (
+                    <GlassView glassEffectStyle="regular" colorScheme={isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
+                ) : (
+                    <BlurView intensity={85} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill}>
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(24,24,38,0.48)' : 'rgba(255,255,255,0.45)' }]} />
+                    </BlurView>
+                ),
                 tabBarLabelStyle: {
-                    fontSize: 10,
+                    fontSize: width < 360 ? 9 : 10,
                     fontWeight: '600',
                     marginBottom: 5,
                 },
@@ -54,9 +101,11 @@ export default function TabLayout() {
             <ExpoTabs.Screen
                 name="home"
                 options={{
-                    title: t('home'),
+                    title: t('community.sessions'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <CalendarDays color={color} size={size} />
+                    ),
                 }}
             />
             <ExpoTabs.Screen
@@ -64,13 +113,36 @@ export default function TabLayout() {
                 options={{
                     title: t('dashboard'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <LayoutDashboard color={color} size={size} />
+                    ),
+                }}
+            />
+
+            <ExpoTabs.Screen
+                name="create-session"
+                options={{
+                    title: t('createMenu.title'),
+                    tabBarShowLabel: false,
+                    tabBarButton: () => (
+                        <View
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                paddingBottom: 0,
+                            }}
+                        >
+                            <AddSessionButton />
+                        </View>
+                    ),
                 }}
             />
 
             <ExpoTabs.Screen
                 name="vault"
                 options={{
+                    href: FEATURES.documents ? undefined : null,
                     title: t('vault_title') || t('vault') || 'Documentos',
                     // @ts-ignore
                     tabBarIcon: ({ color, size }) => {
@@ -80,36 +152,39 @@ export default function TabLayout() {
                 }}
             />
 
+            <ExpoTabs.Screen name="calendar" options={secondaryTabOptions} />
             <ExpoTabs.Screen
                 name="history"
-                options={{
-                    href: null,
-                }}
+                options={secondaryTabOptions}
             />
             <ExpoTabs.Screen
                 name="venues"
                 options={{
+                    ...secondaryTabOptions,
                     title: t('venues_title'),
                     // @ts-ignore
-                    tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
-                }}
-            />
-            <ExpoTabs.Screen
-                name="profile"
-                options={{
-                    title: t('tab_you'),
-                    // @ts-ignore
                     tabBarIcon: ({ color, size }) => (
-                        <View className={`p-0.5 rounded-full border-2 ${color === (isDark ? '#60A5FA' : '#2563EB') ? 'border-blue-500' : 'border-transparent'}`}>
-                            <Avatar
-                                url={profile?.avatar_url}
-                                name={session?.user?.email}
-                                size="sm"
-                            />
-                        </View>
+                        <MapPin color={color} size={size} />
                     ),
                 }}
             />
+            <ExpoTabs.Screen
+                name="community"
+                options={{
+                    title: t('community.title'),
+                    tabBarIcon: ({ color, size }) => (
+                        <Users color={color} size={size} />
+                    ),
+                }}
+            />
+            <ExpoTabs.Screen
+                name="carteles"
+                options={{
+                    title: t('accountMenu.posters'),
+                    tabBarIcon: ({ color, size }) => <PosterIcon color={color} size={size} />,
+                }}
+            />
+            <ExpoTabs.Screen name="account" options={secondaryTabOptions} />
         </ExpoTabs>
     );
 }

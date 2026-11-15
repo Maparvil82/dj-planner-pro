@@ -1,6 +1,12 @@
+import { captureAnalytics } from '../analytics';
+import { useIsFocused } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sessionService } from '../services/sessions';
 import { useAuthStore } from '../store/useAuthStore';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { sessionRange } from '../utils/sessionPlanning';
 import { CreateSessionInput } from '../types/session';
 
 export const useSessionsQuery = (year: number, month: number) => {
@@ -19,18 +25,49 @@ export const useSessionsQuery = (year: number, month: number) => {
 };
 
 export const useUpcomingSessionsQuery = () => {
+    const focused = useIsFocused();
+    const [now, setNow] = useState(() => new Date());
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
-    return useQuery({
+    const selectUpcoming = useCallback(
+        (
+            rows: Awaited<
+                ReturnType<typeof sessionService.getUpcomingSessions>
+            >,
+        ) => rows.filter((row) => row.status !== 'cancelled' && sessionRange(row).end > now),
+        [now],
+    );
+    const query = useQuery({
         queryKey: ['sessions', 'upcoming', userId],
+        select: selectUpcoming,
         queryFn: () => {
             if (!userId) return [];
             return sessionService.getUpcomingSessions(userId);
         },
-        enabled: !!userId && initialized,
-        staleTime: 1000 * 60 * 5, // 5 minutes cache
+        enabled: !!userId && initialized && focused,
+        staleTime: 30000,
+        refetchInterval: focused ? 60000 : false,
     });
+    useFocusEffect(
+        useCallback(() => {
+            setNow(new Date());
+        }, []),
+    );
+    useEffect(() => {
+        if (!focused) return;
+        const timer = setInterval(() => setNow(new Date()), 60000);
+        const listener = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                setNow(new Date());
+            }
+        });
+        return () => {
+            clearInterval(timer);
+            listener.remove();
+        };
+    }, [focused]);
+    return query;
 };
 
 export const useCreateSessionMutation = () => {
@@ -44,8 +81,12 @@ export const useCreateSessionMutation = () => {
             return sessionService.createSession(input, userId);
         },
         onSuccess: () => {
+            captureAnalytics('session_created', {}, userId);
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session-usage'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
             // Invalidate the tags to reflect newly saved venues/titles in the autocomplete
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
@@ -56,26 +97,41 @@ export const useDeleteSessionMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (sessionId: string) => {
-            return sessionService.deleteSession(sessionId);
+        mutationFn: ({
+            sessionId,
+            scope,
+        }: {
+            sessionId: string;
+            scope: 'single' | 'series';
+        }) => {
+            return sessionService.deleteSession(sessionId, scope);
         },
         onSuccess: () => {
             // Refetch calendar and upcoming sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session-usage'] });
+            queryClient.invalidateQueries({ queryKey: ['session'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
         },
     });
 };
 
-export const useSessionByIdQuery = (sessionId: string | undefined | string[]) => {
+export const useSessionByIdQuery = (
+    sessionId: string | undefined | string[],
+) => {
     const id = Array.isArray(sessionId) ? sessionId[0] : sessionId;
+    const { session, initialized } = useAuthStore();
+    const userId = session?.user.id;
 
     return useQuery({
-        queryKey: ['session', id],
+        queryKey: ['session', id, userId],
         queryFn: () => {
             if (!id) return null;
             return sessionService.getSessionById(id);
         },
-        enabled: !!id,
+        enabled: !!id && !!userId && initialized,
     });
 };
 
@@ -83,8 +139,20 @@ export const useUpdateSessionColorMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ sessionId, color, updateAll }: { sessionId: string; color: string; updateAll?: boolean }) => {
-            return sessionService.updateSessionColor(sessionId, color, updateAll);
+        mutationFn: ({
+            sessionId,
+            color,
+            updateAll,
+        }: {
+            sessionId: string;
+            color: string;
+            updateAll?: boolean;
+        }) => {
+            return sessionService.updateSessionColor(
+                sessionId,
+                color,
+                updateAll,
+            );
         },
         onSuccess: (_, variables) => {
             if (variables.updateAll) {
@@ -92,10 +160,15 @@ export const useUpdateSessionColorMutation = () => {
                 queryClient.invalidateQueries({ queryKey: ['session'] });
             } else {
                 // Invalidate the specific session query
-                queryClient.invalidateQueries({ queryKey: ['session', variables.sessionId] });
+                queryClient.invalidateQueries({
+                    queryKey: ['session', variables.sessionId],
+                });
             }
             // Invalidate the sessions array to refetch data on the calendar
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session-usage'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
         },
     });
 };
@@ -106,23 +179,47 @@ export const useUpdateSessionMutation = () => {
     const userId = session?.user?.id;
 
     return useMutation({
-        mutationFn: ({ sessionId, input, updateAll }: { sessionId: string; input: Partial<CreateSessionInput>; updateAll?: boolean }) => {
+        mutationFn: ({
+            sessionId,
+            input,
+            updateAll,
+        }: {
+            sessionId: string;
+            input: Partial<CreateSessionInput>;
+            updateAll?: boolean;
+        }) => {
             if (!userId) throw new Error('User not authenticated');
-            return sessionService.updateSession(sessionId, input, userId, updateAll);
+            return sessionService.updateSession(
+                sessionId,
+                input,
+                userId,
+                updateAll,
+            );
         },
         onSuccess: (_, variables) => {
-            if (variables.updateAll) {
+            if (variables.input.notes?.trim()) captureAnalytics('private_note_saved', {}, userId);
+            if (
+                variables.updateAll ||
+                variables.input.poster_url !== undefined ||
+                variables.input.poster_focus_x !== undefined ||
+                variables.input.poster_focus_y !== undefined
+            ) {
                 queryClient.invalidateQueries({ queryKey: ['session'] });
             } else {
-                queryClient.invalidateQueries({ queryKey: ['session', variables.sessionId] });
+                queryClient.invalidateQueries({
+                    queryKey: ['session', variables.sessionId],
+                });
             }
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['session-usage'] });
+            queryClient.invalidateQueries({ queryKey: ['community'] });
+            queryClient.invalidateQueries({ queryKey: ['collaborations'] });
             queryClient.invalidateQueries({ queryKey: ['tags'] });
         },
     });
 };
 
-export const useAllSessionsQuery = () => {
+export const useAllSessionsQuery = (enabled = true) => {
     const { session, initialized } = useAuthStore();
     const userId = session?.user?.id;
 
@@ -132,6 +229,6 @@ export const useAllSessionsQuery = () => {
             if (!userId) return [];
             return sessionService.getAllSessions(userId);
         },
-        enabled: !!userId && initialized,
+        enabled: enabled && !!userId && initialized,
     });
 };

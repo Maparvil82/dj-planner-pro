@@ -1,4 +1,6 @@
 import React from 'react';
+import { AnalyticsSync } from '../analytics/AnalyticsSync';
+import { CommunityTermsProvider } from '../components/community/CommunityTerms';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { QueryProvider } from './QueryProvider';
 import { useAuthBootstrap } from '../hooks/useAuthBootstrap';
@@ -18,7 +20,7 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
         <QueryProvider>
             <ThemeProvider>
                 <SubscriptionProvider>
-                    {children}
+                    <CommunityTermsProvider><AnalyticsSync />{children}</CommunityTermsProvider>
                 </SubscriptionProvider>
             </ThemeProvider>
         </QueryProvider>

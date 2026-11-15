@@ -1,0 +1,14 @@
+{
+    "background": "#171717",
+    "surface": "#232323",
+    "raised": "#45443F",
+    "field": "#242422",
+    "text": "#F7F7F7",
+    "muted": "#EEF3E1",
+    "primary": "#DCEB7D",
+    "heroEnd": "#EEF3E1",
+    "border": "#55564B",
+    "tint": "#2B3020",
+    "onPrimary": "#232323",
+    "onSurface": "#EEF3E1"
+}

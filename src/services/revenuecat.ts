@@ -4,34 +4,61 @@ import Purchases, {
     PurchasesPackage,
     PurchasesOffering,
     LOG_LEVEL,
+    PRODUCT_CATEGORY,
 } from 'react-native-purchases';
 
 // IMPORTANT: Using exactly this API Key as requested
 const API_KEY_IOS = 'appl_txIQHoyExsJQrrCekQjlfhNEOMs';
 
-// We only support iOS for now
-const API_KEY = Platform.OS === 'ios' ? API_KEY_IOS : '';
+// Android must use the public Google SDK key from the same RevenueCat project.
+const API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '';
+const API_KEY = Platform.OS === 'ios' ? API_KEY_IOS : Platform.OS === 'android' ? API_KEY_ANDROID : '';
 
-// The exact entitlement we are looking for: "DJ Planner Pro"
+// Store entitlement identifier, independent of the public app name "DJ Planner".
 const PRO_ENTITLEMENT_ID = 'DJ Planner Pro';
 
 class RevenueCatService {
+    supportsPurchases(): boolean { return !!API_KEY; }
+    async getPosterCreditPackages(): Promise<PurchasesPackage[]> {
+        if (!this.isConfigured) return [];
+        const offerings = await Purchases.getOfferings();
+        return (offerings.all.poster_credits?.availablePackages || []).filter(pkg => ['com.djplannerpro.app.postercredits5','com.djplannerpro.app.postercredits12'].includes(pkg.product.identifier));
+    }
+    async getStorefrontCountry(): Promise<string | null> {
+        if (!this.isConfigured) return null;
+        try { return (await Purchases.getStorefront())?.countryCode || null; }
+        catch { return null; }
+    }
+    async getIntroEligibility(productIds: string[]): Promise<Record<string, boolean>> {
+        if (!this.isConfigured || Platform.OS !== 'ios' || !productIds.length) return {};
+        try {
+            const result = await Purchases.checkTrialOrIntroductoryPriceEligibility(productIds);
+            return Object.fromEntries(Object.entries(result).map(([id, eligibility]) => [id,
+                eligibility.status === Purchases.INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE]));
+        } catch { return {}; }
+    }
     private isConfigured = false;
+    private configurationQueue: Promise<boolean> = Promise.resolve(false);
 
     /**
      * Configures the RevenueCat SDK.
      * @param appUserID - Optional Supabase user.id to sync purchases to the user.
      */
-    async configureRevenueCat(appUserID?: string): Promise<void> {
+    configureRevenueCat(appUserID?: string): Promise<boolean> {
+        // Serialize account changes so a slower previous login cannot win.
+        this.configurationQueue = this.configurationQueue.catch(() => false).then(() => this.configureIdentity(appUserID));
+        return this.configurationQueue;
+    }
+    private async configureIdentity(appUserID?: string): Promise<boolean> {
         if (!API_KEY) {
-            console.warn('RevenueCat is not supported on this platform yet or missing API key.');
-            return;
+            if (__DEV__) console.warn('RevenueCat is not supported on this platform yet or missing API key.');
+            return false;
         }
 
         try {
             if (!this.isConfigured) {
                 // Provide more verbose logging in development
-                Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+                Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
 
                 if (appUserID) {
                     // Using Supabase user.id as the appUserID in RevenueCat
@@ -41,36 +68,55 @@ class RevenueCatService {
                 }
 
                 this.isConfigured = true;
-                console.log('[RevenueCat] Configured successfully with User ID:', appUserID || 'anonymous');
+                if (__DEV__) console.log('[RevenueCat] Configured successfully');
             } else {
                 // If it is already configured, we switch user instead of configuring again
                 if (appUserID) {
                     await Purchases.logIn(appUserID);
-                    console.log('[RevenueCat] Logged in with User ID:', appUserID);
+                    if (__DEV__) console.log('[RevenueCat] Account changed');
                 } else {
-                    await Purchases.logOut();
-                    console.log('[RevenueCat] Logged out (anonymous)');
+                    if (!(await Purchases.isAnonymous())) await Purchases.logOut();
+                    if (__DEV__) console.log('[RevenueCat] Logged out (anonymous)');
                 }
             }
+            return true;
         } catch (error) {
-            console.error('[RevenueCat] Failed to configure or switch user:', error);
+            if (__DEV__) console.error('[RevenueCat] Failed to configure or switch user:', error);
+            return false;
         }
     }
 
     /**
      * Gets the current offering (set to 'default' ID in RevenueCat).
      */
-    async getCurrentOffering(): Promise<PurchasesOffering | null> {
+    async getCurrentOffering(refreshProducts = false): Promise<PurchasesOffering | null> {
         try {
             const offerings = await Purchases.getOfferings();
             if (offerings.current !== null) {
-                return offerings.current;
+                const offering = offerings.current;
+                if (!refreshProducts || Platform.OS !== 'ios') return offering;
+                // Refresh product metadata without changing package identifiers or attribution.
+                // TestFlight may still return inconsistent metadata: the payment sheet is authoritative.
+                const identifiers = [...new Set([offering.monthly, offering.annual].flatMap(pkg => pkg ? [pkg.product.identifier] : []))];
+                if (!identifiers.length) return offering;
+                const products = await Purchases.getProducts(identifiers, PRODUCT_CATEGORY.SUBSCRIPTION);
+                const byId = new Map(products.map(product => [product.identifier, product]));
+                const refresh = (pkg: PurchasesPackage | null): PurchasesPackage | null => {
+                    if (!pkg) return null;
+                    if (!identifiers.includes(pkg.product.identifier)) return pkg;
+                    const product = byId.get(pkg.product.identifier);
+                    return product ? { ...pkg, product } : null;
+                };
+                return { ...offering,
+                    monthly: refresh(offering.monthly), annual: refresh(offering.annual),
+                    availablePackages: offering.availablePackages.flatMap(pkg => { const updated = refresh(pkg); return updated ? [updated] : []; }),
+                };
             } else {
-                console.warn('[RevenueCat] No current offering configured.');
+                if (__DEV__) console.warn('[RevenueCat] No current offering configured.');
                 return null;
             }
         } catch (error) {
-            console.error('[RevenueCat] Error getting offerings:', error);
+            if (__DEV__) console.error('[RevenueCat] Error getting offerings:', error);
             return null;
         }
     }
@@ -116,10 +162,10 @@ class RevenueCatService {
         } catch (error: any) {
             // Handle user cancellation gracefully
             if (error?.userCancelled) {
-                console.log('[RevenueCat] User cancelled purchase');
+                if (__DEV__) console.log('[RevenueCat] User cancelled purchase');
                 return { success: false, userCancelled: true, error };
             }
-            console.error('[RevenueCat] Error purchasing package:', error);
+            if (__DEV__) console.error('[RevenueCat] Error purchasing package:', error);
             return { success: false, userCancelled: false, error };
         }
     }
@@ -136,7 +182,7 @@ class RevenueCatService {
             const customerInfo = await Purchases.restorePurchases();
             return { success: true, customerInfo };
         } catch (error: any) {
-            console.error('[RevenueCat] Error restoring purchases:', error);
+            if (__DEV__) console.error('[RevenueCat] Error restoring purchases:', error);
             return { success: false, error };
         }
     }
@@ -145,10 +191,11 @@ class RevenueCatService {
      * Fetches the latest customer info state from RevenueCat.
      */
     async getCustomerInfo(): Promise<CustomerInfo | null> {
+        if (!this.isConfigured) return null;
         try {
             return await Purchases.getCustomerInfo();
         } catch (error) {
-            console.error('[RevenueCat] Error fetching customer info:', error);
+            if (__DEV__) console.error('[RevenueCat] Error fetching customer info:', error);
             return null;
         }
     }

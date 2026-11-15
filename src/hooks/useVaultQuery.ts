@@ -1,3 +1,4 @@
+import { FEATURES } from '../config/features';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vaultService } from '../services/vault';
 import { useAuthStore } from '../store/useAuthStore';
@@ -12,7 +13,7 @@ export const useVaultFoldersQuery = () => {
             if (!userId) return [];
             return vaultService.getFolders(userId);
         },
-        enabled: !!userId && initialized,
+        enabled: FEATURES.documents && !!userId && initialized,
     });
 };
 
@@ -26,7 +27,7 @@ export const useVaultFoldersByAssociationQuery = (type: 'session' | 'venue', id:
             if (!userId) return [];
             return vaultService.getFoldersByAssociation(userId, type, id);
         },
-        enabled: !!userId && initialized && !!id,
+        enabled: FEATURES.documents && !!userId && initialized && !!id,
     });
 };
 
@@ -37,7 +38,7 @@ export const useVaultFilesQuery = (folderId: string) => {
             if (!folderId) return [];
             return vaultService.getFiles(folderId);
         },
-        enabled: !!folderId,
+        enabled: FEATURES.documents && !!folderId,
     });
 };
 

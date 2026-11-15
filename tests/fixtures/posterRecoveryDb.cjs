@@ -1,0 +1,17 @@
+const fs=require('node:fs');
+const owner='d5d17646-f273-4fda-b094-ea8a97cb3ad1',user='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',session='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const migrations=['20261018235804_poster_ai_private_beta.sql','20261019012700_poster_ai_metered_budget.sql','20261019032802_poster_ai_calibrated_budget.sql','20261021013422_poster_test_credit_wallet.sql','20261021122711_poster_apple_sandbox_receipts.sql','20261022224311_poster_google_metering.sql','20261023112033_poster_commerce_private.sql','20261023122510_poster_navigation_access.sql','20261024120000_session_generated_posters.sql','20261027221952_poster_welcome_launch.sql','20261028000011_poster_job_recovery.sql'];
+const bootstrap=`do $$begin if not exists(select 1 from pg_roles where rolname='anon')then create role anon;end if;if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated;end if;if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role bypassrls;end if;end$$;
+create schema auth;create schema storage;create schema account_private;
+create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now());
+create function auth.uid() returns uuid language sql as 'select nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
+create function account_private.active_user(target uuid) returns boolean language sql security definer as 'select exists(select 1 from auth.users where id=target)';
+create function account_private.work(text,uuid) returns jsonb language sql as 'select null::jsonb';create function account_private.finalize_guard() returns trigger language plpgsql as 'begin return old;end';
+create table public.sessions(id uuid primary key,user_id uuid,date date,start_time text,status text,booking_timezone text,poster_url text,poster_focus_x float8 default .5,poster_focus_y float8 default .5);
+create table storage.objects(bucket_id text,name text);create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+grant usage on schema account_private,auth,storage to service_role;grant select on auth.users to service_role;grant select,insert on storage.objects to service_role;grant select,update on public.sessions to service_role;
+insert into auth.users(id) values('${owner}'),('${user}'),('${other}');
+insert into public.sessions(id,user_id,date,start_time,status,booking_timezone) values('${session}','${user}','2099-12-24','23:30','confirmed','Europe/Madrid');`;
+const configured=`update public.poster_ai_budget set enabled=true,limit_eur_cents=25000;insert into public.poster_commerce_access(user_id,enabled) values('${user}',true),('${owner}',true) on conflict(user_id) do update set enabled=true;update public.poster_commerce_access set credit_mode='simulation' where user_id='${owner}';insert into public.poster_wallets(user_id,bonus_units,paid_units) values('${user}',10,10);insert into public.poster_test_wallets(user_id,units) values('${owner}',20);set role service_role;`;
+const sql=()=>bootstrap+'\n'+migrations.map(n=>fs.readFileSync('supabase/migrations/'+n,'utf8')).join('\n')+'\n'+configured;
+module.exports={owner,user,other,session,sql};

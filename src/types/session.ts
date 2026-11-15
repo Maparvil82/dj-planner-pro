@@ -1,47 +1,87 @@
-import { UserProfile } from "../services/profile";
+import type { CityLocation } from '../utils/cities';
+import type { FeeAgreement } from '../utils/feeAgreement';
+import { UserProfile } from '../services/profile';
+
+export const SESSION_EVENT_TYPES = ['club', 'festival', 'wedding', 'corporate', 'residency'] as const;
+export type SessionEventType = typeof SESSION_EVENT_TYPES[number];
 
 export interface Session {
     id: string; // uuid
     user_id: string; // uuid
     date: string; // date 'YYYY-MM-DD'
     title: string;
+    event_type?: SessionEventType | null;
+    notes?: string | null;
     venue: string;
+    venue_city?: string | null; // Event location snapshot, independent of the place record.
+    venue_city_location?: CityLocation | null;
+    venue_address?: string | null;
     start_time: string; // e.g., '22:00'
     end_time: string; // e.g., '04:00'
+    booking_timezone?: string | null;
     color: string;
     is_collective: boolean;
     djs: string[];
-    earning_type: 'free' | 'hourly' | 'fixed';
+    dj_profile_ids?: string[];
+    is_guest?: boolean;
+    owner_name?: string;
+    earning_type: 'free' | 'hourly' | 'fixed' | 'agreement';
+    fee_agreement?: FeeAgreement | null;
     earning_amount: number;
     currency: string;
-    recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
+    recurrence_type?:
+        | 'none'
+        | 'daily'
+        | 'weekly'
+        | 'monthly'
+        | 'quarterly'
+        | 'biannually'
+        | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
-    venue_id?: string; // uuid
+    venue_id?: string | null; // uuid
     created_at: string; // timestamptz
     updated_at: string; // timestamptz
-    status?: 'confirmed' | 'cancelled';
+    status?: 'pending' | 'confirmed' | 'cancelled';
+    amount_paid?: number;
     poster_url?: string | null;
+    poster_focus_x?: number;
+    poster_focus_y?: number;
 }
 
 export interface CreateSessionInput {
+    booking_timezone?: string | null;
     date: string;
     title: string;
+    event_type?: SessionEventType | null;
+    notes?: string | null;
     venue: string;
     start_time: string;
     end_time: string;
     color?: string;
     is_collective?: boolean;
     djs?: string[];
-    earning_type?: 'free' | 'hourly' | 'fixed';
+    dj_profile_ids?: string[];
+    earning_type?: 'free' | 'hourly' | 'fixed' | 'agreement';
+    fee_agreement?: FeeAgreement | null;
     earning_amount?: number;
     currency?: string;
-    recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
+    recurrence_type?:
+        | 'none'
+        | 'daily'
+        | 'weekly'
+        | 'monthly'
+        | 'quarterly'
+        | 'biannually'
+        | 'yearly';
     recurrence_end_date?: string; // YYYY-MM-DD
     parent_session_id?: string;
-    venue_id?: string; // uuid
-    status?: 'confirmed' | 'cancelled';
+    venue_id?: string | null; // uuid
+    status?: 'pending' | 'confirmed' | 'cancelled';
+    amount_paid?: number;
     poster_url?: string | null;
+    poster_focus_x?: number;
+    poster_focus_y?: number;
 }
 
 export interface VaultFolder {

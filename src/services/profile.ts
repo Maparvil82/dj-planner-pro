@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { decode } from 'base64-arraybuffer';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { optimizedImage } from './optimizedImage';
+import { storageError } from '../utils/storageLimits';
 
 export interface UserProfile {
     id: string;
@@ -24,10 +24,17 @@ export const profileService = {
         return data;
     },
 
-    async updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
+    async updateProfile(
+        userId: string,
+        updates: Partial<UserProfile>,
+    ): Promise<UserProfile | null> {
         const { data, error } = await supabase
             .from('users_profile')
-            .upsert({ id: userId, ...updates, updated_at: new Date().toISOString() })
+            .upsert({
+                id: userId,
+                ...updates,
+                updated_at: new Date().toISOString(),
+            })
             .select()
             .single();
 
@@ -38,32 +45,53 @@ export const profileService = {
         return data;
     },
 
-    async uploadAvatar(userId: string, imageUri: string): Promise<string | null> {
+    async uploadProfilePhoto(
+        userId: string,
+        imageUri: string,
+    ): Promise<string> {
+        const bytes = await optimizedImage(imageUri, 400);
+        const path = `${userId}/avatar-${(await import('expo-crypto')).randomUUID()}.jpg`;
+        const { error } = await supabase.storage
+            .from('avatars')
+            .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
+        if (error) throw storageError(error);
+        return supabase.storage.from('avatars').getPublicUrl(path).data
+            .publicUrl;
+    },
+
+    async uploadCover(userId: string, imageUri: string): Promise<string> {
+        const bytes = await optimizedImage(imageUri, 1600);
+        const path = `${userId}/cover-${(await import('expo-crypto')).randomUUID()}.jpg`;
+        const { error } = await supabase.storage
+            .from('avatars')
+            .upload(path, bytes, {
+                contentType: 'image/jpeg',
+                upsert: false,
+            });
+        if (error) throw storageError(error);
+        return supabase.storage.from('avatars').getPublicUrl(path).data
+            .publicUrl;
+    },
+
+    async uploadAvatar(
+        userId: string,
+        imageUri: string,
+    ): Promise<string | null> {
         try {
-            // 1. Compress & format image
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                imageUri,
-                [{ resize: { width: 400 } }],
-                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-            );
-
-            if (!manipulatedImage.base64) {
-                throw new Error("Failed to get base64 string from image");
-            }
-
-            const filePath = `${userId}/${Date.now()}.jpg`;
+            const bytes = await optimizedImage(imageUri, 400);
+            const filePath = `${userId}/${(await import('expo-crypto')).randomUUID()}.jpg`;
             const contentType = 'image/jpeg';
 
             // 2. Upload to storage
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, decode(manipulatedImage.base64), {
+                .upload(filePath, bytes, {
                     contentType,
                     upsert: true,
                 });
 
             if (uploadError) {
-                throw uploadError;
+                throw storageError(uploadError);
             }
 
             // 3. Get public URL
@@ -76,38 +104,29 @@ export const profileService = {
             // 4. Update profile DB record
             const { error: dbError } = await supabase
                 .from('users_profile')
-                .upsert({ id: userId, avatar_url: avatarUrl, updated_at: new Date().toISOString() });
+                .upsert({
+                    id: userId,
+                    avatar_url: avatarUrl,
+                    updated_at: new Date().toISOString(),
+                });
 
             if (dbError) throw dbError;
 
             return avatarUrl;
         } catch (error) {
+            if (
+                error instanceof Error &&
+                error.message.startsWith('storageSafety.')
+            )
+                throw error;
             console.error('Upload Avatar Error:', error);
             return null;
         }
     },
 
     async deleteAccount(userId: string): Promise<boolean> {
-        try {
-            // Manual cleanup of dependent tables to work around missing ON DELETE CASCADE
-            // Order is important to respect foreign keys (delete children before parents)
-            await supabase.from('vault_files').delete().eq('user_id', userId);
-            await supabase.from('vault_folders').delete().eq('user_id', userId);
-            await supabase.from('user_tags').delete().eq('user_id', userId);
-            await supabase.from('expenses').delete().eq('user_id', userId);
-            await supabase.from('sessions').delete().eq('user_id', userId);
-            await supabase.from('venues').delete().eq('user_id', userId);
-            await supabase.from('users_profile').delete().eq('id', userId);
-
-            // Call the SECURITY DEFINER function to delete the user from auth.users
-            const { error } = await supabase.rpc('delete_user_data');
-
-            if (error) throw error;
-
-            return true;
-        } catch (error) {
-            console.error('Delete Account Error:', error);
-            return false;
-        }
-    }
+        const { accountDeletion } = await import('./accountDeletion');
+        await accountDeletion.remove(userId);
+        return true;
+    },
 };

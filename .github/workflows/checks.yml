@@ -1,0 +1,28 @@
+name: App checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:community-safety-db
+      - run: npm run test:account-deletion-db
+      - run: npm run test:storage-db
+      - run: npm run test:performance-db
+      - run: npm run test:door-access-db
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.6.4
+      - run: deno test --no-lock --no-config --allow-read supabase/functions/poster-ai/session-image_test.ts

@@ -1,0 +1,6 @@
+[functions.poster-ai]
+verify_jwt = true
+
+# RevenueCat authenticates with a dedicated secret Authorization header, checked in handler.ts.
+[functions.poster-store-webhook]
+verify_jwt = false
